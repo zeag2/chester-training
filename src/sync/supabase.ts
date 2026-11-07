@@ -8,7 +8,6 @@ const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if
 export class SupabaseRemote implements Remote {
   sb: SupabaseClient;
   constructor(url: string, key: string) {
-    // Email codes, not links: a link would open Safari instead of the home-screen app.
     this.sb = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'chester-auth' } });
   }
 
@@ -17,10 +16,15 @@ export class SupabaseRemote implements Remote {
     const { data } = this.sb.auth.onAuthStateChange((_e, s) => fn(toAccount(s?.user)));
     return () => data.subscription.unsubscribe();
   }
-  async sendCode(email: string) { check(await this.sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })); }
-  async verifyCode(email: string, code: string) {
-    const d = check(await this.sb.auth.verifyOtp({ email, token: code.trim(), type: 'email' }));
-    const a = toAccount(d.user); if (!a) throw new Error('Could not sign in'); return a;
+  async signIn(email: string, password: string) {
+    const r = await this.sb.auth.signInWithPassword({ email, password });
+    if (!r.error) return toAccount(r.data.user)!;
+    if (!/invalid login credentials/i.test(r.error.message)) throw new Error(r.error.message);
+    // No account with that email and password: make one (works when "Confirm email" is off in Supabase)
+    const up = await this.sb.auth.signUp({ email, password });
+    if (up.error) throw new Error(/already registered|already exists/i.test(up.error.message) ? 'wrong-password' : up.error.message);
+    if (!up.data.session) throw new Error('confirm-email-on');
+    return toAccount(up.data.user)!;
   }
   async signOut() { await this.sb.auth.signOut(); }
 

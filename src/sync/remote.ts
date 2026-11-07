@@ -7,8 +7,8 @@ export interface Member { userId: string; name: string }
 export interface Remote {
   account(): Promise<Account | null>;
   onAccountChange(fn: (a: Account | null) => void): () => void;
-  sendCode(email: string): Promise<void>;
-  verifyCode(email: string, code: string): Promise<Account>;
+  /** Sign in, or create the account the first time. Throws 'wrong-password' if the email exists with another password. */
+  signIn(email: string, password: string): Promise<Account>;
   signOut(): Promise<void>;
 
   myCatIds(): Promise<string[]>;

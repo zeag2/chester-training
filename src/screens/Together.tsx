@@ -9,8 +9,10 @@ import * as audio from '../lib/audio';
 const appLink = () => location.origin + import.meta.env.BASE_URL;
 const errText = (e: unknown) => {
   const m = e instanceof Error ? e.message : String(e);
-  if (/token|otp|expired|invalid/i.test(m)) return 'That code didn’t work. Check the newest email, or send a new code.';
-  if (/rate|security purposes/i.test(m)) return 'Too many codes just now. Wait a minute and try again.';
+  if (m === 'wrong-password') return 'That email already has an account with a different password.';
+  if (m === 'confirm-email-on') return 'Almost: in Supabase, turn off “Confirm email” (Authentication → Sign In / Providers → Email), then try again.';
+  if (/rate|security purposes/i.test(m)) return 'Too many tries just now. Wait a minute and try again.';
+  if (/password/i.test(m)) return m;
   if (/fetch|network|offline/i.test(m)) return 'No connection. Try again when you’re online.';
   return m;
 };
@@ -21,10 +23,10 @@ const errText = (e: unknown) => {
  */
 export function Together({ mode }: { mode: 'share' | 'join' }) {
   const snap = useStore();
-  const [step, setStep] = useState<'email' | 'code' | 'invite'>(snap.account ? 'invite' : 'email');
+  const [step, setStep] = useState<'email' | 'invite'>(snap.account ? 'invite' : 'email');
   const [email, setEmail] = useState(snap.account?.email ?? '');
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [invite, setInvite] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -44,29 +46,21 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
   if (step === 'email') return wrap(<>
     <h1 style={{ marginTop: 20 }}>{mode === 'join' ? 'Join someone’s cat' : `Train ${catName} together`}</h1>
     <p className="m" style={{ marginTop: 6 }}>{mode === 'join'
-      ? 'Sign in with your email, then enter the invite code you were sent. You’ll both see the same progress, treats and limits.'
+      ? 'Sign in, then enter the invite code you were sent. You’ll both see the same progress, treats and limits.'
       : `Sign in so ${catName}’s progress is saved online. Then send an invite code to whoever trains with you.`}</p>
     <label className="field" htmlFor="tn">Your first name</label>
     <input id="tn" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" enterKeyHint="next" />
     <label className="field" htmlFor="te">Email</label>
-    <input id="te" className="in" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="send" />
-    <p className="s" style={{ marginTop: 8 }}>We’ll email you a 6-digit code. No password.</p>
-    <button className="btn" style={{ marginTop: 20 }} disabled={busy || !/\S+@\S+\.\S+/.test(email) || !name.trim()}
-      onClick={() => run(async () => { await store.sendCode(email); audio.chirp(true); setStep('code'); })}>{busy ? 'Sending…' : 'Email me a code'}</button>
-  </>);
-
-  if (step === 'code') return wrap(<>
-    <h1 style={{ marginTop: 20 }}>Check your email</h1>
-    <p className="m" style={{ marginTop: 6 }}>Enter the code we sent to {email}.</p>
-    <label className="field" htmlFor="tc">Code</label>
-    <input id="tc" className="in" inputMode="numeric" autoComplete="one-time-code" maxLength={10} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 6, textAlign: 'center' }} />
-    <button className="btn" style={{ marginTop: 20 }} disabled={busy || code.length < 6}
+    <input id="te" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="next" />
+    <label className="field" htmlFor="tp">Password</label>
+    <input id="tp" className="in" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="go" />
+    <p className="s" style={{ marginTop: 8 }}>New here? This creates your account. At least 6 characters.</p>
+    <button className="btn" style={{ marginTop: 20 }} disabled={busy || !/\S+@\S+\.\S+/.test(email) || !name.trim() || password.length < 6}
       onClick={() => run(async () => {
-        await store.verifyCode(email, code, name, mode === 'share');
+        await store.signIn(email, password, name, mode === 'share');
         audio.sparkle();
         if (mode === 'share') go('settings'); else setStep('invite');
-      })}>{busy ? 'Checking…' : 'Sign in'}</button>
-    <button className="btn2" style={{ marginTop: 10, width: '100%' }} disabled={busy} onClick={() => run(async () => { await store.sendCode(email); setCode(''); })}>Send a new code</button>
+      })}>{busy ? 'Signing in…' : 'Sign in'}</button>
   </>);
 
   return wrap(<>

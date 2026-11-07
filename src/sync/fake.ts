@@ -6,6 +6,7 @@ export class FakeServer {
   cats = new Map<string, { cat: Cat; inviteCode: string }>();
   members = new Map<string, Member[]>();
   sets = new Map<string, SetRecord>();
+  passwords = new Map<string, string>();
   online = true;
   private n = 0;
   isMember(catId: string, userId: string) { return (this.members.get(catId) ?? []).some((m) => m.userId === userId); }
@@ -20,8 +21,11 @@ export class FakeRemote implements Remote {
   private user() { this.up(); if (!this.me) throw new Error('signed out'); return this.me; }
   async account() { return this.me; }
   onAccountChange() { return () => {}; }
-  async sendCode() { this.up(); }
-  async verifyCode(email: string, code: string) { this.up(); if (code !== '123456') throw new Error('Wrong code'); this.me = { userId: 'u:' + email, email }; return this.me; }
+  async signIn(email: string, password: string) {
+    this.up(); const known = this.s.passwords.get(email);
+    if (known && known !== password) throw new Error('wrong-password');
+    this.s.passwords.set(email, password); this.me = { userId: 'u:' + email, email }; return this.me;
+  }
   async signOut() { this.me = null; }
   async myCatIds() { const u = this.user(); return [...this.s.members].filter(([, ms]) => ms.some((m) => m.userId === u.userId)).map(([id]) => id); }
   async getCat(id: string) { const u = this.user(); const c = this.s.cats.get(id); return c && this.s.isMember(id, u.userId) ? structuredClone(c) : null; }

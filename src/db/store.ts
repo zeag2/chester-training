@@ -159,10 +159,9 @@ export class Store {
     return shared.cat;
   }
 
-  async sendCode(email: string) { await this.remote!.sendCode(email.trim().toLowerCase()); }
-  /** Sign in with the emailed code, share this phone's Chester and put our name on it. */
-  async verifyCode(email: string, code: string, name: string, share = true) {
-    const account = await this.remote!.verifyCode(email.trim().toLowerCase(), code);
+  /** Sign in (or sign up), share this phone's Chester and put our name on it. */
+  async signIn(email: string, password: string, name: string, share = true) {
+    const account = await this.remote!.signIn(email.trim().toLowerCase(), password);
     this.set({ account });
     if (!share) return; // about to join someone else's Chester: don't upload this phone's own
     await this.sync();
