@@ -1,5 +1,6 @@
 /* Chester: original chibi art, navy outlines, two-tone flat shading, glossy eyes.
-   Everything returns SVG strings so poses share one rig and CSS drives motion. */
+   Everything returns SVG strings so poses share one rig; CSS plays the moves and rig.ts adds follow-through. */
+import { restTailPath } from './rig';
 
 export interface Coat { name: string; base: string; shade: string; light: string; line: string; inner: string; nose: string; stripe?: string; white?: boolean; patches?: [string, string]; point?: string }
 
@@ -63,11 +64,12 @@ export function head(c: Coat, eyeKey: string, mood: Mood, uid: string): string {
       + `<path class="tongue" style="transform:scaleY(0)" d="M96 114 H104 V119 A4 4 0 0 1 96 119 Z" fill="#ef8f9a" stroke="${c.line}" stroke-width="2"/>`
       + `<g class="mopen" style="transform:scale(0)"><ellipse cx="100" cy="120" rx="12" ry="15" fill="#7a2f3a" stroke="${c.line}" stroke-width="3"/><ellipse cx="100" cy="128" rx="7" ry="5" fill="#ef8f9a"/></g>`;
   return `<defs><clipPath id="hc${uid}"><path d="${HEAD}"/></clipPath></defs>`
-    + `<g class="earL"><path d="M44 70 L40 22 C40 16 46 14 50 18 L84 42 Z" fill="${ear}" ${SW(c)}/><path d="M50 58 L48 30 L72 46 Z" fill="${c.inner}"/></g>`
-    + `<g class="earR"><path d="M156 70 L160 22 C160 16 154 14 150 18 L116 42 Z" fill="${ear}" ${SW(c)}/><path d="M150 58 L152 30 L128 46 Z" fill="${c.inner}"/></g>`
+    + `<g class="r-earL"><g class="earL"><path d="M44 70 L40 22 C40 16 46 14 50 18 L84 42 Z" fill="${ear}" ${SW(c)}/><path d="M50 58 L48 30 L72 46 Z" fill="${c.inner}"/></g></g>`
+    + `<g class="r-earR"><g class="earR"><path d="M156 70 L160 22 C160 16 154 14 150 18 L116 42 Z" fill="${ear}" ${SW(c)}/><path d="M150 58 L152 30 L128 46 Z" fill="${c.inner}"/></g></g>`
     + `<path d="${HEAD}" fill="${c.base}"/><g clip-path="url(#hc${uid})">${hp}</g><path d="${HEAD}" fill="none" ${SW(c)}/>`
     + `<g class="blush"><ellipse cx="54" cy="110" rx="11" ry="6.5" fill="#f592a3" opacity=".75"/><ellipse cx="146" cy="110" rx="11" ry="6.5" fill="#f592a3" opacity=".75"/></g>`
     + `<g class="eyes">${eyes}</g>`
+    + (mood === 'sleepy' ? '' : `<g class="eyesJoy"><path d="M62 92 Q74 78 86 92 M114 92 Q126 78 138 92" stroke="${c.line}" stroke-width="5" fill="none" stroke-linecap="round"/></g>`)
     + `<path d="M95 104 H105 C105 108 102 110 100 111 C98 110 95 108 95 104 Z" fill="${c.nose}" stroke="${c.line}" stroke-width="2" stroke-linejoin="round"/>`
     + mouth
     + `<g class="whisk"><path d="M28 100 L46 104 M28 113 L46 111 M172 100 L154 104 M172 113 L154 111" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`;
@@ -82,6 +84,9 @@ const tail = (c: Coat, d1: string, d2: string) => {
     + `<path d="${d1}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="${jx}" cy="${jy}" r="6" fill="${f}"/>`
     + `<g class="tailtip"><path d="${d2}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/></g></g>`;
 };
+/** Tail drawn as one smooth chain the rig bends every frame (outline under fill, so no seams). */
+const rigTail = (c: Coat) => { const d = restTailPath(); const f = c.point ?? c.base;
+  return `<g class="rtail"><path class="rt-o" d="${d}" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path class="rt-f" d="${d}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`; };
 const pad = '#f3a9b6';
 const pawFill = (c: Coat) => (c.white ? '#fbfaf7' : c.point ?? c.base);
 
@@ -97,9 +102,9 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean): s
     : `<g class="pawR">${leg(121)}</g>`;
   return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
     + `<ellipse class="shadow" cx="100" cy="190" rx="58" ry="6.5" fill="rgba(29,35,64,.12)"/>`
-    + `<g class="all">${tail(c, 'M132 176 C160 180 178 162 176 134', 'M176 134 C175 120 178 108 186 106')}`
+    + `<g class="r-all"><g class="all">${rigTail(c)}`
     + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}<ellipse cx="100" cy="172" rx="22" ry="27" fill="${c.white ? '#fbfaf7' : c.light}"/></g><path d="${BODY}" fill="none" ${SW(c)}/><g class="pawL">${leg(79)}</g></g>`
-    + `<g class="head">${head(c, eyes, mood, uid)}</g>${right}</g>`;
+    + `<g class="r-head"><g class="head">${head(c, eyes, mood, uid)}</g></g>${right}</g></g>`;
 }
 
 function walk(c: Coat, eyes: string, mood: Mood, uid: string): string {

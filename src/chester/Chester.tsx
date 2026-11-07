@@ -2,7 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { chesterSVG, type Mood, type Pose } from './art';
 import { pickReaction, REACTIONS, SESSION_REACTIONS, type ReactionId } from './reactions';
 import * as audio from '../lib/audio';
-import { atRest, leanFor, stepSpring, strokeTransform, type Spring } from './spring';
+import { leanFor } from './spring';
+import { Rig } from './rig';
 import './chester.css';
 
 export interface ChesterProps {
@@ -11,6 +12,10 @@ export interface ChesterProps {
 }
 
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
+/** Which jolt the rig gives ears and tail for each reaction, and when (ms) it lands. */
+const KICKS: Partial<Record<ReactionId, ['hop' | 'bonk' | 'shake' | 'spin' | 'flick', number]>> = {
+  r1: ['hop', 520], r6: ['hop', 520], r11: ['hop', 480], r8: ['bonk', 380], r10: ['shake', 300], r2: ['spin', 0], r4: ['shake', 120], r5: ['flick', 0], r9: ['flick', 200], r13: ['flick', 300], r14: ['hop', 400],
+};
 
 export function Chester(p: ChesterProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
@@ -23,6 +28,7 @@ export function Chester(p: ChesterProps) {
   const timer = useRef<number>(0);
 
   const play = (id: ReactionId) => {
+    const k = KICKS[id]; if (k) rig.current?.kick(k[0], k[1]);
     setFx('');
     requestAnimationFrame(() => setFx(id));
     window.clearTimeout(timer.current);
@@ -49,34 +55,29 @@ export function Chester(p: ChesterProps) {
     return () => { document.removeEventListener('pointerdown', down); window.clearInterval(iv); window.clearTimeout(lt); window.clearTimeout(it); };
   }, [p.interactive]);
 
-  // stroke to pet: drag sideways across him and he leans into your finger, then springs back with a wobble
+  // the rig: springs that give the sitting pose follow-through (lean, head lag, ears, tail chain)
   const body = useRef<HTMLSpanElement>(null);
-  const drag = useRef({ on: false, x0: 0, y0: 0, moved: false, target: 0, purrAt: 0 });
-  const spring = useRef<Spring>({ x: 0, v: 0 });
-  const raf = useRef(0);
+  const rig = useRef<Rig | null>(null);
+  useEffect(() => {
+    const el = body.current?.querySelector('svg'); if (!el || !el.querySelector('.r-all')) return;
+    const r = new Rig(el); rig.current = r;
+    const io = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([e]) => { r.visible = e.isIntersecting; });
+    io?.observe(el);
+    return () => { r.stop(); io?.disconnect(); rig.current = null; };
+  }, [svg]);
+
+  // stroke to pet: drag sideways across him and he leans into your finger, then settles back with follow-through
+  const drag = useRef({ on: false, x0: 0, y0: 0, moved: false, purrAt: 0 });
   const [stroking, setStroking] = useState(false);
-  const run = () => {
-    let last = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min(48, now - last); last = now;
-      spring.current = stepSpring(spring.current, drag.current.target, dt);
-      if (body.current) body.current.style.transform = strokeTransform(spring.current.x);
-      if (drag.current.on || !atRest(spring.current, 0)) raf.current = requestAnimationFrame(tick);
-      else { raf.current = 0; if (body.current) body.current.style.transform = ''; }
-    };
-    if (!raf.current) raf.current = requestAnimationFrame(tick);
-  };
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
-  const onDown = (e: React.PointerEvent) => { drag.current = { on: true, x0: e.clientX, y0: e.clientY, moved: false, target: 0, purrAt: 0 }; };
+  const onDown = (e: React.PointerEvent) => { drag.current = { on: true, x0: e.clientX, y0: e.clientY, moved: false, purrAt: 0 }; };
   const onMove = (e: React.PointerEvent) => {
     const d = drag.current; if (!d.on) return;
     const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
     if (!d.moved) { if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return; d.moved = true; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); setStroking(true); p.onPet?.(['Prrrr... more', 'Ooh yes, pets', 'Right there...'][Math.floor(Math.random() * 3)], 'r3'); }
-    d.target = leanFor(dx);
+    if (rig.current) rig.current.stroke = leanFor(dx);
     const now = performance.now(); if (now > d.purrAt) { audio.purr(1.9); audio.buzz([6, 40, 6]); d.purrAt = now + 1700; }
-    run();
   };
-  const onUp = () => { const d = drag.current; if (!d.on) return; d.on = false; d.target = 0; if (d.moved) { setStroking(false); run(); } };
+  const onUp = () => { const d = drag.current; if (!d.on) return; d.on = false; if (rig.current) rig.current.stroke = null; if (d.moved) setStroking(false); };
 
   const pet = () => {
     if (drag.current.moved) { drag.current.moved = false; return; }
