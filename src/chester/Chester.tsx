@@ -9,7 +9,7 @@ import './chester.css';
 
 export interface ChesterProps {
   pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string;
-  interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null;
+  interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null; reactKey?: number;
 }
 
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
@@ -37,7 +37,7 @@ export function Chester(p: ChesterProps) {
   };
 
   // external trigger (e.g. a good rep in a session)
-  useEffect(() => { if (p.react) play(p.react); }, [p.react]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (p.react) play(p.react); }, [p.react, p.reactKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!p.interactive) return;
@@ -101,6 +101,7 @@ export function Chester(p: ChesterProps) {
     if (r.sound === 'purr') { audio.purr(id === 'r12' ? 3.4 : 1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
     else if (r.sound === 'sparkle') { audio.sparkle(); audio.buzz([10, 30, 30]); }
     else if (r.sound === 'sneeze') { audio.chirp(false); audio.buzz(20); }
+    else if (r.sound === 'meow') { audio.meow((['mew', 'meow', 'mrrp'] as const)[Math.floor(Math.random() * 3)]); audio.buzz(10); }
     else { audio.chirp(Math.random() > 0.3); audio.buzz(12); }
     play(id);
     p.onPet?.(r.lines[Math.floor(Math.random() * r.lines.length)], id);

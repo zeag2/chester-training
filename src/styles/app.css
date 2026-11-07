@@ -97,3 +97,15 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 /* dark: a soft rim keeps dark coats readable on dark cards */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kc{filter:drop-shadow(0 0 1.2px rgba(255,255,255,.28))}}
 :root[data-theme="dark"] .kc{filter:drop-shadow(0 0 1.2px rgba(255,255,255,.28))}
+/* the litter box gag: he walks off to the right, the box is never shown */
+.gagwrap{display:inline-block;flex:none}
+.gagwrap .gagflip{display:inline-block}
+.gagwrap.out{animation:gagout 1.3s cubic-bezier(.5,0,.75,.4) forwards}
+.gagwrap.away,.gagwrap.stink{transform:translateX(120vw);visibility:hidden}
+.gagwrap.back{animation:gagback 1.1s cubic-bezier(.2,.7,.3,1) both}
+.gagwrap.back .gagflip{transform:scaleX(-1)}
+@keyframes gagout{to{transform:translateX(120vw)}}
+@keyframes gagback{from{transform:translateX(120vw)}to{transform:none}}
+.stink{position:absolute;right:0;top:0;width:100%;height:420px;pointer-events:none}
+.stink svg{position:absolute;right:-20px;width:26px;height:80px;opacity:0;animation:stinkdrift 4.5s var(--ease-out) forwards}
+@keyframes stinkdrift{0%{opacity:0;transform:translate(0,0) scaleY(.7)}15%{opacity:.85}70%{opacity:.6}100%{opacity:0;transform:translate(-62vw,-90px) scaleY(1.15)}}

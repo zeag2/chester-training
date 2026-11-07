@@ -600,3 +600,10 @@ button.tapme.stroking:active{transform:none}
 .tapme .strokebody{transition:opacity 200ms var(--ease-out)}
 .tapme.gone .strokebody{opacity:0}
 .dashcat .kc .shadow{display:none}
+/* meow: mouth opens on the vowel, head lifts a touch */
+.tapme.r15 .mopen{animation:cMeowMouth 900ms var(--ease-out) both}
+.tapme.r15 .mclosed{animation:cMeowHide 900ms linear both}
+.tapme.r15 .head{transform-origin:100px 132px;animation:cMeowHead 900ms var(--ease-out) both}
+@keyframes cMeowMouth{0%{transform:scale(0)}15%{transform:scale(.55,.7)}40%{transform:scale(.8,.9)}75%{transform:scale(.45,.5)}100%{transform:scale(0)}}
+@keyframes cMeowHide{0%,100%{opacity:1}10%,80%{opacity:0}}
+@keyframes cMeowHead{0%,100%{transform:none}35%{transform:rotate(-4deg) translateY(-3px)}70%{transform:rotate(-1deg) translateY(-1px)}}

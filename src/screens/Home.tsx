@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { useStore } from '../db/store';
 import { suggestNext } from '../engine/plan';
@@ -8,6 +8,8 @@ import { DAILY_REWARDED_SETS } from '../engine/rewards';
 import { dailyRates, daysHome, inProgress, streak, today, weekStats, ageText } from '../lib/stats';
 import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
+import * as audio from '../lib/audio';
+import type { ReactionId } from '../chester/reactions';
 
 const PH = (h: number) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night');
 const BEAM = { morning: 'rgba(255,214,130,.24)', day: 'rgba(255,236,170,.22)', evening: 'rgba(255,170,140,.22)', night: 'rgba(150,170,230,.18)' };
@@ -24,9 +26,11 @@ function useCountUp(target: number, ms = 1000) {
 function useHomeMood() {
   const [doze, setDoze] = useState(false);
   const [knead, setKnead] = useState(false);
+  const pokeRef = useRef<() => void>(() => {});
   useEffect(() => {
     let t = 0;
-    const poke = () => { setDoze(false); window.clearTimeout(t); t = window.setTimeout(() => { setKnead(false); setDoze(true); }, 40_000); };
+    const poke = () => { setDoze(false); window.clearTimeout(t); t = window.setTimeout(() => { setKnead(false); setDoze(true); }, 90_000); };
+    pokeRef.current = poke;
     poke();
     document.addEventListener('pointerdown', poke, { passive: true }); window.addEventListener('scroll', poke, { passive: true });
     return () => { window.clearTimeout(t); document.removeEventListener('pointerdown', poke); window.removeEventListener('scroll', poke); };
@@ -37,13 +41,59 @@ function useHomeMood() {
     next();
     return () => { window.clearTimeout(a); window.clearTimeout(b); };
   }, []);
-  return { doze, knead };
+  return { doze, knead, wake: () => pokeRef.current() };
+}
+
+const MEOWS = ['Meow.', 'Mew?', 'Mrrp!', 'Meeeow.', 'Mrrrow?'];
+const AFTER = ['I feel 3 pounds lighter.', 'Don’t go in the bathroom.', 'Someone should check the box. Not it.', 'That one was for you.', 'I have done a great thing.'];
+type Gag = null | 'out' | 'away' | 'stink' | 'back';
+
+/** Every so often he meows at nobody; less often he leaves the room, and the room soon knows why. */
+function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
+  const [meowN, setMeowN] = useState(0);
+  const [meowLine, setMeowLine] = useState('');
+  const [gag, setGag] = useState<Gag>(null);
+  const [gagLine, setGagLine] = useState('');
+  const [stink, setStink] = useState(false);
+  useEffect(() => {
+    if (night || dozing) return;
+    let t = 0;
+    const next = () => { t = window.setTimeout(() => {
+      if (!document.hidden) { audio.meow((['mew', 'meow', 'mrrp'] as const)[Math.floor(Math.random() * 3)]); setMeowN((n) => n + 1); setMeowLine(MEOWS[Math.floor(Math.random() * MEOWS.length)]); }
+      next();
+    }, 25_000 + Math.random() * 45_000); };
+    next();
+    return () => window.clearTimeout(t);
+  }, [night, dozing]);
+  const wakeRef = useRef(wake); wakeRef.current = wake;
+  useEffect(() => {
+    if (night) return;
+    const ts: number[] = []; const at = (ms: number, f: () => void) => ts.push(window.setTimeout(f, ms));
+    const run = () => {
+      if (document.hidden) { schedule(); return; }
+      wakeRef.current(); setGag('out'); setGagLine('');
+      at(1300, () => { setGag('away'); setGagLine('*scritch scritch scritch*'); audio.litter(2.2); });
+      at(3900, () => { setGag('stink'); setGagLine('…'); setStink(true); });
+      at(10_500, () => setStink(false));
+      at(6200, () => { setGag('back'); setGagLine('Mrrp!'); audio.meow('mrrp'); });
+      at(7300, () => { setGag(null); setGagLine(AFTER[Math.floor(Math.random() * AFTER.length)]); schedule(); });
+    };
+    const schedule = () => at(180_000 + Math.random() * 180_000, run);
+    at(30_000 + Math.random() * 30_000, run);
+    return () => { ts.forEach((x) => window.clearTimeout(x)); setGag(null); setStink(false); };
+  }, [night]);
+  return { meowN, meowLine, gag, gagLine, stink };
 }
 
 export function Home() {
   const { cat, progress, sets, wallet, unlockedHidden } = useStore();
   const [line, setLine] = useState('');
-  const { doze, knead } = useHomeMood();
+  const { doze, knead, wake } = useHomeMood();
+  const ph0 = PH(new Date().getHours());
+  const { meowN, meowLine, gag, gagLine, stink } = useHomeLife(ph0 === 'night', doze, wake);
+  const [shown, setShown] = useState<'pet' | 'meow' | 'gag'>('pet');
+  useEffect(() => { if (meowN) setShown('meow'); }, [meowN]);
+  useEffect(() => { if (gagLine) setShown('gag'); }, [gagLine]);
   const ph = PH(new Date().getHours());
   const night = ph === 'night';
   const t = today();
@@ -65,16 +115,18 @@ export function Home() {
     <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>
       <div className="beam" style={{ left: '40%', background: BEAM[ph] }} /><div className="beam" style={{ left: '65%', width: 60, animationDelay: '-8s', background: BEAM[ph] }} />
       {[[45, 300, 0], [57, 360, 3], [70, 260, 6], [78, 340, 9], [52, 220, 11], [85, 300, 4.5]].map(([x, y, d], i) => <span key={i} className="mote" style={{ left: x + '%', top: y, background: MOTE[ph], animationDelay: `-${d}s` }} />)}
+      {stink && <div className="stink">{[0, 1, 2, 3].map((i) => <svg key={i} viewBox="0 0 30 90" style={{ animationDelay: i * 0.35 + 's', top: 120 + (i % 2) * 34 }}><path d="M15 88 C2 74 28 62 15 46 C2 30 28 18 15 2" stroke="#9cbf5b" strokeWidth="5" fill="none" strokeLinecap="round" opacity=".85" /></svg>)}</div>}
       {ph === 'night' && [[10, 30], [30, 18], [55, 40], [78, 22], [90, 60]].map(([x, y], i) => <span key={i} className="star" style={{ left: x + '%', top: y, animationDelay: `-${i * 0.7}s` }} />)}
     </div>
     <div className="stag" style={{ position: 'relative' }}>
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <h1 style={{ marginTop: 4 }}>{GREET[ph]}, Josh.</h1></div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
-        <Chester coat={cat.coat} eyes={cat.eyes} pose={night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}
-          raised={!done && !night && !doze && sets.length === 0} anim={night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
-          width={104} interactive label={cat.name} onPet={(l) => setLine(l)} />
-        <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : line} className="bubble mint">{doze ? 'Zzz… (tap to wake him)' : line || idleLine}</span></div>
+        <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
+        <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}
+          raised={!gag && !done && !night && !doze && sets.length === 0} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
+          width={104} interactive label={cat.name} onPet={(l) => { setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
+        <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine}</span></div>
       </div>
       <div className="card mint" style={{ padding: 18 }}>
         <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today's sets</b><span className="chip num">{Math.min(rewardedToday, DAILY_REWARDED_SETS)} of {DAILY_REWARDED_SETS}</span></div>
