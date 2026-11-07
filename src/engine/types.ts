@@ -27,6 +27,7 @@ export interface SetRecord {
   seconds: number;
   review: boolean;
   rewarded: boolean;
+  repTreats?: number;
   note?: string;
 }
 
@@ -47,3 +48,38 @@ export interface Gift {
 }
 
 export type ProgressEvent = 'none' | 'pass' | 'stepUp' | 'mastered' | 'review';
+
+export interface Cat {
+  id: string;
+  name: string;
+  birthday: string;
+  homeDate: string;
+  breed: string;
+  coat: string;
+  eyes: string;
+  weightLb?: number;
+  rewards: string[];
+  outfit: string;
+  createdAt: number;
+}
+
+export interface Wallet {
+  catId: string;
+  treats: number;
+  bond: number;
+  toys: string[];
+  playMoves: string[];
+  checkinKeys: string[];
+  napTokens: number;
+  hintsSeen: string[];
+  lastGift?: Gift;
+}
+
+export interface SessionDraft {
+  catId: string;
+  skillId: string;
+  startedAt: number;
+  reps: number;
+  good: number;
+  seconds: number;
+}
