@@ -4,6 +4,7 @@ import { pickReaction, REACTIONS, SESSION_REACTIONS, type ReactionId } from './r
 import * as audio from '../lib/audio';
 import { leanFor } from './spring';
 import { Rig } from './rig';
+import { RainbowDash } from './RainbowDash';
 import './chester.css';
 
 export interface ChesterProps {
@@ -79,9 +80,23 @@ export function Chester(p: ChesterProps) {
   };
   const onUp = () => { const d = drag.current; if (!d.on) return; d.on = false; if (rig.current) rig.current.stroke = null; if (d.moved) setStroking(false); };
 
+  // tap him lots (8 taps in 3 s) and he does a rainbow dash, at most once every 10 s
+  const taps = useRef<number[]>([]);
+  const dashAt = useRef(-Infinity);
+  const [dash, setDash] = useState(false);
   const pet = () => {
     if (drag.current.moved) { drag.current.moved = false; return; }
-    const id = pickReaction(last.current); last.current = id;
+    const now = performance.now();
+    taps.current = [...taps.current.filter((t) => now - t < 3000), now];
+    if (taps.current.length >= 8 && now - dashAt.current > 10_000 && !dash) {
+      taps.current = []; dashAt.current = now; setDash(true);
+      audio.sparkle(); audio.buzz([20, 60, 20, 60, 40]);
+      window.setTimeout(() => audio.sparkle(), 700); window.setTimeout(() => audio.chirp(true), 1400); window.setTimeout(() => audio.sparkle(), 2100);
+      window.setTimeout(() => setDash(false), 3600);
+      p.onPet?.('WHEEEE! Rainbow dash!', 'r5');
+      return;
+    }
+    const id = pickReaction(last.current, Math.random, (p.pose ?? 'sit') === 'sit'); last.current = id;
     const r = REACTIONS.find((x) => x.id === id)!;
     if (r.sound === 'purr') { audio.purr(id === 'r12' ? 3.4 : 1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
     else if (r.sound === 'sparkle') { audio.sparkle(); audio.buzz([10, 30, 30]); }
@@ -91,10 +106,11 @@ export function Chester(p: ChesterProps) {
     p.onPet?.(r.lines[Math.floor(Math.random() * r.lines.length)], id);
   };
 
-  const cls = `tapme ${stroking ? 'stroking' : fx || idle}`;
+  const cls = `tapme ${stroking ? 'stroking' : fx || idle}${dash ? ' gone' : ''}`;
   const inner = <>
     <span ref={body} className="strokebody" dangerouslySetInnerHTML={{ __html: svg }} style={{ display: 'block' }} />
     <span className="fxl" aria-hidden="true"><i>&#9829;</i><i>&#9829;</i><i>&#9829;</i></span>
+    {dash && <RainbowDash coat={p.coat} eyes={p.eyes} onDone={() => setDash(false)} />}
   </>;
   if (!p.interactive) return <div ref={ref as any} className={cls} style={{ display: 'inline-block' }}>{inner}</div>;
   return <button ref={ref as any} type="button" className={cls} onClick={pet} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label={`Pet ${p.label ?? 'Chester'}`}>{inner}</button>;

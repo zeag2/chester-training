@@ -195,4 +195,5 @@ export class Store {
 }
 
 export const store = new Store('chester', sharingConfigured() ? new SupabaseRemote(SUPABASE_URL, SUPABASE_KEY) : null);
+if (import.meta.env.DEV) (globalThis as Record<string, unknown>).__chesterStore = store;
 export function useStore(): Snapshot { return useSyncExternalStore(store.subscribe, store.get, store.get); }

@@ -29,10 +29,10 @@ export function SkillPage({ id }: { id: string }) {
     <h2 style={{ marginTop: 22 }}>Steps</h2>
     {d.steps.map((t, i) => { const done = p?.mastered || i < step; const now = !p?.mastered && i === step && open;
       return <div key={i} className="row" style={{ alignItems: 'flex-start', marginTop: 12 }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: done || now ? '#232320' : '#f4f4f1', color: done || now ? '#fff' : '#6a6a64', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flex: 'none' }}>{done ? <Icon name="check" size={18} /> : i + 1}</div>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: done || now ? 'var(--ink)' : 'var(--grey)', color: done || now ? 'var(--on-ink)' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flex: 'none' }}>{done ? <Icon name="check" size={18} /> : i + 1}</div>
         <div style={{ flex: 1, paddingTop: 4 }}><p style={{ fontSize: 15, fontWeight: now ? 700 : 400, color: done || now ? 'var(--ink)' : 'var(--muted)' }}>{t}</p>
           {now && <p className="s" style={{ marginTop: 2 }}>{atStep.length && atStep[atStep.length - 1].good / atStep[atStep.length - 1].reps >= 0.8 && atStep[atStep.length - 1].reps >= 5 ? '1 of 2 passes done' : 'Pass twice in a row to move up'}</p>}</div></div>; })}
-    <div className="card butter" style={{ marginTop: 20 }}><b>Tips</b><p className="s" style={{ marginTop: 4, color: '#5b4a1c' }}>{d.tips}</p></div>
+    <div className="card butter" style={{ marginTop: 20 }}><b>Tips</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>{d.tips}</p></div>
     <div className="card grey"><b>What passing means</b><p className="s" style={{ marginTop: 4 }}>5 or more tries, at least 80% good, and he stays relaxed. Pass twice in a row to move up a step.</p></div>
     <p className="s" style={{ marginTop: 14 }}>Based on: {d.sources.map((s) => SOURCES[s] ?? s).join('; ')}</p>
     {open ? <button className="btn" style={{ marginTop: 18 }} onClick={() => go('session/' + id)}>{p?.mastered ? 'Review session' : 'Start a session'}</button>

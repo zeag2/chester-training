@@ -150,7 +150,7 @@ export function TogetherCard() {
     <b>Train {cat.name} together</b>
     <p className="s" style={{ marginTop: 4 }}>Share {cat.name}’s progress with someone else, so you both see the same skills, treats and daily limits.</p>
     <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: 'wrap' }}>
-      <button className="btn2" style={{ background: '#fff' }} onClick={() => go('together')}>Share {cat.name}</button>
+      <button className="btn2" style={{ background: 'var(--surface)' }} onClick={() => go('together')}>Share {cat.name}</button>
       <button className="btn2" style={{ background: 'transparent' }} onClick={() => go('join')}>I have a code</button>
     </div>
   </div>;
@@ -165,11 +165,11 @@ export function TogetherCard() {
     {household && names.length < 2 && <p className="s" style={{ marginTop: 8 }}>Invite someone with this code:</p>}
     {household && <div className="row" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
       <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: 3, fontVariantNumeric: 'tabular-nums' }}>{household.inviteCode}</span>
-      <button className="btn2" style={{ background: '#fff', marginLeft: 'auto' }} onClick={share}>{copied ? 'Copied' : 'Send invite'}</button>
+      <button className="btn2" style={{ background: 'var(--surface)', marginLeft: 'auto' }} onClick={share}>{copied ? 'Copied' : 'Send invite'}</button>
     </div>}
     <p className="s" style={{ marginTop: 10 }} aria-live="polite">{status}</p>
     <div className="row" style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}>
-      {sync === 'offline' && <button className="btn2" style={{ background: '#fff' }} onClick={() => void store.sync()}>Try again</button>}
+      {sync === 'offline' && <button className="btn2" style={{ background: 'var(--surface)' }} onClick={() => void store.sync()}>Try again</button>}
       <button className="btn2" style={{ background: 'transparent' }} onClick={() => void store.signOut()}>Sign out</button>
     </div>
   </div>;

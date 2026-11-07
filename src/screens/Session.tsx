@@ -58,7 +58,7 @@ export function Session({ skillId }: { skillId: string }) {
   const finish = async () => { setRunning(false); await store.saveDraft({ skillId, startedAt: startedAt.current, reps, good, seconds: elapsed }); go('recap/' + skillId); };
   const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
 
-  return <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: '#fff', paddingTop: 'var(--safe-t)', paddingBottom: 'calc(12px + var(--safe-b))' }}>
+  return <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface)', paddingTop: 'var(--safe-t)', paddingBottom: 'calc(12px + var(--safe-b))' }}>
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '0 16px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div className="top">
         <button className="iconbtn" aria-label="Close session" onClick={finish}><Icon name="close" /></button>
@@ -70,15 +70,15 @@ export function Session({ skillId }: { skillId: string }) {
         <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} raised anim="bat" width={130} extra={wraps} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
         {(line || firstTime) && <span key={line} className="bubble butter" style={{ position: 'absolute', left: '30%', top: 0, fontSize: 13 }}>{line || 'Tap anywhere when I get it!'}</span>}
       </div>
-      <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: '#e6f3ee', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">
-        <span key={pressed} className="pawstamp"><Paw size={120} color="#232320" /></span>
+      <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: 'var(--mint)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">
+        <span key={pressed} className="pawstamp"><Paw size={120} color="var(--ink)" /></span>
         <b style={{ fontSize: 34, fontWeight: 800 }}>Yes!</b>
         <span className="s num">{good} good · {reps - good} missed</span>
       </button>
       <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
         <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={missed}>Missed</button>
         <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={() => { audio.chirp(!running); setRunning(!running); }} aria-label={running ? 'Pause timer' : 'Resume timer'}><Icon name={running ? 'pause' : 'play'} />&nbsp;{running ? 'Pause' : 'Resume'}</button>
-        <button className="btn2" style={{ flex: 1, minHeight: 56, background: 'var(--ink)', color: '#fff' }} onClick={finish}>End</button>
+        <button className="btn2" style={{ flex: 1, minHeight: 56, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={finish}>End</button>
       </div>
     </div>
   </div>;

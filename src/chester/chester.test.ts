@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { pickReaction, REACTIONS } from './reactions';
+import { LYING_OK, pickReaction, REACTIONS } from './reactions';
 import * as audio from '../lib/audio';
 import { chesterSVG } from './art';
 
@@ -34,5 +34,9 @@ describe('art safety', () => {
   it('escapes the cat name in the label', () => {
     const s = chesterSVG({ uid: 'x', label: 'Bo"><img src=x onerror=alert(1)>' });
     expect(s).not.toContain('<img');
+  });
+  it('only picks gentle reactions when he is lying down or kneading', () => {
+    let last: any = null;
+    for (let i = 0; i < 300; i++) { const r = pickReaction(last, Math.random, false); expect(LYING_OK).toContain(r); last = r; }
   });
 });

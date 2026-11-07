@@ -15,14 +15,14 @@ export function skillState(d: SkillDef, progress: ReturnType<typeof useStore>['p
 export const STATE_LABEL: Record<State, string> = { m: 'Mastered', p: 'Learning', u: 'Ready', l: 'Locked' };
 
 export function Node({ d, st, sub, indent = 0 }: { d: SkillDef; st: State; sub: string; indent?: number }) {
-  const look = { m: { bg: '#232320', fg: '#fff', border: '0' }, p: { bg: '#fff', fg: '#232320', border: '2px solid #232320' }, u: { bg: '#fff', fg: '#232320', border: '1.5px solid #e4e4df' }, l: { bg: '#f4f4f1', fg: '#8a8a84', border: '1.5px dashed #c9c9c3' } }[st];
+  const look = { m: { bg: 'var(--ink)', fg: 'var(--on-ink)', border: '0' }, p: { bg: 'var(--surface)', fg: 'var(--ink)', border: '2px solid var(--ink)' }, u: { bg: 'var(--surface)', fg: 'var(--ink)', border: '1.5px solid var(--line)' }, l: { bg: 'var(--grey)', fg: 'var(--muted-2)', border: '1.5px dashed var(--muted-2)' } }[st];
   return <div style={{ position: 'relative', marginTop: 14, marginLeft: indent }}>
-    {indent > 0 && <div aria-hidden="true" style={{ position: 'absolute', left: -12, top: -14, width: 2, height: 42, background: st === 'l' ? '#d6d6d0' : '#232320' }} />}
+    {indent > 0 && <div aria-hidden="true" style={{ position: 'absolute', left: -12, top: -14, width: 2, height: 42, background: st === 'l' ? 'var(--line)' : 'var(--ink)' }} />}
     <a href={'#/skill/' + d.id} className="card" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 12, background: look.bg, color: look.fg, border: look.border, borderRadius: 20, padding: '10px 14px 10px 10px' }}>
-      <div style={{ width: 40, height: 40, borderRadius: '50%', background: st === 'm' ? '#3a3a36' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: look.fg }}>
+      <div style={{ width: 40, height: 40, borderRadius: '50%', background: st === 'm' ? 'var(--ink-2)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: look.fg }}>
         <Icon name={st === 'l' ? 'lock' : st === 'm' ? 'check' : ICON_FOR[d.branch]} size={20} /></div>
       <div className="sp"><b style={{ fontSize: 15 }}>{d.name}</b><p style={{ fontSize: 12, opacity: .75 }}>{sub}</p></div>
-      <span className="chip" style={{ background: st === 'm' ? '#3a3a36' : '#fff', color: look.fg }}>{STATE_LABEL[st]}</span></a></div>;
+      <span className="chip" style={{ background: st === 'm' ? 'var(--ink-2)' : 'var(--surface)', color: look.fg }}>{STATE_LABEL[st]}</span></a></div>;
 }
 
 export function Tree() {
@@ -35,7 +35,7 @@ export function Tree() {
   return <div className="screen">
     <h1>{cat.name}'s skill tree</h1>
     <p className="m" style={{ marginTop: 6 }}>Master a skill to unlock the ones that build on it.</p>
-    {nextLocks.length > 0 && <div className="card butter"><p className="s" style={{ color: '#5b4a1c' }}><b>{nextLocks.length} skills</b> are waiting on something {cat.name} hasn't mastered yet.</p></div>}
+    {nextLocks.length > 0 && <div className="card butter"><p className="s" style={{ color: 'var(--butter-ink)' }}><b>{nextLocks.length} skills</b> are waiting on something {cat.name} hasn't mastered yet.</p></div>}
     <div className="stag">{branches.map((b) => {
       const ds = visible.filter((d) => d.branch === b);
       const hidden = SKILLS.filter((d) => d.branch === b && d.hidden && !unlockedHidden.includes(d.id)).length;

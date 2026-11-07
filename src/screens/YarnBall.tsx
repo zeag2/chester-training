@@ -11,7 +11,7 @@ export function YarnBall({ p, hop, hurry }: { p: number; hop: number; hurry: boo
   const spin = { transform: `rotate(${ang.toFixed(1)}deg)`, transformBox: 'view-box', transformOrigin: '0 0', transition: 'transform 1s linear' } as const;
   return <svg viewBox="0 0 350 220" width="100%" height="100%" aria-hidden="true" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
     <defs><clipPath id="yclip"><circle r="40" /></clipPath></defs>
-    <path d={`M0 ${FLOOR} H350`} stroke="#ecebe5" strokeWidth="3" strokeLinecap="round" />
+    <path d={`M0 ${FLOOR} H350`} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />
     <path d={trailPath(p)} stroke={LINE} strokeWidth="5.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
     <path d={trailPath(p)} stroke={BASE} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     <g style={{ transform: `translate(${x.toFixed(1)}px,${FLOOR}px) scale(${s.toFixed(3)})`, transformBox: 'view-box', transformOrigin: '0 0', transition: 'transform 1s linear' }}>

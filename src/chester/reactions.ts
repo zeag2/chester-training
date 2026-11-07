@@ -19,9 +19,12 @@ export const REACTIONS: { id: ReactionId; name: string; weight: number; lines: s
 /** Session-only reactions (not in the petting pool). */
 export const SESSION_REACTIONS: Partial<Record<ReactionId, number>> = { r14: 1800 };
 
-/** Weighted random reaction that never repeats the previous one. */
-export function pickReaction(last: ReactionId | null, rand: () => number = Math.random): ReactionId {
-  const pool = REACTIONS.filter((r) => r.id !== last);
+/** Moves that only work sitting up. Lying, loafing or kneading he just purrs, bonks, blinks or sneezes. */
+export const LYING_OK: ReactionId[] = ['r3', 'r8', 'r9', 'r10', 'r12'];
+
+/** Weighted random reaction that never repeats the previous one. `sitting` false = only the gentle ones. */
+export function pickReaction(last: ReactionId | null, rand: () => number = Math.random, sitting = true): ReactionId {
+  const pool = REACTIONS.filter((r) => r.id !== last && (sitting || LYING_OK.includes(r.id)));
   const total = pool.reduce((t, r) => t + r.weight, 0);
   let x = rand() * total;
   for (const r of pool) { x -= r.weight; if (x < 0) return r.id; }

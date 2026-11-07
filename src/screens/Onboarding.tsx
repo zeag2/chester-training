@@ -80,7 +80,7 @@ export function Onboarding() {
     </div>
     <label className="field" htmlFor="br">Breed and coat</label><input id="br" className="in" value={breed} onChange={(e) => setBreed(e.target.value)} />
     <label className="field" htmlFor="wt">Weight in pounds (optional)</label><input id="wt" className="in" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="lb" />
-    {birthday && <div className="card butter row" style={{ marginTop: 16 }}><Paw color="#d4a23a" size={24} /><p className="s" style={{ color: '#5b4a1c' }}>{name || 'He'} is {ageText(birthday)}. A great age to start.</p></div>}
+    {birthday && <div className="card butter row" style={{ marginTop: 16 }}><Paw color="#d4a23a" size={24} /><p className="s" style={{ color: 'var(--butter-ink)' }}>{name || 'He'} is {ageText(birthday)}. A great age to start.</p></div>}
     {foot(4, 'Next', () => { setCoat(guessCoat(breed)); next(5); }, !name.trim())}</div></>);
 
   if (step === 5) return wrap(<>{back(4, 'His look')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -90,18 +90,18 @@ export function Onboarding() {
       <b style={{ fontSize: 16, marginTop: 6 }}>{COATS[coat].name} · {EYES[eyes].name} eyes</b></div>
     <span className="field">Coat</span>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }} role="group" aria-label="Coat">
-      {Object.keys(COATS).map((k) => <button key={k} aria-pressed={k === coat} onClick={() => { audio.chirp(); setCoat(k); }} className="chipbtn" style={{ height: 'auto', padding: '8px 2px', borderRadius: 16, background: '#fff', outline: k === coat ? '3px solid #232320' : '1px solid #ecece8', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <span style={{ width: 34, height: 34, borderRadius: '50%', background: SWATCH[k], border: '2px solid rgba(35,35,32,.12)' }} /><span style={{ fontSize: 11, lineHeight: 1.1 }}>{COATS[k].name}</span></button>)}
+      {Object.keys(COATS).map((k) => <button key={k} aria-pressed={k === coat} onClick={() => { audio.chirp(); setCoat(k); }} className="chipbtn" style={{ height: 'auto', padding: '8px 2px', borderRadius: 16, background: 'var(--surface)', outline: k === coat ? '3px solid var(--ink)' : '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <span style={{ width: 34, height: 34, borderRadius: '50%', background: SWATCH[k], border: '2px solid var(--faint)' }} /><span style={{ fontSize: 11, lineHeight: 1.1 }}>{COATS[k].name}</span></button>)}
     </div>
     <span className="field">Eyes</span>
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }} role="group" aria-label="Eye colour">
-      {Object.keys(EYES).map((k) => <button key={k} aria-label={EYES[k].name + ' eyes'} aria-pressed={k === eyes} onClick={() => { audio.chirp(); setEyes(k); }} style={{ background: '#fff', border: 0, borderRadius: '50%', padding: 7, outline: k === eyes ? '3px solid #232320' : '1px solid #ecece8' }}><span style={{ display: 'block', width: 30, height: 30, borderRadius: '50%', background: EYESW[k] }} /></button>)}
+      {Object.keys(EYES).map((k) => <button key={k} aria-label={EYES[k].name + ' eyes'} aria-pressed={k === eyes} onClick={() => { audio.chirp(); setEyes(k); }} style={{ background: 'var(--surface)', border: 0, borderRadius: '50%', padding: 7, outline: k === eyes ? '3px solid var(--ink)' : '1px solid var(--line)' }}><span style={{ display: 'block', width: 30, height: 30, borderRadius: '50%', background: EYESW[k] }} /></button>)}
     </div>
     {foot(5, `That's ${name}!`, () => next(6))}</div></>);
 
   if (step === 6) return wrap(<>{back(5, 'Rewards')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>What does {name} love most?</h1><p className="m" style={{ marginTop: 6 }}>This becomes his paycheck. Pick up to two.</p>
-    {REWARDS.map((r) => { const on = rewards.includes(r.id); return <button key={r.id} className={`card ${r.bg} row`} aria-pressed={on} style={{ outline: on ? '2.5px solid #232320' : 'none' }}
+    {REWARDS.map((r) => { const on = rewards.includes(r.id); return <button key={r.id} className={`card ${r.bg} row`} aria-pressed={on} style={{ outline: on ? '2.5px solid var(--ink)' : 'none' }}
       onClick={() => { audio.chirp(); setRewards(on ? rewards.filter((x) => x !== r.id) : [...rewards, r.id].slice(-2)); }}>
       <div className="ico"><Icon name={r.icon} /></div><div className="sp"><b style={{ fontSize: 16 }}>{r.title}</b><p className="s">{r.sub}</p></div>{on && <span className="chip">Picked</span>}</button>; })}
     <p className="s" style={{ marginTop: 14 }}>In one study, half the cats chose time with a person over food.</p>

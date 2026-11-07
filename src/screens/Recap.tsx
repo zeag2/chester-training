@@ -11,9 +11,9 @@ function Stepper({ label, value, set, min = 0, max = 99 }: { label: string; valu
   return <div className="card grey" style={{ padding: '12px 14px' }}>
     <p className="s" style={{ fontWeight: 700 }}>{label}</p>
     <div className="row" style={{ marginTop: 6 }}>
-      <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: '#fff' }} aria-label={`Fewer ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.max(min, value - 1)); }}>−</button>
+      <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: 'var(--surface)' }} aria-label={`Fewer ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.max(min, value - 1)); }}>−</button>
       <b className="num sp" style={{ fontSize: 34, textAlign: 'center' }} aria-live="polite">{value}</b>
-      <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: '#fff' }} aria-label={`More ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.min(max, value + 1)); }}>+</button>
+      <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: 'var(--surface)' }} aria-label={`More ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.min(max, value + 1)); }}>+</button>
     </div></div>;
 }
 
@@ -42,7 +42,7 @@ export function Recap({ skillId }: { skillId: string }) {
     <Stepper label="Good ones" value={Math.min(good, reps)} set={(n) => setGood(Math.min(n, reps))} max={reps} />
     <span className="field">How was {cat.name}?</span>
     <div className="seg" role="group" aria-label="Mood">{(['Happy', 'Distracted', 'Stressed'] as Mood[]).map((m) => <button key={m} className={m === mood ? 'on' : ''} aria-pressed={m === mood} onClick={() => { audio.buzz(6); setMood(m); }}>{m}</button>)}</div>
-    {mood === 'Stressed' && <div className="card peach row"><Paw color="#c2563f" size={22} /><p className="s" style={{ color: '#6e3424' }}>Good call stopping. Next time, make the step easier or shorter.</p></div>}
+    {mood === 'Stressed' && <div className="card peach row"><Paw color="#c2563f" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}>Good call stopping. Next time, make the step easier or shorter.</p></div>}
     <button className="btn" style={{ marginTop: 22 }} onClick={save} disabled={saving}>{reps === 0 ? 'Skip this set' : 'Save set'}</button>
   </div>;
 }
@@ -58,7 +58,7 @@ export function RewardMoment({ result, catName, coat, eyes }: { result: LogResul
     : event === 'pass' ? 'One more pass in a row moves him up a step.'
     : event === 'review' ? 'Keeping old skills sharp.'
     : set.reps < 5 ? 'Aim for 5 or more tries next time to count toward a pass.' : 'Short and happy beats long. Try again later.';
-  return <div className="overlay" style={{ background: big ? '#fbf3d8' : '#e6f3ee' }}>
+  return <div className="overlay" style={{ background: big ? 'var(--butter)' : 'var(--mint)' }}>
     <div className="conf" aria-hidden="true">{Array.from({ length: big ? 22 : 12 }, (_, k) => <i key={k} style={{ left: `${(k * 37) % 100}%`, background: COLORS[k % 5], animationDelay: `${((k * 0.29) % 3).toFixed(2)}s` }} />)}</div>
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: 'calc(40px + var(--safe-t)) 20px calc(28px + var(--safe-b))', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} mood="happy" anim="dance" width={180} interactive label={catName} /></div>

@@ -25,6 +25,6 @@ export const ICON_FOR: Record<string, string> = { Foundation: 'target', Care: 'h
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' }}><path d={P[name] ?? P.star} /></svg>;
 }
-export function Paw({ color = '#232320', size = 28 }: { color?: string; size?: number }) {
-  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><ellipse cx="12" cy="15.5" rx="5" ry="4.2" fill={color} /><ellipse cx="6" cy="10" rx="2" ry="2.6" fill={color} /><ellipse cx="10" cy="6.5" rx="2" ry="2.6" fill={color} /><ellipse cx="14" cy="6.5" rx="2" ry="2.6" fill={color} /><ellipse cx="18" cy="10" rx="2" ry="2.6" fill={color} /></svg>;
+export function Paw({ color = 'var(--ink)', size = 28 }: { color?: string; size?: number }) {
+  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><ellipse cx="12" cy="15.5" rx="5" ry="4.2" style={{ fill: color }} /><ellipse cx="6" cy="10" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="10" cy="6.5" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="14" cy="6.5" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="18" cy="10" rx="2" ry="2.6" style={{ fill: color }} /></svg>;
 }
