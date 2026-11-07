@@ -5,7 +5,7 @@ import * as audio from '../lib/audio';
 import './chester.css';
 
 export interface ChesterProps {
-  pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number;
+  pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string;
   interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null;
 }
 
@@ -13,8 +13,8 @@ const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
 
 export function Chester(p: ChesterProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const svg = useMemo(() => chesterSVG({ pose: p.pose, coat: p.coat, eyes: p.eyes, mood: p.mood, raised: p.raised, anim: p.anim, width: p.width, uid, label: p.label }),
-    [p.pose, p.coat, p.eyes, p.mood, p.raised, p.anim, p.width, uid, p.label]);
+  const svg = useMemo(() => chesterSVG({ pose: p.pose, coat: p.coat, eyes: p.eyes, mood: p.mood, raised: p.raised, anim: p.anim, width: p.width, uid, label: p.label, extra: p.extra }),
+    [p.pose, p.coat, p.eyes, p.mood, p.raised, p.anim, p.width, uid, p.label, p.extra]);
   const ref = useRef<HTMLButtonElement | HTMLDivElement>(null);
   const [fx, setFx] = useState('');
   const [idle, setIdle] = useState('');

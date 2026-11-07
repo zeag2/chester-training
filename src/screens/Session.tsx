@@ -6,9 +6,10 @@ import { SKILL_BY_ID } from '../engine/skills';
 import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { YarnBall } from './YarnBall';
+import { wrapSVG } from './yarn';
 
 export const SESSION_SECONDS = 120;
-const THREAD = 'M118 189 C140 183 152 195 172 189 S206 183 226 189 S258 195 278 189 S304 185 322 189';
 
 export function Session({ skillId }: { skillId: string }) {
   const { cat, progress, draft, wallet } = useStore();
@@ -30,7 +31,7 @@ export function Session({ skillId }: { skillId: string }) {
     return () => window.clearInterval(iv);
   }, [running]);
   useEffect(() => {
-    if (elapsed >= SESSION_SECONDS && running) { setRunning(false); audio.sparkle(); audio.buzz([20, 60, 20]); setLine('All unravelled! Time to wrap up.'); }
+    if (elapsed >= SESSION_SECONDS && running) { setRunning(false); audio.sparkle(); audio.buzz([20, 60, 20]); setLine('All tangled up! Time to wrap up.'); }
   }, [elapsed, running]);
   // keep a draft so a closed app never loses a set
   useEffect(() => { if (reps > 0 || elapsed > 0) void store.saveDraft({ skillId, startedAt: startedAt.current, reps, good, seconds: elapsed }); }, [reps, good, skillId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -42,7 +43,7 @@ export function Session({ skillId }: { skillId: string }) {
   const step = p?.mastered ? def.steps.length - 1 : p?.step ?? 0;
   const left = SESSION_SECONDS - elapsed;
   const prog = elapsed / SESSION_SECONDS;
-  const s = 1 - prog * 0.68, dx = prog * 160, dy = 44 * (1 - s);
+  const wraps = wrapSVG(prog, '#161a2b');
 
   const markSeen = () => { if (firstTime) void store.updateWallet((w) => ({ ...w, hintsSeen: [...w.hintsSeen, 'session'] })); };
   const yes = () => {
@@ -65,16 +66,8 @@ export function Session({ skillId }: { skillId: string }) {
         <b className="num" style={{ fontSize: 22, minWidth: 54, textAlign: 'right' }} aria-live="off">{mm}:{ss}</b>
       </div>
       <div className={running ? '' : 'paused'} style={{ position: 'relative', width: '100%', aspectRatio: '350 / 200', maxHeight: '30vh', margin: '2px auto 0' }}>
-        <svg viewBox="0 0 350 220" width="100%" height="100%" aria-hidden="true" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
-          <path d="M0 194 H350" stroke="#ecebe5" strokeWidth="3" strokeLinecap="round" />
-          <path className="thread" d={THREAD} pathLength={100} stroke="#e46f7f" strokeWidth="4" fill="none" strokeLinecap="round" strokeDasharray="100" style={{ strokeDashoffset: 100 - prog * 100 }} />
-          <g className="ballmove" style={{ transform: `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }}>
-            <ellipse cx="150" cy="192" rx="40" ry="5" fill="rgba(29,35,64,.12)" />
-            <g className="ballspin"><circle cx="150" cy="146" r="44" fill="#ef8f9a" stroke="#161a2b" strokeWidth="4" />
-              <path d="M114 128 C136 140 160 136 186 150 M110 152 C130 146 160 162 180 172 M126 112 C140 132 152 160 150 188 M160 104 C150 124 168 150 190 140" stroke="#c45466" strokeWidth="3" fill="none" strokeLinecap="round" />
-              <path d="M120 122 C130 112 142 108 152 108" stroke="#fff" strokeWidth="4" fill="none" strokeLinecap="round" opacity=".55" /></g></g>
-        </svg>
-        <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} raised anim="bat" width={130} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
+        <YarnBall p={prog} hop={pressed} hurry={running && left <= 10} />
+        <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} raised anim="bat" width={130} extra={wraps} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
         {(line || firstTime) && <span key={line} className="bubble butter" style={{ position: 'absolute', left: '30%', top: 0, fontSize: 13 }}>{line || 'Tap anywhere when I get it!'}</span>}
       </div>
       <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: '#e6f3ee', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">

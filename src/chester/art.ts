@@ -140,18 +140,26 @@ function sleep(c: Coat, eyes: string, uid: string): string {
     + `<g class="zz"><text x="150" y="70" font-size="28" font-weight="800" fill="#4a5590" font-family="Nunito,sans-serif">z</text><text x="170" y="46" font-size="20" font-weight="800" fill="#7a86b8" font-family="Nunito,sans-serif">z</text><text x="186" y="28" font-size="14" font-weight="800" fill="#a4add0" font-family="Nunito,sans-serif">z</text></g></g>`;
 }
 
+/** Bread loaf: one low dome, head tucked into the front, paws peeking under the chin, tail wrapped along the floor. */
 function loaf(c: Coat, eyes: string, mood: Mood, uid: string): string {
-  return `<ellipse class="shadow" cx="104" cy="190" rx="84" ry="7" fill="rgba(29,35,64,.12)"/>`
-    + `<g class="all">${tail(c, 'M164 180 C188 182 196 168 186 156', 'M186 156 C178 148 166 150 160 156')}`
-    + `<g class="bodyg"><path d="M30 186 C24 146 50 122 104 122 C158 122 186 146 178 186 Z" fill="${c.base}" ${SW(c)}/>`
-    + `<path d="M178 186 C186 156 172 132 146 126 C168 142 172 164 164 186 Z" fill="${c.shade}"/>`
-    + `<ellipse cx="78" cy="186" rx="14" ry="7" fill="${pawFill(c)}" ${SW(c, 3.5)}/><ellipse cx="120" cy="186" rx="14" ry="7" fill="${pawFill(c)}" ${SW(c, 3.5)}/></g>`
-    + `<g style="transform:translate(0px,10px) scale(.9);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid)}</g></g></g>`;
+  const BODY = 'M24 188 C14 150 34 112 92 104 C150 96 204 116 212 156 C216 176 210 188 200 188 Z';
+  let bp = `<path d="M212 150 C214 184 196 196 150 192 C190 180 204 160 200 128 Z" fill="${c.shade}"/>`
+    + `<path d="M118 112 C150 104 184 112 200 132" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity="${c.base === '#353746' || c.base === '#3d3330' ? 0.1 : 0.35}"/>`;
+  if (c.stripe) bp += `<path d="M132 104 Q138 118 130 128 M156 104 Q162 118 154 130 M180 112 Q184 124 176 134" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="160" cy="124" rx="34" ry="20" fill="${c.patches[1]}"/><ellipse cx="196" cy="168" rx="20" ry="18" fill="${c.patches[0]}"/>`;
+  const paw = (x: number) => `<path d="M${x - 16} 189 C${x - 17} 170 ${x + 17} 170 ${x + 16} 189 Z" fill="${pawFill(c)}" ${SW(c, 3.5)}/><path d="M${x - 5} 181 V187 M${x + 5} 181 V187" stroke="${c.line}" stroke-width="2.2" stroke-linecap="round"/>`;
+  return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<ellipse class="shadow" cx="114" cy="191" rx="102" ry="7" fill="rgba(29,35,64,.12)"/>`
+    + `<g class="all"><g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + `<g style="transform:translate(-18px,40px) scale(.84);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid)}</g></g>`
+    + paw(64) + paw(100)
+    + tail(c, 'M200 172 C218 186 204 188 180 186', 'M180 186 C164 186 154 184 148 176')
+    + `</g>`;
 }
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
-export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string }): string {
+export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string }): string {
   const c = COATS[o.coat ?? 'black'] ?? COATS.black;
   const pose = o.pose ?? 'sit';
   const mood = o.mood ?? 'curious';
@@ -160,5 +168,5 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid)
     : pose === 'loaf' ? loaf(c, o.eyes ?? 'gold', mood, o.uid)
     : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised);
-  return `<svg class="kc pose-${pose} ${o.anim ?? ''}" viewBox="-14 -34 232 232" width="${o.width ?? 160}" role="img" aria-label="${esc(o.label ?? c.name + ' kitten')}" style="overflow:visible">${body}</svg>`;
+  return `<svg class="kc pose-${pose} ${o.anim ?? ''}" viewBox="-14 -34 232 232" width="${o.width ?? 160}" role="img" aria-label="${esc(o.label ?? c.name + ' kitten')}" style="overflow:visible">${body}${o.extra ?? ''}</svg>`;
 }

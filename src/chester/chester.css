@@ -199,10 +199,7 @@
 @keyframes ksneeze{0%,100%{transform:rotate(0)}30%{transform:rotate(-10deg) translateY(-4px)}45%{transform:rotate(8deg) translateY(4px)}60%{transform:rotate(-4deg)}80%{transform:rotate(2deg)}}
 .kc.bat .pawR{animation:kswat 1.5s var(--ease-in-out) infinite}
 .kc.bat .head{animation:klookyarn 1.5s var(--sine) infinite}
-.paused .kc.bat .pawR,.paused .kc.bat .head,.paused .ballspin{animation-play-state:paused}
-.ballmove{transform-box:view-box;transform-origin:150px 146px;transition:transform 1s linear}
-.ballspin{transform-box:view-box;transform-origin:150px 146px;animation:kroll2 2.4s linear infinite}
-.thread{transition:stroke-dashoffset 1s linear}
+.paused .kc.bat .pawR,.paused .kc.bat .head{animation-play-state:paused}
 @keyframes kroll2{to{transform:rotate(360deg)}}
 .beam{position:absolute;top:-60px;width:120px;height:520px;transform:rotate(28deg);pointer-events:none;animation:kbeam 26s var(--sine) infinite alternate}
 .mote{position:absolute;width:4px;height:4px;border-radius:50%;pointer-events:none;animation:kmote 14s linear infinite}
@@ -251,7 +248,7 @@
 .kc.pose-sleep .head{animation:knaphead 4.6s var(--sine) infinite}
 .kc.pose-sleep .zz{animation:kzz 2.8s var(--sine) infinite}
 .kc.pose-sleep .tailbase{transform-origin:190px 180px;animation:ksleeptail 6s var(--sine) infinite}
-.kc.pose-loaf .tailbase{transform-origin:164px 180px}.kc.pose-loaf .tailtip{transform-origin:186px 156px}
+.kc.pose-loaf .tailbase{transform-origin:200px 172px}.kc.pose-loaf .tailtip{transform-origin:180px 186px}
 @keyframes kstep{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
 @keyframes kwalkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes kballroll{0%,100%{transform:rotate(-12deg) translateY(0)}50%{transform:rotate(14deg) translateY(-6px)}}

@@ -67,10 +67,20 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .yespaw:active{transform:scale(.97);background:#d6ece3}
 .pawstamp{display:inline-flex;animation:kstamp 420ms var(--back)}
 @keyframes kstamp{0%{transform:scale(.7) rotate(-8deg)}60%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
-.ballmove{transform-box:view-box;transform-origin:150px 146px;transition:transform 1s linear}
-.ballspin{transform-box:view-box;transform-origin:150px 146px;animation:kroll2 2.4s linear infinite}
-.thread{transition:stroke-dashoffset 1s linear}
-.paused .ballspin,.paused .kc.bat .pawR,.paused .kc.bat .head{animation-play-state:paused}
+.paused .kc.bat .pawR,.paused .kc.bat .head{animation-play-state:paused}
 @keyframes kroll2{to{transform:rotate(360deg)}}
 .kc.bat .pawR{animation:kswat 1.5s var(--ease-in-out) infinite}
 .kc.bat .head{animation:klookyarn 1.5s var(--sine) infinite}
+/* yarn timer */
+.yrock,.yhopA,.yhopB,.yhurry{transform-box:view-box;transform-origin:0 0}
+.yrock{animation:yrock 2.6s var(--sine) infinite}
+.yhopA{animation:yhopA 650ms var(--ease-out)}
+.yhopB{animation:yhopB 650ms var(--ease-out)}
+.yhurry{animation:yhurry .45s var(--sine) infinite}
+.paused .yrock,.paused .yhurry{animation-play-state:paused}
+@keyframes yrock{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes yhopA{0%{transform:translateY(0) scale(1.08,.9)}35%{transform:translateY(-16px) scale(.95,1.06)}65%{transform:translateY(0) scale(1.06,.93)}82%{transform:translateY(-4px)}100%{transform:none}}
+@keyframes yhopB{0%{transform:translateY(0) scale(1.08,.9)}35%{transform:translateY(-16px) scale(.95,1.06)}65%{transform:translateY(0) scale(1.06,.93)}82%{transform:translateY(-4px)}100%{transform:none}}
+@keyframes yhurry{0%,100%{transform:translateX(-2px) rotate(-5deg)}50%{transform:translateX(2px) rotate(5deg)}}
+.kc .wrapin path{stroke-dasharray:100;animation:wrapin 1.1s var(--ease-out) both}
+@keyframes wrapin{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
