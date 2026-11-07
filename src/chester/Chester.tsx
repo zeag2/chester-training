@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { chesterSVG, type Mood, type Pose } from './art';
 import { pickReaction, REACTIONS, SESSION_REACTIONS, type ReactionId } from './reactions';
 import * as audio from '../lib/audio';
+import { atRest, leanFor, stepSpring, strokeTransform, type Spring } from './spring';
 import './chester.css';
 
 export interface ChesterProps {
@@ -48,10 +49,40 @@ export function Chester(p: ChesterProps) {
     return () => { document.removeEventListener('pointerdown', down); window.clearInterval(iv); window.clearTimeout(lt); window.clearTimeout(it); };
   }, [p.interactive]);
 
+  // stroke to pet: drag sideways across him and he leans into your finger, then springs back with a wobble
+  const body = useRef<HTMLSpanElement>(null);
+  const drag = useRef({ on: false, x0: 0, y0: 0, moved: false, target: 0, purrAt: 0 });
+  const spring = useRef<Spring>({ x: 0, v: 0 });
+  const raf = useRef(0);
+  const [stroking, setStroking] = useState(false);
+  const run = () => {
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(48, now - last); last = now;
+      spring.current = stepSpring(spring.current, drag.current.target, dt);
+      if (body.current) body.current.style.transform = strokeTransform(spring.current.x);
+      if (drag.current.on || !atRest(spring.current, 0)) raf.current = requestAnimationFrame(tick);
+      else { raf.current = 0; if (body.current) body.current.style.transform = ''; }
+    };
+    if (!raf.current) raf.current = requestAnimationFrame(tick);
+  };
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const onDown = (e: React.PointerEvent) => { drag.current = { on: true, x0: e.clientX, y0: e.clientY, moved: false, target: 0, purrAt: 0 }; };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d.on) return;
+    const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+    if (!d.moved) { if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return; d.moved = true; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); setStroking(true); p.onPet?.(['Prrrr... more', 'Ooh yes, pets', 'Right there...'][Math.floor(Math.random() * 3)], 'r3'); }
+    d.target = leanFor(dx);
+    const now = performance.now(); if (now > d.purrAt) { audio.purr(1.9); audio.buzz([6, 40, 6]); d.purrAt = now + 1700; }
+    run();
+  };
+  const onUp = () => { const d = drag.current; if (!d.on) return; d.on = false; d.target = 0; if (d.moved) { setStroking(false); run(); } };
+
   const pet = () => {
+    if (drag.current.moved) { drag.current.moved = false; return; }
     const id = pickReaction(last.current); last.current = id;
     const r = REACTIONS.find((x) => x.id === id)!;
-    if (r.sound === 'purr') { audio.purr(1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
+    if (r.sound === 'purr') { audio.purr(id === 'r12' ? 3.4 : 1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
     else if (r.sound === 'sparkle') { audio.sparkle(); audio.buzz([10, 30, 30]); }
     else if (r.sound === 'sneeze') { audio.chirp(false); audio.buzz(20); }
     else { audio.chirp(Math.random() > 0.3); audio.buzz(12); }
@@ -59,11 +90,11 @@ export function Chester(p: ChesterProps) {
     p.onPet?.(r.lines[Math.floor(Math.random() * r.lines.length)], id);
   };
 
-  const cls = `tapme ${fx || idle}`;
+  const cls = `tapme ${stroking ? 'stroking' : fx || idle}`;
   const inner = <>
-    <span dangerouslySetInnerHTML={{ __html: svg }} style={{ display: 'block' }} />
+    <span ref={body} className="strokebody" dangerouslySetInnerHTML={{ __html: svg }} style={{ display: 'block' }} />
     <span className="fxl" aria-hidden="true"><i>&#9829;</i><i>&#9829;</i><i>&#9829;</i></span>
   </>;
   if (!p.interactive) return <div ref={ref as any} className={cls} style={{ display: 'inline-block' }}>{inner}</div>;
-  return <button ref={ref as any} type="button" className={cls} onClick={pet} aria-label={`Pet ${p.label ?? 'Chester'}`}>{inner}</button>;
+  return <button ref={ref as any} type="button" className={cls} onClick={pet} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label={`Pet ${p.label ?? 'Chester'}`}>{inner}</button>;
 }

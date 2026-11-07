@@ -13,13 +13,15 @@ import { Tree } from './screens/Tree';
 import { Library } from './screens/Library';
 import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
-import { setMuted } from './lib/audio';
+import { setMuted, warm } from './lib/audio';
 
 export default function App() {
   const snap = useStore();
   const [r0, r1] = useRoute();
   useEffect(() => { void store.load(); }, []);
   useEffect(() => { setMuted(localStorage.getItem('chester-muted') === '1'); }, []);
+  // iPhone only allows audio after a tap: unlock it and fetch the sampled sounds on the first one
+  useEffect(() => { const f = () => warm(); document.addEventListener('pointerdown', f, { once: true, passive: true }); return () => document.removeEventListener('pointerdown', f); }, []);
   if (!snap.ready) return <div className="screen" aria-busy="true" />;
   if (!snap.cat && r0 !== 'session') return <Onboarding />;
   const plus = () => { const s = suggestNext(SKILLS, snap.progress, snap.sets, snap.unlockedHidden, today())[0]; go('session/' + (s?.skill.id ?? 'clicker')); };

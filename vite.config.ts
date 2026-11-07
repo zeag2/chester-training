@@ -8,7 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'sfx/*.wav'],
+      workbox: { globPatterns: ['**/*.{js,css,html,svg,png,wav}'] },
       manifest: {
         name: 'Chester',
         short_name: 'Chester',

@@ -15,9 +15,35 @@ function ac(): AudioContext | null {
   } catch { return null; }
 }
 
+/* Sampled sounds from the earshot bank (made in code, measured): clicker = click/double, reward = mallet/flourish.
+   Loaded once on first use; until they arrive (or if fetch fails) the synth versions play instead. */
+const SAMPLES = { clicker: 'sfx/clicker.wav', reward: 'sfx/reward.wav' } as const;
+type SampleName = keyof typeof SAMPLES;
+const buffers: Partial<Record<SampleName, AudioBuffer>> = {};
+let loading = false;
+function load(c: AudioContext) {
+  if (loading) return; loading = true;
+  const base = (import.meta as any).env?.BASE_URL ?? '/';
+  for (const [name, path] of Object.entries(SAMPLES) as [SampleName, string][]) {
+    try {
+      void fetch(base + path).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject())).then((a) => c.decodeAudioData(a)).then((b) => { buffers[name] = b; }).catch(() => { /* synth fallback */ });
+    } catch { /* no fetch (tests) */ }
+  }
+}
+function sample(name: SampleName, gain: number, rate = 1): boolean {
+  const c = ac(); if (!c) return false; load(c);
+  const b = buffers[name]; if (!b) return false;
+  const s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = rate; const g = c.createGain(); g.gain.value = gain;
+  s.connect(g); g.connect(c.destination); s.start(); return true;
+}
+/** Call on first user gesture so samples are ready by the first rep. */
+export function warm() { const c = ac(); if (c) load(c); }
+
 export function buzz(p: number | number[]) { try { (navigator as any).vibrate?.(p); } catch { /* iPhone: no vibration */ } }
 
 export function click() {
+  // tiny pitch variation so 30 reps in a row don't sound machine-identical
+  if (sample('clicker', 0.42, 0.97 + Math.random() * 0.06)) return;
   const c = ac(); if (!c) return; const t = c.currentTime;
   [0, 0.045].forEach((off) => { const o = c.createOscillator(); const g = c.createGain(); o.type = 'square'; o.frequency.setValueAtTime(2400, t + off);
     g.gain.setValueAtTime(0.22, t + off); g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.018); o.connect(g); g.connect(c.destination); o.start(t + off); o.stop(t + off + 0.02); });
@@ -27,11 +53,12 @@ export function chirp(up = true) {
   const c = ac(); if (!c) return; const t = c.currentTime; const o = c.createOscillator(); const g = c.createGain();
   const f0 = (up ? 520 : 760) * (0.9 + Math.random() * 0.25);
   o.type = 'triangle'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(up ? f0 * 1.85 : f0 * 0.58, t + 0.16);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.4, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
   o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.22);
 }
 
 export function sparkle() {
+  if (sample('reward', 0.38)) return;
   const c = ac(); if (!c) return; const t = c.currentTime;
   [880, 1175, 1568, 2093].forEach((f, i) => { const o = c.createOscillator(); const g = c.createGain(); o.type = 'sine'; o.frequency.value = f;
     const s = t + i * 0.07; g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.14, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.32);
