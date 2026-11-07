@@ -18,6 +18,7 @@ const P: Record<string, string> = {
   star: 'M12 4 L14.5 9.5 L20 10 L16 14 L17 20 L12 17 L7 20 L8 14 L4 10 L9.5 9.5 Z',
   leaf: 'M5 19 C5 10 11 5 19 5 C19 13 14 19 5 19 Z M5 19 L13 11',
   pause: 'M8 5 V19 M16 5 V19', play: 'M7 5 L19 12 L7 19 Z',
+  gear: 'M12 12 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M12 3 V5.5 M12 18.5 V21 M3 12 H5.5 M18.5 12 H21 M5.6 5.6 L7.4 7.4 M16.6 16.6 L18.4 18.4 M5.6 18.4 L7.4 16.6 M16.6 7.4 L18.4 5.6',
   sound: 'M4 10 H8 L13 6 V18 L8 14 H4 Z M16 9 C17.5 10.5 17.5 13.5 16 15', mute: 'M4 10 H8 L13 6 V18 L8 14 H4 Z M16 10 L20 14 M20 10 L16 14',
 };
 export const ICON_FOR: Record<string, string> = { Foundation: 'target', Care: 'hand', Manners: 'mat', Adventure: 'leaf', Tricks: 'star' };
