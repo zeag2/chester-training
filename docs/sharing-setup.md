@@ -16,6 +16,6 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 
 Notes
-- Forgot a password: in Supabase, Authentication → Users → the user → set a new password, or delete the user and sign in again (their sets stay with the cat only if someone else is still a member).
+- Forgot a password: in Supabase, Authentication → Users → the user → set a new password. Don’t delete a user: their logged sets would be deleted with them.
 - Free projects pause after a week with no use. Daily training keeps it awake; if it does pause, press Restore in the dashboard.
 - Policy tests: `supabase/tests/rls_test.sql` runs against plain Postgres with `supabase/tests/stub_auth.sql` loaded first.
