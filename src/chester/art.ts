@@ -89,7 +89,7 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean): s
   bp += `<path d="M140 146 C148 176 134 194 108 194 C128 182 134 166 132 142 Z" fill="${c.shade}"/>`;
   const leg = (x: number) => `<rect x="${x - 11}" y="146" width="22" height="42" rx="11" fill="${pawFill(c)}" ${SW(c)}/><path d="M${x - 4} 182 V187 M${x + 4} 182 V187" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/>`;
   const right = raised
-    ? `<g class="pawR raised" style="transform:rotate(-160deg)"><rect x="117" y="148" width="22" height="58" rx="11" fill="${pawFill(c)}" ${SW(c)}/><ellipse cx="128" cy="196" rx="6" ry="5" fill="${pad}"/><circle cx="121" cy="188" r="2.6" fill="${pad}"/><circle cx="128" cy="186" r="2.6" fill="${pad}"/><circle cx="135" cy="188" r="2.6" fill="${pad}"/></g>`
+    ? `<g class="pawR raised" style="transform:rotate(-160deg)"><rect x="117" y="148" width="22" height="58" rx="11" fill="${pawFill(c)}" ${SW(c)}/><ellipse cx="128" cy="189" rx="6.5" ry="5.5" fill="${pad}"/><circle cx="121.5" cy="197.5" r="2.7" fill="${pad}"/><circle cx="128" cy="200" r="2.7" fill="${pad}"/><circle cx="134.5" cy="197.5" r="2.7" fill="${pad}"/></g>`
     : `<g class="pawR">${leg(121)}</g>`;
   return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
     + `<ellipse class="shadow" cx="100" cy="190" rx="58" ry="6.5" fill="rgba(29,35,64,.12)"/>`
