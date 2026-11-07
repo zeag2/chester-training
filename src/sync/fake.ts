@@ -22,8 +22,11 @@ export class FakeRemote implements Remote {
   async account() { return this.me; }
   onAccountChange() { return () => {}; }
   async signIn(email: string, password: string) {
-    this.up(); const known = this.s.passwords.get(email);
-    if (known && known !== password) throw new Error('wrong-password');
+    this.up(); if (this.s.passwords.get(email) !== password) throw new Error('bad-login');
+    this.me = { userId: 'u:' + email, email }; return this.me;
+  }
+  async signUp(email: string, password: string) {
+    this.up(); if (this.s.passwords.has(email)) throw new Error('email-taken');
     this.s.passwords.set(email, password); this.me = { userId: 'u:' + email, email }; return this.me;
   }
   async signOut() { this.me = null; }

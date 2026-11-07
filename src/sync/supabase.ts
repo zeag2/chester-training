@@ -18,13 +18,15 @@ export class SupabaseRemote implements Remote {
   }
   async signIn(email: string, password: string) {
     const r = await this.sb.auth.signInWithPassword({ email, password });
-    if (!r.error) return toAccount(r.data.user)!;
-    if (!/invalid login credentials/i.test(r.error.message)) throw new Error(r.error.message);
-    // No account with that email and password: make one (works when "Confirm email" is off in Supabase)
-    const up = await this.sb.auth.signUp({ email, password });
-    if (up.error) throw new Error(/already registered|already exists/i.test(up.error.message) ? 'wrong-password' : up.error.message);
-    if (!up.data.session) throw new Error('confirm-email-on');
-    return toAccount(up.data.user)!;
+    if (r.error) throw new Error(/invalid login credentials/i.test(r.error.message) ? 'bad-login' : r.error.message);
+    return toAccount(r.data.user)!;
+  }
+  async signUp(email: string, password: string) {
+    const r = await this.sb.auth.signUp({ email, password });
+    if (r.error) throw new Error(/already registered|already exists/i.test(r.error.message) ? 'email-taken' : r.error.message);
+    // With "Confirm email" on, Supabase hides taken emails and returns no session
+    if (!r.data.session) throw new Error('confirm-email-on');
+    return toAccount(r.data.user)!;
   }
   async signOut() { await this.sb.auth.signOut(); }
 

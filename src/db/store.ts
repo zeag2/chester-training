@@ -159,9 +159,10 @@ export class Store {
     return shared.cat;
   }
 
-  /** Sign in (or sign up), share this phone's Chester and put our name on it. */
-  async signIn(email: string, password: string, name: string, share = true) {
-    const account = await this.remote!.signIn(email.trim().toLowerCase(), password);
+  /** Create an account or sign in; when sharing, upload this phone's Chester and put our name on it. */
+  async signIn(email: string, password: string, name: string, share = true, create = false) {
+    const e = email.trim().toLowerCase();
+    const account = create ? await this.remote!.signUp(e, password) : await this.remote!.signIn(e, password);
     this.set({ account });
     if (!share) return; // about to join someone else's Chester: don't upload this phone's own
     await this.sync();

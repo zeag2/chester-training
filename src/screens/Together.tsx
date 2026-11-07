@@ -9,7 +9,8 @@ import * as audio from '../lib/audio';
 const appLink = () => location.origin + import.meta.env.BASE_URL;
 const errText = (e: unknown) => {
   const m = e instanceof Error ? e.message : String(e);
-  if (m === 'wrong-password') return 'That email already has an account with a different password.';
+  if (m === 'bad-login') return 'That email and password don’t match. New here? Tap “Create account” above.';
+  if (m === 'email-taken') return 'That email already has an account. Tap “I already have one” above to sign in.';
   if (m === 'confirm-email-on') return 'Almost: in Supabase, turn off “Confirm email” (Authentication → Sign In / Providers → Email), then try again.';
   if (/rate|security purposes/i.test(m)) return 'Too many tries just now. Wait a minute and try again.';
   if (/password/i.test(m)) return m;
@@ -17,55 +18,94 @@ const errText = (e: unknown) => {
   return m;
 };
 
+/** Send the invite code with the phone's share sheet, or copy it. Returns true when copied. */
+export async function sendInvite(catName: string, code: string): Promise<boolean> {
+  const text = `Help me train ${catName}! Open ${appLink()} , tap “I have an invite code”, create an account, and enter ${code}.`;
+  try {
+    if (navigator.share) { await navigator.share({ title: `Train ${catName}`, text }); return false; }
+    await navigator.clipboard.writeText(text); return true;
+  } catch { return false; /* closed the share sheet */ }
+}
+
 /**
- * Full-screen flow for training Chester together.
- * mode "share": sign in and share this phone's Chester. mode "join": sign in and join with an invite code.
+ * Full-screen flow for training Chester together, in two clear steps.
+ * share: 1 your account → 2 invite someone.   join: 1 your account → 2 enter their invite code.
  */
 export function Together({ mode }: { mode: 'share' | 'join' }) {
   const snap = useStore();
-  const [step, setStep] = useState<'email' | 'invite'>(snap.account ? 'invite' : 'email');
-  const [email, setEmail] = useState(snap.account?.email ?? '');
+  const [step, setStep] = useState<'account' | 'next'>(snap.account ? 'next' : 'account');
+  const [create, setCreate] = useState(true);
+  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
   const [invite, setInvite] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [copied, setCopied] = useState(false);
   const catName = snap.cat?.name ?? 'Chester';
   const run = async (fn: () => Promise<void>) => { setBusy(true); setErr(''); try { await fn(); } catch (e) { setErr(errText(e)); } finally { setBusy(false); } };
   const leave = () => (snap.cat ? go('settings') : history.length > 1 ? history.back() : go('home'));
 
   if (!sharingConfigured()) return <div className="screen"><Top onBack={leave} title="Train together" /><p className="m">Sharing isn’t switched on in this version of the app yet.</p></div>;
 
-  const wrap = (body: React.ReactNode) => <div className="screen" style={{ display: 'flex', flexDirection: 'column' }}>
+  const wrap = (n: 1 | 2, label: string, body: React.ReactNode) => <div className="screen" style={{ display: 'flex', flexDirection: 'column' }}>
     <Top onBack={leave} title={mode === 'join' ? 'Join with a code' : 'Train together'} />
-    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '18px 12px 8px', margin: 0 }}><Chester coat={snap.cat?.coat ?? 'black'} eyes={snap.cat?.eyes ?? 'gold'} mood="happy" width={120} interactive label={catName} /></div>
+    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '14px 12px 6px', margin: 0 }}><Chester coat={snap.cat?.coat ?? 'black'} eyes={snap.cat?.eyes ?? 'gold'} mood="happy" width={100} interactive label={catName} /></div>
+    <p className="s" style={{ marginTop: 18, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Step {n} of 2 · {label}</p>
     {body}
     {err && <p role="alert" className="s" style={{ marginTop: 12, color: '#b4412b', fontWeight: 700 }}>{err}</p>}
   </div>;
 
-  if (step === 'email') return wrap(<>
-    <h1 style={{ marginTop: 20 }}>{mode === 'join' ? 'Join someone’s cat' : `Train ${catName} together`}</h1>
-    <p className="m" style={{ marginTop: 6 }}>{mode === 'join'
-      ? 'Sign in, then enter the invite code you were sent. You’ll both see the same progress, treats and limits.'
-      : `Sign in so ${catName}’s progress is saved online. Then send an invite code to whoever trains with you.`}</p>
-    <label className="field" htmlFor="tn">Your first name</label>
-    <input id="tn" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" enterKeyHint="next" />
-    <label className="field" htmlFor="te">Email</label>
-    <input id="te" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="next" />
-    <label className="field" htmlFor="tp">Password</label>
-    <input id="tp" className="in" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="go" />
-    <p className="s" style={{ marginTop: 8 }}>New here? This creates your account. At least 6 characters.</p>
-    <button className="btn" style={{ marginTop: 20 }} disabled={busy || !/\S+@\S+\.\S+/.test(email) || !name.trim() || password.length < 6}
-      onClick={() => run(async () => {
-        await store.signIn(email, password, name, mode === 'share');
-        audio.sparkle();
-        if (mode === 'share') go('settings'); else setStep('invite');
-      })}>{busy ? 'Signing in…' : 'Sign in'}</button>
-  </>);
+  if (step === 'account') {
+    const valid = /\S+@\S+\.\S+/.test(email) && password.length >= 6 && (!create || !!name.trim());
+    const pick = (c: boolean) => { setCreate(c); setErr(''); };
+    return wrap(1, 'Your account', <>
+      <h1 style={{ marginTop: 6 }}>{create ? 'Create your account' : 'Sign in'}</h1>
+      <p className="m" style={{ marginTop: 6 }}>{mode === 'join'
+        ? `You need your own account to train ${snap.cat ? catName : 'their cat'} together. Next you’ll enter the invite code.`
+        : `An account saves ${catName}’s progress online. Next you’ll get an invite code to send.`}</p>
+      <div className="seg" role="group" aria-label="Account" style={{ marginTop: 16 }}>
+        <button className={create ? 'on' : ''} aria-pressed={create} onClick={() => pick(true)}>I’m new</button>
+        <button className={!create ? 'on' : ''} aria-pressed={!create} onClick={() => pick(false)}>I already have one</button>
+      </div>
+      {create && <><label className="field" htmlFor="tn">Your first name</label>
+        <input id="tn" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" enterKeyHint="next" /></>}
+      <label className="field" htmlFor="te">Email</label>
+      <input id="te" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="next" />
+      <label className="field" htmlFor="tp">{create ? 'Make a password' : 'Password'}</label>
+      <div className="row" style={{ gap: 8 }}>
+        <input id="tp" className="in" type={show ? 'text' : 'password'} autoComplete={create ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="go" />
+        <button className="btn2" onClick={() => setShow(!show)} aria-pressed={show}>{show ? 'Hide' : 'Show'}</button>
+      </div>
+      {create && <p className="s" style={{ marginTop: 8 }}>At least 6 characters. No email is sent.</p>}
+      <button className="btn" style={{ marginTop: 20 }} disabled={busy || !valid}
+        onClick={() => run(async () => {
+          await store.signIn(email, password, name, mode === 'share', create);
+          audio.sparkle(); setStep('next');
+        })}>{busy ? (create ? 'Creating…' : 'Signing in…') : create ? 'Create account' : 'Sign in'}</button>
+    </>);
+  }
 
-  return wrap(<>
-    <h1 style={{ marginTop: 20 }}>Enter the invite code</h1>
-    <p className="m" style={{ marginTop: 6 }}>{snap.cat && snap.household === null
+  if (mode === 'share') {
+    const h = snap.household; const others = (h?.members.length ?? 1) - 1;
+    return wrap(2, 'Invite', <>
+      <h1 style={{ marginTop: 6 }}>{others > 0 ? 'You’re all set' : `Invite someone to train ${catName}`}</h1>
+      <p className="m" style={{ marginTop: 6 }}>{others > 0
+        ? `${catName} is shared. Anyone else can join with this code too.`
+        : 'Send them this code. They open the app, tap “I have an invite code”, make their own account, and enter it.'}</p>
+      {h ? <div className="card sky" style={{ textAlign: 'center' }}>
+        <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{h.inviteCode}</span>
+      </div> : <p className="s" style={{ marginTop: 14 }} aria-live="polite">{snap.sync === 'offline' ? 'Can’t reach the server. Check your connection.' : 'Getting your code…'}</p>}
+      {h && <button className="btn" style={{ marginTop: 16 }} onClick={async () => { if (await sendInvite(catName, h.inviteCode)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }}>{copied ? 'Copied' : 'Send invite'}</button>}
+      {!h && snap.sync === 'offline' && <button className="btn2" style={{ marginTop: 12 }} onClick={() => void store.sync()}>Try again</button>}
+      <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => go('settings')}>Done</button>
+    </>);
+  }
+
+  return wrap(2, 'Invite code', <>
+    <h1 style={{ marginTop: 6 }}>Enter the invite code</h1>
+    <p className="m" style={{ marginTop: 6 }}>{snap.cat && !snap.household
       ? `Joining replaces the ${catName} on this phone with the shared one.`
       : 'Ask the person you train with. It’s in their Settings, under Train together.'}</p>
     <label className="field" htmlFor="ti">Invite code</label>
@@ -98,14 +138,7 @@ export function TogetherCard() {
 
   const me = account.userId;
   const names = (household?.members ?? []).map((m) => (m.userId === me ? `${m.name || 'You'} (you)` : m.name || 'Someone'));
-  const share = async () => {
-    const code = household?.inviteCode ?? '';
-    const text = `Help me train ${cat.name}! Open ${appLink()} , tap “I have an invite code”, and enter ${code}.`;
-    try {
-      if (navigator.share) await navigator.share({ title: `Train ${cat.name}`, text });
-      else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    } catch { /* closed the share sheet */ }
-  };
+  const share = async () => { if (household && (await sendInvite(cat.name, household.inviteCode))) { setCopied(true); setTimeout(() => setCopied(false), 2000); } };
   const status = sync === 'syncing' ? 'Syncing…' : sync === 'offline' ? 'Offline. Sets are saved here and sync when you’re back online.' : 'Up to date';
   return <div className="card sky">
     <b>Training together</b>

@@ -13,13 +13,14 @@ describe('training Chester together', () => {
     const josh = device(server); await josh.load();
     await josh.saveCat(chester);
     await josh.logSet({ ...pass, at: Date.parse('2026-11-08T09:00:00') });
-    await josh.signIn('josh@example.com', 'catnip1', 'Josh');
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
     expect(josh.get().household?.members).toEqual([{ userId: 'u:josh@example.com', name: 'Josh' }]);
     const code = josh.get().household!.inviteCode;
 
     const sam = device(server); await sam.load();
-    await sam.signIn('sam@example.com', 'catnip1', 'Sam', false);
-    await expect(sam.signIn('josh@example.com', 'guess!', 'Sam', false)).rejects.toThrow('wrong-password');
+    await sam.signIn('sam@example.com', 'catnip1', 'Sam', false, true);
+    await expect(sam.signIn('josh@example.com', 'guess!', 'Sam', false)).rejects.toThrow('bad-login');
+    await expect(sam.signIn('josh@example.com', 'guess!', 'Sam', false, true)).rejects.toThrow('email-taken');
     expect(await sam.join('nope', 'Sam')).toBe(false);
     expect(await sam.join(code, 'Sam')).toBe(true);
     expect(sam.get().cat?.name).toBe('Chester');
@@ -44,7 +45,7 @@ describe('training Chester together', () => {
   it('keeps training offline and catches up later without losing or doubling sets', async () => {
     const server = new FakeServer();
     const josh = device(server); await josh.load(); await josh.saveCat(chester);
-    await josh.signIn('josh@example.com', 'catnip1', 'Josh');
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
     server.online = false;
     await josh.logSet(pass); await josh.logSet(pass);
     expect(josh.get().sync).toBe('offline');
@@ -58,10 +59,10 @@ describe('training Chester together', () => {
   it('replaces her own practice Chester when she joins his', async () => {
     const server = new FakeServer();
     const josh = device(server); await josh.load(); await josh.saveCat(chester);
-    await josh.signIn('josh@example.com', 'catnip1', 'Josh');
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
     const sam = device(server); await sam.load();
     await sam.saveCat({ ...chester, name: 'Practice' }); await sam.logSet(pass);
-    await sam.signIn('sam@example.com', 'catnip1', 'Sam', false);
+    await sam.signIn('sam@example.com', 'catnip1', 'Sam', false, true);
     await sam.join(josh.get().household!.inviteCode, 'Sam');
     expect(sam.get().cat?.name).toBe('Chester');
     expect(sam.get().sets).toHaveLength(0);
