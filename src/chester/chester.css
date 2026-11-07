@@ -258,3 +258,15 @@
 .tapme .look{transform:translate(var(--lx,0px),var(--ly,0px))}
 .tapme{background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 160ms var(--ease-out)}
 button.tapme:active{transform:scale(.94)}
+/* ---- kneading on the pillow (Pusheen-style): paws press in turn, pillow dents, body leans into each press ---- */
+.kc.pose-knead .tailbase{transform-origin:200px 172px}.kc.pose-knead .tailtip{transform-origin:180px 186px}
+.kc.pose-knead .bodyg{transform-origin:112px 188px}
+.kc.pose-knead .kneadL,.kc.pose-knead .kneadR{transform-origin:0 0;animation:kknead 1.5s var(--sine) infinite}
+.kc.pose-knead .kneadL{transform-origin:66px 196px}.kc.pose-knead .kneadR{transform-origin:104px 196px;animation-delay:-.75s}
+.kc.pose-knead .dentL,.kc.pose-knead .dentR{animation:kdent 1.5s var(--sine) infinite}
+.kc.pose-knead .dentL{transform-origin:66px 174px}.kc.pose-knead .dentR{transform-origin:104px 174px;animation-delay:-.75s}
+.kc.pose-knead .all{transform-origin:112px 186px;animation:kleanknead 1.5s var(--sine) infinite}
+.kc.pose-knead .head{animation:kbob 1.5s var(--sine) infinite .12s}
+@keyframes kknead{0%,100%{transform:translateY(-12px) scale(.95,1)}45%{transform:translateY(2px) scale(1.12,.86)}62%{transform:translateY(1px) scale(1.06,.92)}}
+@keyframes kdent{0%,100%{transform:scale(.4,.3);opacity:.3}45%{transform:scale(1.1,1.3);opacity:1}60%{transform:scale(1,1.1);opacity:.9}}
+@keyframes kleanknead{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}

@@ -49,7 +49,7 @@ export function Home() {
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <h1 style={{ marginTop: 4 }}>{GREET[ph]}, Josh.</h1></div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
-        <Chester coat={cat.coat} eyes={cat.eyes} pose={done || ph === 'night' ? 'sleep' : 'sit'} mood={done ? 'sleepy' : 'curious'} raised={!done && sets.length === 0} anim={!done && sets.length === 0 ? 'wave' : ''} width={104} interactive label={cat.name} onPet={(l) => setLine(l)} />
+        <Chester coat={cat.coat} eyes={cat.eyes} pose={done || ph === 'night' ? 'sleep' : sets.length === 0 ? 'sit' : 'knead'} mood={done ? 'sleepy' : 'curious'} raised={!done && sets.length === 0} anim={!done && sets.length === 0 ? 'wave' : ''} width={104} interactive label={cat.name} onPet={(l) => setLine(l)} />
         <div style={{ marginBottom: 26 }}><span key={line} className="bubble mint">{line || idleLine}</span></div>
       </div>
       <div className="card mint" style={{ padding: 18 }}>

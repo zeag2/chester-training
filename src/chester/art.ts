@@ -23,7 +23,7 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'walk' | 'ball' | 'sleep' | 'loaf';
+export type Pose = 'sit' | 'walk' | 'ball' | 'sleep' | 'loaf' | 'knead';
 
 const SW = (c: Coat, w = 4) => `stroke="${c.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 const HEAD = 'M100 34 C150 34 162 66 162 92 C162 124 134 140 100 140 C66 140 38 124 38 92 C38 66 50 34 100 34 Z';
@@ -140,21 +140,29 @@ function sleep(c: Coat, eyes: string, uid: string): string {
     + `<g class="zz"><text x="150" y="70" font-size="28" font-weight="800" fill="#4a5590" font-family="Nunito,sans-serif">z</text><text x="170" y="46" font-size="20" font-weight="800" fill="#7a86b8" font-family="Nunito,sans-serif">z</text><text x="186" y="28" font-size="14" font-weight="800" fill="#a4add0" font-family="Nunito,sans-serif">z</text></g></g>`;
 }
 
-/** Bread loaf: one low dome, head tucked into the front, paws peeking under the chin, tail wrapped along the floor. */
-function loaf(c: Coat, eyes: string, mood: Mood, uid: string): string {
+/** Bread loaf: one low dome, head tucked into the front, paws peeking under the chin, tail wrapped along the floor.
+    knead = the same loaf standing on a pink pillow, paws pressing in turn. */
+function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false): string {
   const BODY = 'M24 188 C14 150 34 112 92 104 C150 96 204 116 212 156 C216 176 210 188 200 188 Z';
   let bp = `<path d="M212 150 C214 184 196 196 150 192 C190 180 204 160 200 128 Z" fill="${c.shade}"/>`
     + `<path d="M118 112 C150 104 184 112 200 132" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity="${c.base === '#353746' || c.base === '#3d3330' ? 0.1 : 0.35}"/>`;
   if (c.stripe) bp += `<path d="M132 104 Q138 118 130 128 M156 104 Q162 118 154 130 M180 112 Q184 124 176 134" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
   if (c.patches) bp += `<ellipse cx="160" cy="124" rx="34" ry="20" fill="${c.patches[1]}"/><ellipse cx="196" cy="168" rx="20" ry="18" fill="${c.patches[0]}"/>`;
-  const paw = (x: number) => `<path d="M${x - 16} 189 C${x - 17} 170 ${x + 17} 170 ${x + 16} 189 Z" fill="${pawFill(c)}" ${SW(c, 3.5)}/><path d="M${x - 5} 181 V187 M${x + 5} 181 V187" stroke="${c.line}" stroke-width="2.2" stroke-linecap="round"/>`;
-  return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
-    + `<ellipse class="shadow" cx="114" cy="191" rx="102" ry="7" fill="rgba(29,35,64,.12)"/>`
-    + `<g class="all"><g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+  const paw = (x: number, cls = '') => `<g${cls ? ` class="${cls}"` : ''}><path d="M${x - 16} 189 C${x - 17} 170 ${x + 17} 170 ${x + 16} 189 Z" fill="${pawFill(c)}" ${SW(c, 3.5)}/><path d="M${x - 5} 181 V187 M${x + 5} 181 V187" stroke="${c.line}" stroke-width="2.2" stroke-linecap="round"/></g>`;
+  const leg = (x: number, cls: string) => `<g class="${cls}"><rect x="${x - 13}" y="164" width="26" height="32" rx="13" fill="${pawFill(c)}" ${SW(c, 3.5)}/><path d="M${x - 5} 188 V194 M${x + 5} 188 V194" stroke="${c.line}" stroke-width="2.2" stroke-linecap="round"/></g>`;
+  const cat = `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + (knead ? leg(66, 'kneadL') + leg(104, 'kneadR') : '')
     + `<g style="transform:translate(-18px,40px) scale(.84);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid)}</g></g>`
-    + paw(64) + paw(100)
-    + tail(c, 'M200 172 C218 186 204 188 180 186', 'M180 186 C164 186 154 184 148 176')
-    + `</g>`;
+    + (knead ? '' : paw(64) + paw(100))
+    + tail(c, 'M200 172 C218 186 204 188 180 186', 'M180 186 C164 186 154 184 148 176');
+  const defs = `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`;
+  if (!knead) return defs + `<ellipse class="shadow" cx="114" cy="191" rx="102" ry="7" fill="rgba(29,35,64,.12)"/><g class="all">${cat}</g>`;
+  const P = '#f6a9bd', PS = '#e88aa3', PL = '#8f3e58';
+  return defs + `<ellipse cx="112" cy="200" rx="108" ry="5" fill="rgba(29,35,64,.12)"/>`
+    + `<g class="pillow"><path d="M8 184 C0 168 14 162 28 168 C70 158 156 158 198 168 C212 162 226 168 218 184 C226 198 212 204 198 198 C156 206 70 206 28 198 C14 204 0 198 8 184 Z" fill="${P}" stroke="${PL}" stroke-width="3.5" stroke-linejoin="round"/>`
+    + `<path d="M30 192 C80 200 150 200 196 192" stroke="${PS}" stroke-width="7" fill="none" stroke-linecap="round"/>`
+    + `<ellipse class="dentL" cx="66" cy="174" rx="18" ry="4" fill="${PS}"/><ellipse class="dentR" cx="104" cy="174" rx="18" ry="4" fill="${PS}"/></g>`
+    + `<g class="all"><g style="transform:translateY(-20px)">${cat}</g></g>`;
 }
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -166,7 +174,7 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
   const body = pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid)
     : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid)
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid)
-    : pose === 'loaf' ? loaf(c, o.eyes ?? 'gold', mood, o.uid)
+    : pose === 'loaf' || pose === 'knead' ? loaf(c, o.eyes ?? 'gold', mood, o.uid, pose === 'knead')
     : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised);
   return `<svg class="kc pose-${pose} ${o.anim ?? ''}" viewBox="-14 -34 232 232" width="${o.width ?? 160}" role="img" aria-label="${esc(o.label ?? c.name + ' kitten')}" style="overflow:visible">${body}${o.extra ?? ''}</svg>`;
 }
