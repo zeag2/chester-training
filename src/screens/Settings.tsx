@@ -3,9 +3,10 @@ import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
 import { useInstallHint } from '../lib/install';
+import { TogetherCard } from './Together';
 
 export function Settings() {
-  const { cat, sets } = useStore();
+  const { cat, sets, account } = useStore();
   const [muted, setM] = useState(isMuted());
   const [name, setName] = useState(cat?.name ?? '');
   const showInstall = useInstallHint();
@@ -22,7 +23,8 @@ export function Settings() {
     <div className="seg" role="group" aria-label="Sound"><button className={!muted ? 'on' : ''} aria-pressed={!muted} onClick={() => { setMuted(false); localStorage.setItem('chester-muted', '0'); setM(false); chirp(); }}>On</button><button className={muted ? 'on' : ''} aria-pressed={muted} onClick={() => { setMuted(true); localStorage.setItem('chester-muted', '1'); setM(true); }}>Off</button></div>
     <label className="field" htmlFor="nm">Name</label>
     <div className="row"><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} /><button className="btn2" onClick={() => store.saveCat({ ...cat, name: name.trim() || cat.name })}>Save</button></div>
+    <TogetherCard />
     {showInstall && <div className="card butter"><b>Put {cat.name} on your home screen</b><p className="s" style={{ marginTop: 4, color: '#5b4a1c' }}>In Safari, tap the Share button, then "Add to Home Screen". It opens full screen like an app and works offline.</p></div>}
-    <div className="card grey"><b>Backup</b><p className="s" style={{ marginTop: 4 }}>Everything is saved on this phone only. Download a backup file now and then.</p><button className="btn2" style={{ marginTop: 10, background: '#fff' }} onClick={exportData}>Download backup</button></div>
+    <div className="card grey"><b>Backup</b><p className="s" style={{ marginTop: 4 }}>{account ? 'Saved on this phone and online. You can also download a copy.' : 'Everything is saved on this phone only. Download a backup file now and then.'}</p><button className="btn2" style={{ marginTop: 10, background: '#fff' }} onClick={exportData}>Download backup</button></div>
   </div>;
 }

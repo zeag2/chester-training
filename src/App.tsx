@@ -13,6 +13,7 @@ import { Tree } from './screens/Tree';
 import { Library } from './screens/Library';
 import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
+import { Together } from './screens/Together';
 import { setMuted, warm } from './lib/audio';
 
 export default function App() {
@@ -22,7 +23,14 @@ export default function App() {
   useEffect(() => { setMuted(localStorage.getItem('chester-muted') === '1'); }, []);
   // iPhone only allows audio after a tap: unlock it and fetch the sampled sounds on the first one
   useEffect(() => { const f = () => warm(); document.addEventListener('pointerdown', f, { once: true, passive: true }); return () => document.removeEventListener('pointerdown', f); }, []);
+  // Pick up the other trainer's sets when the app comes back to the front, and every few minutes while open
+  useEffect(() => {
+    const f = () => { if (document.visibilityState === 'visible' && store.get().account) void store.sync(); };
+    document.addEventListener('visibilitychange', f); const t = setInterval(f, 180_000);
+    return () => { document.removeEventListener('visibilitychange', f); clearInterval(t); };
+  }, []);
   if (!snap.ready) return <div className="screen" aria-busy="true" />;
+  if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
   if (!snap.cat && r0 !== 'session') return <Onboarding />;
   const plus = () => { const s = suggestNext(SKILLS, snap.progress, snap.sets, snap.unlockedHidden, today())[0]; go('session/' + (s?.skill.id ?? 'clicker')); };
   let body: React.ReactNode;

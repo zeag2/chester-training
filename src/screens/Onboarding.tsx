@@ -6,6 +6,7 @@ import { Icon, Paw } from '../ui/icons';
 import { ageText } from '../lib/stats';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { sharingConfigured } from '../sync/config';
 
 const REWARDS = [
   { id: 'treats', title: 'Tasty treats', sub: 'Lickable treats, chicken, kibble', bg: 'peach', icon: 'yarn' },
@@ -44,7 +45,8 @@ export function Onboarding() {
     <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '30px 16px 16px', borderRadius: 32 }}><Chester coat="black" eyes="gold" mood="happy" raised anim="wave" width={190} interactive /></div>
     <h1 style={{ marginTop: 30, fontSize: 32 }}>Let's teach your kitten a few tricks.</h1>
     <p className="m" style={{ marginTop: 12, fontSize: 16 }}>Short, fun sessions with a clicker. A few minutes a day, with steps based on cat research.</p>
-    {foot(1, 'Get started', () => next(2))}</div>);
+    {foot(1, 'Get started', () => next(2))}
+    {sharingConfigured() && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent' }} onClick={() => go('join')}>I have an invite code</button>}</div>);
 
   if (step === 2) return wrap(<>{back(1, 'About him')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>Who are we training?</h1><p className="m" style={{ marginTop: 6 }}>You can change this later.</p>

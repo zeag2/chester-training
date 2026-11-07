@@ -29,6 +29,10 @@ export interface SetRecord {
   rewarded: boolean;
   repTreats?: number;
   note?: string;
+  /** The gift this set earned, so treats and toys can be worked out again on any phone. */
+  gift?: Gift | null;
+  /** Account id of whoever logged it (shared training). */
+  by?: string;
 }
 
 export interface SkillProgress {
@@ -61,6 +65,9 @@ export interface Cat {
   rewards: string[];
   outfit: string;
   createdAt: number;
+  updatedAt?: number;
+  /** Treats, bond and toys earned before sets kept their gifts (set once when upgrading). */
+  carry?: { treats: number; bond: number; toys: string[] };
 }
 
 export interface Wallet {
