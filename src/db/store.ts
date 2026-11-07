@@ -40,6 +40,9 @@ export class Store {
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
+  /** Name typed when creating the account, put on the cat once it is uploaded (set up before the cat exists). */
+  get myName(): string { try { return localStorage.getItem('chester-my-name') ?? ''; } catch { return ''; } }
+  set myName(v: string) { try { localStorage.setItem('chester-my-name', v); } catch { /* private mode */ } }
 
   constructor(dbName = 'chester', remote: Remote | null = null) { this.db = new ChesterDB(dbName); this.remote = remote; }
 
@@ -134,7 +137,7 @@ export class Store {
         if (id) cat = await this.adopt(id);
       } else {
         const shared = await r.getCat(cat.id);
-        if (!shared) { await r.createCat(cat); }
+        if (!shared) { await r.createCat(cat); if (this.myName) await r.setName(cat.id, this.myName).catch(() => {}); }
         else if ((shared.cat.updatedAt ?? 0) > (cat.updatedAt ?? 0)) { cat = { ...shared.cat, id: cat.id }; await this.db.cats.put(cat); }
         else if ((cat.updatedAt ?? 0) > (shared.cat.updatedAt ?? 0)) { await r.updateCat(cat); }
       }
@@ -162,6 +165,7 @@ export class Store {
   /** Create an account or sign in; when sharing, upload this phone's Chester and put our name on it. */
   async signIn(email: string, password: string, name: string, share = true, create = false) {
     const e = email.trim().toLowerCase();
+    if (name.trim()) this.myName = name.trim();
     const account = create ? await this.remote!.signUp(e, password) : await this.remote!.signIn(e, password);
     this.set({ account });
     if (!share) return; // about to join someone else's Chester: don't upload this phone's own

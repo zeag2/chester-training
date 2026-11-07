@@ -72,6 +72,19 @@ describe('training Chester together', () => {
     expect(again.get().cat?.name).toBe('Chester');
   });
 
+  it('makes the account first during onboarding, then shares the cat once it exists, and restores it on a new phone', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load();
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    expect(josh.get().cat).toBeNull();
+    await josh.saveCat(chester); await josh.logSet(pass); await josh.sync();
+    expect(josh.get().household?.members).toEqual([{ userId: 'u:josh@example.com', name: 'Josh' }]);
+    const phone2 = device(server); await phone2.load();
+    await phone2.signIn('josh@example.com', 'catnip1', '', true, false);
+    expect(phone2.get().cat?.name).toBe('Chester');
+    expect(phone2.get().sets).toHaveLength(1);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });
