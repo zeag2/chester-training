@@ -75,8 +75,12 @@ export function head(c: Coat, eyeKey: string, mood: Mood, uid: string): string {
 
 const tail = (c: Coat, d1: string, d2: string) => {
   const f = c.point ?? c.base;
-  return `<g class="tailbase"><path d="${d1}" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round"/><path d="${d1}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/>`
-    + `<g class="tailtip"><path d="${d2}" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round"/><path d="${d2}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/></g></g>`;
+  const [jx, jy] = d2.replace(/^M\s*/, '').split(/[\s,C]+/).map(Number);
+  // outlines first, fills on top: the bend reads as one smooth tail with no seam
+  return `<g class="tailbase"><path d="${d1}" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round"/>`
+    + `<g class="tailtip"><path d="${d2}" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round"/></g>`
+    + `<path d="${d1}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="${jx}" cy="${jy}" r="6" fill="${f}"/>`
+    + `<g class="tailtip"><path d="${d2}" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/></g></g>`;
 };
 const pad = '#f3a9b6';
 const pawFill = (c: Coat) => (c.white ? '#fbfaf7' : c.point ?? c.base);
