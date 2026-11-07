@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { chesterSVG, type Mood, type Pose } from './art';
-import { pickReaction, REACTIONS, type ReactionId } from './reactions';
+import { pickReaction, REACTIONS, SESSION_REACTIONS, type ReactionId } from './reactions';
 import * as audio from '../lib/audio';
 import './chester.css';
 
@@ -25,7 +25,7 @@ export function Chester(p: ChesterProps) {
     setFx('');
     requestAnimationFrame(() => setFx(id));
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setFx(''), REACTIONS.find((r) => r.id === id)?.ms ?? 1300);
+    timer.current = window.setTimeout(() => setFx(''), REACTIONS.find((r) => r.id === id)?.ms ?? SESSION_REACTIONS[id] ?? 1300);
   };
 
   // external trigger (e.g. a good rep in a session)

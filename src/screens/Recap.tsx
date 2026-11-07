@@ -61,7 +61,7 @@ export function RewardMoment({ result, catName, coat, eyes }: { result: LogResul
   return <div className="overlay" style={{ background: big ? '#fbf3d8' : '#e6f3ee' }}>
     <div className="conf" aria-hidden="true">{Array.from({ length: big ? 22 : 12 }, (_, k) => <i key={k} style={{ left: `${(k * 37) % 100}%`, background: COLORS[k % 5], animationDelay: `${((k * 0.29) % 3).toFixed(2)}s` }} />)}</div>
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: 'calc(40px + var(--safe-t)) 20px calc(28px + var(--safe-b))', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} mood="happy" raised anim="wave bounce" width={180} interactive label={catName} /></div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} mood="happy" anim="dance" width={180} interactive label={catName} /></div>
       <div className="stag" style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: 30, marginTop: 8 }}>{title}</h1>
         <p className="m" style={{ marginTop: 8 }}>{sub}</p>

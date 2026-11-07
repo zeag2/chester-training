@@ -51,7 +51,7 @@ export function Session({ skillId }: { skillId: string }) {
     setReps((r) => r + 1); setGood((g) => g + 1); setPressed((n) => n + 1);
     if (!running && elapsed < SESSION_SECONDS) setRunning(true);
     const n = good + 1;
-    setReact(n % 3 === 0 ? 'r6' : 'r1'); setLine(['Click! Treat!', 'Nom!', 'Again!', 'Yes!'][n % 4]);
+    setReact(n % 3 === 0 ? 'r14' : 'r1'); setLine(['Click! Treat!', 'Nom!', 'Again!', 'Yes!'][n % 4]);
     window.setTimeout(() => setReact(null), 50);
   };
   const missed = () => { audio.buzz(6); markSeen(); setReps((r) => r + 1); setLine('No worries, try again'); };
