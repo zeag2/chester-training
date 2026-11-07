@@ -130,13 +130,22 @@ function ball(c: Coat, eyes: string, mood: Mood, uid: string): string {
     + `<g style="transform:translate(-44px,50px) rotate(-16deg) scale(.74);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood === 'curious' ? 'open' : mood, uid)}</g></g></g>`;
 }
 
+/** Curled donut nap: round body, head tucked low in front on a paw, tail wrapped around the front. Only the back breathes.
+    A snot bubble lives on the nose and shows with the "night" anim. */
 function sleep(c: Coat, eyes: string, uid: string): string {
-  return `<ellipse class="shadow" cx="110" cy="190" rx="92" ry="7" fill="rgba(29,35,64,.12)"/>`
-    + `<g class="all"><g class="bodyg"><path d="M28 186 C20 130 70 100 120 102 C178 104 206 140 196 186 Z" fill="${c.base}" ${SW(c)}/>`
-    + `<path d="M196 186 C206 150 186 118 150 106 C184 126 194 158 182 186 Z" fill="${c.shade}"/>`
-    + (c.stripe ? `<path d="M110 106 Q116 120 108 130 M134 108 Q140 122 132 132 M156 116 Q160 128 152 136" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>` : '')
-    + `</g><g class="tailbase"><path d="M190 180 C150 198 80 196 56 176" stroke="${c.line}" stroke-width="22" fill="none" stroke-linecap="round"/><path d="M190 180 C150 198 80 196 56 176" stroke="${c.point ?? c.base}" stroke-width="14" fill="none" stroke-linecap="round"/></g>`
-    + `<g style="transform:translate(-22px,46px) rotate(-6deg) scale(.78);transform-origin:100px 92px"><g class="head">${head(c, eyes, 'sleepy', uid)}</g></g>`
+  const BODY = 'M46 188 C34 140 78 100 126 102 C178 104 204 146 192 188 Z';
+  let bp = `<path d="M196 150 C200 186 176 198 132 194 C176 182 190 160 182 118 Z" fill="${c.shade}"/>`
+    + `<path d="M84 116 C110 102 150 104 172 120" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity="${c.base === '#353746' || c.base === '#3d3330' ? 0.1 : 0.35}"/>`;
+  if (c.stripe) bp += `<path d="M120 104 Q126 118 118 128 M146 106 Q152 120 144 132 M170 118 Q174 130 166 138" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="150" cy="122" rx="34" ry="20" fill="${c.patches[1]}"/><ellipse cx="186" cy="170" rx="18" ry="18" fill="${c.patches[0]}"/>`;
+  const snot = `<g class="snot"><circle cx="112" cy="116" r="10" fill="rgba(196,228,255,.55)" stroke="#8fc0e6" stroke-width="2"/><circle cx="108" cy="112" r="2.6" fill="#fff"/></g>`;
+  return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<ellipse class="shadow" cx="118" cy="191" rx="90" ry="7" fill="rgba(29,35,64,.12)"/>`
+    + `<g class="all"><g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/>`
+    + `<path d="M156 132 C180 144 182 172 160 184" stroke="${c.line}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/></g>`
+    + tail(c, 'M188 182 C180 200 132 202 106 196', 'M106 196 C90 194 78 190 72 182')
+    + `<ellipse cx="104" cy="186" rx="16" ry="7" fill="${pawFill(c)}" ${SW(c, 3.5)}/>`
+    + `<g style="transform:translate(-30px,52px) rotate(-10deg) scale(.72);transform-origin:100px 92px"><g class="head">${head(c, eyes, 'sleepy', uid)}${snot}</g></g>`
     + `<g class="zz"><text x="150" y="70" font-size="28" font-weight="800" fill="#4a5590" font-family="Nunito,sans-serif">z</text><text x="170" y="46" font-size="20" font-weight="800" fill="#7a86b8" font-family="Nunito,sans-serif">z</text><text x="186" y="28" font-size="14" font-weight="800" fill="#a4add0" font-family="Nunito,sans-serif">z</text></g></g>`;
 }
 
