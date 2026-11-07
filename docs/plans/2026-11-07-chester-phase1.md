@@ -1,6 +1,6 @@
 # Chester Training App — Phase 1 Implementation Plan
 
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** An installable web app Josh uses daily to clicker-train Chester: onboarding, a full-screen "Yes!" paw session with a yarn-ball timer, a recap that applies the pass rules, a skill tree and skill pages, an animated Chester, and treats plus a gift for every finished set.
 
@@ -37,10 +37,10 @@
 
 **Files:** Create `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/styles/tokens.css`, `public/icon.svg`, `.github/workflows/pages.yml`, `vitest.config.ts`.
 
-- [ ] Vite React-TS app with `base: '/chester-training/'`, vite-plugin-pwa (`registerType: 'autoUpdate'`, manifest name "Chester", display `standalone`, theme `#232320`, icons from `public/icon.svg`).
-- [ ] Tokens from the mockup: Nunito; ink `#232320`; surfaces mint `#e6f3ee`, peach `#fdede5`, sky `#e7effa`, butter `#fbf3d8`, grey `#f4f4f1`; easing `--ease-out: cubic-bezier(0.23,1,0.32,1)`, `--ease-in-out: cubic-bezier(0.77,0,0.175,1)`, `--sine: cubic-bezier(.45,0,.55,1)`.
-- [ ] Pages workflow: on push to `main`, `npm ci && npm test && npm run build`, deploy `dist` with `actions/deploy-pages`.
-- [ ] Verify: `npm run build` succeeds; `npm test` runs (0 tests OK). Commit `chore: scaffold`.
+- [x] Vite React-TS app with `base: '/chester-training/'`, vite-plugin-pwa (`registerType: 'autoUpdate'`, manifest name "Chester", display `standalone`, theme `#232320`, icons from `public/icon.svg`).
+- [x] Tokens from the mockup: Nunito; ink `#232320`; surfaces mint `#e6f3ee`, peach `#fdede5`, sky `#e7effa`, butter `#fbf3d8`, grey `#f4f4f1`; easing `--ease-out: cubic-bezier(0.23,1,0.32,1)`, `--ease-in-out: cubic-bezier(0.77,0,0.175,1)`, `--sine: cubic-bezier(.45,0,.55,1)`.
+- [x] Pages workflow: on push to `main`, `npm ci && npm test && npm run build`, deploy `dist` with `actions/deploy-pages`.
+- [x] Verify: `npm run build` succeeds; `npm test` runs (0 tests OK). Commit `chore: scaffold`.
 
 ### Task 2: Training engine (pure, tested)
 
@@ -58,9 +58,9 @@
 - `suggestNext(defs, progress, sets, today): { skill: SkillDef; reason: string }[]` (max 3 in progress; care first; review after 7 days)
 - `rewardFor(s: SetRecord, setsToday: SetRecord[], treatsToday: number): { rewarded: boolean; treats: number; gift: Gift | null }`, `rollGift(rand: () => number): Gift`
 
-- [ ] Tests first: pass at 4/5 mood Happy; fail at 4/5 Stressed; fail at 4/4 (reps < 5 → still 100% but reps<5 fails); two passes → `stepUp`; pass on last step twice → `mastered`; struggle after two <50%; `localDay` around midnight in America/Indiana/Indianapolis; clamp good ≤ reps; mastered skill → `review: true`, no step change; 4th set in a day → `rewarded: false`; treats cap at 30; set with reps 2 and 30 s → no gift; Stressed set with 5 reps → gift.
-- [ ] Implement. `skills.ts` holds all 35 skills: the 17 from the tracker/mockup with their steps, plus 18 hidden (scale step-on, chin rest, car ride, pill time, eye and ear drops, tooth brushing, harness, leash walks, meeting visitors, off the counter, leave it, stay, lie down, roll over, wave, sit pretty, ring a bell, up and off), each 3–5 steps, `hidden.unlockBy` naming the check-in answer or prerequisite.
-- [ ] Verify `npm test` green. Commit `feat(engine): rules, plan, rewards`.
+- [x] Tests first: pass at 4/5 mood Happy; fail at 4/5 Stressed; fail at 4/4 (reps < 5 → still 100% but reps<5 fails); two passes → `stepUp`; pass on last step twice → `mastered`; struggle after two <50%; `localDay` around midnight in America/Indiana/Indianapolis; clamp good ≤ reps; mastered skill → `review: true`, no step change; 4th set in a day → `rewarded: false`; treats cap at 30; set with reps 2 and 30 s → no gift; Stressed set with 5 reps → gift.
+- [x] Implement. `skills.ts` holds all 35 skills: the 17 from the tracker/mockup with their steps, plus 18 hidden (scale step-on, chin rest, car ride, pill time, eye and ear drops, tooth brushing, harness, leash walks, meeting visitors, off the counter, leave it, stay, lie down, roll over, wave, sit pretty, ring a bell, up and off), each 3–5 steps, `hidden.unlockBy` naming the check-in answer or prerequisite.
+- [x] Verify `npm test` green. Commit `feat(engine): rules, plan, rewards`.
 
 ### Task 3: Storage
 
@@ -68,8 +68,8 @@
 
 **Interfaces — Produces:** Dexie tables `cats`, `progress`, `sets`, `wallet`, `drafts`; `useStore()` hook returning `{ cat, progress, sets, wallet, saveCat, logSet(input): Promise<{event, reward}>, saveDraft, clearDraft, draft }`. `logSet` runs `applySet` + `rewardFor` and writes atomically.
 
-- [ ] Test: `logSet` twice with passing sets moves step 0→1 and adds treats; persisted across a fresh `Store` instance.
-- [ ] Implement; commit `feat(db): local store`.
+- [x] Test: `logSet` twice with passing sets moves step 0→1 and adds treats; persisted across a fresh `Store` instance.
+- [x] Implement; commit `feat(db): local store`.
 
 ### Task 4: Chester (art, motion, sound)
 
@@ -77,10 +77,10 @@
 
 **Interfaces — Produces:** `<Chester pose="sit"|"walk"|"ball"|"sleep"|"loaf" coat eyes mood="curious"|"happy"|"sleepy" anim? reaction? look? size />`; `pickReaction(last: string|null, rand): ReactionId` (11 ids, weighted, no repeat); `audio.click()`, `audio.chirp(up)`, `audio.purr(sec)`, `audio.sparkle()`, `buzz(pattern)`, all no-ops without an AudioContext.
 
-- [ ] Art per spec: navy outline `#1d2340`, two-tone flat shading, glossy dark eyes with gold ring for Chester, pink ears and blush; 11 coats; six poses (sit, walk, ball on back, curled sleep, loaf, + bounce as sit animation).
-- [ ] Idle motion (breath, head lag, ear twitches, tail base/tip follow-through, blink, glance) and reactions from the mockup (`r1`…`r11`), plus idle variations every ~5 s and eye-follow on taps.
-- [ ] Tests: `pickReaction` never repeats the previous id over 500 draws; audio functions don't throw when `AudioContext` is undefined.
-- [ ] Visual check: render each pose × 3 coats to PNG with Playwright and look. Commit `feat(chester): mascot`.
+- [x] Art per spec: navy outline `#1d2340`, two-tone flat shading, glossy dark eyes with gold ring for Chester, pink ears and blush; 11 coats; six poses (sit, walk, ball on back, curled sleep, loaf, + bounce as sit animation).
+- [x] Idle motion (breath, head lag, ear twitches, tail base/tip follow-through, blink, glance) and reactions from the mockup (`r1`…`r11`), plus idle variations every ~5 s and eye-follow on taps.
+- [x] Tests: `pickReaction` never repeats the previous id over 500 draws; audio functions don't throw when `AudioContext` is undefined.
+- [x] Visual check: render each pose × 3 coats to PNG with Playwright and look. Commit `feat(chester): mascot`.
 
 ### Task 5: Screens
 
@@ -88,16 +88,16 @@
 
 **Interfaces — Consumes:** `useStore()`, engine functions, `<Chester/>`, audio.
 
-- [ ] Onboarding (5 steps, mockup layout) writes the Cat; first-run only.
-- [ ] Home per mockup (greeting by time of day, sunbeam, today's sets as paws, Start card from `suggestNext`, heads-up card when `isStruggling`, stats count-up, success chart from sets).
-- [ ] Session: full-screen `PawButton` ("Yes!"), `YarnTimer` (120 s, pause/resume), Missed / Pause / End as visible buttons; draft saved on every tap; first-session hint once.
-- [ ] Recap: good/reps steppers prefilled, mood, save → `logSet` → `RewardMoment` (gift, step-up or mastery celebration).
-- [ ] Tree, Skill page, Library (skills index + search) per mockup; Badges tab hidden until a skill is mastered.
-- [ ] Test (jsdom): Session → 6 taps, 2 missed → End → Recap shows 6 of 8; killing and remounting Session restores the draft.
-- [ ] Commit `feat(ui): phase 1 screens`.
+- [x] Onboarding (5 steps, mockup layout) writes the Cat; first-run only.
+- [x] Home per mockup (greeting by time of day, sunbeam, today's sets as paws, Start card from `suggestNext`, heads-up card when `isStruggling`, stats count-up, success chart from sets).
+- [x] Session: full-screen `PawButton` ("Yes!"), `YarnTimer` (120 s, pause/resume), Missed / Pause / End as visible buttons; draft saved on every tap; first-session hint once.
+- [x] Recap: good/reps steppers prefilled, mood, save → `logSet` → `RewardMoment` (gift, step-up or mastery celebration).
+- [x] Tree, Skill page, Library (skills index + search) per mockup; Badges tab hidden until a skill is mastered.
+- [x] Test (jsdom): Session → 6 taps, 2 missed → End → Recap shows 6 of 8; killing and remounting Session restores the draft.
+- [x] Commit `feat(ui): phase 1 screens`.
 
 ### Task 6: Verify and ship
 
-- [ ] Playwright on the built app at 390×844: onboarding through one full session; screenshots of every screen; fix what looks wrong.
-- [ ] Code review of the whole branch (code-reviewer skill).
-- [ ] Push to `zeag2/chester-training`, enable Pages (Actions source), confirm the live URL loads and installs.
+- [x] Playwright on the built app at 390×844: onboarding through one full session; screenshots of every screen; fix what looks wrong.
+- [x] Code review of the whole branch (code-reviewer skill).
+- [x] Push to `zeag2/chester-training`, enable Pages (Actions source), confirm the live URL loads and installs.
