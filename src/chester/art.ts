@@ -134,6 +134,17 @@ const pawFill = (c: Coat) => (c.white ? '#fbfaf7' : c.point ?? c.base);
 const stripeW = LW * 1.4;
 const shadow = (cx: number, rx: number, cls = 'shadow') => `<ellipse class="${cls}" cx="${cx}" cy="190" rx="${rx}" ry="6" fill="rgba(29,35,64,.12)"/>`;
 
+/** A limb from the body (x1, y1) to a round paw at (x2, y2), w wide. Outlined down both sides and round the paw
+    only: the end that joins the body has no line across it, so arms and legs grow out of the body. */
+function openLimb(c: Coat, x1: number, y1: number, x2: number, y2: number, w: number, fill: string): string {
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1, dx = (x2 - x1) / len, dy = (y2 - y1) / len, nx = -dy, ny = dx, r = w / 2, k = 0.5523 * r;
+  const P = (x: number, y: number) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+  const A = [x1 + nx * r, y1 + ny * r], B = [x2 + nx * r, y2 + ny * r], C = [x2 - nx * r, y2 - ny * r], D = [x1 - nx * r, y1 - ny * r], T = [x2 + dx * r, y2 + dy * r];
+  const edge = `M${P(A[0], A[1])} L${P(B[0], B[1])} C${P(B[0] + dx * k, B[1] + dy * k)} ${P(T[0] + nx * k, T[1] + ny * k)} ${P(T[0], T[1])}`
+    + ` C${P(T[0] - nx * k, T[1] - ny * k)} ${P(C[0] + dx * k, C[1] + dy * k)} ${P(C[0], C[1])} L${P(D[0], D[1])}`;
+  return `<path d="${edge} Z" fill="${fill}"/><path d="${edge}" fill="none" ${SW(c)}/>`;
+}
+
 /** Sitting, facing you: a little chibi (the only pose allowed to be), small head on a pear-shaped body with haunches,
     front paws together and the long tail wrapped round them. `doze` bows the head and closes the eyes. */
 const SIT_HEAD = { size: 0.84, lift: -12 };
@@ -149,7 +160,7 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w 
   const leg = (x: number) => { const e = `M${x - 7} 140 V182 C${x - 8.5} 188 ${x - 5} 190.5 ${x} 190.5 C${x + 5} 190.5 ${x + 8.5} 188 ${x + 7} 182 V140`;
     return `<path d="${e} Z" fill="${pawFill(c)}"/><path d="${e}" fill="none" ${SW(c)}/><path d="M${x - 2.5} 186 V189 M${x + 2.5} 186 V189" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/>`; };
   const right = raised
-    ? `<g class="pawR raised" style="transform:rotate(-160deg)"><rect x="108" y="142" width="16" height="48" rx="8" fill="${pawFill(c)}" ${SW(c)}/><ellipse cx="116" cy="179" rx="4.5" ry="4" fill="${pad}"/><circle cx="111.5" cy="185.5" r="2" fill="${pad}"/><circle cx="116" cy="187.5" r="2" fill="${pad}"/><circle cx="120.5" cy="185.5" r="2" fill="${pad}"/></g>`
+    ? `<g class="pawR raised" style="transform:rotate(-160deg)">${openLimb(c, 116, 144, 116, 182, 16, pawFill(c))}<ellipse cx="116" cy="179" rx="4.5" ry="4" fill="${pad}"/><circle cx="111.5" cy="185.5" r="2" fill="${pad}"/><circle cx="116" cy="187.5" r="2" fill="${pad}"/><circle cx="120.5" cy="185.5" r="2" fill="${pad}"/></g>`
     : `<g class="pawR"><g class="r-legR">${leg(108)}</g></g>`;
   const tail = rigTail(c, 'M140 178 C160 180 162 194 140 195', 'M140 195 C120 196 96 197 70 193', 0.3);
   const k = SIT_HEAD.size;
@@ -195,10 +206,9 @@ function walk(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
     showing their toe beans, tail curled out behind, looking at the ball with a little blep. */
 function ball(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const pf = pawFill(c);
-  // a short, chubby limb ending in a round paw (outline under fill so the joins stay clean)
+  // a short, chubby limb ending in a round paw, open where it joins the body
   const limb = (x1: number, y1: number, x2: number, y2: number, cls: string, beans = false) =>
-    `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="${16 + 2 * LW}" stroke-linecap="round"/>`
-    + `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${pf}" stroke-width="16" stroke-linecap="round"/>`
+    `<g class="${cls}">${openLimb(c, x1, y1, x2, y2, 16, pf)}`
     + (beans ? `<ellipse cx="${x2}" cy="${y2 + 1.5}" rx="4.2" ry="3.4" fill="${pad}"/><circle cx="${x2 - 4.6}" cy="${y2 - 3.6}" r="1.8" fill="${pad}"/><circle cx="${x2}" cy="${y2 - 5.4}" r="1.8" fill="${pad}"/><circle cx="${x2 + 4.6}" cy="${y2 - 3.6}" r="1.8" fill="${pad}"/>`
       : `<path d="M${x2 - 2.5} ${y2 - 5} v3 M${x2 + 2.5} ${y2 - 5} v3" stroke="${c.line}" stroke-width="1.4" stroke-linecap="round"/>`)
     + '</g>';
@@ -278,7 +288,7 @@ function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false, w =
   if (c.stripe) bp += `<path d="M132 110 Q138 124 130 134 M156 112 Q162 126 154 138 M180 120 Q184 132 176 142" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
   if (c.patches) bp += `<ellipse cx="160" cy="130" rx="34" ry="20" fill="${c.patches[1]}"/><ellipse cx="194" cy="170" rx="20" ry="18" fill="${c.patches[0]}"/>`;
   const paw = (x: number, cls = '') => `<g${cls ? ` class="${cls}"` : ''}><path d="M${x - 12} 189 C${x - 13} 175 ${x + 13} 175 ${x + 12} 189 Z" fill="${pawFill(c)}" ${SW(c)}/><path d="M${x - 4} 183 V187 M${x + 4} 183 V187" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/></g>`;
-  const leg = (x: number, cls: string) => `<g class="${cls}"><rect x="${x - 10}" y="164" width="20" height="32" rx="10" fill="${pawFill(c)}" ${SW(c)}/><path d="M${x - 4} 189 V194 M${x + 4} 189 V194" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/></g>`;
+  const leg = (x: number, cls: string) => `<g class="${cls}">${openLimb(c, x, 166, x, 186, 20, pawFill(c))}<path d="M${x - 4} 189 V194 M${x + 4} 189 V194" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/></g>`;
   const s = 0.86;
   const cat = `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
     + (knead ? leg(68, 'kneadL') + leg(100, 'kneadR') : '')
@@ -300,7 +310,7 @@ function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false, w =
 function fly(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const BODY = 'M28 120 C28 102 62 96 104 98 C140 100 162 106 164 122 C166 140 138 146 100 146 C58 146 28 138 28 120 Z';
   const limb = (x1: number, y1: number, x2: number, y2: number, cls: string, back = false) =>
-    `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="${12 + 2 * LW}" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${back ? c.shade : pawFill(c)}" stroke-width="12" stroke-linecap="round"/></g>`;
+    `<g class="${cls}">${openLimb(c, x1, y1, x2, y2, 12, back ? c.shade : pawFill(c))}</g>`;
   let bp = `<path d="M34 130 C70 150 130 152 162 130 C150 146 120 150 96 150 C66 150 44 142 34 130 Z" fill="${c.shade}"/>`
     + `<ellipse cx="108" cy="132" rx="34" ry="9" fill="${c.white ? '#fbfaf7' : c.light}"/>`;
   if (c.stripe) bp += `<path d="M70 98 Q74 110 68 118 M92 98 Q96 110 90 118 M114 99 Q118 111 112 119" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
