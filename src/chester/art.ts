@@ -29,8 +29,16 @@ export type Pose = 'sit' | 'walk' | 'ball' | 'sleep' | 'loaf' | 'knead' | 'fly';
 const SW = (c: Coat, w = 4) => `stroke="${c.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 const HEAD = 'M100 34 C150 34 162 66 162 92 C162 124 134 140 100 140 C66 140 38 124 38 92 C38 66 50 34 100 34 Z';
 
+/** Head size against the body, scaled about the neck (100, 132) so it stays attached in every pose. */
+export const HEAD_SIZE = { scale: 0.88 };
+
 /** Head drawn around center (100, 92). */
 export function head(c: Coat, eyeKey: string, mood: Mood, uid: string, wear = ''): string {
+  const k = HEAD_SIZE.scale;
+  const inner = headArt(c, eyeKey, mood, uid, wear);
+  return k === 1 ? inner : `<g transform="translate(100 132) scale(${k}) translate(-100 -132)">${inner}</g>`;
+}
+function headArt(c: Coat, eyeKey: string, mood: Mood, uid: string, wear: string): string {
   const e = EYES[eyeKey] ?? EYES.gold;
   const ear = c.point ?? c.base;
   let hp = '';

@@ -638,3 +638,7 @@ button.tapme.stroking:active{transform:none}
 
 /* ---- yarn batting: the rig moves his body and head with the swats, so only the paw is CSS here ---- */
 .kc.rigged.bat .head{animation:none}
+
+/* walking: the head stays level while the body bobs under it (counter-bob), so it doesn't wobble like a bobblehead */
+.kc.pose-walk .head{animation:kheadsteady .25s var(--sine) infinite alternate}
+@keyframes kheadsteady{from{transform:translateY(0)}to{transform:translateY(2px)}}

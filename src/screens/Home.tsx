@@ -127,7 +127,7 @@ export function Home() {
     <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>
       <div className="beam" style={{ left: '40%', background: BEAM[ph] }} /><div className="beam" style={{ left: '65%', width: 60, animationDelay: '-8s', background: BEAM[ph] }} />
       {[[45, 300, 0], [57, 360, 3], [70, 260, 6], [78, 340, 9], [52, 220, 11], [85, 300, 4.5]].map(([x, y, d], i) => <span key={i} className="mote" style={{ left: x + '%', top: y, background: MOTE[ph], animationDelay: `-${d}s` }} />)}
-      {stink && <div className="stink">{[0, 1, 2, 3].map((i) => <svg key={i} viewBox="0 0 30 90" style={{ animationDelay: i * 0.35 + 's', top: 120 + (i % 2) * 34 }}><path d="M15 88 C2 74 28 62 15 46 C2 30 28 18 15 2" stroke="#9cbf5b" strokeWidth="5" fill="none" strokeLinecap="round" opacity=".85" /></svg>)}</div>}
+      {stink && <div className="stink">{[0, 1, 2, 3].map((i) => <svg key={i} viewBox="0 0 90 30" style={{ animationDelay: i * 0.35 + 's', top: [104, 140, 120, 158][i] }}><path d="M88 15 C74 2 60 28 46 15 C32 2 18 28 2 15" stroke="#9cbf5b" strokeWidth="5" fill="none" strokeLinecap="round" opacity=".85" /></svg>)}</div>}
       {ph === 'night' && [[10, 30], [30, 18], [55, 40], [78, 22], [90, 60]].map(([x, y], i) => <span key={i} className="star" style={{ left: x + '%', top: y, animationDelay: `-${i * 0.7}s` }} />)}
     </div>
     <div className="stag" style={{ position: 'relative' }}>

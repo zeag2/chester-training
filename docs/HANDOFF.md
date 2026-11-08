@@ -93,13 +93,16 @@ ready to share with friends.
   squash.
 - **Tap reactions:** hop, purr, flop, chin scratch, play bite, head bonk, mlem, sneeze, meow, zoomies and more. Only
   gentle ones play when he's lying, loafing or kneading.
-- **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle.
+- **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle. While walking the head stays level as the body
+  bobs under it.
+- **Head size:** `HEAD_SIZE.scale` in `src/chester/art.ts` (0.88; it was 1.0 and read as a bobblehead). It scales about
+  the neck, so every pose, the rig and the outfits follow.
 - **Life on Home:**
   - Sits by default and makes biscuits for about 7 seconds every 25 to 55 seconds.
   - Dozes after 90 seconds alone.
   - Sleeps from **10:30 PM to 5 AM**; a tap wakes him (sleepy) for two minutes.
   - Random meows every 25 to 70 seconds.
-  - The **off-screen litter box gag** every 3 to 6 minutes: he walks off, digging is heard, stink drifts in, he
+  - The **off-screen litter box gag** every 3 to 6 minutes: he walks off, digging is heard, horizontal stink lines drift in from the right, he
     zooms back and owns it.
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon, to an
   original ~5.4-second 8-bit tune (deliberately not the Nyan Cat song).
