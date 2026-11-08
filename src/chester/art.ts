@@ -90,7 +90,7 @@ function headArt(c: Coat, eyeKey: string, mood: Mood, uid: string, wear: string)
 }
 
 /** Outfits from Chester's corner, drawn in head coordinates so they follow every pose, the rig and petting. */
-export const OUTFITS = ['bell', 'bowtie', 'bandana', 'flower', 'party', 'crown'] as const;
+export const OUTFITS = ['bell', 'bowtie', 'bandana', 'flower', 'party', 'crown', 'scarf'] as const;
 export function outfit(c: Coat, wear: string): string {
   const L = `stroke="${c.line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
   switch (wear) {
@@ -105,6 +105,11 @@ export function outfit(c: Coat, wear: string): string {
       + `<path d="M90 22 L114 26 M96 6 L108 8" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="102" cy="-14" r="7" fill="#efc44a" ${L}/></g>`;
     case 'crown': return `<g class="wear wear-crown"><path d="M74 42 L72 12 L88 26 L100 4 L112 26 L128 12 L126 42 Q100 48 74 42 Z" fill="#efc44a" ${L}/>`
       + `<circle cx="100" cy="34" r="4.5" fill="#d2493f"/><circle cx="84" cy="36" r="3.2" fill="#3f6fb0"/><circle cx="116" cy="36" r="3.2" fill="#3f6fb0"/></g>`;
+    // a cosy knitted scarf in two friends' colours, one end hanging down the chest
+    case 'scarf': return `<g class="wear wear-scarf"><path d="M58 126 Q100 152 142 126 L144 138 Q100 166 56 138 Z" fill="#ef8f9a" ${L}/>`
+      + `<path d="M70 134 Q75 142 72 148 M86 140 Q90 148 87 154 M114 140 Q110 148 113 154 M130 134 Q125 142 128 148" stroke="#6cc3b5" stroke-width="5" fill="none" stroke-linecap="round"/>`
+      + `<path d="M118 146 L126 182 L110 184 L104 150 Z" fill="#ef8f9a" ${L}/><path d="M112 162 L123 160 M114 172 L125 170" stroke="#6cc3b5" stroke-width="5" stroke-linecap="round"/>`
+      + `<path d="M110 184 L108 191 M115 184 L114 191 M120 183 L121 190 M125 182 L127 189" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`;
     default: return '';
   }
 }

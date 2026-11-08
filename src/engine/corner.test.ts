@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bondLevel, canBuy, dailyGiftTreats, ITEM_BY_ID, mergeCorner, withCorner, type CornerEvent } from './corner';
+import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, owned, unrewardedFriends, withCorner, type CornerEvent } from './corner';
 
 const ev = (id: string, treats: number, at = 1, extra: Partial<CornerEvent> = {}): CornerEvent => ({ id, kind: 'buy', day: '2026-11-08', at, treats, bond: 0, ...extra });
 
@@ -34,5 +34,12 @@ describe('Chester’s corner', () => {
     expect(bondLevel(0)).toMatchObject({ level: 1, next: 3, frac: 0 });
     expect(bondLevel(5)).toMatchObject({ level: 2, name: 'Buddies', next: 8 });
     expect(bondLevel(99)).toMatchObject({ level: 6, next: null, frac: 1 });
+  });
+  it('pays each friend once, caps the number of friend bonuses, and the scarf can’t be bought', () => {
+    const paid = Array.from({ length: FRIEND_BONUS.max - 1 }, (_, i) => ev('friend-f' + i, 15, i, { kind: 'friend', bond: 1 }));
+    expect(unrewardedFriends({ log: paid }, ['f0', 'new1', 'new2'])).toEqual(['new1']); // f0 paid; room for one more
+    expect(owned({ log: paid }).has('scarf')).toBe(true);
+    expect(owned({ log: [] }).has('scarf')).toBe(false);
+    expect(canBuy(ITEM_BY_ID.scarf, 999, { log: [] })).toBe(false);
   });
 });

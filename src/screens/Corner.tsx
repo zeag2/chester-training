@@ -74,6 +74,7 @@ export function Corner() {
     if (await store.play(toy)) say(pt('+1 bond. He loves playing with you.'));
   });
   const tap = (item: ShopItem) => act(async () => {
+    if (!have.has(item.id) && item.special) { say(item.special); return; }
     if (!have.has(item.id)) {
       if (balance < item.price) { say(`${item.price - balance} more treats to go`); return; }
       if (await store.buy(item.id)) { audio.sparkle(); audio.buzz([10, 40, 20]); setReact({ id: 'r1', n: Date.now() }); setLine(item.kind === 'toy' ? 'A new toy!' : 'Ooh, fancy!'); say(`${item.name} bought`); }
@@ -121,17 +122,17 @@ export function Corner() {
           {SHOP.filter((i) => i.kind === sh.kind).map((item) => {
             const mine = have.has(item.id);
             const on = (item.kind === 'outfit' && c?.wearing === item.id) || (item.kind === 'cushion' && c?.cushion === item.id);
-            const short = !mine && balance < item.price;
+            const short = !mine && (!!item.special || balance < item.price);
             const label = mine ? (item.kind === 'toy' ? 'Play' : on ? (item.kind === 'outfit' ? 'Wearing' : 'In use') : item.kind === 'outfit' ? 'Wear' : 'Use') : `${item.price}`;
             return <button key={item.id} className={`card ${on ? 'mint' : 'grey'}`} style={{ margin: 0, border: on ? '2px solid var(--teal)' : '2px solid transparent', textAlign: 'left', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 6, padding: 12 }}
-              onClick={() => tap(item)} aria-pressed={item.kind !== 'toy' && mine ? on : undefined} aria-label={mine ? `${item.name}: ${label}` : `Buy ${item.name} for ${item.price} treats`}>
+              onClick={() => tap(item)} aria-pressed={item.kind !== 'toy' && mine ? on : undefined} aria-label={mine ? `${item.name}: ${label}` : item.special ? `${item.name}: ${item.special}` : `Buy ${item.name} for ${item.price} treats`}>
               <div style={{ height: 76, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: short ? 0.55 : 1 }}>
                 {item.kind === 'outfit' ? <Chester coat={cat.coat} eyes={cat.eyes} wear={item.id} mood="happy" width={74} />
                   : item.kind === 'cushion' ? <CushionArt id={item.id} width={120} /> : <ToyArt name={item.id} i={0} />}</div>
               <b style={{ fontSize: 15 }}>{item.name}</b>
               <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}</p>
               <span className="chip num" style={{ alignSelf: 'flex-start', background: mine ? 'var(--surface)' : 'var(--butter)', color: mine ? 'var(--ink)' : 'var(--butter-ink)' }}>
-                {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : <><Paw size={14} color="#d4a23a" />{label}</>}</span>
+                {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : item.special ? <><Icon name="lock" size={14} />Make a friend</> : <><Paw size={14} color="#d4a23a" />{label}</>}</span>
             </button>;
           })}
         </div>

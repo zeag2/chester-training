@@ -49,6 +49,11 @@ ready to share with friends.
 
 ### Friends (`#/friends`, from Home and Settings)
 - Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
+- **Friend bonus:** each new friend gives the pet being shown +15 treats and +1 bond, once per friend, for the first
+  10 friends (`FRIEND_BONUS`, `unrewardedFriends` in `corner.ts`; logged as `friend-<their id>` so re-adding doesn't pay
+  again). Both sides get it: the person adding right away, the other when their friends are next checked (opening
+  Friends, or a check during sync every 10 minutes). The first friend unlocks the **Friendship scarf**, an outfit
+  that can't be bought. Home shows a "new friend" card with Put the scarf on / See their cats.
 - **Invite:** a **+** on Home's Friends card and on the Friends screen opens an invite sheet (code, Send an invite,
   Copy code, add a code). Invite links are `<app>#/friends/<CODE>`: opening one fills the code in, and it's kept
   (`src/lib/invite.ts`) while a new friend sets up the app and signs in.

@@ -10,6 +10,7 @@ import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { inviteText, pendingFriend, setPendingFriend } from '../lib/invite';
 import { titleFor } from '../lib/appname';
+import { FRIEND_BONUS, owned } from '../engine/corner';
 
 function PetCardView({ p }: { p: FriendPet }) {
   const c = p.card; const mastered = c.mastered ?? [];
@@ -30,7 +31,7 @@ function PetCardView({ p }: { p: FriendPet }) {
 
 /** Your code, a way to send it, and a box for a friend's code. Used on the Friends screen and in the invite sheet. */
 export function InvitePanel({ prefill = '' }: { prefill?: string }) {
-  const { friends, pets } = useStore();
+  const { friends, pets, cat } = useStore();
   const [code, setCode] = useState(prefill || pendingFriend());
   const [msg, setMsg] = useState(prefill || pendingFriend() ? 'A friend invited you. Tap Add to be friends.' : '');
   const [busy, setBusy] = useState(false);
@@ -41,7 +42,7 @@ export function InvitePanel({ prefill = '' }: { prefill?: string }) {
     try {
       const name = await store.addFriend(code);
       if (name === null) setMsg(code.trim().toUpperCase() === mine ? 'That’s your own code. Send it to a friend instead.' : 'That code didn’t match anyone. Check the letters and try again.');
-      else { audio.sparkle(); setMsg(`You’re friends${name ? ` with ${name}` : ''}!`); setCode(''); setPendingFriend(''); }
+      else { audio.sparkle(); setMsg(`You’re friends${name ? ` with ${name}` : ''}!${cat ? ` +${FRIEND_BONUS.treats} treats for ${cat.name}.` : ''}`); setCode(''); setPendingFriend(''); }
     } catch { setMsg('Can’t reach PalDex right now. Try again in a moment.'); }
     finally { setBusy(false); }
   };
@@ -55,6 +56,7 @@ export function InvitePanel({ prefill = '' }: { prefill?: string }) {
     <div className="card butter" style={{ textAlign: 'center' }}>
       <p className="s" style={{ color: 'var(--butter-ink)' }}>Your friend code</p>
       <b className="num" style={{ display: 'block', fontSize: 34, letterSpacing: 6, marginTop: 4, color: 'var(--butter-ink)' }} aria-label={`Your friend code: ${mine.split('').join(' ')}`}>{mine}</b>
+      <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 8 }}>Each new friend: +{FRIEND_BONUS.treats} treats and +1 bond for {cat?.name ?? 'your cat'}, for you both{owned(cat?.corner).has('scarf') ? '.' : '. Your first friend also unlocks a Friendship scarf.'}</p>
       <button className="btn" style={{ marginTop: 12 }} onClick={send}>Send an invite</button>
       <button className="btn2" style={{ width: '100%', marginTop: 8, background: 'var(--surface)' }} onClick={() => copy(mine, 'Code copied.')}>Copy code</button>
     </div>

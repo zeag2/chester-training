@@ -13,7 +13,7 @@ import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
-import { ITEM_BY_ID, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { FRIEND_BONUS, ITEM_BY_ID, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -40,6 +40,8 @@ export interface Snapshot {
   pets: Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'>[];
   /** Loaded when the Friends screen opens; null when signed out or not loaded yet. */
   friends: Friends | null;
+  /** New friends whose bonus just landed, for a card on Home (`scarf`: it was the first friend). */
+  friendNews: { names: string[]; scarf: boolean } | null;
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -51,7 +53,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -276,10 +278,35 @@ export class Store {
       const code = await r.friendCode(this.myName);
       const [list, pets] = await Promise.all([r.friends(), r.friendPets()]);
       this.set({ friends: { code, list, pets } });
+      await this.rewardFriends(list);
     } catch (e) {
       if (String((e as Error)?.message).includes('friends-missing')) this.set({ friends: { code: '', list: [], pets: [], missing: true } });
       else throw e;
     }
+  }
+  /** A bonus for the pet being shown for each new friend (once per friend, up to a cap; the first unlocks the scarf).
+      Both sides get it: whoever adds a code right away, the other person next time their friends are checked. */
+  async rewardFriends(list: Friend[]): Promise<string[]> {
+    const fresh = unrewardedFriends(this.snap.cat?.corner, list.map((f) => f.userId)); if (!fresh.length) return [];
+    let paid: string[] = []; let first = false;
+    const ok = await this.corner((c) => {
+      paid = unrewardedFriends(c, fresh); if (!paid.length) return null;
+      first = !c.log.some((e) => e.kind === 'friend');
+      return { ...c, log: [...c.log, ...paid.map((id) => this.event('friend', 'friend-' + id, FRIEND_BONUS.treats, FRIEND_BONUS.bond))] };
+    });
+    if (!ok) return [];
+    const names = paid.map((id) => list.find((f) => f.userId === id)?.name || 'A friend');
+    const prev = this.snap.friendNews;
+    this.set({ friendNews: { names: [...(prev?.names ?? []), ...names], scarf: (prev?.scarf ?? false) || first } });
+    return names;
+  }
+  dismissFriendNews() { this.set({ friendNews: null }); }
+  private friendsCheckedAt = 0;
+  /** Every so often during sync: has someone added my code? Then their bonus lands here too. */
+  private async checkFriends(r: Remote) {
+    if (Date.now() - this.friendsCheckedAt < 10 * 60_000) return;
+    this.friendsCheckedAt = Date.now();
+    try { await this.rewardFriends(await r.friends()); } catch { /* friends not set up yet, or offline */ }
   }
   /** Add a friend by their code: their name ('' if none), or null when the code is wrong. */
   async addFriend(code: string): Promise<string | null> {
@@ -333,6 +360,7 @@ export class Store {
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       await this.rebuild(cat, { household, sync: 'ok', careSync });
       void this.publishCard(r, cat.id);
+      void this.checkFriends(r);
     } catch {
       this.set({ sync: 'offline' });
     }
@@ -386,7 +414,7 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null }); }
+  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null }); this.friendsCheckedAt = 0; }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {

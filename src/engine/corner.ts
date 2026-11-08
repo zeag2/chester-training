@@ -4,7 +4,8 @@
 import type { Earned } from './derive';
 
 export type ShelfKind = 'outfit' | 'toy' | 'cushion';
-export interface ShopItem { id: string; kind: ShelfKind; name: string; price: number; blurb: string }
+/** `special`: not for sale; earned another way (shown in the corner once earned, with how to earn it until then). */
+export interface ShopItem { id: string; kind: ShelfKind; name: string; price: number; blurb: string; special?: string }
 
 export const SHOP: ShopItem[] = [
   { id: 'bell', kind: 'outfit', name: 'Bell collar', price: 12, blurb: 'Jingles when he hops' },
@@ -13,6 +14,7 @@ export const SHOP: ShopItem[] = [
   { id: 'flower', kind: 'outfit', name: 'Ear flower', price: 22, blurb: 'A daisy behind one ear' },
   { id: 'party', kind: 'outfit', name: 'Party hat', price: 28, blurb: 'Every day is a party' },
   { id: 'crown', kind: 'outfit', name: 'Little crown', price: 45, blurb: 'He always knew' },
+  { id: 'scarf', kind: 'outfit', name: 'Friendship scarf', price: 0, blurb: 'For making a friend', special: 'Make a friend on PalDex to earn it' },
   { id: 'box', kind: 'toy', name: 'Cardboard box', price: 8, blurb: 'The best toy ever made' },
   { id: 'laser', kind: 'toy', name: 'Laser dot', price: 14, blurb: 'Where did it go?' },
   { id: 'tunnel', kind: 'toy', name: 'Crinkle tunnel', price: 24, blurb: 'Zoom in, zoom out' },
@@ -22,9 +24,10 @@ export const SHOP: ShopItem[] = [
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 
-export type CornerKind = 'buy' | 'gift' | 'play';
+export type CornerKind = 'buy' | 'gift' | 'play' | 'friend';
 export interface CornerEvent {
-  /** Buys get a random id; the daily gift is `gift-<day>` and play is `play-<day>`, so two phones can't both claim one. */
+  /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>` and a friend bonus is `friend-<their id>`,
+      so two phones can't both claim one, and a friend removed and added again doesn't pay twice. */
   id: string;
   kind: CornerKind;
   day: string;
@@ -60,9 +63,23 @@ export function withCorner(e: Earned, c: Corner | undefined): Earned {
   return { ...e, treats, bond };
 }
 
-export function owned(c: Corner | undefined): Set<string> { return new Set((c?.log ?? []).filter((e) => e.kind === 'buy' && e.item).map((e) => e.item!)); }
+export function owned(c: Corner | undefined): Set<string> {
+  const log = c?.log ?? [];
+  const out = new Set(log.filter((e) => e.kind === 'buy' && e.item).map((e) => e.item!));
+  if (log.some((e) => e.kind === 'friend')) out.add('scarf');
+  return out;
+}
 
-export function canBuy(item: ShopItem, balance: number, c: Corner | undefined): boolean { return !owned(c).has(item.id) && balance >= item.price; }
+/** Making a friend: treats and a bond point for the pet, once per friend, for the first few friends. */
+export const FRIEND_BONUS = { treats: 15, bond: 1, max: 10 };
+/** Which of these friends haven't paid their bonus to this pet yet (respecting the cap). */
+export function unrewardedFriends(c: Corner | undefined, friendIds: string[]): string[] {
+  const log = c?.log ?? []; const paid = new Set(log.filter((e) => e.kind === 'friend').map((e) => e.id));
+  const room = Math.max(0, FRIEND_BONUS.max - paid.size);
+  return friendIds.filter((id) => !paid.has('friend-' + id)).slice(0, room);
+}
+
+export function canBuy(item: ShopItem, balance: number, c: Corner | undefined): boolean { return !item.special && !owned(c).has(item.id) && balance >= item.price; }
 
 /** The daily gift's size, the same on every phone for a given pet and day: 2 to 6 treats. */
 export function dailyGiftTreats(catId: string, day: string): number {

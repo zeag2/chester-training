@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Store } from '../db/store';
 import { FakeServer } from './fake';
+import { owned } from '../engine/corner';
 
 const chester = { name: 'Chester', birthday: '2026-04', homeDate: '2026-11-01', breed: 'American Shorthair', coat: 'black', eyes: 'gold', rewards: ['treats'], outfit: '' };
 const pass = { skillId: 'clicker', reps: 10, good: 10, mood: 'Happy' as const, seconds: 90 };
@@ -270,19 +271,31 @@ describe('training Chester together', () => {
     expect(code).toBeTruthy();
     expect(await josh.addFriend('WRONG')).toBeNull();
     expect(await josh.addFriend(josh.get().friends!.code)).toBeNull(); // not yourself
+    const before = josh.get().wallet!.treats, bondBefore = josh.get().wallet!.bond;
     expect(await josh.addFriend(code.toLowerCase())).toBe('Erin');
+    // a bonus for making a friend: treats, bond and the Friendship scarf; Home gets a card
+    expect(josh.get().wallet!.treats).toBe(before + 15); expect(josh.get().wallet!.bond).toBe(bondBefore + 1);
+    expect(owned(josh.get().cat!.corner).has('scarf')).toBe(true);
+    expect(josh.get().friendNews).toEqual({ names: ['Erin'], scarf: true });
     expect(josh.get().friends!.list.map((f) => f.name)).toEqual(['Erin']);
     const mochi = josh.get().friends!.pets;
     expect(mochi.map((p) => [p.ownerName, p.card.name, p.card.coat])).toEqual([['Erin', 'Mochi', 'orange']]);
     expect(mochi[0].card.setsWeek).toBe(0);
 
-    await erin.loadFriends(); // both ways, and her view shows Chester's published card
+    const erinBefore = erin.get().wallet!.treats;
+    await erin.loadFriends(); // both ways (her bonus lands too), and her view shows Chester's published card
+    expect(erin.get().wallet!.treats).toBe(erinBefore + 15);
+    expect(erin.get().friendNews?.names).toEqual(['Josh']);
     const ch = erin.get().friends!.pets[0];
     expect([ch.ownerName, ch.card.name, ch.card.setsWeek]).toEqual(['Josh', 'Chester', 1]);
 
     await erin.removeFriend(erin.get().friends!.list[0].userId);
     await josh.loadFriends();
     expect(josh.get().friends!.list).toEqual([]); expect(josh.get().friends!.pets).toEqual([]);
+    // friends again: no second bonus for the same friend
+    const again = josh.get().wallet!.treats;
+    expect(await josh.addFriend(code)).toBe('Erin');
+    expect(josh.get().wallet!.treats).toBe(again);
   });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;

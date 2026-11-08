@@ -10,7 +10,7 @@ import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { CareCard } from './Care';
-import { giftClaimed } from '../engine/corner';
+import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
 import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
 import { InviteSheet } from './Friends';
@@ -98,7 +98,7 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
 }
 
 export function Home() {
-  const { cat, progress, sets, wallet, unlockedHidden, account, household, pets } = useStore();
+  const { cat, progress, sets, wallet, unlockedHidden, account, household, pets, friendNews } = useStore();
   // whoever is signed in on this phone gets greeted by name; the other trainer shows as "training with"
   const me = household?.members.find((m) => m.userId === account?.userId);
   const myName = me?.name || store.myName;
@@ -187,9 +187,18 @@ export function Home() {
       {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
+      {friendNews && <div className="card butter pop" role="status">
+        <div className="row" style={{ alignItems: 'flex-start' }}><Icon name="star" /><div className="sp">
+          <b style={{ color: 'var(--butter-ink)' }}>{friendNews.names.length === 1 ? `${friendNews.names[0]} is now your friend!` : `${friendNews.names.length} new friends!`}</b>
+          <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 2 }}>+{FRIEND_BONUS.treats * friendNews.names.length} treats and +{friendNews.names.length} bond for {cat.name}{friendNews.scarf ? `, and a Friendship scarf in ${pt('his')} corner` : ''}.</p></div>
+          <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissFriendNews()}><Icon name="close" /></button></div>
+        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+          {friendNews.scarf && <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { void store.wear('scarf'); store.dismissFriendNews(); }}>Put the scarf on</button>}
+          <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
+      </div>}
       {account && <div className="card sky row">
         <a href="#/friends" className="row sp" style={{ color: 'inherit', gap: 12, textDecoration: 'none' }}><div className="ico"><Icon name="hand" /></div>
-          <div className="sp"><b>Friends’ cats</b><p className="s">{pendingFriend() ? 'A friend invited you. Tap to add them.' : `See your friends’ cats next to ${cat.name}.`}</p></div></a>
+          <div className="sp"><b>Friends’ cats</b><p className="s">{pendingFriend() ? 'A friend invited you. Tap to add them.' : `Each new friend: +${FRIEND_BONUS.treats} treats for ${cat.name}.`}</p></div></a>
         <button className="plusbtn" aria-label="Invite a friend" onClick={() => setInvite(true)}><Icon name="plus" size={22} /></button></div>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
