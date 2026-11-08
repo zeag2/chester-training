@@ -321,8 +321,9 @@ Items marked *(art)* suit the art session.
   cat's Visit page.
 
 ### Phase 2: Chester's world (finish first)
-- [ ] **Badges and trophy case** (M): a badge per mastered skill, shelves by branch, closest badge on top. The recap
-  still says badges "arrive in the next update".
+- [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
+  per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
+  recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
 - [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
   bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
 - [ ] **Bond levels unlock things** (S–M): idle behaviours and outfits per level (they unlock nothing yet).
@@ -392,7 +393,7 @@ Items marked *(art)* suit the art session.
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
-                        #/library, #/skill/<id>, #/corner; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/library, #/skill/<id>, #/corner, #/trophies; #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
                         #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
                         #/settings still work.
   engine/               pure logic, unit-tested, no I/O

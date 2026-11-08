@@ -55,7 +55,7 @@ export function RewardMoment({ result, catName, coat, eyes, wear }: { result: Lo
   const pt = usePetText();
   const big = event === 'mastered' || event === 'stepUp';
   const title = event === 'mastered' ? `${catName} mastered ${def.name}!` : event === 'stepUp' ? 'Step up!' : event === 'pass' ? 'That’s a pass!' : event === 'review' ? 'Review done' : set.mood === 'Stressed' ? 'Kind call to stop' : 'Nice practice';
-  const sub = pt(event === 'mastered' ? 'A new trick for his collection. Badges and his new move arrive in the next update.'
+  const sub = pt(event === 'mastered' ? 'A new trick for his collection, and a new badge in his trophy case.'
     : event === 'stepUp' ? `Next: ${def.steps[progress.step]}`
     : event === 'pass' ? 'One more pass in a row moves him up a step.'
     : event === 'review' ? 'Keeping old skills sharp.'

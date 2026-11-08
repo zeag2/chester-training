@@ -76,7 +76,7 @@ export function Train() {
           <div className="row"><div className="ico"><Icon name={ICON_FOR[d.branch]} /></div><div className="sp"><b style={{ fontSize: 16 }}>{d.name}</b><p className="s">Step {p.step + 1} of {d.steps.length}</p></div></div>
           <div className="bar" style={{ marginTop: 12 }}><i style={{ width: `${Math.max(6, (p.step / d.steps.length) * 100)}%` }} /></div></a>; })}</>}
       <h2 style={{ marginTop: 22 }}>More</h2>
-      {([['tree', 'Skill tree', 'tree', 'Every skill by branch, and what unlocks next'], ['library', 'Library', 'book', 'How each skill works, with tips and sources'],
+      {([['tree', 'Skill tree', 'tree', 'Every skill by branch, and what unlocks next'], ['library', 'Library', 'book', 'How each skill works, with tips and sources'], ['trophies', 'Trophy case', 'star', 'A badge for every skill mastered'],
         ['corner', `${cat.name}’s corner`, 'star', wallet ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions` : 'Outfits, toys and cushions']] as const).map(([to, title, icon, sub]) =>
         <button key={to} className="card grey row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 8 }} onClick={() => go(to)}>
           <div className="ico"><Icon name={icon} /></div><div className="sp"><b>{title}</b><p className="s">{sub}</p></div></button>)}
