@@ -39,6 +39,21 @@ shared with the people you live with, plus friends who can see each other's cats
 
 ---
 
+## Working in parallel sessions
+
+Josh runs separate sessions at the same time. To keep them from colliding:
+
+| Session | Owns (edits freely) | Must not edit |
+|---|---|---|
+| **Art & animation** | `src/chester/*` (art.ts, rig.ts, Chester.tsx, Chase.tsx, RainbowDash.tsx, reactions.ts, chester.css), the cat-only parts of `src/screens/Home.tsx` (the cats row, gag, chase, nuzzle), `docs/plans/2026-11-08-cat-art-style.md` | `src/db`, `src/sync`, `supabase/`, other screens |
+| **Friends (visit + treat)** | `src/screens/Friends.tsx`, a new `src/screens/Visit.tsx`, `src/sync/*`, `src/db/store.ts`, `src/engine/corner.ts`, `supabase/migrations` + `supabase/tests`, the friends strip on Home (its own component, one line in `Home.tsx`) | `src/chester/*` (use `<Chester>` as is) |
+
+- Each session works on **its own branch** (`claude/art-...` / `claude/friends-...`), and before pushing to `main` runs
+  `git fetch origin main && git rebase origin/main`, then `npm test && npm run typecheck && npm run build`.
+- `docs/HANDOFF.md`: each session edits only its own items (section 2 and its own part of section 1), so rebases merge.
+- `Home.tsx` is shared: keep changes small and in separate spots (the art session near the cats row, the friends
+  session one line adding `<FriendsStrip />` after the Today card).
+
 ## 1. What's built
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
