@@ -32,8 +32,9 @@ shared with the people you live with, plus friends who can see each other's cats
    paws, smaller head), dozing sit, curled sleep, a new draped idle, a two-cat nuzzle (replacing the head bonk), then
    loaf, fly and ball. Walk was redrawn already (refine: tail up like a question mark, face more side-on). Large job:
    check every coat, every outfit and every move with Playwright frame strips (section 4).
-2. **Friends: visit and treat** is built (2026-11-08, branch `claude/friends-visit-treat`). Josh: run
-   `supabase/migrations/20261111000000_friend_treats.sql` in the Supabase SQL editor to switch treats on.
+2. **Friends: visit and treat** is built and live (2026-11-08, branch `claude/friends-visit-treat`), and
+   `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
+   refuse signed-out callers). Next: try a treat between two real phones.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
 4. Then the rest of section 2.
 
@@ -234,8 +235,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 In order:
 
-1. ~~**Friends, more visible, and visiting**~~: built (see section 1, Friends). Left: Josh runs
-   `20261111000000_friend_treats.sql`, then a real test between two phones. Ideas next: a "thank you" back to the giver,
+1. ~~**Friends, more visible, and visiting**~~: built and its SQL run (see section 1, Friends). Left: a real test
+   between two phones. Ideas next: a "thank you" back to the giver,
    treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
 2. **Cat art redraw**: see "Pick up here" and the style guide. Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
