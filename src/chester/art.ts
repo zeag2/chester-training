@@ -143,8 +143,9 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w 
 function walk(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const leg = (x: number, cls: string, back: boolean, far: boolean) => {
     const t = back ? 13 : 9; // half-width at the top: thighs at the back
-    const d = `M${x - t} 146 C${x - t} 162 ${x - 7} 174 ${x - 7} 182 Q${x - 8} 191 ${x + 1} 191 Q${x + 10} 191 ${x + 8} 182 C${x + 8} 174 ${x + t - 2} 160 ${x + t - 2} 146 Z`;
-    return `<g class="${cls}"><path d="${d}" fill="${far ? c.shade : pawFill(c)}" ${SW(c)}/><path d="M${x - 3} 186 V189 M${x + 3} 186 V189" stroke="${c.line}" stroke-width="1.8" stroke-linecap="round"/></g>`;
+    // outlined down the sides and round the paw only: no closing line where the leg joins the body
+    const edge = `M${x - t} 140 C${x - t} 162 ${x - 7} 174 ${x - 7} 182 Q${x - 8} 191 ${x + 1} 191 Q${x + 10} 191 ${x + 8} 182 C${x + 8} 174 ${x + t - 2} 160 ${x + t - 2} 140`;
+    return `<g class="${cls}"><path d="${edge} Z" fill="${far ? c.shade : pawFill(c)}"/><path d="${edge}" fill="none" ${SW(c)}/><path d="M${x - 3} 186 V189 M${x + 3} 186 V189" stroke="${c.line}" stroke-width="1.8" stroke-linecap="round"/></g>`;
   };
   const BODY = 'M166 126 C173 142 166 160 148 165 C126 170 96 170 80 168 C58 166 44 154 46 136 C48 118 62 108 84 110 C106 112 130 117 148 115 C157 114 163 119 166 126 Z';
   return `<defs><clipPath id="wb${uid}"><path d="${BODY}"/></clipPath></defs>`
