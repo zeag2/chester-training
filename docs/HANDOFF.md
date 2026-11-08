@@ -23,15 +23,10 @@ shared with the people you live with, plus friends who can see each other's cats
 
 ## Pick up here
 
-**The next session starts with the cat redraw**, then friends visiting. Suggested first message:
-> pick up from docs/HANDOFF.md and redraw Chester using docs/plans/2026-11-08-cat-art-style.md
-
-(attach Josh's reference images again: photos of Chester and the anime stills; the session can't see old uploads).
-
-1. **Redraw the cat poses** to the style guide `docs/plans/2026-11-08-cat-art-style.md`: sit (tail wrapped round the
-   paws, smaller head), dozing sit, curled sleep, a new draped idle, a two-cat nuzzle (replacing the head bonk), then
-   loaf, fly and ball. Walk was redrawn already (refine: tail up like a question mark, face more side-on). Large job:
-   check every coat, every outfit and every move with Playwright frame strips (section 4).
+1. **The cat redraw is live** (first pass, 2026-11-08, art session): every pose to the style guide, a cuter ball pose
+   from Josh's references, and limbs that grow out of the body. Details and ideas for a second pass: section 2,
+   item 2. Next: Josh looks at it on his phone; for the next art pass, attach the reference images again (a session
+   can't see old uploads).
 2. **Friends: visit and treat** is built and live (2026-11-08, branch `claude/friends-visit-treat`), and
    `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
    refuse signed-out callers). Next: try a treat between two real phones.
@@ -238,8 +233,8 @@ In order:
 1. ~~**Friends, more visible, and visiting**~~: built and its SQL run (see section 1, Friends). Left: a real test
    between two phones. Ideas next: a "thank you" back to the giver,
    treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
-2. **Cat art redraw**: first pass done, on branch `claude/chester-cat-art-redraw-xlu1vr` (not on `main` yet).
-   Josh reviews it (dev `#/gallery` shows every pose and the nuzzle) and merges when happy. Done, to the style guide:
+2. **Cat art redraw**: first pass done and live (branch `claude/chester-cat-art-redraw-xlu1vr`, merged 2026-11-08).
+   Dev `#/gallery` shows every pose and the nuzzle. Done, to the style guide:
    - One thin outline everywhere (`LW = 3` in `art.ts`; scaled heads draw thicker lines so it stays even), flat fills
      with one shadow shape, no gloss. Simpler face: round amber eyes with one highlight, tiny nose, small "w" mouth,
      two whiskers a side, faint blush.

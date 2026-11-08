@@ -674,5 +674,5 @@ button.tapme.stroking:active{transform:none}
 @keyframes cNuzzleR{0%,100%{transform:none}22%,45%{transform:translate(16px,6px) rotate(18deg)}60%{transform:translate(14px,5px) rotate(14deg)}78%{transform:translate(16px,6px) rotate(18deg)}}
 @keyframes cNuzzleL{0%,100%{transform:none}22%,45%{transform:translate(-16px,6px) rotate(-18deg)}60%{transform:translate(-14px,5px) rotate(-14deg)}78%{transform:translate(-16px,6px) rotate(-18deg)}}
 .gagwrap:not(.out):not(.away):not(.gone):not(.back),.homecats .other:first-child{transition:transform .5s var(--ease-in-out)}
-.gagwrap.nuzzling{transform:translateX(6px)}
-.homecats.nuzzling .other:first-child{transform:translateX(-8px)}
+.gagwrap.nuzzling{transform:translateX(12px)}
+.homecats.nuzzling .other:first-child{transform:translateX(-16px)}
