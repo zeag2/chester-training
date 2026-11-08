@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { store, useStore } from './db/store';
-import { suggestNext } from './engine/plan';
-import { SKILLS } from './engine/skills';
-import { today } from './lib/stats';
-import { useRoute, go } from './ui/router';
+import { useRoute } from './ui/router';
 import { TabBar } from './ui/TabBar';
 import { AnotherCat, Onboarding } from './screens/Onboarding';
 import { Home } from './screens/Home';
@@ -17,6 +14,9 @@ import { Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
+import { Train } from './screens/Train';
+import { QuickLog } from './screens/QuickLog';
+import type { CareKind } from './engine/care';
 import { Friends } from './screens/Friends';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
@@ -26,7 +26,8 @@ import { movedTo } from './lib/moved';
 
 export default function App() {
   const snap = useStore();
-  const [r0, r1] = useRoute();
+  const route = useRoute(); const [r0, r1] = route;
+  const [quick, setQuick] = useState(false);
   useEffect(() => { void store.load(); }, []);
   const [installStep, setInstallStep] = useState(wantsInstallStep);
   // the app is named after the kittens: on the tab, the Home Screen icon and the install manifest
@@ -52,21 +53,25 @@ export default function App() {
   if (r0 === 'another' && snap.cat) return <AnotherCat />;
   if (!snap.cat && installStep && r0 !== 'join') return <Install onSkip={() => setInstallStep(false)} />;
   if (!snap.cat && r0 !== 'session') return <Onboarding />;
-  const plus = () => { const s = suggestNext(SKILLS, snap.progress, snap.sets, snap.unlockedHidden, today())[0]; go('session/' + (s?.skill.id ?? 'clicker')); };
   let body: React.ReactNode;
   let tab = '';
+  const r2 = route[2];
   switch (r0) {
     case 'session': return snap.cat ? <Session key={r1} skillId={r1 ?? 'clicker'} /> : <Onboarding />;
     case 'recap': return <Recap key={r1} skillId={r1 ?? 'clicker'} />;
-    case 'tree': body = <Tree />; tab = 'tree'; break;
-    case 'library': body = <Library />; tab = 'library'; break;
-    case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'library'; break;
-    case 'settings': body = <Settings />; tab = 'settings'; break;
-    case 'care': body = <Care />; tab = 'home'; break;
-    case 'corner': body = <Corner />; tab = 'home'; break;
-    case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'home'; break;
+    // Health: the care page, as its own tab; #/health/log/<kind> opens a log form straight away (from the + sheet)
+    case 'health': case 'care': body = <Care key={r1 === 'log' ? 'log-' + r2 : 'care'} open={r1 === 'log' ? (r2 as CareKind) : undefined} />; tab = 'health'; break;
+    // Train: everything about training, with the tree, library, skills and Chester's corner under it
+    case 'train': body = <Train />; tab = 'train'; break;
+    case 'tree': body = <Tree />; tab = 'train'; break;
+    case 'library': body = <Library />; tab = 'train'; break;
+    case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'train'; break;
+    case 'corner': body = <Corner />; tab = 'train'; break;
+    // Me: your cats, people (household and friends), app settings, your data
+    case 'me': case 'settings': body = <Settings />; tab = 'me'; break;
+    case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'me'; break;
     default: body = <Home />; tab = 'home';
   }
-  return <>{body}<TabBar active={tab} onPlus={plus} /></>;
+  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}</>;
 }
 

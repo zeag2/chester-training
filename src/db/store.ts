@@ -304,7 +304,7 @@ export class Store {
   private friendsCheckedAt = 0;
   /** Every so often during sync: has someone added my code? Then their bonus lands here too. */
   private async checkFriends(r: Remote) {
-    if (Date.now() - this.friendsCheckedAt < 10 * 60_000) return;
+    if (Date.now() - this.friendsCheckedAt < 60_000) return; // checked on every app open (sync runs then), at most once a minute
     this.friendsCheckedAt = Date.now();
     try { await this.rewardFriends(await r.friends()); } catch { /* friends not set up yet, or offline */ }
   }

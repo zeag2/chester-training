@@ -11,6 +11,7 @@ import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
 import { Scanner } from './Scanner';
+import { PetSwitcher } from '../ui/PetSwitcher';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -31,10 +32,11 @@ function summary(i: CareItem): string {
 
 type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[CareKind]> } | null;
 
-export function Care() {
+export function Care({ open }: { open?: CareKind } = {}) {
   const { cat, care, careSync, account, household } = useStore();
   const pt = usePetText();
-  const [editing, setEditing] = useState<Editing>(null);
+  // opened from the + sheet: go straight to that log form
+  const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
   const [flags, setFlags] = useState(false);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
@@ -45,9 +47,9 @@ export function Care() {
   if (!cat) return null;
 
   return <div className="screen">
-    <div className="top" style={{ marginLeft: -10 }}><button className="iconbtn" aria-label="Back to Home" onClick={() => go('home')}><Icon name="back" /></button></div>
-    <h1>{cat.name}’s care</h1>
-    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with everyone who trains him' : ''}.</p>
+    <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
+    <PetSwitcher />
+    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
     <button className="card peach row" style={{ alignItems: 'flex-start' }} onClick={() => setFlags(!flags)} aria-expanded={flags}>
@@ -175,16 +177,28 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
   </div>;
 }
 
-/** Home card: what's due next, or a nudge to start the care log. */
-export function CareCard() {
+/** Home: today at a glance. What's due (up to three), the last weight, and one-tap logging. */
+export function TodayCard() {
   const { cat, care } = useStore();
-  const next = useMemo(() => reminders(care)[0], [care]);
+  const due = useMemo(() => reminders(care).slice(0, 3), [care]);
+  const ws = useMemo(() => weights(care), [care]);
   if (!cat) return null;
-  return <button className="card sky row" onClick={() => go('care')}>
-    <div className="ico"><Icon name="hand" /></div>
-    <div className="sp"><b>{cat.name}’s care</b><p className="s">{next ? `${next.title}: ${dueText(next.daysLeft).toLowerCase()}` : care.length ? 'Food, health log and vet visits' : 'Track food he loves, weight, vet visits'}</p></div>
-    {next && next.daysLeft <= 0 && <span className="chip" style={{ background: 'var(--peach)' }}>Due</span>}
-  </button>;
+  const last = ws[ws.length - 1];
+  const prev = ws[ws.length - 2];
+  const delta = last && prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : null;
+  return <div className="card sky">
+    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today</b>
+      {last && <a href="#/health" className="chip num" style={{ textDecoration: 'none' }}>{last.data.lb} lb{delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}</a>}</div>
+    {due.length ? due.map((r) => <a key={r.id} href="#/health" className="row" style={{ marginTop: 10, color: 'inherit', textDecoration: 'none', gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? '#d4a23a' : 'var(--teal)' }} />
+        <span className="sp" style={{ fontSize: 15 }}>{r.title}</span><span className="s">{dueText(r.daysLeft)}</span></a>)
+      : <p className="s" style={{ marginTop: 6 }}>{care.length ? 'All caught up. Nothing due.' : `Start ${cat.name}’s health log: a weigh-in is a great first entry.`}</p>}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 12 }}>
+      {([['weight', 'Weight', 'target'], ['symptom', 'Symptom', 'ear'], ['food', 'Food', 'leaf'], ['vet', 'Vet', 'box']] as const).map(([k, label, icon]) =>
+        <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
+          <Icon name={icon} size={20} /><span style={{ fontSize: 12 }}>{label}</span></button>)}
+    </div>
+  </div>;
 }
 
 /** Find a food by name or barcode in Open Pet Food Facts, and fill in the form from the pick. */

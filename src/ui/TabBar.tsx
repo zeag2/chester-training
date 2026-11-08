@@ -1,10 +1,12 @@
 import { Icon } from './icons';
-export function TabBar({ active, onPlus }: { active: string; onPlus: () => void }) {
-  const t = (id: string, label: string, icon: string) => <a href={'#/' + id} className={`tab ${active === id ? 'on' : ''}`} aria-current={active === id ? 'page' : undefined}><Icon name={icon} size={24} />{label}</a>;
+/** Home · Health · + · Train · Me. The + opens the quick-log sheet. `dot` marks a tab with something new (e.g. a new friend). */
+export function TabBar({ active, onPlus, dot }: { active: string; onPlus: () => void; dot?: string }) {
+  const t = (id: string, label: string, icon: string) => <a href={'#/' + id} className={`tab ${active === id ? 'on' : ''}`} aria-current={active === id ? 'page' : undefined}>
+    <span style={{ position: 'relative', display: 'inline-flex' }}><Icon name={icon} size={24} />{dot === id && <i className="tabdot" aria-label="new" />}</span>{label}</a>;
   return <nav className="tabs" aria-label="Main"><div className="tabs-in">
-    {t('home', 'Home', 'home')}{t('tree', 'Tree', 'tree')}
-    <button className="tab" aria-label="Start a session" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
-    {t('library', 'Library', 'book')}
-    {t('settings', 'Settings', 'gear')}
+    {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}
+    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
+    {t('train', 'Train', 'target')}
+    {t('me', 'Me', 'user')}
   </div></nav>;
 }

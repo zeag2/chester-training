@@ -96,7 +96,7 @@ export function Friends({ code: linkCode }: { code?: string }) {
   useEffect(() => { if (linkCode) setPendingFriend(linkCode); }, [linkCode]);
   useEffect(() => { if (!account) { setLoading(false); return; } store.loadFriends().catch(() => setErr('Can’t reach PalDex right now. Check your connection.')).finally(() => setLoading(false)); }, [account]);
 
-  const top = <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('home')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Friends</b>
+  const top = <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('me')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Friends</b>
     {account && friends && !friends.missing && <button className="iconbtn" aria-label="Invite a friend" onClick={() => setSheet(true)}><Icon name="plus" /></button>}</div>;
   if (!account) return <div className="screen">{top}
     <div className="card mint"><b>Sign in to add friends</b><p className="s" style={{ marginTop: 4 }}>Friends see each other’s cats: their look, outfit, skills and streak. Never care records or documents.{pendingFriend() ? ' Your invite is saved; it’ll be ready once you’re signed in.' : ''}</p>

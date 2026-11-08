@@ -21,6 +21,18 @@ ready to share with friends.
 
 ## 1. What's built
 
+### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
+- **Tabs: Home · Health · + · Train · Me** (`src/ui/TabBar.tsx`). A red dot on Me means a new friend.
+- **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
+  change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
+  corner, friends.
+- **Health** (`#/health`, the old Care page): `#/health/log/<kind>` opens a log form straight away.
+- **+** (`QuickLog.tsx`): weight, symptom, food, vet, medicine, grooming, a document, and a training set (if on).
+- **Train** (`Train.tsx`): today's sets, stats, chart, learning now, then Skill tree, Library and the corner. A cat with
+  training off sees a "Turn on training" card. `Cat.training` (missing = on); asked per cat at setup, switchable in
+  Train and in each cat's edit sheet.
+- **Me** (`Settings.tsx`, `#/me`): Your cats, People (friends, household), Account, App, Your data.
+
 ### Training (Phase 1, from `docs/plans/2026-11-07-chester-phase1.md`)
 - **Onboarding:** Welcome, then "How are you joining?": **Set up my cat** (account, then pet questions) or **Someone
   invited me** (account, then invite code, then straight to the shared pets). Asks boy or girl. Setup starts empty,
@@ -168,7 +180,9 @@ ready to share with friends.
 
 Roughly in the order agreed with Josh:
 
-1. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
+1. **Next from the demo:** all cats together on Home playing; a toy-chase animation; real push notifications for new
+   friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
+2. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
    Bond levels don't unlock anything yet. More outfits/toys are easy to add (`SHOP` + `outfit()`).
 2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,
    Megan did 3"). Sets already record `by` (account id); names come from the household members.
@@ -197,8 +211,10 @@ Roughly in the order agreed with Josh:
 ```
 src/
   main.tsx              entry: theme, self-updates, React root
-  App.tsx               hash router (#/home, #/session/<skill>, #/recap/<skill>, #/tree, #/library, #/skill/<id>,
-                        #/settings, #/care, #/corner, #/together, #/join, #/add-pet, dev-only #/gallery)
+  App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
+                        #/library, #/skill/<id>, #/corner; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
+                        #/settings still work.
   engine/               pure logic, unit-tested, no I/O
     types.ts            Cat, SetRecord, SkillDef, Wallet, Gift, SessionDraft…
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
@@ -225,7 +241,8 @@ src/
     RainbowDash.tsx     the dash overlay
     chester.css         CSS moves (several historical layers; later rules win; see section 6)
     spring.ts           damped spring
-  screens/              Home, Session, Recap, Tree, Library, SkillPage, Settings, Care, Corner, Onboarding,
+  screens/              Home, Train, QuickLog, Session, Recap, Tree, Library, SkillPage, Settings (Me), Care (Health),
+                        Corner, Friends, Install, Onboarding,
                         Together (account and invite forms), Scanner (barcode), YarnBall, Gallery (dev only)
   lib/
     audio.ts            sampled and synthesized sounds, jingle, litter, meow
@@ -233,6 +250,8 @@ src/
     ocr.ts              text from photos (Tesseract) and PDFs (pdf.js), loaded on demand
     petfood.ts          Open Pet Food Facts lookups
     pet.ts              petText(): pet's name and she/her for girls, applied to written copy
+    appname.ts, appicon.ts  the app named after the cats, and its Home Screen icon drawn from them
+    install.ts, invite.ts, moved.ts  install prompt/guide, friend invite links, the old address's redirect
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     images.ts, stats.ts, install.ts

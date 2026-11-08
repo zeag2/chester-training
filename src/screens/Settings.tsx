@@ -34,9 +34,9 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 }
 
 function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
-  const [f, setF] = useState({ name: cat.name, sex: cat.sex ?? 'm', birthday: cat.birthday, homeDate: cat.homeDate, microchip: cat.microchip ?? '', altered: !!cat.altered });
+  const [f, setF] = useState({ name: cat.name, sex: cat.sex ?? 'm', birthday: cat.birthday, homeDate: cat.homeDate, microchip: cat.microchip ?? '', altered: !!cat.altered, training: cat.training !== false });
   const set = (k: keyof typeof f, v: unknown) => setF((x) => ({ ...x, [k]: v }));
-  const save = async () => { await store.saveCat({ ...cat, name: f.name.trim() || cat.name, sex: f.sex, birthday: f.birthday, homeDate: f.homeDate, microchip: f.microchip.replace(/\s/g, '') || undefined, altered: f.altered }); onClose(); };
+  const save = async () => { await store.saveCat({ ...cat, name: f.name.trim() || cat.name, sex: f.sex, birthday: f.birthday, homeDate: f.homeDate, microchip: f.microchip.replace(/\s/g, '') || undefined, altered: f.altered, training: f.training }); onClose(); };
   return <Sheet title={`Edit ${cat.name}`} onClose={onClose}>
     <label className="field" htmlFor="pn">Name</label><input id="pn" className="in" value={f.name} onChange={(e) => set('name', e.target.value)} />
     <span className="field">Boy or girl</span>
@@ -46,7 +46,8 @@ function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
       <div style={{ flex: 1, minWidth: 0 }}><label className="field" htmlFor="ph">Home since</label><input id="ph" className="in" type="date" value={f.homeDate} onChange={(e) => set('homeDate', e.target.value)} /></div>
     </div>
     <label className="field" htmlFor="pm">Microchip number</label><input id="pm" className="in" inputMode="numeric" value={f.microchip} onChange={(e) => set('microchip', e.target.value)} placeholder="15 digits, from adoption or vet papers" />
-    <div className="lgroup" style={{ marginTop: 16 }}><Row label={f.sex === 'f' ? 'Spayed' : 'Neutered'}><Switch on={f.altered} onChange={(v) => set('altered', v)} label={f.sex === 'f' ? 'Spayed' : 'Neutered'} /></Row></div>
+    <div className="lgroup" style={{ marginTop: 16 }}><Row label={f.sex === 'f' ? 'Spayed' : 'Neutered'}><Switch on={f.altered} onChange={(v) => set('altered', v)} label={f.sex === 'f' ? 'Spayed' : 'Neutered'} /></Row>
+      <Row label="Training" sub="Adds skills, sets and rewards in the Train tab"><Switch on={f.training} onChange={(v) => set('training', v)} label="Training" /></Row></div>
     <button className="btn" style={{ marginTop: 20 }} onClick={save} disabled={!f.name.trim()}>Save</button>
   </Sheet>;
 }
@@ -97,14 +98,13 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
 }
 
 export function Settings() {
-  const { cat, sets, account, household, sync, care, pets } = useStore();
+  const { cat, account, household, sync, care, pets, friendNews } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
   const [person, setPerson] = useState('');
   const showInstall = useInstallHint();
   if (!cat) return null;
-  const he = cat.sex === 'f' ? 'Girl' : 'Boy';
   const exportData = async () => {
     const data = { app: 'PalDex', exported: new Date().toISOString(), cats: await store.db.cats.toArray(), sets: await store.db.sets.toArray(), care: await store.db.care.toArray(), wallet: await store.db.wallet.toArray() };
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
@@ -114,35 +114,33 @@ export function Settings() {
   const others = (household?.members ?? []).filter((m) => m.userId !== account?.userId);
   const syncText = sync === 'syncing' ? 'Syncing…' : sync === 'offline' ? 'Offline: changes are saved here and sync when you’re back online' : 'Up to date';
 
+  const edit = async (id: string) => { if (id !== cat.id) await store.switchPet(id); setSheet('pet'); };
   return <div className="screen">
-    <h1>Settings</h1>
+    <h1 style={{ marginTop: 18 }}>Me</h1>
+    {account && <p className="m" style={{ marginTop: 4 }}>{me?.name || store.myName || 'You'} · {account.email}</p>}
 
-    <div className="card mint row" style={{ marginTop: 16, alignItems: 'center' }}>
-      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="sleep" width={96} interactive label={cat.name} />
-      <div className="sp"><b style={{ fontSize: 18 }}>{cat.name}</b>
-        <p className="s">{[he, ageText(cat.birthday).replace(/^about /, ''), cat.altered && (cat.sex === 'f' ? 'spayed' : 'neutered')].filter(Boolean).join(' · ')}</p>
-        <p className="s">{sets.length} sets · {care.length} care entries{cat.microchip ? ` · chip …${cat.microchip.slice(-4)}` : ''}</p></div>
-      <button className="btn2" style={{ background: 'var(--surface)', minHeight: 40 }} onClick={() => setSheet('pet')}>Edit</button>
-    </div>
-
-    <Group title="Pets">
-      {pets.map((p) => <Row key={p.id} label={p.name} value={p.id === cat.id ? 'Showing' : 'Switch'} onClick={p.id === cat.id ? undefined : () => void store.switchPet(p.id)}>
-        <span style={{ width: 34, height: 34, marginLeft: -4, order: -1, display: 'flex' }}><Chester coat={p.coat} eyes={p.eyes} width={34} mood="happy" /></span></Row>)}
-      <Row label="Add another pet" onClick={() => go('add-pet')} />
+    <Group title="Your cats">
+      {pets.map((p) => { const full = p.id === cat.id ? cat : null; return <Row key={p.id} label={p.name} sub={full ? [ageText(cat.birthday).replace(/^about /, ''), cat.training === false ? 'Health tracking' : 'Training on', `${care.length} health entries`].filter(Boolean).join(' · ') : 'Tap to edit'}
+        value="Edit" onClick={() => void edit(p.id)}>
+        <span style={{ width: 34, height: 34, marginLeft: -4, order: -1, display: 'flex' }}><Chester coat={p.coat} eyes={p.eyes} width={34} mood="happy" /></span></Row>; })}
+      <Row label="Add another cat" onClick={() => go('add-pet')} />
     </Group>
 
-    {sharingConfigured() && (account ? <Group title="Household" foot={syncText}>
-      <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set it up' : 'You'} onClick={() => setSheet('name')} />
+    {sharingConfigured() && (account ? <Group title="People" foot={household && others.length ? `Your household sees and looks after every cat here. ${syncText}.` : syncText}>
+      <Row label="Friends" sub="Your friend code, and your friends’ cats" value={friendNews ? 'New' : undefined} onClick={() => go('friends')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
-        value={m.owner ? 'Set it up' : 'In your household'} onClick={() => setPerson(m.userId)} />)}
-      <Row label="Friends" sub="Add friends with a code and see their cats" onClick={() => go('friends')} />
-      {household && <Row label={others.length ? 'Invite someone else' : 'Invite someone to your household'} onClick={() => setSheet('invite')} />}
-      {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
-      <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? ${cat.name} stays on this phone; sign back in to sync again.`)) void store.signOut(); }} />
-    </Group> : <Group title="Household" foot="Share your pets with the people you live with, so you all see the same skills, treats, care and limits.">
-      <Row label="Set up a household" onClick={() => go('together')} />
+        value={m.owner ? 'Set it up' : 'Household'} onClick={() => setPerson(m.userId)} />)}
+      {household && <Row label={others.length ? 'Invite someone else to your household' : 'Invite someone you live with'} onClick={() => setSheet('invite')} />}
+    </Group> : <Group title="People" foot="Sign in to share your cats with the people you live with, and to add friends.">
+      <Row label="Create an account or sign in" onClick={() => go('together')} />
       <Row label="Join a household with a code" onClick={() => go('join')} />
     </Group>)}
+
+    {account && <Group title="Account">
+      <Row label="Your name" value={me?.name || store.myName || 'Add'} onClick={() => setSheet('name')} />
+      {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
+      <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? Your cats stay on this phone; sign back in to sync again.`)) void store.signOut(); }} />
+    </Group>}
 
     <Group title="App">
       <Row label="Sound"><Switch on={!muted} label="Sound" onChange={(on) => { setMuted(!on); localStorage.setItem('chester-muted', on ? '0' : '1'); setM(!on); if (on) chirp(); }} /></Row>
@@ -152,7 +150,7 @@ export function Settings() {
     </Group>
 
     <Group title="Your data" foot={account ? 'Saved on this phone and online.' : 'Saved on this phone only. Download a copy now and then.'}>
-      <Row label="Download a backup" sub="Training, care log and treats, as a file" onClick={exportData} />
+      <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
     </Group>
 
     {sheet === 'pet' && <EditPet cat={cat} onClose={() => setSheet('')} />}

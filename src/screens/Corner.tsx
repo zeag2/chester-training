@@ -87,7 +87,7 @@ export function Corner() {
   });
 
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back home" onClick={() => go('home')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>{cat.name}’s corner</b>
+    <div className="top"><button className="iconbtn" aria-label="Back to Train" onClick={() => go('train')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>{cat.name}’s corner</b>
       <span className="chip num" style={{ background: 'var(--butter)', color: 'var(--butter-ink)', minHeight: 32, fontSize: 14 }} aria-label={`${balance} treats`}><Paw size={16} color="#d4a23a" />{balance}</span></div>
     <div className="stag">
       <div className="card butter" style={{ padding: '18px 16px 14px', position: 'relative', overflow: 'hidden' }}>
