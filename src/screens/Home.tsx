@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
-import { useStore } from '../db/store';
+import { store, useStore } from '../db/store';
 import { suggestNext } from '../engine/plan';
 import { isStruggling } from '../engine/rules';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
@@ -86,7 +86,11 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
 }
 
 export function Home() {
-  const { cat, progress, sets, wallet, unlockedHidden } = useStore();
+  const { cat, progress, sets, wallet, unlockedHidden, account, household } = useStore();
+  // whoever is signed in on this phone gets greeted by name; the other trainer shows as "training with"
+  const me = household?.members.find((m) => m.userId === account?.userId);
+  const myName = me?.name || store.myName;
+  const partners = (household?.members ?? []).filter((m) => m.userId !== account?.userId && m.name).map((m) => m.name);
   const [line, setLine] = useState('');
   const { doze, knead, wake } = useHomeMood();
   const ph0 = PH(new Date().getHours());
@@ -120,7 +124,8 @@ export function Home() {
     </div>
     <div className="stag" style={{ position: 'relative' }}>
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
-        <h1 style={{ marginTop: 4 }}>{GREET[ph]}, Josh.</h1></div>
+        <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
+        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Training {cat.name} with {partners.join(' and ')}</p>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
         <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}
