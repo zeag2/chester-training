@@ -340,8 +340,10 @@ Items marked *(art)* suit the art session.
   iPhone only when installed. Today everything is in-app (red dot on Me, cards on Home).
 
 ### Phase 3: grow and open up
-- [ ] **Weekly recap** (M): a "{cat}'s week" card: weight trend, health entries, sets and success rate, what improved,
-  who did what (sets record `by`), treats from friends.
+- [x] **Weekly recap** (done 2026-11-08): `#/week` (`src/screens/Week.tsx`, `weekSummary()` in `src/engine/week.ts`):
+  the last 7 days of meals, scoops, play, daily checks, weight change, symptoms, vet and meds, sets and good-rep rate,
+  who logged what, treats from friends and for care. Linked from the Quick log header ("Chester's week is in" on
+  Sundays and Mondays). Ideas: what improved (steps up, mastered), share as an image.
 - [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
   `hiddenUnlocks` in `rules.ts`).
 - [ ] **Glossary in the library** (S).
@@ -356,7 +358,7 @@ Items marked *(art)* suit the art session.
 ### Friends
 - [ ] **Thank-you back** (S, SQL): the owner taps "Thank Erin", she sees a thank-you from the cat.
 - [ ] **A friend's cat visits your Home** (M) *(art)*: now and then sits beside yours for a bit.
-- [ ] **Friends in the weekly recap** (S): who gave treats this week (with the recap).
+- [x] **Friends in the weekly recap**: treats from friends are counted (names still to add).
 
 ### Treats
 - [ ] **7-day care streak bonus** (S): without any guilt for missing a day.
@@ -396,7 +398,7 @@ Items marked *(art)* suit the art session.
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
-                        #/library, #/skill/<id>, #/corner, #/trophies; #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
                         #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
                         #/settings still work.
   engine/               pure logic, unit-tested, no I/O

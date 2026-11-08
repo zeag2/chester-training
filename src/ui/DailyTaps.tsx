@@ -31,7 +31,8 @@ export function DailyTaps() {
     { what: 'play', label: 'Played', icon: 'yarn', done: play.length > 0, sub: play.length ? `${play.length}× today` : 'Not yet today' },
   ];
   return <div className="card white" style={{ border: '1px solid var(--grey)' }}>
-    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b><span className="s">One tap, logged now</span></div>
+    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b>
+      <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
       {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => void log(t.what)}
         aria-label={`${t.label}. ${t.sub}`}

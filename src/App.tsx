@@ -21,6 +21,7 @@ import { Friends } from './screens/Friends';
 import { Visit } from './screens/Visit';
 import { LogLink } from './ui/DailyTaps';
 import { Trophies } from './screens/Trophies';
+import { Week } from './screens/Week';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
@@ -68,6 +69,7 @@ export default function App() {
     case 'train': body = <Train />; tab = 'train'; break;
     case 'tree': body = <Tree />; tab = 'train'; break;
     case 'library': body = <Library />; tab = 'train'; break;
+    case 'week': body = <Week />; tab = 'home'; break;
     case 'trophies': body = <Trophies />; tab = 'train'; break;
     case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'train'; break;
     case 'corner': body = <Corner />; tab = 'train'; break;
