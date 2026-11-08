@@ -106,8 +106,9 @@ ready to share with friends.
     walks all the way off, digging is heard, horizontal stink lines drift in from the right, he runs back and puffs
     his chest out, proud (no meows or biscuits interrupt it). Sequence in `useHomeLife` in `src/screens/Home.tsx`; he
     zooms back and owns it.
-- **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon, to an
-  original ~5.4-second 8-bit tune (deliberately not the Nyan Cat song).
+- **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon (wearing his
+  outfit). Each 3.8 s pass swoops in fast, glides slowly across, zips out fast (`PASS_MS` in `RainbowDash.tsx`;
+  keyframes follow Chester, not the long trail). The original 8-bit tune is fitted to the whole dash (~7.6 s (deliberately not the Nyan Cat song).
 - **Sounds:** clicker and reward are recorded samples (`public/sfx`). Chirp, purr, meow, litter digging and the tune
   are synthesized in `src/lib/audio.ts`.
 

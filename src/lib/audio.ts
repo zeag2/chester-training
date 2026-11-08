@@ -122,16 +122,20 @@ export function litter(sec = 1.8) {
 
 /** The rainbow-dash tune: an original bouncy 8-bit piece (square-wave lead, triangle bass) that runs the length of
     the dash (~5.4 s): a rising phrase, the same phrase answered higher, a little bridge, and a fanfare to land on. */
-export function jingle() {
-  const c = ac(); if (!c) return; const t0 = c.currentTime + 0.02; const step = 0.112;
+/** The dash tune, fitted to `totalMs` (the whole dash): 64 eighth-note steps. */
+export function jingle(totalMs = 7600) {
+  const c = ac(); if (!c) return; const t0 = c.currentTime + 0.02; const step = totalMs / 1000 / 64;
   const N = (n: string) => { const i = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(n.slice(0, -1)); return 440 * 2 ** ((i - 9) / 12 + (Number(n.slice(-1)) - 4)); };
   const A = ['E5', 'G5', 'C6', 'G5', 'D5', 'G5', 'B5', 'G5', 'C5', 'E5', 'A5', 'E5', 'F5', 'A5', 'C6', 'A5'];
   const A2 = ['E5', 'G5', 'C6', 'E6', 'D6', 'B5', 'G5', 'B5', 'C6', 'A5', 'E5', 'A5', 'F5', 'A5', 'D6', 'F6'];
   const BR = ['E6', '-', 'D6', 'C6', 'D6', '-', 'G5', '-'];
   const END = ['C6', 'E6', 'G6', '-', 'E6', 'C6', '-', '-'];
-  const lead = [...A, ...A2, ...BR, ...END];
+  // the phrase, its answer, the phrase again a little higher at the end, a bridge, and the landing fanfare
+  const A3 = ['E5', 'G5', 'C6', 'G5', 'D5', 'G5', 'B5', 'D6', 'C6', 'E6', 'A5', 'E6', 'F5', 'A5', 'C6', 'D6'];
+  const lead = [...A, ...A2, ...A3, ...BR, ...END];
   const bassBar = (n: string, m: string) => [n, '-', m, '-'];
   const bass = [
+    ...bassBar('C3', 'G3'), ...bassBar('G2', 'D3'), ...bassBar('A2', 'E3'), ...bassBar('F2', 'C3'),
     ...bassBar('C3', 'G3'), ...bassBar('G2', 'D3'), ...bassBar('A2', 'E3'), ...bassBar('F2', 'C3'),
     ...bassBar('C3', 'G3'), ...bassBar('G2', 'D3'), ...bassBar('A2', 'E3'), ...bassBar('F2', 'C3'),
     ...bassBar('F2', 'C3'), ...bassBar('G2', 'D3'), 'C3', '-', 'G2', '-', 'C3', '-', '-', '-',
