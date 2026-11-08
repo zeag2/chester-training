@@ -67,6 +67,8 @@ export interface Cat {
   /** Boy or girl, for he/she in the app's text. Missing = boy (cats set up before this existed). */
   sex?: 'm' | 'f';
   microchip?: string;
+  /** The household this pet belongs to (its people share all of its pets). */
+  householdId?: string;
   /** Spayed or neutered. */
   altered?: boolean;
   createdAt: number;

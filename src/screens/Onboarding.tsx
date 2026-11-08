@@ -62,7 +62,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
     <button className="card mint row" style={{ marginTop: 18, textAlign: 'left', border: 0 }} onClick={() => { setInvited(false); next(account ? 4 : 3); }}>
       <div className="ico"><Icon name="star" /></div><div className="sp"><b style={{ fontSize: 17 }}>Set up my cat</b><p className="s">Start fresh. You can invite someone later.</p></div></button>
     <button className="card sky row" style={{ textAlign: 'left', border: 0 }} onClick={() => { setInvited(true); next(account ? 8 : 3); }}>
-      <div className="ico"><Icon name="hand" /></div><div className="sp"><b style={{ fontSize: 17 }}>Someone invited me</b><p className="s">You have an invite code from the person you train with.</p></div></button>
+      <div className="ico"><Icon name="hand" /></div><div className="sp"><b style={{ fontSize: 17 }}>Someone invited me</b><p className="s">You have an invite code to join their household.</p></div></button>
     <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(2)}</div></div></>);
 
   if (step === 3) return wrap(<>{back(2, 'Your account')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>

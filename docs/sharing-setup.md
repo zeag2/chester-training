@@ -23,6 +23,10 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
    - Supabase → Edge Functions → Deploy a new function → Via editor. Name it exactly `read-vet-doc`,
      replace the code with `supabase/functions/read-vet-doc/index.ts`, and deploy. Leave "Verify JWT" on.
    Without this step documents are still stored; you just fill in the details yourself.
+8. **People list with emails + remove someone.** Run `supabase/migrations/20261108230000_household_tools.sql`.
+9. **Households.** Run `supabase/migrations/20261109000000_households.sql`. Moves existing sharing into households
+   (one per pet owner, keeping their invite code); from then on people join a household and see all its pets.
+   The app works the old per-pet way until this is run.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

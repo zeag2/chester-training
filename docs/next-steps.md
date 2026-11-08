@@ -13,7 +13,8 @@ Done
   random meows; off-screen litter box gag; rainbow dash after 8 quick taps.
 - Dark mode (Settings → Appearance), Settings tab relabelled.
 
-Also done: multiple pets (switcher on Home, Pets list + Add another pet in Settings; each pet has its own
+Also done: households (people + pets; one invite code; pets added later are shared automatically; removing someone
+removes all pets; migration keeps old codes). Multiple pets (switcher on Home, Pets list + Add another pet in Settings; each pet has its own
 training, care, documents, people and invite code; every shared pet comes to a new phone on sign-in).
 
 Next, in order

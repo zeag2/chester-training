@@ -59,7 +59,7 @@ function EditMyName({ onClose }: { onClose: () => void }) {
     <input className="in" style={{ marginTop: 12 }} value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" autoFocus aria-label="Your name" />
     <button className="btn" style={{ marginTop: 16 }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
     {meRow && !meRow.owner && meRow.email !== undefined && cat && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }}
-      onClick={async () => { if (confirm(`Stop training ${cat.name}? ${cat.name} is removed from this phone; you can rejoin with an invite code.`)) { await store.removeMember(meRow.userId).catch(() => {}); onClose(); } }}>Leave {cat.name}</button>}
+      onClick={async () => { if (confirm(`Leave this household? Its pets are removed from this phone; you can rejoin with an invite code.`)) { await store.removeMember(meRow.userId).catch(() => {}); onClose(); } }}>Leave household</button>}
   </Sheet>;
 }
 
@@ -77,19 +77,19 @@ function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
     {same && <div className="card butter" style={{ marginTop: 12 }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
     {iOwn ? <>
       <button className="btn" style={{ marginTop: 16, background: 'var(--rose)' }} onClick={async () => {
-        if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from ${cat.name}? Sets they logged stay.`)) return;
-        try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up ' + cat.name + ' can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
-      }}>Remove from {cat.name}</button>
-      <p className="s" style={{ marginTop: 8 }}>They lose access to {cat.name}. Everything they logged stays.</p></>
-      : <p className="s" style={{ marginTop: 14 }}>Only the person who set up {cat.name} can remove people.</p>}
+        if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from the household? They lose access to every pet in it. Sets they logged stay.`)) return;
+        try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up the household can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
+      }}>Remove from household</button>
+      <p className="s" style={{ marginTop: 8 }}>They lose access to every pet in the household. Everything they logged stays.</p></>
+      : <p className="s" style={{ marginTop: 14 }}>Only the person who set up the household can remove people.</p>}
     {err && <p className="s" role="alert" style={{ marginTop: 10, color: 'var(--rose)' }}>{err}</p>}
   </Sheet>;
 }
 
 function Invite({ catName, code, onClose }: { catName: string; code: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  return <Sheet title={`Invite someone to train ${catName}`} onClose={onClose}>
-    <p className="s" style={{ marginTop: 4 }}>They open PalDex, choose “Someone invited me”, make an account, and enter this code. Anyone with it can see and train {catName}.</p>
+  return <Sheet title="Invite someone to your household" onClose={onClose}>
+    <p className="s" style={{ marginTop: 4 }}>They open PalDex, choose “Someone invited me”, make an account, and enter this code. They’ll see and help train every pet in your household, including ones you add later.</p>
     <div className="card sky" style={{ textAlign: 'center' }}><span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{code}</span></div>
     <button className="btn" style={{ marginTop: 14 }} onClick={async () => { if (await sendInvite(catName, code)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }}>{copied ? 'Copied' : 'Send invite'}</button>
   </Sheet>;
@@ -130,16 +130,16 @@ export function Settings() {
       <Row label="Add another pet" onClick={() => go('add-pet')} />
     </Group>
 
-    {sharingConfigured() && (account ? <Group title={`People training ${cat.name}`} foot={syncText}>
-      <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set up ' + cat.name : 'You'} onClick={() => setSheet('name')} />
+    {sharingConfigured() && (account ? <Group title="Household" foot={syncText}>
+      <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set it up' : 'You'} onClick={() => setSheet('name')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
-        value={m.owner ? 'Set up ' + cat.name : 'Trains with you'} onClick={() => setPerson(m.userId)} />)}
-      {household && <Row label={others.length ? 'Invite someone else' : `Invite someone to train ${cat.name}`} onClick={() => setSheet('invite')} />}
+        value={m.owner ? 'Set it up' : 'In your household'} onClick={() => setPerson(m.userId)} />)}
+      {household && <Row label={others.length ? 'Invite someone else' : 'Invite someone to your household'} onClick={() => setSheet('invite')} />}
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? ${cat.name} stays on this phone; sign back in to sync again.`)) void store.signOut(); }} />
-    </Group> : <Group title={`People training ${cat.name}`} foot={`Share ${cat.name}’s progress so you both see the same skills, treats and limits.`}>
-      <Row label={`Train ${cat.name} together`} onClick={() => go('together')} />
-      <Row label="I have an invite code" onClick={() => go('join')} />
+    </Group> : <Group title="Household" foot="Share your pets with the people you live with, so you all see the same skills, treats, care and limits.">
+      <Row label="Set up a household" onClick={() => go('together')} />
+      <Row label="Join a household with a code" onClick={() => go('join')} />
     </Group>)}
 
     <Group title="App">

@@ -20,7 +20,7 @@ const errText = (e: unknown) => {
 
 /** Send the invite code with the phone's share sheet, or copy it. Returns true when copied. */
 export async function sendInvite(catName: string, code: string): Promise<boolean> {
-  const text = `Help me train ${catName}! Open ${appLink()} , choose “Someone invited me”, create an account, and enter ${code}.`;
+  const text = `Join my PalDex household to help train ${catName}! Open ${appLink()} , choose “Someone invited me”, create an account, and enter ${code}.`;
   try {
     if (navigator.share) { await navigator.share({ title: `Train ${catName}`, text }); return false; }
     await navigator.clipboard.writeText(text); return true;
@@ -124,10 +124,10 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
 
   const h = snap.household; const others = (h?.members.length ?? 1) - 1;
   return wrap(2, 'Invite', <>
-    <h1 style={{ marginTop: 6 }}>{others > 0 ? 'You’re all set' : `Invite someone to train ${catName}`}</h1>
+    <h1 style={{ marginTop: 6 }}>{others > 0 ? 'You’re all set' : 'Invite someone to your household'}</h1>
     <p className="m" style={{ marginTop: 6 }}>{others > 0
       ? `${catName} is shared. Anyone else can join with this code too.`
-      : 'Send them this code. They open the app, choose “Someone invited me”, make their own account, and enter it.'}</p>
+      : 'Send them this code. They open the app, choose “Someone invited me”, make their own account, and enter it. They’ll see every pet in your household, including ones you add later.'}</p>
     {h ? <div className="card sky" style={{ textAlign: 'center' }}>
       <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{h.inviteCode}</span>
     </div> : <p className="s" style={{ marginTop: 14 }} aria-live="polite">{snap.sync === 'offline' ? 'Can’t reach the server. Check your connection.' : 'Getting your code…'}</p>}

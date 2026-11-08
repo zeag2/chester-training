@@ -195,6 +195,28 @@ describe('training Chester together', () => {
     expect(phone2.get().pets.map((p) => p.name).sort()).toEqual(['Chester', 'Luna']);
   });
 
+  it('shares a whole household: a pet added later reaches everyone, and removing someone removes all pets', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@house.test', 'catnip1', 'Josh', true, true);
+    const meg = device(server); await meg.load();
+    await meg.signIn('meg@house.test', 'catnip1', 'Megan', false, true);
+    await meg.join(josh.get().household!.inviteCode, 'Megan');
+    // Josh adds a second cat: it goes into the same household, no new invite
+    await josh.saveCat({ ...chester, name: 'Luna', sex: 'f' }); await josh.sync();
+    expect(josh.get().cat?.householdId).toBe(server.houseOf(josh.get().pets[0].id)!.id);
+    await meg.sync();
+    expect(meg.get().pets.map((p) => p.name).sort()).toEqual(['Chester', 'Luna']);
+    expect(server.houses.size).toBe(1);
+    // she logs a set for Luna; Josh sees it
+    await meg.switchPet(meg.get().pets.find((p) => p.name === 'Luna')!.id); await meg.logSet(pass); await meg.sync();
+    await josh.sync(); expect(josh.get().sets).toHaveLength(1);
+    // removed from the household: no access to either pet
+    await josh.removeMember('u:meg@house.test');
+    expect(await meg.remote!.myCatIds()).toEqual([]);
+    expect(josh.get().household!.members.map((m) => m.name)).toEqual(['Josh']);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });

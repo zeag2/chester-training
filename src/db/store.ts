@@ -100,7 +100,8 @@ export class Store {
   }
 
   async saveCat(c: Omit<Cat, 'id' | 'createdAt'> & Partial<Pick<Cat, 'id' | 'createdAt' | 'carry'>>) {
-    const cat: Cat = { ...c, id: c.id ?? uid(), createdAt: c.createdAt ?? Date.now(), updatedAt: Date.now(), carry: c.carry ?? { treats: 0, bond: 0, toys: [] } } as Cat;
+    const cat: Cat = { ...c, id: c.id ?? uid(), createdAt: c.createdAt ?? Date.now(), updatedAt: Date.now(), carry: c.carry ?? { treats: 0, bond: 0, toys: [] },
+      householdId: c.householdId ?? (c.id ? undefined : this.snap.cat?.householdId) } as Cat;
     await this.db.cats.put(cat);
     if (!(await this.db.wallet.get(cat.id))) await this.db.wallet.put(newWallet(cat.id));
     await this.rebuild(cat);
@@ -222,6 +223,7 @@ export class Store {
         const shared = await r.getCat(cat.id);
         if (!shared) { await r.createCat(cat); if (this.myName) await r.setName(cat.id, this.myName).catch(() => {}); }
         else if ((shared.cat.updatedAt ?? 0) > (cat.updatedAt ?? 0)) { cat = { ...shared.cat, id: cat.id }; await this.db.cats.put(cat); }
+        else if (shared.cat.householdId && shared.cat.householdId !== cat.householdId) { cat = { ...cat, householdId: shared.cat.householdId }; await this.db.cats.put(cat); }
         else if ((cat.updatedAt ?? 0) > (shared.cat.updatedAt ?? 0)) { await r.updateCat(cat); }
       }
       if (!cat) { this.set({ sync: 'ok', household: null }); return; }
@@ -264,7 +266,8 @@ export class Store {
   /** Join someone else's Chester. This phone's own cat (if any) is replaced by the shared one. */
   join(code: string, name: string): Promise<boolean> {
     return this.serial(async () => {
-      const id = await this.remote!.join(code.trim(), name.trim()); if (!id) return false;
+      const id = await this.remote!.join(code.trim(), name.trim()); if (id === null) return false;
+      if (id === '') return true; // a household with no pets yet: its pets arrive as they're added
       // joining adds the pet; an untouched practice pet made during setup is tidied away
       const old = this.snap.cat;
       if (old && old.id !== id && !(await this.db.sets.where('catId').equals(old.id).count()) && !(await this.db.care.where('catId').equals(old.id).count())) await this.forget(old.id);

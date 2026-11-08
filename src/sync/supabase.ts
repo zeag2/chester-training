@@ -31,36 +31,90 @@ export class SupabaseRemote implements Remote {
   }
   async signOut() { await this.sb.auth.signOut(); }
 
+  // ---- households: people and pets together. Until the households SQL is run, each pet is shared on its own. ----
+  private hasHouseholds: Promise<boolean> | null = null;
+  private checkedAt = 0;
+  /** Whether the households SQL has been run. A "no" is re-checked after a minute, so running it takes effect without a restart. */
+  private households(): Promise<boolean> {
+    if (this.hasHouseholds && Date.now() - this.checkedAt > 60_000) void this.hasHouseholds.then((ok) => { if (!ok) this.hasHouseholds = null; });
+    if (!this.hasHouseholds) { this.checkedAt = Date.now(); this.hasHouseholds = Promise.resolve(this.sb.from('households').select('id').limit(1)).then((r) => !r.error, () => false); }
+    return this.hasHouseholds;
+  }
+  private async householdOf(catId: string): Promise<{ id: string; code: string; owner: string } | null> {
+    const k = await this.sb.from('cats').select('household_id').eq('id', catId).maybeSingle();
+    const hid = (k.data as { household_id?: string } | null)?.household_id; if (!hid) return null;
+    const h = check(await this.sb.from('households').select('id, invite_code, created_by').eq('id', hid).maybeSingle());
+    return h ? { id: h.id as string, code: h.invite_code as string, owner: h.created_by as string } : null;
+  }
+  /** The household new pets go into: the given one, else one you're in, else a new one. */
+  private async homeFor(preferred?: string): Promise<string> {
+    if (preferred) return preferred;
+    const a = await this.account();
+    const mine = check(await this.sb.from('household_members').select('household_id, joined_at').eq('user_id', a!.userId).order('joined_at'));
+    if (mine?.length) return mine[0].household_id as string;
+    const made = check(await this.sb.from('households').insert({}).select('id').single());
+    if (!made) throw new Error('Could not make a household');
+    return made.id as string;
+  }
+
   async myCatIds() {
     const a = await this.account(); if (!a) return [];
+    if (await this.households()) {
+      // every pet you can see: all pets in your households (row-level security decides)
+      const rows = check(await this.sb.from('cats').select('id, created_at').order('created_at'));
+      return (rows ?? []).map((r) => r.id as string);
+    }
     const rows = check(await this.sb.from('cat_members').select('cat_id, joined_at').eq('user_id', a.userId).order('joined_at'));
     return (rows ?? []).map((r) => r.cat_id as string);
   }
   async getCat(id: string) {
     const r = check(await this.sb.from('cats').select('data, invite_code').eq('id', id).maybeSingle());
-    return r ? { cat: { ...(r.data as Cat), id }, inviteCode: r.invite_code as string } : null;
+    if (!r) return null;
+    const h = (await this.households()) ? await this.householdOf(id) : null;
+    return { cat: { ...(r.data as Cat), id, householdId: h?.id }, inviteCode: h?.code ?? (r.invite_code as string) };
   }
-  async createCat(cat: Cat) { check(await this.sb.from('cats').insert({ id: cat.id, data: cat })); }
+  async createCat(cat: Cat) {
+    if (await this.households()) {
+      const hid = await this.homeFor(cat.householdId);
+      check(await this.sb.from('cats').insert({ id: cat.id, data: { ...cat, householdId: hid }, household_id: hid }));
+    } else check(await this.sb.from('cats').insert({ id: cat.id, data: cat }));
+  }
   async updateCat(cat: Cat) { check(await this.sb.from('cats').update({ data: cat }).eq('id', cat.id)); }
-  async join(code: string, name: string) { return check(await this.sb.rpc('join_cat', { code, name })) as string | null; }
-  async members(catId: string): Promise<Member[]> {
-    // with emails and owner, once the household SQL is set up; otherwise just names
-    const people = await this.sb.rpc('cat_people', { c: catId });
-    if (!people.error && Array.isArray(people.data)) {
-      return (people.data as { user_id: string; display_name: string; email: string; sets_logged: number; is_owner: boolean }[])
-        .map((r) => ({ userId: r.user_id, name: r.display_name, email: r.email, sets: Number(r.sets_logged), owner: r.is_owner }));
+  async join(code: string, name: string) {
+    if (await this.households()) {
+      const hid = check(await this.sb.rpc('join_household', { code, name })) as string | null;
+      if (!hid) return null;
+      const first = check(await this.sb.from('cats').select('id').eq('household_id', hid).order('created_at').limit(1));
+      return (first?.[0]?.id as string | undefined) ?? '';
     }
+    return check(await this.sb.rpc('join_cat', { code, name })) as string | null;
+  }
+  async members(catId: string): Promise<Member[]> {
+    type Row = { user_id: string; display_name: string; email: string; sets_logged: number; is_owner: boolean };
+    const map = (rows: Row[]) => rows.map((r) => ({ userId: r.user_id, name: r.display_name, email: r.email, sets: Number(r.sets_logged), owner: r.is_owner }));
+    if (await this.households()) {
+      const h = await this.householdOf(catId);
+      if (h) { const p = await this.sb.rpc('household_people', { h: h.id }); if (!p.error && Array.isArray(p.data)) return map(p.data as Row[]); }
+    }
+    const people = await this.sb.rpc('cat_people', { c: catId });
+    if (!people.error && Array.isArray(people.data)) return map(people.data as Row[]);
     const rows = check(await this.sb.from('cat_members').select('user_id, display_name').eq('cat_id', catId).order('joined_at'));
     return (rows ?? []).map((r) => ({ userId: r.user_id as string, name: r.display_name as string }));
   }
   async removeMember(catId: string, userId: string) {
-    const r = await this.sb.from('cat_members').delete().eq('cat_id', catId).eq('user_id', userId).select('user_id');
+    const h = (await this.households()) ? await this.householdOf(catId) : null;
+    const r = h
+      ? await this.sb.from('household_members').delete().eq('household_id', h.id).eq('user_id', userId).select('user_id')
+      : await this.sb.from('cat_members').delete().eq('cat_id', catId).eq('user_id', userId).select('user_id');
     if (r.error) throw new Error(r.error.message);
     if (!r.data?.length) throw new Error('not-allowed');
   }
   async setName(catId: string, name: string) {
     const a = await this.account(); if (!a) return;
-    check(await this.sb.from('cat_members').update({ display_name: name.slice(0, 40) }).eq('cat_id', catId).eq('user_id', a.userId));
+    const n = name.slice(0, 40);
+    const h = (await this.households()) ? await this.householdOf(catId) : null;
+    if (h) check(await this.sb.from('household_members').update({ display_name: n }).eq('household_id', h.id).eq('user_id', a.userId));
+    await this.sb.from('cat_members').update({ display_name: n }).eq('cat_id', catId).eq('user_id', a.userId);
   }
 
   async pullSets(catId: string) {
