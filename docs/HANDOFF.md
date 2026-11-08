@@ -6,7 +6,9 @@ PalDex (repo `chester-training`) is a phone web app for clicker-training a cat, 
 with the people you live with. It was built for Josh's kitten **Chester** and his girlfriend **Megan**, and is now
 ready to share with friends.
 
-- **Live:** https://zeag2.github.io/chester-training/ (installable to the iPhone home screen)
+- **Live:** https://zeag2.github.io/chester-training/ (installable to the iPhone home screen). **Moving to Cloudflare
+  Pages** (free `*.pages.dev` address, Josh's choice): the app builds for either host (`BASE_PATH`, see section 4).
+  Once the new address exists, put it in `MOVED_TO` (`src/lib/moved.ts`) so the old link sends people there.
 - **Deploys:** every push to `main` runs `.github/workflows/pages.yml` (tests, build, GitHub Pages). Work happens on a
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
@@ -263,6 +265,9 @@ npm run build      # what CI runs
   test removes members at the end, so run it last (it also needs user D from `people_test.sql`). `friends_test.sql`
   sets up its own people: run it right after the friends migration (stubs, all migrations, `rls_test` before households).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
+- **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
+  environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
+  Every push to `main` deploys both once Cloudflare is connected.
 - **Supabase changes:** Josh runs SQL himself in the dashboard's SQL editor (cloud sessions can't reach supabase.com).
   Keep migrations idempotent (`if not exists`, `drop policy if exists`) and paste them into chat for him.
 
@@ -287,6 +292,7 @@ npm run build      # what CI runs
 | **App name PalDex, URL unchanged** | Renaming the repo would break the URL and home-screen installs. If it ever goes public, reconsider the name: "Pokédex"/"Paldea" are Nintendo's. |
 | **Self-updating PWA (`registerType: 'prompt'` + `updates.ts`)** | iPhone home-screen apps only check for updates on a cold start; this checks on return to the front and never interrupts a session. |
 | **Remembered "my name" is per account** | It used to be per phone, which put Megan's name on Josh's account. |
+| **New address on Cloudflare Pages (`*.pages.dev`)** | Josh's call: free, shorter, no GitHub name in it. The old link keeps working and points people to the new one; data comes along by signing in (local-only data stays on the old address). |
 | **Corner lives on the pet record, as a log merged by id** | No new SQL for Josh to run, works offline, and two phones buying at once both keep their buys. Offline double-spending can push the balance below zero; it shows as 0 and buying waits until it's positive. |
 | **Install page before setup, on phones only** | Josh's call. On iPhone, setting up in Safari and then installing would leave the data behind in Safari, so installing first is also the safe order. |
 | **No reduced-motion override** | Josh's explicit choice in Phase 1. |

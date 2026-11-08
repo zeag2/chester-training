@@ -22,6 +22,7 @@ import { setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
 import { applyAppName, pendingPets } from './lib/appname';
+import { movedTo } from './lib/moved';
 
 export default function App() {
   const snap = useStore();
@@ -41,6 +42,8 @@ export default function App() {
     return () => { document.removeEventListener('visibilitychange', f); clearInterval(t); };
   }, []);
   if (!snap.ready) return <div className="screen" aria-busy="true" />;
+  // PalDex moved: someone new on the old address goes straight to the new one (people with pets here get a card on Home)
+  if (!snap.cat && movedTo()) { location.replace(movedTo()!); return <div className="screen" aria-busy="true" />; }
   if (import.meta.env.DEV && r0 === 'gallery') return <Gallery />;
   if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
   if (r0 === 'add-pet') return <Onboarding adding key={pendingPets().join()} />;
