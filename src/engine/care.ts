@@ -16,7 +16,7 @@ export interface CareData {
   groom: { what: GroomWhat; notes?: string };
   med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string };
   /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
-  doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string };
+  doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string; categories?: ('vet' | 'esa' | 'adoption' | 'other')[] };
 }
 
 /** What the vet-document reader found, for the user to confirm. */

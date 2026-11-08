@@ -1,23 +1,23 @@
 /* Get the text out of a vet document on the phone: PDFs give their text directly; photos and scanned PDFs
    go through on-device text recognition (Tesseract). Both libraries load only when a document is added. */
 
-async function ocr(images: (Blob | HTMLCanvasElement)[], onProgress?: (p: number) => void): Promise<string> {
+async function ocr(images: (Blob | HTMLCanvasElement)[], onProgress?: (p: number) => void): Promise<string[]> {
   const { createWorker } = await import('tesseract.js');
   const base = new URL(import.meta.env.BASE_URL + 'ocr/', location.href).toString();
   const worker = await createWorker('eng', 1, { workerPath: base + 'worker.min.js', corePath: base, langPath: base, gzip: true, logger: (m: { status: string; progress: number }) => { if (m.status === 'recognizing text') onProgress?.(m.progress); } });
   try {
-    let out = '';
-    for (const img of images) out += (await worker.recognize(img)).data.text + '\n';
+    const out: string[] = [];
+    for (const img of images) out.push((await worker.recognize(img)).data.text);
     return out;
   } finally { await worker.terminate(); }
 }
 
-async function pdfText(file: Blob, onProgress?: (p: number) => void): Promise<string> {
+async function pdfText(file: Blob, onProgress?: (p: number) => void): Promise<string[]> {
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
   const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  const pages = Math.min(doc.numPages, 6);
-  let text = '';
+  const pages = Math.min(doc.numPages, 40);
+  const texts: string[] = [];
   for (let n = 1; n <= pages; n++) {
     const page = await doc.getPage(n);
     const content = await page.getTextContent();
@@ -28,12 +28,13 @@ async function pdfText(file: Blob, onProgress?: (p: number) => void): Promise<st
       const y = Math.round(it.transform[5] / 3);
       (rows.get(y) ?? rows.set(y, []).get(y)!).push({ x: it.transform[4], s: it.str });
     }
-    text += [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, r]) => r.sort((a, b) => a.x - b.x).map((c) => c.s).join(' ')).join('\n') + '\n';
+    texts.push([...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, r]) => r.sort((a, b) => a.x - b.x).map((c) => c.s).join(' ')).join('\n'));
+    onProgress?.(n / pages * 0.3);
   }
-  if (text.replace(/\s/g, '').length >= 40) return text;
+  if (texts.join('').replace(/\s/g, '').length >= 40 * Math.min(pages, 2)) return texts;
   // a scan with no text layer: draw each page and read it
   const canvases: HTMLCanvasElement[] = [];
-  for (let n = 1; n <= Math.min(pages, 3); n++) {
+  for (let n = 1; n <= Math.min(pages, 8); n++) {
     const page = await doc.getPage(n); const vp = page.getViewport({ scale: 2 });
     const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
     await page.render({ canvas: c, canvasContext: c.getContext('2d')!, viewport: vp }).promise;
@@ -42,8 +43,8 @@ async function pdfText(file: Blob, onProgress?: (p: number) => void): Promise<st
   return ocr(canvases, onProgress);
 }
 
-/** The text of a photo or PDF of a vet record. */
-export async function textFromFile(file: File, onProgress?: (p: number) => void): Promise<string> {
+/** The text of a photo or PDF, one string per page. */
+export async function textFromFile(file: File, onProgress?: (p: number) => void): Promise<string[]> {
   const pdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
   return pdf ? pdfText(file, onProgress) : ocr([file], onProgress);
 }

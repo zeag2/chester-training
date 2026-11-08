@@ -144,6 +144,22 @@ describe('training Chester together', () => {
     expect(server.files.size).toBe(0); expect(josh.get().care).toHaveLength(0);
   });
 
+  it('never gives one person’s name to another who signs in on the same phone', async () => {
+    const server = new FakeServer();
+    const phone = device(server); await phone.load(); await phone.saveCat(chester);
+    await phone.signIn('jo@shared.test', 'catnip1', '', true, true); // Josh never typed a name
+    const code = phone.get().household!.inviteCode;
+    await phone.signOut();
+    const sam = device(server); await sam.load();
+    await sam.signIn('meg@shared.test', 'catnip1', 'Megan', false, true); await sam.join(code, 'Megan');
+    // Josh signs back in on the shared phone: his row must stay unnamed, not become "Megan"
+    await phone.signIn('jo@shared.test', 'catnip1', '', true, false);
+    const names = phone.get().household!.members.map((m) => [m.userId, m.name]);
+    expect(names).toEqual([['u:jo@shared.test', ''], ['u:meg@shared.test', 'Megan']]);
+    await phone.renameMe('Josh');
+    expect(phone.get().household!.members.map((m) => m.name)).toEqual(['Josh', 'Megan']);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });

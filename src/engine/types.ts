@@ -66,6 +66,9 @@ export interface Cat {
   outfit: string;
   /** Boy or girl, for he/she in the app's text. Missing = boy (cats set up before this existed). */
   sex?: 'm' | 'f';
+  microchip?: string;
+  /** Spayed or neutered. */
+  altered?: boolean;
   createdAt: number;
   updatedAt?: number;
   /** Treats, bond and toys earned before sets kept their gifts (set once when upgrading). */

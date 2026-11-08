@@ -47,9 +47,11 @@ export class Store {
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
-  /** Name typed when creating the account, put on the cat once it is uploaded (set up before the cat exists). */
-  get myName(): string { try { return localStorage.getItem('chester-my-name') ?? ''; } catch { return ''; } }
-  set myName(v: string) { try { localStorage.setItem('chester-my-name', v); } catch { /* private mode */ } }
+  /** Name typed when creating the account, put on the cat once it is uploaded (set up before the cat exists).
+      Kept per account, so a second person signing in on this phone never inherits the first one's name. */
+  private nameKey(uid = this.snap.account?.userId) { return uid ? 'chester-my-name:' + uid : ''; }
+  get myName(): string { try { const k = this.nameKey(); return k ? localStorage.getItem(k) ?? '' : ''; } catch { return ''; } }
+  set myName(v: string) { try { const k = this.nameKey(); if (k) localStorage.setItem(k, v); } catch { /* private mode */ } }
 
   constructor(dbName = 'chester', remote: Remote | null = null) { this.db = new ChesterDB(dbName); this.remote = remote; }
 
@@ -215,7 +217,7 @@ export class Store {
       let household = shared ? { inviteCode: shared.inviteCode, members: await r.members(cat.id) } : null;
       // keep my name in step both ways: fill it in online if it's missing there, remember it here for offline
       const meRow = household?.members.find((m) => m.userId === account.userId);
-      if (meRow && !meRow.name && this.myName) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
+      if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       await this.rebuild(cat, { household, sync: 'ok', careSync });
     } catch {
@@ -233,9 +235,9 @@ export class Store {
   /** Create an account or sign in; when sharing, upload this phone's Chester and put our name on it. */
   async signIn(email: string, password: string, name: string, share = true, create = false) {
     const e = email.trim().toLowerCase();
-    if (name.trim()) this.myName = name.trim();
     const account = create ? await this.remote!.signUp(e, password) : await this.remote!.signIn(e, password);
     this.set({ account });
+    if (name.trim()) this.myName = name.trim();
     if (!share) return; // about to join someone else's Chester: don't upload this phone's own
     await this.sync();
     if (this.snap.cat && name.trim()) { await this.remote!.setName(this.snap.cat.id, name.trim()).catch(() => {}); await this.sync(); }

@@ -84,11 +84,12 @@ export function Care() {
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
 
-    <h2 style={{ marginTop: 22 }}>Vet documents</h2>
+    <h2 style={{ marginTop: 22 }}>Documents</h2>
     <DocAdder signedIn={!!account} />
     {docs.map((d) => <button key={d.id} className="item" onClick={() => setEditing({ kind: 'doc', item: d })}>
       <div className="ico grey"><Icon name="book" /></div>
-      <div className="sp"><b>{d.data.title}</b><p className="s">{d.data.summary ?? (d.data.mime === 'application/pdf' ? 'PDF' : 'Photo')}</p></div>
+      <div className="sp"><b>{d.data.title}</b><p className="s">{d.data.summary ?? (d.data.mime === 'application/pdf' ? 'PDF' : 'Photo')}</p>
+        {(d.data.categories ?? []).filter((c) => c !== 'other').length > 0 && <div className="row" style={{ gap: 4, marginTop: 4, flexWrap: 'wrap' }}>{(d.data.categories ?? []).filter((c) => c !== 'other').map((c) => <span key={c} className="chip" style={{ background: c === 'vet' ? 'var(--mint)' : c === 'esa' ? 'var(--sky)' : 'var(--butter)' }}>{c === 'vet' ? 'Vet' : c === 'esa' ? 'ESA & housing' : 'Adoption'}</span>)}</div>}</div>
       <span className="s">{fmt(d.data.docDate ? noon(d.data.docDate) : d.at)}</span></button>)}
 
     <h2 style={{ marginTop: 22 }}>Health log</h2>
@@ -241,31 +242,41 @@ function DocAdder({ signedIn }: { signedIn: boolean }) {
     let r;
     try {
       const { textFromFile } = await import('../lib/ocr');
-      const { parseVetText } = await import('../lib/docparse');
-      r = parseVetText(await textFromFile(file, setProgress));
+      const { parseVetPages } = await import('../lib/docparse');
+      r = parseVetPages(await textFromFile(file, setProgress));
     } catch {
       setStage('error'); setMsg('Couldn’t read that file. Try a clear, flat photo in good light, or a PDF.'); return;
     }
     // keep the file too, when sharing is set up
     let d: CareItem<'doc'> | null = null;
     if (signedIn) {
-      try { d = await store.addDoc(file); await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? undefined, summary: r.summary }, { id: d.id, at: d.at }); setDoc(d); }
+      try { d = await store.addDoc(file); await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? undefined, summary: r.summary, categories: r.categories }, { id: d.id, at: d.at }); setDoc(d); }
       catch (e) { setNote(/bucket|not found|404|row-level|policy/i.test(String((e as Error).message)) ? 'The file itself wasn’t saved: document storage isn’t set up in Supabase yet. Your log entries still save.' : 'The file itself wasn’t saved (' + (e as Error).message + '). Your log entries still save.'); }
     } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
     const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
     const list: Pick[] = [];
-    if (r.visitReason) list.push({ key: 'vet', label: 'Vet visit: ' + r.visitReason, detail: [r.clinic, r.docDate && fmt(noon(r.docDate))].filter(Boolean).join(' · '), on: true,
-      save: (doc) => store.saveCare('vet', { reason: r.visitReason!, clinic: r.clinic ?? undefined, doc }, { at: at(r.docDate) }) });
-    if (r.weightLb) list.push({ key: 'w', label: `Weight: ${r.weightLb} lb`, detail: r.docDate ? fmt(noon(r.docDate)) : '', on: true,
-      save: (doc) => store.saveCare('weight', { lb: r.weightLb!, doc }, { at: at(r.docDate) }) });
+    // profile details the pet doesn't have yet (birthday, microchip, neutered, home since)
+    const cat = store.get().cat; const pr = r.profile;
+    if (cat) {
+      const changes: string[] = []; const patch: Partial<typeof cat> = {};
+      if (pr.birthday && cat.birthday !== pr.birthday.slice(0, 7)) { patch.birthday = pr.birthday.slice(0, 7); changes.push('born ' + fmt(noon(pr.birthday))); }
+      if (pr.microchip && cat.microchip !== pr.microchip) { patch.microchip = pr.microchip; changes.push('microchip ' + pr.microchip); }
+      if (pr.altered && !cat.altered) { patch.altered = true; changes.push(cat.sex === 'f' ? 'spayed' : 'neutered'); }
+      if (pr.adopted && cat.homeDate !== pr.adopted) { patch.homeDate = pr.adopted; changes.push('home since ' + fmt(noon(pr.adopted)) + (pr.adoptedFrom ? ` (from ${pr.adoptedFrom})` : '')); }
+      if (changes.length) list.push({ key: 'profile', label: `Update ${cat.name}’s profile`, detail: changes.join(' · '), on: true, save: () => store.saveCat({ ...cat, ...patch }) });
+    }
+    r.visits.forEach((v, i) => list.push({ key: 'v' + i, label: (/test/i.test(v.reason) ? 'Test: ' : 'Vet visit: ') + v.reason, detail: [v.notes, v.clinic, v.date && fmt(noon(v.date))].filter(Boolean).join(' · '), on: true,
+      save: (doc) => store.saveCare('vet', { reason: v.reason, clinic: v.clinic ?? undefined, notes: v.notes ?? undefined, doc }, { at: at(v.date) }) }));
+    r.weights.forEach((w, i) => list.push({ key: 'w' + i, label: `Weight: ${w.lb} lb`, detail: w.date ? fmt(noon(w.date)) : '', on: true,
+      save: (doc) => store.saveCare('weight', { lb: w.lb, doc }, { at: at(w.date) }) }));
     r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
       save: (doc) => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc }, { at: at(it.date) }) }));
     setPicks(list); setMsg(r.summary); setStage('review');
   };
 
   return <div className="card grey" style={{ marginTop: 10 }}>
-    {stage === 'idle' && <><p className="s">Snap a photo of a vet invoice, visit summary or vaccine certificate, or pick a PDF. It’s read right on your phone (free, nothing sent anywhere to read it) and you check what it found.</p>
-      <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a vet document
+    {stage === 'idle' && <><p className="s">Vet records, vaccine certificates, adoption papers or ESA/housing forms: snap a photo or pick a PDF (several pages is fine). It’s read right on your phone, free, and you check what it found before anything is saved.</p>
+      <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a document
         <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label></>}
     {stage === 'read' && <><p className="s" aria-live="polite">Reading the document on your phone… {progress > 0 ? Math.round(progress * 100) + '%' : 'getting ready (the first time takes a little longer)'}</p>
       <div className="bar" style={{ marginTop: 8 }}><i style={{ width: Math.max(4, progress * 100) + '%', animation: 'none' }} /></div></>}
