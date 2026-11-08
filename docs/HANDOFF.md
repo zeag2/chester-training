@@ -1,10 +1,12 @@
 # PalDex: handoff
 
-_Last updated 2026-11-08 (Chester's corner). Start here when picking the project back up._
+_Last updated 2026-11-08, end of the session that built the corner, friends, the tracker-first layout and the new walk
+pose. Start here when picking the project back up._
 
-PalDex (repo `chester-training`) is a phone web app for clicker-training a cat, keeping its care records, and sharing both
-with the people you live with. It was built for Josh's kitten **Chester** and his girlfriend **Megan**, and is now
-ready to share with friends.
+PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
+symptoms, vet visits, medicine and vaccines, food, documents) and **clicker training as an optional extra per cat**,
+shared with the people you live with, plus friends who can see each other's cats. It was built for Josh's kitten
+**Chester** and his girlfriend **Megan**, and is now shared with friends.
 
 - **Live:** **https://paldex-4qh.pages.dev/** (Cloudflare Pages, project `paldex`; `paldex` itself was taken, hence the
   suffix). Installable to the iPhone Home Screen. The old address https://zeag2.github.io/chester-training/ still
@@ -15,7 +17,25 @@ ready to share with friends.
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 85 tests passing in 14 files; everything is on `main` and live.
+- **State at handoff:** 95 tests passing in 17 files, typecheck and build clean, working tree clean; everything is on
+  `main` and live (last commit: the art style guide). All Supabase SQL through `20261110000000_friends.sql` has been
+  run (checked against the live database), including the extra `revoke ... from anon` on the friend functions.
+
+## Pick up here
+
+**The next session starts with the cat redraw**, then friends visiting. Suggested first message:
+> pick up from docs/HANDOFF.md and redraw Chester using docs/plans/2026-11-08-cat-art-style.md
+
+(attach Josh's reference images again: photos of Chester and the anime stills; the session can't see old uploads).
+
+1. **Redraw the cat poses** to the style guide `docs/plans/2026-11-08-cat-art-style.md`: sit (tail wrapped round the
+   paws, smaller head), dozing sit, curled sleep, a new draped idle, a two-cat nuzzle (replacing the head bonk), then
+   loaf, fly and ball. Walk was redrawn already (refine: tail up like a question mark, face more side-on). Large job:
+   check every coat, every outfit and every move with Playwright frame strips (section 4).
+2. **Friends: visit and treat** (section 2, item 1). Needs a small SQL file for Josh to run.
+3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
+4. Then the rest of section 2.
+
 
 ---
 
@@ -59,7 +79,7 @@ ready to share with friends.
   The remembered name is stored **per account**, not per phone.
 - Works offline: sets and care save on the phone and sync when back online, never doubled.
 
-### Friends (`#/friends`, from Home and Settings)
+### Friends (`#/friends`, from Me, Home's Friends card and its +)
 - Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
 - **Friend bonus:** each new friend gives the pet being shown +15 treats and +1 bond, once per friend, for the first
   10 friends (`FRIEND_BONUS`, `unrewardedFriends` in `corner.ts`; logged as `friend-<their id>` so re-adding doesn't pay
@@ -81,7 +101,7 @@ ready to share with friends.
 - Each pet has its own training, care log and documents. New pets go into the household of the pet being shown.
 - **Cats only.** Dogs would need new art and a new skill set (see section 5).
 
-### Chester's care (`#/care`, from the blue card on Home)
+### Health (the Health tab, `#/health`; was "Chester's care")
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
 - **Coming up:** medicine and vaccine due dates, nails and brushing getting overdue (once started), and the yearly
   checkup.
@@ -100,7 +120,7 @@ ready to share with friends.
     expiry dates aren't treated as due dates.
   - **Storage:** files go in the private `pet-docs` bucket, readable by household members only.
 
-### Chester's corner (`#/corner`, from the yellow card on Home or "Spend treats" after a set)
+### Chester's corner (`#/corner`, under Train, from Home's yellow card, or "Spend treats" after a set)
 - **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 3 toys (box, laser dot,
   crinkle tunnel) and 3 cushions (mint, heart, cloud). Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
 - **Outfits show everywhere** Chester appears for that pet (Home, session, recap, settings, skill pages). They're
@@ -182,39 +202,42 @@ ready to share with friends.
 
 ## 2. What's left
 
-Roughly in the order agreed with Josh:
+In order:
 
-1. **Next (Josh, after the demo):**
-   - **Walk pose redrawn** (done, from Josh's photo of Chester standing side-on): small head on the shoulders, long
-     body, tapered legs with paws, tail sweeping back. Loaf, fly and ball could get the same treatment; Josh may get
-     an artist (brief: SVG, named parts, flat colour regions, same canvas per pose). **Style guide for redrawing every
-     pose from Josh's references: `docs/plans/2026-11-08-cat-art-style.md`.**
-   - **Friends more visible + visiting**: a friends' cats strip on Home; tap a friend's cat to visit (big, pettable,
-     same reactions), and **give them a free treat** once a day. Needs SQL: a `friend_treats(from, cat_id, day)` table
-     plus a `give_treat(cat_id)` function; the owner's phone turns received treats into corner log entries
-     (`treat-<from>-<day>`) so they count in the balance, and shows "Erin gave Chester a treat".
-   - Real push notifications for new friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
-2. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
-   Bond levels don't unlock anything yet. More outfits/toys are easy to add (`SHOP` + `outfit()`).
-2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,
-   Megan did 3"). Sets already record `by` (account id); names come from the household members.
-3. **Badges and trophy case:** a badge per mastered skill, shelves by branch, closest badge on top. Recap currently
-   says "Badges … arrive in the next update".
-4. **Check-ins:** five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
-   `hiddenUnlocks` in `rules.ts`). Some skills are locked behind these today.
-5. **Photo album:** a photo of the real pet at each mastery. It can reuse the `pet-docs` bucket pattern.
-6. **Care extras:** suggest the "Loves it" treat when training a hard skill; a one-tap vet summary (weight trend,
-   vaccines, symptoms) to show at appointments.
-7. **Animation extras (optional):** new idle behaviors like stretching after a nap, grooming a paw, chasing his tail,
-   or looking where you tap. Real recorded meows (licensed) if the synthesized ones sound robotic.
-8. **Other animals (bigger):** dogs or others need their own art (`src/chester/art.ts` is cat-only), skills and copy.
+1. **Friends, more visible, and visiting** (Josh asked; friends feel buried):
+   - A friends' cats strip on Home (faces, like the cat switcher).
+   - Tap one to **visit**: their cat big, pettable, with the same reactions (the `Chester` component with their
+     coat, eyes and outfit from the card).
+   - **Give a free treat**, once a day per friend's cat. New SQL: a `friend_treats(from_user, cat_id, day)` table
+     (unique per from/cat/day) and `give_treat(cat_id)` (only for friends' pets), plus `treats_for(cat_id)` for the
+     household. The owner's phone turns each into a corner log entry `treat-<from>-<day>` (+1 treat, counted in the
+     balance like gifts) and shows "Erin gave Chester a treat" on Home.
+2. **Cat art redraw**: see "Pick up here" and the style guide. Josh may also hire an artist; brief: SVG, named parts,
+   flat colour regions, same canvas and ground line per pose, original art with full rights.
+3. **Push notifications** for new friends and treats (Web Push; iPhone only when installed): a Supabase Edge Function
+   with VAPID keys (keys via the environment's secrets, never in the repo), a `push_subscriptions` table, and a
+   trigger on `friends`. Today it's in-app only: checked on every app open, red dot on Me, a card on Home.
+4. **Weekly recap:** a "{cat}'s week" card: weight trend, health entries, and for training cats sets, success rate,
+   what improved, who did what (sets record `by`; names from household members).
+5. **Badges and trophy case:** a badge per mastered skill, shelves by branch. Recap still says badges "arrive in the
+   next update".
+6. **Check-ins:** five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
+   `hiddenUnlocks` in `rules.ts`).
+7. **Care extras:** a one-tap vet summary (weight trend, vaccines, symptoms) to show at appointments; suggest the
+   "Loves it" treat for hard skills; medicine reminders as notifications once push exists.
+8. **Corner leftovers:** nap tokens (streak saver) unbuilt (`Wallet.napTokens`, `playMoves` unused); bond levels unlock
+   nothing yet; more outfits and toys are easy (`SHOP` + `outfit()`).
+9. **Photo album:** a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).
+10. **A cleaner address:** `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken. A second Cloudflare
+    Pages project with a free name (e.g. `chesterpals`) or a custom domain would fix it; then update `MOVED_TO`.
+11. **Tidy-up:** `chester.css` has several historical layers with 23 duplicated keyframe names (later ones win); fold
+    them into one set with before/after screenshots. Real recorded (licensed) meows if the synthesized ones sound robotic.
+12. **Other animals (bigger):** dogs need their own art, skills and copy.
 
 ### Open items for Josh
-- Remove the **duplicate Megan** account: Settings, Household, the Megan with 0 sets, Remove from household. The
-  emails only show once `20261108230000_household_tools.sql` or the households SQL (`household_people`) has run;
-  the households SQL **has** been run.
-- Confirm `20261108230000_household_tools.sql` was run. It isn't required now that households exist, but it's harmless.
-- If his name still shows wrong anywhere: Settings, then his own row, then Your name.
+- Try the new setup with a friend on a real iPhone: name and icon on the Home Screen, both cats in setup.
+- If wanted: a cleaner address (section 2, item 10).
+- Old: remove the duplicate Megan account (Me, People, the Megan with 0 sets, Remove from household) if it's still there.
 
 ---
 
@@ -292,6 +315,9 @@ docs/
 ---
 
 ## 4. How to work on it
+
+- **Start cloud sessions on the `chester-training` environment** (section 7): the Default one can't reach the food
+  databases, the live site or Supabase.
 
 ```bash
 npm ci
@@ -381,8 +407,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 
 ### Cloud environment
 - **`chester-training`** (personal, created 2026-11-08): package registries and MCP servers, plus
-  `world.openpetfoodfacts.org`, `world.openfoodfacts.org`, `api.upcitemdb.com` (food lookups) and `paldex-4qh.pages.dev`
-  (to check the live site).
+  `world.openpetfoodfacts.org`, `world.openfoodfacts.org`, `api.upcitemdb.com` (food lookups), `paldex-4qh.pages.dev`
+  (to check the live site) and `vtcufhddooqzckjcpzwn.supabase.co` (to check the SQL was run, signed out, with the
+  public key). The Default environment allows none of these.
   The Default environment blocks those hosts. Start PalDex cloud sessions on this one.
 
 ### MCP servers (repo, `.mcp.json`)
@@ -394,11 +421,23 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - Plugins: **Icons8** was offered (Anthropic Directory) but isn't turned on yet. If it is, it could replace
   `src/ui/icons.tsx` and the corner's toy art.
 
+### Skills actually used so far
+- In the Nov 7 sessions: **reanimate**, **earshot**/**real-sound**, **huashu-art-motion** and claudedesignskills (motion
+  and sound pass).
+- In the Nov 8 session (this one): none of the installed skills were invoked; the GSAP, Lottie and LottieFiles tools
+  were installed but not used. Good candidates next: **reanimate** to match Josh's reference GIFs when redrawing and
+  re-timing poses; **earshot** before any sound change; **text-to-lottie** or LottieFiles for one-off celebrations.
+- Plugins: the Anthropic Directory's **Icons8** was offered (not enabled).
+
 ### Tools used for checks (no install needed)
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed
   animations, fast-forward with `page.clock` to just before the moment, then `clock.resume()` and capture in real time:
   CSS animations don't follow the fake clock.
 - Chromium's fake camera (`--use-file-for-fake-video-capture` with a generated barcode video) to test the scanner.
+- A throwaway local Postgres 16 (`/usr/lib/postgresql/16/bin`, run as the `postgres` user in a folder it can reach,
+  e.g. `/var/tmp`) for the SQL policy tests.
+- iPhone emulation in Playwright (`devices['iPhone 15']`, `navigator.standalone` stubbed for "installed") for the
+  install and setup flow; build with `VITE_SUPABASE_URL=` to test setup without touching the real database.
 
 ### Install commands used (to repeat in another project)
 ```bash

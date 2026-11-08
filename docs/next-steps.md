@@ -1,6 +1,6 @@
 # Next steps
 
-See **docs/HANDOFF.md** for the full picture: what's built, what's left, file structure, decisions and gotchas.
+See **docs/HANDOFF.md**, section "Pick up here", for exactly where things stand and the suggested first message.
 
-Done: Chester's corner (outfits, toys, cushions, daily gift, bond levels). Up next, in order: weekly recap, badges/trophy case, check-ins, photo album,
-care extras (treat suggestions, vet summary).
+Up next, in order: redraw the cat poses to `docs/plans/2026-11-08-cat-art-style.md`; friends visiting and giving
+treats (new SQL); test the iPhone setup on a real phone; push notifications; weekly recap; badges; check-ins.
