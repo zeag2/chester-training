@@ -6,6 +6,8 @@ export interface Account { userId: string; email: string }
 export interface PetCard { name: string; coat?: string; eyes?: string; sex?: 'm' | 'f'; birthday?: string; wear?: string; cushion?: string; mastered?: string[]; setsWeek?: number; streak?: number; bond?: number }
 export interface Friend { userId: string; name: string }
 export interface FriendPet { owner: string; ownerName: string; catId: string; card: PetCard }
+/** A free treat a friend gave one of my pets on their local day. */
+export interface ReceivedTreat { from: string; fromName: string; day: string }
 
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
@@ -53,4 +55,12 @@ export interface Remote {
   removeFriend(userId: string): Promise<void>;
   /** Publish a pet's card for friends to see. */
   publishCard(catId: string, card: PetCard): Promise<void>;
+
+  /** Friends' treats. These throw 'treats-missing' until the friend treats SQL has been run. */
+  /** Give a friend's pet today's free treat: true when given, false when it already had one from you that day. */
+  giveTreat(catId: string, day: string): Promise<boolean>;
+  /** Friends' pets I've given a treat to on that day. */
+  treatsGiven(day: string): Promise<string[]>;
+  /** Treats my pet got from friends (the last 30 days). */
+  treatsFor(catId: string): Promise<ReceivedTreat[]>;
 }

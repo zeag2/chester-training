@@ -19,6 +19,9 @@ export class FakeServer {
   profiles = new Map<string, { code: string; name: string }>();
   friendships = new Set<string>();
   cards = new Map<string, PetCard>();
+  treatsTable = true;
+  /** friend treats, keyed `from|cat|day` */
+  treats = new Map<string, { from: string; catId: string; day: string }>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -107,4 +110,17 @@ export class FakeRemote implements Remote {
   }
   async removeFriend(userId: string) { const u = this.fr(); this.s.friendships.delete(u.userId + '|' + userId); this.s.friendships.delete(userId + '|' + u.userId); }
   async publishCard(catId: string, card: PetCard) { const u = this.fr(); if (!this.s.isMember(catId, u.userId)) throw new Error('not your pet'); this.s.cards.set(catId, structuredClone(card)); }
+
+  private tr() { const u = this.fr(); if (!this.s.treatsTable) throw new Error('treats-missing'); return u; }
+  async giveTreat(catId: string, day: string) {
+    const u = this.tr();
+    if (!(await this.friendPets()).some((p) => p.catId === catId)) throw new Error('not a friend\'s pet');
+    const k = u.userId + '|' + catId + '|' + day; if (this.s.treats.has(k)) return false;
+    this.s.treats.set(k, { from: u.userId, catId, day }); return true;
+  }
+  async treatsGiven(day: string) { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.day === day).map((t) => t.catId); }
+  async treatsFor(catId: string) {
+    const u = this.tr(); if (!this.s.isMember(catId, u.userId)) return [];
+    return [...this.s.treats.values()].filter((t) => t.catId === catId).map((t) => ({ from: t.from, fromName: this.s.profiles.get(t.from)?.name ?? '', day: t.day }));
+  }
 }

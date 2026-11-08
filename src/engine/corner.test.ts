@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, owned, unrewardedFriends, withCorner, type CornerEvent } from './corner';
+import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
 
 const ev = (id: string, treats: number, at = 1, extra: Partial<CornerEvent> = {}): CornerEvent => ({ id, kind: 'buy', day: '2026-11-08', at, treats, bond: 0, ...extra });
 
@@ -41,5 +41,12 @@ describe('Chester’s corner', () => {
     expect(owned({ log: paid }).has('scarf')).toBe(true);
     expect(owned({ log: [] }).has('scarf')).toBe(false);
     expect(canBuy(ITEM_BY_ID.scarf, 999, { log: [] })).toBe(false);
+  });
+  it('adds each friend’s treat once: new ones only, no repeats within a batch, counted in the balance', () => {
+    const c = { log: [ev(treatId('erin', '2026-11-08'), 1, 1, { kind: 'treat' })] };
+    const got = [{ from: 'erin', day: '2026-11-08' }, { from: 'erin', day: '2026-11-09' }, { from: 'dana', day: '2026-11-09' }, { from: 'dana', day: '2026-11-09' }];
+    expect(newTreats(c, got)).toEqual([{ from: 'erin', day: '2026-11-09' }, { from: 'dana', day: '2026-11-09' }]);
+    expect(newTreats(undefined, [])).toEqual([]);
+    expect(withCorner({ treats: 5, bond: 0, toys: [] }, c).treats).toBe(6);
   });
 });

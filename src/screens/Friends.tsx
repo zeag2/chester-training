@@ -15,7 +15,7 @@ import { FRIEND_BONUS, owned } from '../engine/corner';
 function PetCardView({ p }: { p: FriendPet }) {
   const c = p.card; const mastered = c.mastered ?? [];
   const he = c.sex === 'f' ? 'She' : 'He';
-  return <div className="card white" style={{ margin: 0, padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+  return <a href={'#/visit/' + p.catId} aria-label={`Visit ${c.name}`} className="card white" style={{ margin: 0, padding: 14, display: 'flex', flexDirection: 'column', gap: 6, color: 'inherit', textDecoration: 'none' }}>
     <div style={{ display: 'flex', justifyContent: 'center', height: 96, alignItems: 'flex-end' }}>
       <Chester coat={c.coat} eyes={c.eyes} wear={c.wear} mood="happy" width={92} label={c.name} /></div>
     <b style={{ fontSize: 16 }}>{c.name}</b>
@@ -26,7 +26,8 @@ function PetCardView({ p }: { p: FriendPet }) {
     </div>
     <p className="s" style={{ lineHeight: 1.35 }}>{mastered.length ? `${he} can: ${mastered.slice(0, 3).map((id) => SKILL_BY_ID[id]?.name ?? id).join(', ')}${mastered.length > 3 ? '…' : ''}` : `${c.setsWeek ? `${c.setsWeek} sets this week` : 'Just getting started'}`}</p>
     <p className="s">Bond: {bondLevel(c.bond ?? 0).name}</p>
-  </div>;
+    <span className="chip" style={{ alignSelf: 'flex-start', background: 'var(--sky)' }}>Visit and pet</span>
+  </a>;
 }
 
 /** Your code, a way to send it, and a box for a friend's code. Used on the Friends screen and in the invite sheet. */

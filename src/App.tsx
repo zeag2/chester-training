@@ -18,6 +18,7 @@ import { Train } from './screens/Train';
 import { QuickLog } from './screens/QuickLog';
 import type { CareKind } from './engine/care';
 import { Friends } from './screens/Friends';
+import { Visit } from './screens/Visit';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
@@ -70,6 +71,7 @@ export default function App() {
     // Me: your cats, people (household and friends), app settings, your data
     case 'me': case 'settings': body = <Settings />; tab = 'me'; break;
     case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'me'; break;
+    case 'visit': body = <Visit key={r1} catId={r1 ?? ''} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
   return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}</>;

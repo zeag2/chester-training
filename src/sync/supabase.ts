@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
-import type { Account, Friend, FriendPet, Member, PetCard, Remote } from './remote';
+import type { Account, Friend, FriendPet, Member, PetCard, ReceivedTreat, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
 const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -159,9 +159,9 @@ export class SupabaseRemote implements Remote {
   }
 
   // ---- friends ----
-  private async rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
+  private async rpc<T>(fn: string, args?: Record<string, unknown>, missing = 'friends-missing'): Promise<T> {
     const r = await this.sb.rpc(fn, args);
-    if (r.error) throw new Error(/could not find the function|does not exist|schema cache|PGRST202/i.test(r.error.message + (r.error as { code?: string }).code) ? 'friends-missing' : r.error.message);
+    if (r.error) throw new Error(/could not find the function|does not exist|schema cache|PGRST202/i.test(r.error.message + (r.error as { code?: string }).code) ? missing : r.error.message);
     return r.data as T;
   }
   friendCode(name: string) { return this.rpc<string>('my_friend_code', { name }); }
@@ -172,4 +172,10 @@ export class SupabaseRemote implements Remote {
   }
   async removeFriend(userId: string) { await this.rpc('remove_friend', { friend: userId }); }
   async publishCard(catId: string, card: PetCard) { await this.rpc('set_pet_card', { c: catId, card }); }
+
+  giveTreat(catId: string, day: string) { return this.rpc<boolean>('give_treat', { c: catId, d: day }, 'treats-missing'); }
+  async treatsGiven(day: string): Promise<string[]> { return (await this.rpc<string[] | null>('treats_given', { d: day }, 'treats-missing')) ?? []; }
+  async treatsFor(catId: string): Promise<ReceivedTreat[]> {
+    return ((await this.rpc<{ from_user: string; from_name: string; day: string }[]>('treats_for', { c: catId }, 'treats-missing')) ?? []).map((r) => ({ from: r.from_user, fromName: r.from_name, day: r.day }));
+  }
 }

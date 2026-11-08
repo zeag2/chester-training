@@ -32,7 +32,8 @@ shared with the people you live with, plus friends who can see each other's cats
    paws, smaller head), dozing sit, curled sleep, a new draped idle, a two-cat nuzzle (replacing the head bonk), then
    loaf, fly and ball. Walk was redrawn already (refine: tail up like a question mark, face more side-on). Large job:
    check every coat, every outfit and every move with Playwright frame strips (section 4).
-2. **Friends: visit and treat** (section 2, item 1). Needs a small SQL file for Josh to run.
+2. **Friends: visit and treat** is built (2026-11-08, branch `claude/friends-visit-treat`). Josh: run
+   `supabase/migrations/20261111000000_friend_treats.sql` in the Supabase SQL editor to switch treats on.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
 4. Then the rest of section 2.
 
@@ -109,6 +110,20 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   (`cardFor`/`publishCard` in `store.ts`, `set_pet_card` in SQL); `friend_pets()` returns only the card plus name and look.
 - Needs `20261110000000_friends.sql` (run it in the Supabase SQL editor). Until then the screen says friends aren't
   switched on yet; nothing else is affected.
+- **Friends' cats strip on Home** (`src/ui/FriendsStrip.tsx`, one line after the Today card in `Home.tsx`): faces like
+  the cat switcher, with a little paw badge on each cat that can still get today's treat. Hidden until you have a
+  friend with a cat (or a treat just arrived). It also shows "Erin gave Chester a treat" (`treatNews` in the store).
+- **Visiting** (`#/visit/<catId>`, `src/screens/Visit.tsx`, also from each card on the Friends screen): the friend's cat
+  big and pettable with the usual reactions (`<Chester interactive>` with the card's coat, eyes and outfit), plus the
+  card's skills, streak and bond.
+- **Free treats:** once a day per friend's cat (the giver's local day). The server enforces it
+  (`friend_treats`, `give_treat(c, d)` only for friends' pets and only within a day of the server's date;
+  `treats_given(d)` for "Given today"; `treats_for(c)` for the pet's household, last 30 days). The owner's phones turn
+  each into a corner log entry `treat-<from>-<day>` (+1 treat, `by` = the giver) on sync (at most once a minute per
+  pet) and whenever Friends loads (`collectTreats` in `store.ts`, `newTreats` in `corner.ts`); merging by id means
+  two phones in the household never count one twice.
+- Needs `20261111000000_friend_treats.sql`. Until it's run, visiting still works and the treat card says "Treats aren't
+  switched on yet" (`friends.treats === 'missing'`); the strip shows no treat badges.
 
 ### Multiple pets
 - Settings, then Pets, then **Add another pet** (pet questions only). A switcher shows on Home when there's more than
@@ -219,14 +234,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 In order:
 
-1. **Friends, more visible, and visiting** (Josh asked; friends feel buried):
-   - A friends' cats strip on Home (faces, like the cat switcher).
-   - Tap one to **visit**: their cat big, pettable, with the same reactions (the `Chester` component with their
-     coat, eyes and outfit from the card).
-   - **Give a free treat**, once a day per friend's cat. New SQL: a `friend_treats(from_user, cat_id, day)` table
-     (unique per from/cat/day) and `give_treat(cat_id)` (only for friends' pets), plus `treats_for(cat_id)` for the
-     household. The owner's phone turns each into a corner log entry `treat-<from>-<day>` (+1 treat, counted in the
-     balance like gifts) and shows "Erin gave Chester a treat" on Home.
+1. ~~**Friends, more visible, and visiting**~~: built (see section 1, Friends). Left: Josh runs
+   `20261111000000_friend_treats.sql`, then a real test between two phones. Ideas next: a "thank you" back to the giver,
+   treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
 2. **Cat art redraw**: see "Pick up here" and the style guide. Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
 3. **Push notifications** for new friends and treats (Web Push; iPhone only when installed): a Supabase Edge Function
@@ -292,7 +302,7 @@ src/
     chester.css         CSS moves (several historical layers; later rules win; see section 6)
     spring.ts           damped spring
   screens/              Home, Train, QuickLog, Session, Recap, Tree, Library, SkillPage, Settings (Me), Care (Health),
-                        Corner, Friends, Install, Onboarding,
+                        Corner, Friends, Visit (a friend's cat), Install, Onboarding,
                         Together (account and invite forms), Scanner (barcode), YarnBall, Gallery (dev only)
   lib/
     audio.ts            sampled and synthesized sounds, jingle, litter, meow
@@ -305,7 +315,7 @@ src/
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     images.ts, stats.ts, install.ts
-  ui/                   TabBar, icons, router
+  ui/                   TabBar, icons, router, PetSwitcher, FriendsStrip (friends' cats on Home)
   styles/app.css        tokens (light + dark), layout, components
 supabase/
   migrations/           SQL, run by hand in the Supabase SQL editor, in this order:
@@ -315,6 +325,7 @@ supabase/
     20261108230000_household_tools.sql   cat_people, member removal (superseded by households, harmless)
     20261109000000_households.sql        households, migration of existing sharing, join_household, household_people
     20261110000000_friends.sql           friend codes, friendships, pet cards, add_friend/friend_pets/set_pet_card
+    20261111000000_friend_treats.sql     friends' free treats: friend_treats, give_treat/treats_given/treats_for
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -349,6 +360,10 @@ npm run build      # what CI runs
   `household_test.sql` each in their own `psql` session (the households migration goes before them). The households
   test removes members at the end, so run it last (it also needs user D from `people_test.sql`). `friends_test.sql`
   sets up its own people: run it right after the friends migration (stubs, all migrations, `rls_test` before households).
+  `friend_treats_test.sql` also sets up its own people: run it after the friend treats migration (it's fine after
+  `friends_test.sql`). The full order that passed on 2026-11-08: stub_auth, stub_storage, shared_training, care,
+  vet_docs, household_tools, rls_test, households, friends, friends_test, friend_treats (twice, to check it's
+  idempotent), friend_treats_test.
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -443,6 +458,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   were installed but not used. Good candidates next: **reanimate** to match Josh's reference GIFs when redrawing and
   re-timing poses; **earshot** before any sound change; **text-to-lottie** or LottieFiles for one-off celebrations.
 - Plugins: the Anthropic Directory's **Icons8** was offered (not enabled).
+
+- In the friends visit + treat session (2026-11-08, `claude/friends-visit-treat`): no skills, plugins or MCP servers
+  were invoked. Checks used Playwright (iPhone 15, light and dark, the dev store seeded with the in-memory
+  `FakeServer` imported through Vite) and a local Postgres 16 for `friend_treats_test.sql`.
 
 ### Tools used for checks (no install needed)
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed

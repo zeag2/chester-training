@@ -15,6 +15,7 @@ import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
 import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
 import { InviteSheet } from './Friends';
+import { FriendsStrip } from '../ui/FriendsStrip';
 import { usePetText } from '../lib/pet';
 
 /** Part of the day from the time; night runs 10:30 PM to 5 AM. */
@@ -171,6 +172,7 @@ export function Home() {
         <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
         <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>}
       <TodayCard />
+      <FriendsStrip />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
         <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>

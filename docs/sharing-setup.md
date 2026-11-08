@@ -27,6 +27,9 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
 9. **Households.** Run `supabase/migrations/20261109000000_households.sql`. Moves existing sharing into households
    (one per pet owner, keeping their invite code); from then on people join a household and see all its pets.
    The app works the old per-pet way until this is run.
+10. **Friends.** Run `supabase/migrations/20261110000000_friends.sql`.
+11. **Friends' treats.** Run `supabase/migrations/20261111000000_friend_treats.sql` (after step 10). Until then, visiting
+    friends' cats works and the treat button says treats aren't switched on yet.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

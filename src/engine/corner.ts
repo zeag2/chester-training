@@ -24,10 +24,11 @@ export const SHOP: ShopItem[] = [
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 
-export type CornerKind = 'buy' | 'gift' | 'play' | 'friend';
+export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat';
 export interface CornerEvent {
-  /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>` and a friend bonus is `friend-<their id>`,
-      so two phones can't both claim one, and a friend removed and added again doesn't pay twice. */
+  /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>`, a friend bonus is `friend-<their id>`
+      and a friend's free treat is `treat-<their id>-<their day>`, so two phones can't both claim one, and a friend
+      removed and added again doesn't pay twice. */
   id: string;
   kind: CornerKind;
   day: string;
@@ -77,6 +78,15 @@ export function unrewardedFriends(c: Corner | undefined, friendIds: string[]): s
   const log = c?.log ?? []; const paid = new Set(log.filter((e) => e.kind === 'friend').map((e) => e.id));
   const room = Math.max(0, FRIEND_BONUS.max - paid.size);
   return friendIds.filter((id) => !paid.has('friend-' + id)).slice(0, room);
+}
+
+/** A friend's free treat (once a day per friend per pet, enforced by the server). */
+export const FRIEND_TREAT = 1;
+export const treatId = (from: string, day: string) => `treat-${from}-${day}`;
+/** Received treats that aren't in this pet's log yet. */
+export function newTreats<T extends { from: string; day: string }>(c: Corner | undefined, got: T[]): T[] {
+  const have = new Set((c?.log ?? []).filter((e) => e.kind === 'treat').map((e) => e.id)); const seen = new Set<string>();
+  return got.filter((t) => { const id = treatId(t.from, t.day); if (have.has(id) || seen.has(id)) return false; seen.add(id); return true; });
 }
 
 export function canBuy(item: ShopItem, balance: number, c: Corner | undefined): boolean { return !item.special && !owned(c).has(item.id) && balance >= item.price; }

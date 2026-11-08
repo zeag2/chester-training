@@ -6,19 +6,21 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, Friend, FriendPet, Member, PetCard, Remote } from '../sync/remote';
+import type { Account, Friend, FriendPet, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
-import { FRIEND_BONUS, ITEM_BY_ID, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { FRIEND_BONUS, FRIEND_TREAT, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
-/** Friends: my code, my friends and their pets' cards. `missing` = the friends SQL hasn't been run yet. */
-export interface Friends { code: string; list: Friend[]; pets: FriendPet[]; missing?: boolean }
+/** Friends: my code, my friends and their pets' cards. `missing` = the friends SQL hasn't been run yet.
+    `given`: friends' pets I've given today's treat to; `treats: 'missing'` = the friend treats SQL hasn't been run yet. */
+export interface Friends { code: string; list: Friend[]; pets: FriendPet[]; missing?: boolean; given?: string[]; treats?: 'missing' }
+export type GiveResult = 'given' | 'already' | 'missing' | 'error';
 
 export interface Snapshot {
   ready: boolean;
@@ -42,6 +44,8 @@ export interface Snapshot {
   friends: Friends | null;
   /** New friends whose bonus just landed, for a card on Home (`scarf`: it was the first friend). */
   friendNews: { names: string[]; scarf: boolean } | null;
+  /** Friends' treats that just landed for a pet, for a line on Home ("Erin gave Chester a treat"). */
+  treatNews: { cat: string; names: string[] } | null;
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -53,7 +57,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -277,8 +281,11 @@ export class Store {
     try {
       const code = await r.friendCode(this.myName);
       const [list, pets] = await Promise.all([r.friends(), r.friendPets()]);
-      this.set({ friends: { code, list, pets } });
+      let given: string[] = []; let treats: 'missing' | undefined;
+      try { given = await r.treatsGiven(localDay(Date.now())); } catch (e) { if (String((e as Error)?.message).includes('treats-missing')) treats = 'missing'; else throw e; }
+      this.set({ friends: { code, list, pets, given, treats } });
       await this.rewardFriends(list);
+      await this.collectTreats(true);
     } catch (e) {
       if (String((e as Error)?.message).includes('friends-missing')) this.set({ friends: { code: '', list: [], pets: [], missing: true } });
       else throw e;
@@ -301,6 +308,40 @@ export class Store {
     return names;
   }
   dismissFriendNews() { this.set({ friendNews: null }); }
+
+  /** Give a friend's pet today's free treat (once a day per pet, checked by the server). */
+  async giveTreat(catId: string): Promise<GiveResult> {
+    const r = this.remote; if (!r || !this.snap.account) return 'error';
+    let out: GiveResult;
+    try { out = (await r.giveTreat(catId, localDay(Date.now()))) ? 'given' : 'already'; }
+    catch (e) { if (!String((e as Error)?.message).includes('treats-missing')) return 'error'; out = 'missing'; }
+    const f = this.snap.friends;
+    if (f) this.set({ friends: out === 'missing' ? { ...f, treats: 'missing' } : { ...f, given: [...new Set([...(f.given ?? []), catId])] } });
+    return out;
+  }
+  private treatsCheckedAt = new Map<string, number>();
+  /** Treats friends gave the pet being shown: each becomes +1 treat in its corner log, once (merged by id across the
+      household's phones), and a line on Home. Checked on sync at most once a minute per pet, and when Friends loads. */
+  async collectTreats(force = false): Promise<string[]> {
+    const r = this.remote; const cat = this.snap.cat; if (!r || !this.snap.account || !cat) return [];
+    if (!force && Date.now() - (this.treatsCheckedAt.get(cat.id) ?? 0) < 60_000) return [];
+    this.treatsCheckedAt.set(cat.id, Date.now());
+    let got: ReceivedTreat[];
+    try { got = await r.treatsFor(cat.id); } catch { return []; } // treats SQL not run yet, or offline
+    if (!newTreats(cat.corner, got).length) return [];
+    let fresh: ReceivedTreat[] = [];
+    const ok = await this.corner((c, now) => {
+      if (now.id !== cat.id) return null;
+      fresh = newTreats(c, got); if (!fresh.length) return null;
+      return { ...c, log: [...c.log, ...fresh.map((t) => ({ ...this.event('treat', treatId(t.from, t.day), FRIEND_TREAT, 0), by: t.from }))] };
+    });
+    if (!ok) return [];
+    const names = [...new Set(fresh.map((t) => t.fromName || 'A friend'))];
+    const prev = this.snap.treatNews?.cat === cat.name ? this.snap.treatNews.names : [];
+    this.set({ treatNews: { cat: cat.name, names: [...new Set([...prev, ...names])] } });
+    return names;
+  }
+  dismissTreatNews() { this.set({ treatNews: null }); }
   private friendsCheckedAt = 0;
   /** Every so often during sync: has someone added my code? Then their bonus lands here too. */
   private async checkFriends(r: Remote) {
@@ -361,6 +402,7 @@ export class Store {
       await this.rebuild(cat, { household, sync: 'ok', careSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);
+      void this.collectTreats();
     } catch {
       this.set({ sync: 'offline' });
     }
@@ -414,7 +456,7 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null }); this.friendsCheckedAt = 0; }
+  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {
