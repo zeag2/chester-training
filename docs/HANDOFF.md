@@ -326,9 +326,12 @@ Items marked *(art)* suit the art session.
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
 - [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
   bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
-- [ ] **Bond levels unlock things** (S–M): idle behaviours and outfits per level (they unlock nothing yet).
-- [ ] **Nap tokens** (S): one every 7 days, protects the streak on a rest day; never a broken-streak message
-  (`Wallet.napTokens` exists, unused).
+- [x] **Bond levels unlock outfits** (done 2026-11-08): Buddies a bell collar, Pals a bow tie, Best friends an ear
+  flower, Partners in crime a party hat, Soulmates the crown, free (`BOND_LEVELS[].gift`, `owned(c, bond)`); the corner
+  says which level gives what. Still open *(art)*: idle behaviours per level.
+- [x] **Nap tokens** (done 2026-11-08): `streakInfo()` in `lib/stats.ts`: every 7 days trained earn a nap (keep up to
+  2), and a missed day spends one instead of resetting the streak; Train shows "· 1 nap saved". Derived from sets, so
+  it agrees on every phone (`Wallet.napTokens` stays unused).
 - [ ] **Mastery-only corner items** (S): e.g. a cozy box from Carrier comfort.
 - [ ] **Play moves found by petting** (S) *(art)*: a counter of moves discovered (`Wallet.playMoves`, unused).
 - [ ] **Photo album** (M): a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).

@@ -66,9 +66,11 @@ export function withCorner(e: Earned, c: Corner | undefined): Earned {
   return { ...e, treats, bond };
 }
 
-export function owned(c: Corner | undefined): Set<string> {
+/** What the pet owns: bought items, the scarf once it has a friend, and outfits its bond level has given it. */
+export function owned(c: Corner | undefined, bond = 0): Set<string> {
   const log = c?.log ?? [];
   const out = new Set(log.filter((e) => e.kind === 'buy' && e.item).map((e) => e.item!));
+  for (const l of BOND_LEVELS) if (l.gift && bond >= l.at) out.add(l.gift);
   if (log.some((e) => e.kind === 'friend')) out.add('scarf');
   return out;
 }
@@ -117,7 +119,7 @@ export function careReward(c: Corner | undefined, item: CareItem, history: CareI
   return { treats: base, why: 'entry' };
 }
 
-export function canBuy(item: ShopItem, balance: number, c: Corner | undefined): boolean { return !item.special && !owned(c).has(item.id) && balance >= item.price; }
+export function canBuy(item: ShopItem, balance: number, c: Corner | undefined, bond = 0): boolean { return !item.special && !owned(c, bond).has(item.id) && balance >= item.price; }
 
 /** The daily gift's size, the same on every phone for a given pet and day: 2 to 6 treats. */
 export function dailyGiftTreats(catId: string, day: string): number {
@@ -128,14 +130,17 @@ export function dailyGiftTreats(catId: string, day: string): number {
 export const giftClaimed = (c: Corner | undefined, day: string) => !!c?.log.some((e) => e.id === 'gift-' + day);
 export const playedToday = (c: Corner | undefined, day: string) => !!c?.log.some((e) => e.id === 'play-' + day);
 
-export const BOND_LEVELS = [
+/** `gift`: an outfit that becomes his for free on reaching that level (or he can buy it sooner). */
+export const BOND_LEVELS: { at: number; name: string; gift?: string }[] = [
   { at: 0, name: 'Getting to know you' },
-  { at: 3, name: 'Buddies' },
-  { at: 8, name: 'Pals' },
-  { at: 15, name: 'Best friends' },
-  { at: 25, name: 'Partners in crime' },
-  { at: 40, name: 'Soulmates' },
+  { at: 3, name: 'Buddies', gift: 'bell' },
+  { at: 8, name: 'Pals', gift: 'bowtie' },
+  { at: 15, name: 'Best friends', gift: 'flower' },
+  { at: 25, name: 'Partners in crime', gift: 'party' },
+  { at: 40, name: 'Soulmates', gift: 'crown' },
 ];
+/** The bond level that gives this item for free, if any. */
+export const bondGiftLevel = (itemId: string) => BOND_LEVELS.find((l) => l.gift === itemId);
 /** Level (1-based), its name, and how far along to the next one (0 to 1; 1 at the top level). */
 export function bondLevel(bond: number): { level: number; name: string; next: number | null; frac: number } {
   let i = 0; while (i + 1 < BOND_LEVELS.length && bond >= BOND_LEVELS[i + 1].at) i++;

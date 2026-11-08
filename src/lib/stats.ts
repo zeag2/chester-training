@@ -12,12 +12,19 @@ export function weekStats(sets: SetRecord[]) {
   const reps = w.reduce((a, s) => a + s.reps, 0), good = w.reduce((a, s) => a + s.good, 0);
   return { sessions: w.length, reps, good, rate: reps ? Math.round((100 * good) / reps) : 0 };
 }
-export function streak(sets: SetRecord[]): number {
-  const days = new Set(sets.map((s) => s.day)); let d = today(); let n = 0;
-  if (!days.has(d)) d = lastNDays(2)[0];
-  while (days.has(d)) { n++; d = new Date(Date.parse(d + 'T12:00:00Z') - 864e5).toISOString().slice(0, 10); }
-  return n;
+/** Days in a row with a set. A rest day never shows as a broken streak when a nap token covers it: every 7 days
+    trained earn one (keep up to 2), and a missed day uses one instead of resetting. Today never breaks it. */
+export function streakInfo(sets: SetRecord[], end = today()): { days: number; naps: number; napsUsed: number } {
+  const days = new Set(sets.map((s) => s.day)); if (!days.size) return { days: 0, naps: 0, napsUsed: 0 };
+  let d = [...days].sort()[0]; let n = 0, naps = 0, used = 0, since = 0;
+  while (d <= end) {
+    if (days.has(d)) { n++; since++; if (since === 7) { naps = Math.min(2, naps + 1); since = 0; } }
+    else if (d !== end) { if (naps > 0) { naps--; used++; } else { n = 0; since = 0; used = 0; } }
+    d = new Date(Date.parse(d + 'T12:00:00Z') + 864e5).toISOString().slice(0, 10);
+  }
+  return { days: n, naps, napsUsed: used };
 }
+export function streak(sets: SetRecord[]): number { return streakInfo(sets).days; }
 export function dailyRates(sets: SetRecord[]) {
   return lastNDays(7).map((d) => { const x = sets.filter((s) => s.day === d); const r = x.reduce((a, s) => a + s.reps, 0), g = x.reduce((a, s) => a + s.good, 0); return { day: d, rate: r ? Math.round((100 * g) / r) : null }; });
 }

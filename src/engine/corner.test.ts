@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CareItem } from './care';
-import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, careReward, CARE_TREATS, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
+import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, bondGiftLevel, careReward, CARE_TREATS, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
 
 const ev = (id: string, treats: number, at = 1, extra: Partial<CornerEvent> = {}): CornerEvent => ({ id, kind: 'buy', day: '2026-11-08', at, treats, bond: 0, ...extra });
 
@@ -73,5 +73,12 @@ describe('Chester’s corner', () => {
     // a vet visit in the last week
     expect(careReward(undefined, care('v', 'vet', { reason: 'Checkup' }, now - 2 * day), [], now)).toEqual({ treats: 2 + CARE_TREATS.vetVisit, why: 'vetVisit' });
     expect(careReward(undefined, care('v', 'vet', { reason: 'Checkup' }, now - 60 * day), [], now)!.why).toBe('entry');
+  });
+  it('gives an outfit free at each bond level from Buddies up', () => {
+    expect(owned(undefined, 2).has('bell')).toBe(false);
+    expect(owned(undefined, 3).has('bell')).toBe(true);
+    expect([...owned(undefined, 40)].sort()).toEqual(['bell', 'bowtie', 'crown', 'flower', 'party']);
+    expect(canBuy(ITEM_BY_ID.bell, 99, undefined, 3)).toBe(false);
+    expect(bondGiftLevel('crown')?.name).toBe('Soulmates');
   });
 });

@@ -4,7 +4,7 @@ import { suggestNext } from '../engine/plan';
 import { isStruggling } from '../engine/rules';
 import { SKILLS } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
-import { dailyRates, inProgress, streak, today, weekStats } from '../lib/stats';
+import { dailyRates, inProgress, streakInfo, today, weekStats } from '../lib/stats';
 import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import { usePetText } from '../lib/pet';
@@ -24,7 +24,7 @@ export function Train() {
   const t = today();
   const rewardedToday = sets.filter((s) => s.day === t && s.rewarded).length;
   const next = suggestNext(SKILLS, progress, sets, unlockedHidden, t)[0];
-  const ws = weekStats(sets); const st = streak(sets);
+  const ws = weekStats(sets); const si = streakInfo(sets); const st = si.days;
   const mastered = Object.values(progress).filter((p) => p.mastered).length;
   const learning = inProgress(progress, sets);
   const struggling = learning.find((d) => progress[d.id] && isStruggling(sets.filter((s) => s.skillId === d.id), progress[d.id]));
@@ -61,7 +61,7 @@ export function Train() {
         <div className="card grey" style={{ margin: 0 }}><p className="s">This week</p><b className="num" style={{ fontSize: 26 }}>{c1}</b><p className="s">sets</p></div>
         <div className="card grey" style={{ margin: 0 }}><p className="s">Success</p><b className="num" style={{ fontSize: 26 }}>{ws.reps ? c2 + '%' : '–'}</b><p className="s">{ws.good} of {ws.reps} reps</p></div>
         <div className="card grey" style={{ margin: 0 }}><p className="s">Mastered</p><b className="num" style={{ fontSize: 26 }}>{c3}</b><p className="s">of {SKILLS.filter((s) => !s.hidden || unlockedHidden.includes(s.id)).length} skills</p></div>
-        <div className="card grey" style={{ margin: 0 }}><p className="s">Streak</p><b className="num" style={{ fontSize: 26 }}>{c4}</b><p className="s">{st === 1 ? 'day' : 'days in a row'}</p></div>
+        <div className="card grey" style={{ margin: 0 }}><p className="s">Streak</p><b className="num" style={{ fontSize: 26 }}>{c4}</b><p className="s">{st === 1 ? 'day' : 'days in a row'}{si.naps ? ` · ${si.naps} nap${si.naps > 1 ? 's' : ''} saved` : ''}</p></div>
       </div>
       {sets.length > 0 && <div className="card grey">
         <div className="row"><b className="sp" style={{ fontSize: 16 }}>{pt('Is he getting it?')}</b><span className="s">Pass is 80%</span></div>

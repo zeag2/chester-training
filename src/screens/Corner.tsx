@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
-import { bondLevel, dailyGiftTreats, giftClaimed, ITEM_BY_ID, owned, playedToday, SHOP, type ShelfKind, type ShopItem } from '../engine/corner';
+import { BOND_LEVELS, bondGiftLevel, bondLevel, dailyGiftTreats, giftClaimed, ITEM_BY_ID, owned, playedToday, SHOP, type ShelfKind, type ShopItem } from '../engine/corner';
 import { localDay } from '../engine/day';
 import type { ReactionId } from '../chester/reactions';
 import { Icon, Paw } from '../ui/icons';
@@ -56,7 +56,7 @@ export function Corner() {
   if (!cat || !wallet) return null;
   const c = cat.corner;
   const day = localDay(Date.now());
-  const have = owned(c);
+  const have = owned(c, wallet.bond);
   const balance = Math.max(0, wallet.treats);
   const bond = bondLevel(wallet.bond);
   const giftReady = !giftClaimed(c, day);
@@ -100,7 +100,7 @@ export function Corner() {
         <div style={{ marginTop: 10 }}>
           <div className="row"><b className="sp">Bond: {bond.name}</b><span className="s num">Level {bond.level}</span></div>
           <div className="bar" style={{ marginTop: 8 }} role="progressbar" aria-label="Bond" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(bond.frac * 100)}><i style={{ width: `${Math.max(4, bond.frac * 100)}%` }} /></div>
-          <p className="s" style={{ marginTop: 6 }}>{bond.next == null ? pt('As close as it gets. He adores you.') : `${bond.next - wallet.bond} more bond to the next level. Gifts and daily play build it.`}</p>
+          <p className="s" style={{ marginTop: 6 }}>{bond.next == null ? pt('As close as it gets. He adores you.') : `${bond.next - wallet.bond} more bond to the next level${(() => { const g = BOND_LEVELS[bond.level]?.gift; return g && !have.has(g) ? `, which gives ${pt('him')} a free ${ITEM_BY_ID[g].name.toLowerCase()}` : ''; })()}. Gifts, play and friends build it.`}</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export function Corner() {
                 {item.kind === 'outfit' ? <Chester coat={cat.coat} eyes={cat.eyes} wear={item.id} mood="happy" width={74} />
                   : item.kind === 'cushion' ? <CushionArt id={item.id} width={120} /> : <ToyArt name={item.id} i={0} />}</div>
               <b style={{ fontSize: 15 }}>{item.name}</b>
-              <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}</p>
+              <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}{!mine && bondGiftLevel(item.id) ? ` · Free at ${bondGiftLevel(item.id)!.name}` : ''}</p>
               <span className="chip num" style={{ alignSelf: 'flex-start', background: mine ? 'var(--surface)' : 'var(--butter)', color: mine ? 'var(--ink)' : 'var(--butter-ink)' }}>
                 {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : item.special ? <><Icon name="lock" size={14} />Make a friend</> : <><Paw size={14} color="#d4a23a" />{label}</>}</span>
             </button>;
