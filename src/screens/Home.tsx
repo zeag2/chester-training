@@ -180,6 +180,8 @@ export function Home() {
       {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
+      {account && <a href="#/friends" className="card sky row" style={{ color: 'inherit' }}><div className="ico"><Icon name="hand" /></div>
+        <div className="sp"><b>Friends’ cats</b><p className="s">Add friends with a code and see their cats next to {cat.name}.</p></div></a>}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;

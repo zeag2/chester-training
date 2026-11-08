@@ -17,6 +17,7 @@ import { Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
+import { Friends } from './screens/Friends';
 import { setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
@@ -57,6 +58,7 @@ export default function App() {
     case 'settings': body = <Settings />; tab = 'settings'; break;
     case 'care': body = <Care />; tab = 'home'; break;
     case 'corner': body = <Corner />; tab = 'home'; break;
+    case 'friends': body = <Friends />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
   return <>{body}<TabBar active={tab} onPlus={plus} /></>;

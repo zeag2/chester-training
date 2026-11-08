@@ -6,7 +6,8 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, Member, Remote } from '../sync/remote';
+import type { Account, Friend, FriendPet, Member, PetCard, Remote } from '../sync/remote';
+import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
@@ -16,6 +17,8 @@ import { ITEM_BY_ID, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, wit
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
+/** Friends: my code, my friends and their pets' cards. `missing` = the friends SQL hasn't been run yet. */
+export interface Friends { code: string; list: Friend[]; pets: FriendPet[]; missing?: boolean }
 
 export interface Snapshot {
   ready: boolean;
@@ -35,6 +38,8 @@ export interface Snapshot {
   careSync: 'ok' | 'missing';
   /** Every pet on this phone, for the switcher. `cat` is the one being shown. */
   pets: Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'>[];
+  /** Loaded when the Friends screen opens; null when signed out or not loaded yet. */
+  friends: Friends | null;
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -46,7 +51,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [] };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -249,6 +254,39 @@ export class Store {
     }
   }
 
+  // ---- friends ----
+
+  /** The card friends see for the pet being shown: its look, outfit and a few highlights. */
+  cardFor(): PetCard | null {
+    const { cat, progress, sets, wallet } = this.snap; if (!cat) return null;
+    return { name: cat.name, wear: cat.corner?.wearing, cushion: cat.corner?.cushion,
+      mastered: Object.values(progress).filter((p) => p.mastered).map((p) => p.skillId),
+      setsWeek: weekStats(sets).sessions, streak: streak(sets), bond: wallet?.bond ?? 0 };
+  }
+  private published = new Map<string, string>();
+  private async publishCard(r: Remote, catId: string) {
+    const card = this.cardFor(); if (!card || this.snap.cat?.id !== catId) return;
+    const key = JSON.stringify(card); if (this.published.get(catId) === key) return;
+    try { await r.publishCard(catId, card); this.published.set(catId, key); } catch { /* friends SQL not run yet, or offline: next sync */ }
+  }
+  /** Load my friend code, my friends and their pets. */
+  async loadFriends(): Promise<void> {
+    const r = this.remote; if (!r || !this.snap.account) { this.set({ friends: null }); return; }
+    try {
+      const code = await r.friendCode(this.myName);
+      const [list, pets] = await Promise.all([r.friends(), r.friendPets()]);
+      this.set({ friends: { code, list, pets } });
+    } catch (e) {
+      if (String((e as Error)?.message).includes('friends-missing')) this.set({ friends: { code: '', list: [], pets: [], missing: true } });
+      else throw e;
+    }
+  }
+  /** Add a friend by their code: their name ('' if none), or null when the code is wrong. */
+  async addFriend(code: string): Promise<string | null> {
+    const name = await this.remote!.addFriend(code.trim()); if (name !== null) await this.loadFriends(); return name;
+  }
+  async removeFriend(userId: string) { await this.remote!.removeFriend(userId); await this.loadFriends(); }
+
   // ---- shared training ----
 
   /** Send what this phone has that the shared copy lacks, then take everything the shared copy has. */
@@ -294,6 +332,7 @@ export class Store {
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       await this.rebuild(cat, { household, sync: 'ok', careSync });
+      void this.publishCard(r, cat.id);
     } catch {
       this.set({ sync: 'offline' });
     }
@@ -347,7 +386,7 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off' }); }
+  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null }); }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {

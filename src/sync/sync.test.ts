@@ -254,4 +254,40 @@ describe('training Chester together', () => {
     await josh.sync(); await meg.sync();
     expect(meg.get().wallet!.bond).toBe(josh.get().wallet!.bond);
   });
+  it('adds friends by code both ways and shows only their pets’ cards', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.logSet({ ...pass });
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    await josh.buy('bell').catch(() => false);
+    const erin = device(server); await erin.load();
+    await erin.saveCat({ ...chester, name: 'Mochi', coat: 'orange' });
+    await erin.signIn('erin@example.com', 'catnip1', 'Erin', true, true);
+    await josh.sync(); await erin.sync();
+
+    await josh.loadFriends(); await erin.loadFriends();
+    const code = erin.get().friends!.code;
+    expect(code).toBeTruthy();
+    expect(await josh.addFriend('WRONG')).toBeNull();
+    expect(await josh.addFriend(josh.get().friends!.code)).toBeNull(); // not yourself
+    expect(await josh.addFriend(code.toLowerCase())).toBe('Erin');
+    expect(josh.get().friends!.list.map((f) => f.name)).toEqual(['Erin']);
+    const mochi = josh.get().friends!.pets;
+    expect(mochi.map((p) => [p.ownerName, p.card.name, p.card.coat])).toEqual([['Erin', 'Mochi', 'orange']]);
+    expect(mochi[0].card.setsWeek).toBe(0);
+
+    await erin.loadFriends(); // both ways, and her view shows Chester's published card
+    const ch = erin.get().friends!.pets[0];
+    expect([ch.ownerName, ch.card.name, ch.card.setsWeek]).toEqual(['Josh', 'Chester', 1]);
+
+    await erin.removeFriend(erin.get().friends!.list[0].userId);
+    await josh.loadFriends();
+    expect(josh.get().friends!.list).toEqual([]); expect(josh.get().friends!.pets).toEqual([]);
+  });
+  it('says friends need setting up until the friends SQL is run', async () => {
+    const server = new FakeServer(); server.friendsTable = false;
+    const a = device(server); await a.load(); await a.signIn('a@example.com', 'catnip1', 'A', false, true);
+    await a.loadFriends();
+    expect(a.get().friends?.missing).toBe(true);
+  });
 });

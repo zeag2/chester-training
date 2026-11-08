@@ -1,6 +1,6 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
-import type { Account, Member, Remote } from './remote';
+import type { Account, Member, PetCard, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
 
@@ -15,6 +15,10 @@ export class FakeServer {
   files = new Map<string, Blob>();
   reading: DocReading | null = null;
   online = true;
+  friendsTable = true;
+  profiles = new Map<string, { code: string; name: string }>();
+  friendships = new Set<string>();
+  cards = new Map<string, PetCard>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -84,4 +88,23 @@ export class FakeRemote implements Remote {
   async docUrl(path: string) { this.user(); return 'blob:' + path; }
   async removeDoc(path: string) { this.user(); this.s.files.delete(path); }
   async readDoc(path: string) { this.user(); if (!this.s.files.has(path)) throw new Error('missing'); if (!this.s.reading) throw new Error('reader-missing'); return this.s.reading; }
+
+  private fr() { const u = this.user(); if (!this.s.friendsTable) throw new Error('friends-missing'); return u; }
+  async friendCode(name: string) {
+    const u = this.fr(); const p = this.s.profiles.get(u.userId) ?? { code: this.s.next('F').toUpperCase(), name: '' };
+    if (name) p.name = name; this.s.profiles.set(u.userId, p); return p.code;
+  }
+  async addFriend(code: string) {
+    const u = this.fr(); const hit = [...this.s.profiles].find(([, p]) => p.code === code.trim().toUpperCase());
+    if (!hit || hit[0] === u.userId) return null;
+    this.s.friendships.add(u.userId + '|' + hit[0]); this.s.friendships.add(hit[0] + '|' + u.userId); return hit[1].name;
+  }
+  async friends() { const u = this.fr(); return [...this.s.friendships].filter((f) => f.startsWith(u.userId + '|')).map((f) => { const id = f.split('|')[1]; return { userId: id, name: this.s.profiles.get(id)?.name ?? '' }; }); }
+  async friendPets() {
+    const u = this.fr(); const mine = new Set(this.myHouses().map((h) => h.id));
+    return (await this.friends()).flatMap((f) => [...this.s.cats].filter(([, c]) => !mine.has(c.householdId) && this.s.houses.get(c.householdId)?.members.some((m) => m.userId === f.userId))
+      .map(([id, c]) => ({ owner: f.userId, ownerName: f.name, catId: id, card: { ...(this.s.cards.get(id) ?? {}), name: c.cat.name, coat: c.cat.coat, eyes: c.cat.eyes, sex: c.cat.sex, birthday: c.cat.birthday } as PetCard })));
+  }
+  async removeFriend(userId: string) { const u = this.fr(); this.s.friendships.delete(u.userId + '|' + userId); this.s.friendships.delete(userId + '|' + u.userId); }
+  async publishCard(catId: string, card: PetCard) { const u = this.fr(); if (!this.s.isMember(catId, u.userId)) throw new Error('not your pet'); this.s.cards.set(catId, structuredClone(card)); }
 }

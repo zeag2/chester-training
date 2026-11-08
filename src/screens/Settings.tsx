@@ -135,6 +135,7 @@ export function Settings() {
       <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set it up' : 'You'} onClick={() => setSheet('name')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
         value={m.owner ? 'Set it up' : 'In your household'} onClick={() => setPerson(m.userId)} />)}
+      <Row label="Friends" sub="Add friends with a code and see their cats" onClick={() => go('friends')} />
       {household && <Row label={others.length ? 'Invite someone else' : 'Invite someone to your household'} onClick={() => setSheet('invite')} />}
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? ${cat.name} stays on this phone; sign back in to sync again.`)) void store.signOut(); }} />

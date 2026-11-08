@@ -2,6 +2,11 @@ import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 
 export interface Account { userId: string; email: string }
+/** What friends see of a pet: its look and a few training highlights. Never care, documents or sets. */
+export interface PetCard { name: string; coat?: string; eyes?: string; sex?: 'm' | 'f'; birthday?: string; wear?: string; cushion?: string; mastered?: string[]; setsWeek?: number; streak?: number; bond?: number }
+export interface Friend { userId: string; name: string }
+export interface FriendPet { owner: string; ownerName: string; catId: string; card: PetCard }
+
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
 /** The shared copy of a cat. The app talks to Supabase through this; tests use an in-memory one. */
@@ -38,4 +43,14 @@ export interface Remote {
   removeDoc(path: string): Promise<void>;
   /** Ask the server to read a stored document and suggest log entries. */
   readDoc(path: string): Promise<DocReading>;
+
+  /** Friends. These throw 'friends-missing' until the friends SQL has been run. */
+  friendCode(name: string): Promise<string>;
+  /** Their name ('' if none), or null when the code is wrong or your own. */
+  addFriend(code: string): Promise<string | null>;
+  friends(): Promise<Friend[]>;
+  friendPets(): Promise<FriendPet[]>;
+  removeFriend(userId: string): Promise<void>;
+  /** Publish a pet's card for friends to see. */
+  publishCard(catId: string, card: PetCard): Promise<void>;
 }

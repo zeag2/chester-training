@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
-import type { Account, Member, Remote } from './remote';
+import type { Account, Friend, FriendPet, Member, PetCard, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
 const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -157,4 +157,19 @@ export class SupabaseRemote implements Remote {
     }
     return (data as { result: DocReading }).result;
   }
+
+  // ---- friends ----
+  private async rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
+    const r = await this.sb.rpc(fn, args);
+    if (r.error) throw new Error(/could not find the function|does not exist|schema cache|PGRST202/i.test(r.error.message + (r.error as { code?: string }).code) ? 'friends-missing' : r.error.message);
+    return r.data as T;
+  }
+  friendCode(name: string) { return this.rpc<string>('my_friend_code', { name }); }
+  addFriend(code: string) { return this.rpc<string | null>('add_friend', { code }); }
+  async friends(): Promise<Friend[]> { return ((await this.rpc<{ user_id: string; name: string }[]>('my_friends')) ?? []).map((r) => ({ userId: r.user_id, name: r.name })); }
+  async friendPets(): Promise<FriendPet[]> {
+    return ((await this.rpc<{ owner: string; owner_name: string; cat_id: string; card: PetCard }[]>('friend_pets')) ?? []).map((r) => ({ owner: r.owner, ownerName: r.owner_name, catId: r.cat_id, card: r.card }));
+  }
+  async removeFriend(userId: string) { await this.rpc('remove_friend', { friend: userId }); }
+  async publishCard(catId: string, card: PetCard) { await this.rpc('set_pet_card', { c: catId, card }); }
 }

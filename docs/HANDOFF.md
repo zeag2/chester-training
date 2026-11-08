@@ -43,6 +43,14 @@ ready to share with friends.
   The remembered name is stored **per account**, not per phone.
 - Works offline: sets and care save on the phone and sync when back online, never doubled.
 
+### Friends (`#/friends`, from Home and Settings)
+- Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
+- Friends see a **card** for each of each other's pets: look, outfit, age, skills mastered, streak, sets this week,
+  bond. Never the pet record, care, documents or training sets. Each household publishes its pet's card on sync
+  (`cardFor`/`publishCard` in `store.ts`, `set_pet_card` in SQL); `friend_pets()` returns only the card plus name and look.
+- Needs `20261110000000_friends.sql` (run it in the Supabase SQL editor). Until then the screen says friends aren't
+  switched on yet; nothing else is affected.
+
 ### Multiple pets
 - Settings, then Pets, then **Add another pet** (pet questions only). A switcher shows on Home when there's more than
   one pet. The pet being shown is remembered.
@@ -108,7 +116,7 @@ ready to share with friends.
     zooms back and owns it.
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon (wearing his
   outfit). Each 3.8 s pass swoops in fast, glides slowly across, zips out fast (`PASS_MS` in `RainbowDash.tsx`;
-  keyframes follow Chester, not the long trail). The original 8-bit tune is fitted to the whole dash (~7.6 s (deliberately not the Nyan Cat song).
+  keyframes follow Chester, not the long trail). The original 8-bit tune is fitted to the whole dash (~7.6 s), and is deliberately not the Nyan Cat song.
 - **Sounds:** clicker and reward are recorded samples (`public/sfx`). Chirp, purr, meow, litter digging and the tune
   are synthesized in `src/lib/audio.ts`.
 
@@ -222,6 +230,7 @@ supabase/
     20261108180000_vet_docs.sql          pet-docs storage bucket + policies, 'doc' care kind
     20261108230000_household_tools.sql   cat_people, member removal (superseded by households, harmless)
     20261109000000_households.sql        households, migration of existing sharing, join_household, household_people
+    20261110000000_friends.sql           friend codes, friendships, pet cards, add_friend/friend_pets/set_pet_card
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -251,7 +260,8 @@ npm run build      # what CI runs
 - **Database policy tests:** start a throwaway Postgres 16, load `supabase/tests/stub_auth.sql` and
   `stub_storage.sql`, then the migrations in order, then `rls_test.sql`; run `care_test.sql`, `docs_test.sql` and
   `household_test.sql` each in their own `psql` session (the households migration goes before them). The households
-  test removes members at the end, so run it last.
+  test removes members at the end, so run it last (it also needs user D from `people_test.sql`). `friends_test.sql`
+  sets up its own people: run it right after the friends migration (stubs, all migrations, `rls_test` before households).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Supabase changes:** Josh runs SQL himself in the dashboard's SQL editor (cloud sessions can't reach supabase.com).
   Keep migrations idempotent (`if not exists`, `drop policy if exists`) and paste them into chat for him.
