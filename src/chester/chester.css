@@ -620,3 +620,21 @@ button.tapme.stroking:active{transform:none}
 .kc.rigged.dance .all,.kc.rigged.dance .shadow,.kc.rigged.dance .head,.kc.rigged.dance .earL,.kc.rigged.dance .earR,
 .kc.rigged.dance .pawL,.kc.rigged.dance .pawR:not(.raised){animation:none}
 .tapme.r1 .kc.rigged,.tapme.r6 .kc.rigged,.tapme.r11 .kc.rigged,.tapme.r14 .kc.rigged{animation:none}
+
+/* ---- blinks: an eyelid in his coat colour drops over each eye and lifts, instead of squashing the eye flat ---- */
+.kc .eyes{animation:none}
+.kc .lids{transform-origin:100px 72px;transform:scaleY(0);animation:klid 4.9s infinite}
+@keyframes klid{0%,88.5%,100%{transform:scaleY(0)}90.5%,91.5%{transform:scaleY(1)}93.5%{transform:scaleY(0)}}
+.tapme.stroking .lids,.kc.slowblink .lids{animation:none}
+.kc.slowblink .lids{animation:kslowlid 3.6s var(--sine) infinite}
+@keyframes kslowlid{0%,18%,82%,100%{transform:scaleY(0)}38%,62%{transform:scaleY(1)}}
+
+/* ---- walking: diagonal pairs swing together with a little lift, quick enough that the feet keep up ---- */
+.kc.pose-walk .legFL,.kc.pose-walk .legBR{animation:kgait .5s var(--sine) infinite}
+.kc.pose-walk .legFR,.kc.pose-walk .legBL{animation:kgait .5s var(--sine) infinite -.25s}
+@keyframes kgait{0%,100%{transform:rotate(20deg)}25%{transform:rotate(0deg) translateY(-4px)}50%{transform:rotate(-20deg)}75%{transform:rotate(0deg)}}
+.kc.pose-walk .all{animation:kwalkbob .25s var(--sine) infinite alternate}
+@keyframes kwalkbob{from{transform:translateY(0)}to{transform:translateY(-2.5px)}}
+
+/* ---- yarn batting: the rig moves his body and head with the swats, so only the paw is CSS here ---- */
+.kc.rigged.bat .head{animation:none}

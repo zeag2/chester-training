@@ -93,6 +93,18 @@ export const MOVES: Record<string, { ms: number; loop?: boolean; keys: Key[] }> 
     { t: 0.82, x: 46, y: 0, sx: 0.98, sy: 1.03, head: 0, hy: 0, lean: 0 },
     { t: 1, ...REST },                                                        // pad back to his spot
   ] },
+  // yarn batting, on the same 3 s beat as the paw's burst of swats and the ball's nudge: lean in, swat, settle, watch
+  bat: { ms: 3000, loop: true, keys: [
+    { t: 0, head: 5, hy: 1 },
+    { t: 0.03, lean: 1, sy: 0.97, sx: 1.02 },
+    { t: 0.06, lean: 5, head: 9, hy: 2, sy: 1.02, sx: 0.99 },
+    { t: 0.12, lean: 2, head: 6 },
+    { t: 0.18, lean: 5, head: 9, sy: 1.02 },
+    { t: 0.28, lean: 0, head: 4, hy: 1, sy: 1, sx: 1 },
+    { t: 0.5, head: -2, hy: 0 },
+    { t: 0.75, head: 4 },
+    { t: 1, head: 5, hy: 1 },
+  ] },
   dance: { ms: 1100, loop: true, keys: [
     { t: 0, lean: -6, head: 7, y: 0, sx: 1.06, sy: 0.92, legL: 0, legR: 0.5 },
     { t: 0.25, lean: 0, head: 0, y: -9, sx: 0.97, sy: 1.05, legL: 0, legR: 0 },
@@ -130,6 +142,7 @@ export class Rig {
   private move: { name: string; t0: number } | null = null;
   private legs: { L: SVGGElement | null; R: SVGGElement | null } = { L: null, R: null };
   private shadow: SVGGElement | null = null;
+  private svg: SVGSVGElement | null = null;
   private raf = 0; private last = 0; private t0 = performance.now(); private flickAt = 0; private flick = 0;
   /** Finger lean, -1..1, while stroking; null otherwise. */
   stroke: number | null = null;
@@ -146,6 +159,8 @@ export class Rig {
     this.legs = { L: q('.r-legL'), R: q('.r-legR') }; this.shadow = q('.r-shadow');
     svg.classList.add('rigged');
     if (svg.classList.contains('dance') && !this.lying) this.play('dance');
+    if (svg.classList.contains('bat') && !this.lying) this.play('bat');
+    this.svg = svg;
     this.flickAt = this.t0 + 2500 + Math.random() * 4000;
     this.start();
   }
@@ -176,6 +191,8 @@ export class Rig {
     const t = (now - this.t0) / 1000; const s = this.s;
     let m = sampleMove([{ t: 0 }, { t: 1 }], 0);
     if (this.move) {
+      // a paused training session freezes the move where it is, like the CSS paw
+      if (this.svg?.closest('.paused')) this.move.t0 += dt;
       const def = MOVES[this.move.name]; let u = (now - this.move.t0) / def.ms;
       if (u >= 1) { if (def.loop) { u %= 1; } else { this.move = null; u = 1; } }
       m = sampleMove(def.keys, Math.min(1, u));

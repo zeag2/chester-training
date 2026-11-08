@@ -57,6 +57,11 @@ export function head(c: Coat, eyeKey: string, mood: Mood, uid: string): string {
         + `<circle cx="${cx + 4.5}" cy="83" r="4.8" fill="#fff"/><circle cx="${cx - 4.5}" cy="96" r="2.2" fill="#fff"/><circle cx="${cx + 6}" cy="94" r="1.2" fill="#fff" opacity=".8"/>`;
     }
     eyes += '</g></g>';
+    // eyelids for blinking: coat-coloured lids clipped to the eyes, with a lash line at the bottom edge
+    const lid = c.point ?? c.base;
+    eyes += `<defs><clipPath id="ey${uid}"><ellipse cx="74" cy="89" rx="16.4" ry="17.9"/><ellipse cx="126" cy="89" rx="16.4" ry="17.9"/></clipPath></defs>`
+      + `<g clip-path="url(#ey${uid})"><g class="lids"><rect x="54" y="70" width="92" height="38" fill="${lid}"/>`
+      + `<path d="M60 96 Q74 104 88 96 M112 96 Q126 104 140 96" stroke="${c.line}" stroke-width="4" fill="none" stroke-linecap="round"/></g></g>`;
   }
   const mouth = mood === 'open'
     ? `<path d="M90 113 Q100 132 110 113 Z" fill="#7a2f3a" stroke="${c.line}" stroke-width="3" stroke-linejoin="round"/><path d="M94 122 Q100 128 106 122" fill="#ef8f9a"/>`
