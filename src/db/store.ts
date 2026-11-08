@@ -148,7 +148,11 @@ export class Store {
       await r.pushSets(mine.filter((s) => !known.has(s.id)).sort(bySetOrder));
       if (theirs.length) await this.db.sets.bulkPut(theirs);
       const shared = await r.getCat(cat.id);
-      const household = shared ? { inviteCode: shared.inviteCode, members: await r.members(cat.id) } : null;
+      let household = shared ? { inviteCode: shared.inviteCode, members: await r.members(cat.id) } : null;
+      // keep my name in step both ways: fill it in online if it's missing there, remember it here for offline
+      const meRow = household?.members.find((m) => m.userId === account.userId);
+      if (meRow && !meRow.name && this.myName) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
+      else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       await this.rebuild(cat, { household, sync: 'ok' });
     } catch {
       this.set({ sync: 'offline' });
@@ -182,6 +186,15 @@ export class Store {
       await this.rebuild(await this.adopt(id));
       return true;
     }).then(async (ok) => { if (ok) await this.sync(); return ok; });
+  }
+
+  /** Change the name the other trainer sees, and the one Home greets on this phone. */
+  async renameMe(name: string) {
+    const n = name.trim().slice(0, 40); if (!n) return;
+    this.myName = n;
+    const cat = this.snap.cat; const a = this.snap.account;
+    if (cat && a && this.remote) { await this.remote.setName(cat.id, n).catch(() => {}); await this.sync(); }
+    else this.set({});
   }
 
   async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off' }); }

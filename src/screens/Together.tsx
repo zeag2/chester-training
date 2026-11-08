@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { sharingConfigured } from '../sync/config';
@@ -145,6 +145,9 @@ function Top({ onBack, title }: { onBack: () => void; title: string }) {
 export function TogetherCard() {
   const { cat, account, household, sync } = useStore();
   const [copied, setCopied] = useState(false);
+  const savedName = household?.members.find((m) => m.userId === account?.userId)?.name || store.myName;
+  const [myName, setMyName] = useState(savedName);
+  useEffect(() => { setMyName(savedName); }, [savedName]);
   if (!sharingConfigured() || !cat) return null;
   if (!account) return <div className="card sky">
     <b>Train {cat.name} together</b>
@@ -162,6 +165,11 @@ export function TogetherCard() {
   return <div className="card sky">
     <b>Training together</b>
     <p className="s" style={{ marginTop: 4 }}>{names.length ? names.join(' · ') : account.email}</p>
+    <label className="field" htmlFor="myname">Your name</label>
+    <div className="row" style={{ gap: 8 }}>
+      <input id="myname" className="in" style={{ background: 'var(--surface)' }} value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="So Home can greet you" autoComplete="given-name" />
+      <button className="btn2" style={{ background: 'var(--surface)' }} disabled={!myName.trim() || myName.trim() === savedName} onClick={() => void store.renameMe(myName)}>{myName.trim() && myName.trim() === savedName ? 'Saved' : 'Save'}</button>
+    </div>
     {household && names.length < 2 && <p className="s" style={{ marginTop: 8 }}>Invite someone with this code:</p>}
     {household && <div className="row" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
       <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: 3, fontVariantNumeric: 'tabular-nums' }}>{household.inviteCode}</span>

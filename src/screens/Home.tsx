@@ -125,7 +125,8 @@ export function Home() {
     <div className="stag" style={{ position: 'relative' }}>
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
-        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Training {cat.name} with {partners.join(' and ')}</p>}</div>
+        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Training {cat.name} with {partners.join(' and ')}</p>}
+        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
         <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}

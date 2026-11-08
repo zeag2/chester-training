@@ -85,6 +85,21 @@ describe('training Chester together', () => {
     expect(phone2.get().sets).toHaveLength(1);
   });
 
+  it('greets each trainer by their own name, fills in a missing name, and lets you change it', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const sam = device(server); await sam.load();
+    await sam.signIn('sam@example.com', 'catnip1', '', false, true); // signed up without a name
+    await sam.join(josh.get().household!.inviteCode, '');
+    const nameOf = (s: Store) => s.get().household!.members.find((m) => m.userId === s.get().account!.userId)!.name;
+    expect(nameOf(josh)).toBe('Josh');
+    await sam.renameMe('Sam');
+    expect(nameOf(sam)).toBe('Sam');
+    await josh.sync();
+    expect(josh.get().household!.members.map((m) => m.name)).toEqual(['Josh', 'Sam']);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });
