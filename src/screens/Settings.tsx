@@ -27,6 +27,8 @@ export function Settings() {
     <div className="seg" role="group" aria-label="Appearance">{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div>
     <label className="field" htmlFor="nm">Name</label>
     <div className="row"><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} /><button className="btn2" onClick={() => store.saveCat({ ...cat, name: name.trim() || cat.name })}>Save</button></div>
+    <span className="field">Boy or girl?</span>
+    <div className="seg" role="group" aria-label="Boy or girl">{([['m', 'Boy'], ['f', 'Girl']] as const).map(([v, l]) => <button key={v} className={(cat.sex ?? 'm') === v ? 'on' : ''} aria-pressed={(cat.sex ?? 'm') === v} onClick={() => void store.saveCat({ ...cat, sex: v })}>{l}</button>)}</div>
     <TogetherCard />
     {showInstall && <div className="card butter"><b>Put {cat.name} on your home screen</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>In Safari, tap the Share button, then "Add to Home Screen". It opens full screen like an app and works offline.</p></div>}
     <div className="card grey"><b>Backup</b><p className="s" style={{ marginTop: 4 }}>{account ? 'Saved on this phone and online. You can also download a copy.' : 'Everything is saved on this phone only. Download a backup file now and then.'}</p><button className="btn2" style={{ marginTop: 10, background: 'var(--surface)' }} onClick={exportData}>Download backup</button></div>

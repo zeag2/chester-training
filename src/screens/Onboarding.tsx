@@ -7,6 +7,7 @@ import { ageText } from '../lib/stats';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { sharingConfigured } from '../sync/config';
+import { petText } from '../lib/pet';
 import { AccountForm, CodeForm, StepLabel } from './Together';
 
 const REWARDS = [
@@ -31,15 +32,18 @@ export function Onboarding() {
   const [invited, setInvited] = useState(false);
   const { account } = useStore();
   const [myName, setMyName] = useState('');
-  const [name, setName] = useState('Chester');
-  const [birthday, setBirthday] = useState('2026-04');
-  const [homeDate, setHomeDate] = useState('2026-11-01');
-  const [breed, setBreed] = useState('American Shorthair, black');
+  const [name, setName] = useState('');
+  const [sex, setSex] = useState<'m' | 'f'>('m');
+  const [birthday, setBirthday] = useState('');
+  const [homeDate, setHomeDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [breed, setBreed] = useState('');
   const [weight, setWeight] = useState('');
   const [coat, setCoat] = useState('black');
   const [eyes, setEyes] = useState('gold');
   const [rewards, setRewards] = useState<string[]>(['treats', 'petting']);
   const next = (n: number) => { audio.chirp(true); setStep(n); };
+  const pt = (x: string) => petText(x, { name: name.trim() || 'your cat', sex });
+  const He = sex === 'f' ? 'She' : 'He';
   const total = !sharingConfigured() ? 5 : invited ? 4 : 7;
   const dots = (n: number) => { const at = sharingConfigured() ? n : n === 1 ? 1 : n - 2; return <div className="dots" aria-label={`Step ${at} of ${total}`}>{Array.from({ length: total }, (_, i) => <i key={i} className={i + 1 === at ? 'on' : ''} />)}</div>; };
   const back = (n: number, label: string) => <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => setStep(n)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{label}</b></div>;
@@ -71,20 +75,22 @@ export function Onboarding() {
     <CodeForm name={myName} onDone={() => go('home')} />
     <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(4)}</div></div></>);
 
-  if (step === 4) return wrap(<>{back(!sharingConfigured() ? 1 : account ? 2 : 3, 'About him')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+  if (step === 4) return wrap(<>{back(!sharingConfigured() ? 1 : account ? 2 : 3, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>Who are we training?</h1><p className="m" style={{ marginTop: 6 }}>You can change this later.</p>
-    <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" />
+    <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" placeholder="Your cat’s name" />
+    <span className="field">Boy or girl?</span>
+    <div className="seg" role="group" aria-label="Boy or girl"><button className={sex === 'm' ? 'on' : ''} aria-pressed={sex === 'm'} onClick={() => setSex('m')}>Boy</button><button className={sex === 'f' ? 'on' : ''} aria-pressed={sex === 'f'} onClick={() => setSex('f')}>Girl</button></div>
     <div style={{ display: 'flex', gap: 10 }}>
       <div style={{ flex: 1, minWidth: 0 }}><label className="field" htmlFor="bd">Birthday (a guess is fine)</label><input id="bd" className="in" type="month" value={birthday} onChange={(e) => setBirthday(e.target.value)} /></div>
       <div style={{ flex: 1, minWidth: 0 }}><label className="field" htmlFor="hd">Home since</label><input id="hd" className="in" type="date" value={homeDate} onChange={(e) => setHomeDate(e.target.value)} /></div>
     </div>
-    <label className="field" htmlFor="br">Breed and coat</label><input id="br" className="in" value={breed} onChange={(e) => setBreed(e.target.value)} />
+    <label className="field" htmlFor="br">Breed and coat</label><input id="br" className="in" value={breed} onChange={(e) => setBreed(e.target.value)} placeholder="e.g. Tabby, Siamese, black shorthair" />
     <label className="field" htmlFor="wt">Weight in pounds (optional)</label><input id="wt" className="in" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="lb" />
-    {birthday && <div className="card butter row" style={{ marginTop: 16 }}><Paw color="#d4a23a" size={24} /><p className="s" style={{ color: 'var(--butter-ink)' }}>{name || 'He'} is {ageText(birthday)}. A great age to start.</p></div>}
+    {birthday && <div className="card butter row" style={{ marginTop: 16 }}><Paw color="#d4a23a" size={24} /><p className="s" style={{ color: 'var(--butter-ink)' }}>{name || He} is {ageText(birthday)}. A great age to start.</p></div>}
     {foot(4, 'Next', () => { setCoat(guessCoat(breed)); next(5); }, !name.trim())}</div></>);
 
-  if (step === 5) return wrap(<>{back(4, 'His look')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-    <h1>Let's build {name}</h1><p className="m" style={{ marginTop: 6 }}>We started from "{breed}". Change anything.</p>
+  if (step === 5) return wrap(<>{back(4, sex === 'f' ? 'Her look' : 'His look')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <h1>Let's build {name}</h1><p className="m" style={{ marginTop: 6 }}>{breed ? <>We started from "{breed}". Change anything.</> : 'Pick the closest coat and eye colour.'}</p>
     <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 12px 12px' }}>
       <Chester key={coat + eyes} coat={coat} eyes={eyes} raised anim="wave" width={170} interactive label={name} />
       <b style={{ fontSize: 16, marginTop: 6 }}>{COATS[coat].name} · {EYES[eyes].name} eyes</b></div>
@@ -100,7 +106,7 @@ export function Onboarding() {
     {foot(5, `That's ${name}!`, () => next(6))}</div></>);
 
   if (step === 6) return wrap(<>{back(5, 'Rewards')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-    <h1>What does {name} love most?</h1><p className="m" style={{ marginTop: 6 }}>This becomes his paycheck. Pick up to two.</p>
+    <h1>What does {name} love most?</h1><p className="m" style={{ marginTop: 6 }}>{pt('This becomes his paycheck. Pick up to two.')}</p>
     {REWARDS.map((r) => { const on = rewards.includes(r.id); return <button key={r.id} className={`card ${r.bg} row`} aria-pressed={on} style={{ outline: on ? '2.5px solid var(--ink)' : 'none' }}
       onClick={() => { audio.chirp(); setRewards(on ? rewards.filter((x) => x !== r.id) : [...rewards, r.id].slice(-2)); }}>
       <div className="ico"><Icon name={r.icon} /></div><div className="sp"><b style={{ fontSize: 16 }}>{r.title}</b><p className="s">{r.sub}</p></div>{on && <span className="chip">Picked</span>}</button>; })}
@@ -110,13 +116,14 @@ export function Onboarding() {
   const rule = (n: number, bg: string, t: string, s: string) => <div className={`card ${bg} row`} style={{ alignItems: 'flex-start' }}><div className="ico" style={{ fontWeight: 800, fontSize: 18 }}>{n}</div><div><b style={{ fontSize: 16 }}>{t}</b><p className="s" style={{ marginTop: 2 }}>{s}</p></div></div>;
   return wrap(<>{back(6, 'How it works')}<div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>Three house rules</h1>
-    {rule(1, 'mint', 'Keep it tiny', '1 to 3 minutes, up to 3 times a day. Stop while he still wants more.')}
-    {rule(2, 'peach', 'Click, then treat', 'Click the moment he does it. Every click gets a reward.')}
-    {rule(3, 'sky', 'He can say no', 'Ears back or walking away means stop. Try again later.')}
+    {rule(1, 'mint', 'Keep it tiny', pt('1 to 3 minutes, up to 3 times a day. Stop while he still wants more.'))}
+    {rule(2, 'peach', 'Click, then treat', pt('Click the moment he does it. Every click gets a reward.'))}
+    {rule(3, 'sky', `${He} can say no`, 'Ears back or walking away means stop. Try again later.')}
     <div className="card butter"><b>First up: Charge the clicker</b><p className="s" style={{ marginTop: 2 }}>Click, treat, repeat 10 times. {name} learns that the click means something good.</p></div>
+    {sharingConfigured() && <p className="s" style={{ marginTop: 12 }}>Your pet’s info is saved to PalDex’s online database so it’s backed up and can be shared with people you invite. Only you and the people you invite see it in the app; the person who runs this PalDex can see the database.</p>}
     {foot(7, `Start ${name}'s first session`, async () => {
       audio.sparkle();
-      await store.saveCat({ name: name.trim() || 'Chester', birthday, homeDate, breed, coat, eyes, weightLb: weight ? Number(weight) : undefined, rewards, outfit: '' });
+      await store.saveCat({ name: name.trim() || 'Kitty', sex, birthday, homeDate, breed, coat, eyes, weightLb: weight ? Number(weight) : undefined, rewards, outfit: '' });
       go('session/clicker');
     })}</div></>);
 }

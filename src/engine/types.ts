@@ -64,6 +64,8 @@ export interface Cat {
   weightLb?: number;
   rewards: string[];
   outfit: string;
+  /** Boy or girl, for he/she in the app's text. Missing = boy (cats set up before this existed). */
+  sex?: 'm' | 'f';
   createdAt: number;
   updatedAt?: number;
   /** Treats, bond and toys earned before sets kept their gifts (set once when upgrading). */

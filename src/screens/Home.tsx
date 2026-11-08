@@ -10,6 +10,7 @@ import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { CareCard } from './Care';
+import { usePetText } from '../lib/pet';
 import type { ReactionId } from '../chester/reactions';
 
 const PH = (h: number) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night');
@@ -94,6 +95,7 @@ export function Home() {
   const partners = (household?.members ?? []).filter((m) => m.userId !== account?.userId && m.name).map((m) => m.name);
   const [line, setLine] = useState('');
   const { doze, knead, wake } = useHomeMood();
+  const pt = usePetText();
   const ph0 = PH(new Date().getHours());
   const { meowN, meowLine, gag, gagLine, stink } = useHomeLife(ph0 === 'night', doze, wake);
   const [shown, setShown] = useState<'pet' | 'meow' | 'gag'>('pet');
@@ -133,13 +135,13 @@ export function Home() {
         <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}
           raised={!gag && !done && !night && !doze && sets.length === 0} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
           width={104} interactive label={cat.name} onPet={(l) => { setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
-        <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine}</span></div>
+        <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>
       </div>
       <div className="card mint" style={{ padding: 18 }}>
         <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today's sets</b><span className="chip num">{Math.min(rewardedToday, DAILY_REWARDED_SETS)} of {DAILY_REWARDED_SETS}</span></div>
         <div className="row" style={{ gap: 10, marginTop: 10 }}>{Array.from({ length: DAILY_REWARDED_SETS }, (_, i) => <span key={i} className="pop" style={{ animationDelay: `${i * 90}ms`, display: 'inline-flex' }}><Paw size={34} color={i < rewardedToday ? 'var(--ink)' : 'var(--faint)'} /></span>)}</div>
         {next && !done && <div className="card white" style={{ marginTop: 14, padding: 14 }}>
-          <div className="row"><div className="ico peach"><Icon name={ICON_FOR[next.skill.branch]} /></div><div className="sp"><p className="s">{next.kind === 'review' ? 'Review' : next.kind === 'start' ? 'Up next · new skill' : 'Up next'}</p><b style={{ fontSize: 16 }}>{next.skill.name}</b><p className="s">Step {(progress[next.skill.id]?.step ?? 0) + 1}: {next.skill.steps[progress[next.skill.id]?.step ?? 0]}</p></div></div>
+          <div className="row"><div className="ico peach"><Icon name={ICON_FOR[next.skill.branch]} /></div><div className="sp"><p className="s">{next.kind === 'review' ? 'Review' : next.kind === 'start' ? 'Up next · new skill' : 'Up next'}</p><b style={{ fontSize: 16 }}>{next.skill.name}</b><p className="s">Step {(progress[next.skill.id]?.step ?? 0) + 1}: {pt(next.skill.steps[progress[next.skill.id]?.step ?? 0])}</p></div></div>
           <button className="btn" style={{ marginTop: 12 }} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
         {done && <p className="s" style={{ marginTop: 10 }}>Daily goal done. {cat.name} is napping; rewards reset tomorrow.</p>}
       </div>
@@ -152,7 +154,7 @@ export function Home() {
         <div className="card grey" style={{ margin: 0 }}><p className="s">Streak</p><b className="num" style={{ fontSize: 26 }}>{c4}</b><p className="s">{st === 1 ? 'day' : 'days in a row'}</p></div>
       </div>
       {sets.length > 0 && <div className="card grey">
-        <div className="row"><b className="sp" style={{ fontSize: 16 }}>Is he getting it?</b><span className="s">Pass is 80%</span></div>
+        <div className="row"><b className="sp" style={{ fontSize: 16 }}>{pt('Is he getting it?')}</b><span className="s">Pass is 80%</span></div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }} role="img" aria-label={'Success rate by day: ' + rates.map((r) => `${r.day} ${r.rate ?? 'no sets'}`).join(', ')}>
           {rates.map((r, i) => <div key={r.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
             <span className="s num" style={{ fontSize: 11 }}>{r.rate == null ? '' : r.rate + '%'}</span>

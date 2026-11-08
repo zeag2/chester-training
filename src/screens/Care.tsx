@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
+import { usePetText } from '../lib/pet';
 import {
   dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
@@ -32,6 +33,7 @@ type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[Care
 
 export function Care() {
   const { cat, care, careSync, account, household } = useStore();
+  const pt = usePetText();
   const [editing, setEditing] = useState<Editing>(null);
   const [flags, setFlags] = useState(false);
   const due = useMemo(() => reminders(care), [care]);
@@ -45,14 +47,14 @@ export function Care() {
   return <div className="screen">
     <div className="top" style={{ marginLeft: -10 }}><button className="iconbtn" aria-label="Back to Home" onClick={() => go('home')}><Icon name="back" /></button></div>
     <h1>{cat.name}’s care</h1>
-    <p className="m" style={{ marginTop: 4 }}>Food he likes, his health log and what’s coming up{household && household.members.length > 1 ? ', shared with everyone who trains him' : ''}.</p>
+    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with everyone who trains him' : ''}.</p>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
     <button className="card peach row" style={{ alignItems: 'flex-start' }} onClick={() => setFlags(!flags)} aria-expanded={flags}>
       <div className="ico"><Icon name="ear" /></div>
       <div className="sp"><b>When to call the vet now</b>
         {!flags && <p className="s" style={{ color: 'var(--peach-ink)' }}>Tap to see the warning signs.</p>}
-        {flags && <><ul className="s" style={{ color: 'var(--peach-ink)', margin: '6px 0 0', paddingLeft: 18 }}>{RED_FLAGS.map((f) => <li key={f} style={{ marginTop: 4 }}>{f}</li>)}</ul>
+        {flags && <><ul className="s" style={{ color: 'var(--peach-ink)', margin: '6px 0 0', paddingLeft: 18 }}>{RED_FLAGS.map((f) => <li key={f} style={{ marginTop: 4 }}>{pt(f)}</li>)}</ul>
           <p className="s" style={{ marginTop: 8, color: 'var(--peach-ink)' }}>This app can’t diagnose anything. If you’re unsure, call your vet or an emergency vet.</p></>}
       </div>
     </button>
@@ -75,7 +77,7 @@ export function Care() {
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p></div>}
 
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
-    {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.</p>}
+    {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
     {(['love', 'ok', 'no'] as Verdict[]).map((v) => { const list = foods.filter((f) => f.data.verdict === v); if (!list.length) return null;
       return <div key={v} style={{ marginTop: 12 }}><p className="s" style={{ fontWeight: 800 }}>{VERDICT_LABEL[v]}</p>
         {list.map((f) => <button key={f.id} className="item" onClick={() => setEditing({ kind: 'food', item: f })}>
@@ -117,6 +119,7 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 /** Bottom sheet with the form for one kind of entry; also edits and deletes. */
 function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
+  const pt = usePetText();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
   const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
@@ -142,7 +145,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
       {kind === 'food' && <>{f.image && <img src={f.image} alt="" style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 12, background: '#fff', marginTop: 12 }} />}
         {text('Name', 'name', { placeholder: 'e.g. Chicken pâté' })}{text('Brand (optional)', 'brand')}
         {seg<FoodType>('Type', 'type', [['dry', 'Dry'], ['wet', 'Wet'], ['treat', 'Treat'], ['other', 'Other']])}
-        {seg<Verdict>('What he thinks', 'verdict', [['love', 'Loves it'], ['ok', 'It’s OK'], ['no', 'Won’t eat it']])}
+        {seg<Verdict>(pt('What he thinks'), 'verdict', [['love', 'Loves it'], ['ok', 'It’s OK'], ['no', 'Won’t eat it']])}
         <label className="row" style={{ marginTop: 14, gap: 10 }}><input type="checkbox" checked={!!f.current} onChange={(e) => set('current', e.target.checked)} style={{ width: 22, height: 22 }} /><span>We’re using this now</span></label>
         {text('Notes (optional)', 'notes', { placeholder: 'Flavor, where to buy, tummy trouble…' })}
         {f.ingredients && <details style={{ marginTop: 12 }}><summary className="s" style={{ fontWeight: 700 }}>Ingredients</summary><p className="s" style={{ marginTop: 6 }}>{f.ingredients}</p></details>}</>}
@@ -157,7 +160,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         {text('Notes (optional)', 'notes')}{when}
         <p className="s" style={{ marginTop: 10, color: 'var(--peach-ink)' }}>If it’s on the “call the vet now” list, call now rather than waiting.</p></>}
       {kind === 'groom' && <>{seg<GroomWhat>('What', 'what', [['brush', 'Brush'], ['nails', 'Nails'], ['bath', 'Bath'], ['teeth', 'Teeth'], ['ears', 'Ears']])}{text('Notes (optional)', 'notes')}{when}
-        {f.what === 'bath' && <p className="s" style={{ marginTop: 10 }}>Most cats don’t need baths: only when he gets into something, or the vet says so.</p>}</>}
+        {f.what === 'bath' && <p className="s" style={{ marginTop: 10 }}>{pt('Most cats don’t need baths: only when he gets into something, or the vet says so.')}</p>}</>}
       {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}</>}
       {kind === 'med' && <>{text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}

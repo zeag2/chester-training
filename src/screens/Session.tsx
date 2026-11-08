@@ -8,10 +8,12 @@ import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { YarnBall } from './YarnBall';
 import { wrapSVG } from './yarn';
+import { usePetText } from '../lib/pet';
 
 export const SESSION_SECONDS = 120;
 
 export function Session({ skillId }: { skillId: string }) {
+  const pt = usePetText();
   const { cat, progress, draft, wallet } = useStore();
   const def = SKILL_BY_ID[skillId];
   const resume = draft && draft.skillId === skillId ? draft : null;
@@ -62,7 +64,7 @@ export function Session({ skillId }: { skillId: string }) {
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '0 16px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div className="top">
         <button className="iconbtn" aria-label="Close session" onClick={finish}><Icon name="close" /></button>
-        <div className="sp"><b style={{ fontSize: 16 }}>{def.name}</b><p className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Step {step + 1}: {def.steps[step]}</p></div>
+        <div className="sp"><b style={{ fontSize: 16 }}>{def.name}</b><p className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Step {step + 1}: {pt(def.steps[step])}</p></div>
         <b className="num" style={{ fontSize: 22, minWidth: 54, textAlign: 'right' }} aria-live="off">{mm}:{ss}</b>
       </div>
       <div className={running ? '' : 'paused'} style={{ position: 'relative', width: '100%', aspectRatio: '350 / 200', maxHeight: '30vh', margin: '2px auto 0' }}>

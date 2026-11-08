@@ -6,6 +6,7 @@ import type { Mood } from '../engine/types';
 import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { usePetText } from '../lib/pet';
 
 function Stepper({ label, value, set, min = 0, max = 99 }: { label: string; value: number; set: (n: number) => void; min?: number; max?: number }) {
   return <div className="card grey" style={{ padding: '12px 14px' }}>
@@ -51,13 +52,14 @@ const COLORS = ['#d4a23a', '#2a7a6f', '#c2563f', '#3f6fb0', '#e38b3d'];
 export function RewardMoment({ result, catName, coat, eyes }: { result: LogResult; catName: string; coat: string; eyes: string }) {
   const def = SKILL_BY_ID[result.set.skillId];
   const { event, reward, set, progress } = result;
+  const pt = usePetText();
   const big = event === 'mastered' || event === 'stepUp';
   const title = event === 'mastered' ? `${catName} mastered ${def.name}!` : event === 'stepUp' ? 'Step up!' : event === 'pass' ? 'That’s a pass!' : event === 'review' ? 'Review done' : set.mood === 'Stressed' ? 'Kind call to stop' : 'Nice practice';
-  const sub = event === 'mastered' ? 'A new trick for his collection. Badges and his new move arrive in the next update.'
+  const sub = pt(event === 'mastered' ? 'A new trick for his collection. Badges and his new move arrive in the next update.'
     : event === 'stepUp' ? `Next: ${def.steps[progress.step]}`
     : event === 'pass' ? 'One more pass in a row moves him up a step.'
     : event === 'review' ? 'Keeping old skills sharp.'
-    : set.reps < 5 ? 'Aim for 5 or more tries next time to count toward a pass.' : 'Short and happy beats long. Try again later.';
+    : set.reps < 5 ? 'Aim for 5 or more tries next time to count toward a pass.' : 'Short and happy beats long. Try again later.');
   return <div className="overlay" style={{ background: big ? 'var(--butter)' : 'var(--mint)' }}>
     <div className="conf" aria-hidden="true">{Array.from({ length: big ? 22 : 12 }, (_, k) => <i key={k} style={{ left: `${(k * 37) % 100}%`, background: COLORS[k % 5], animationDelay: `${((k * 0.29) % 3).toFixed(2)}s` }} />)}</div>
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: 'calc(40px + var(--safe-t)) 20px calc(28px + var(--safe-b))', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
@@ -67,8 +69,8 @@ export function RewardMoment({ result, catName, coat, eyes }: { result: LogResul
         <p className="m" style={{ marginTop: 8 }}>{sub}</p>
         {reward.rewarded ? <>
           <div className="card white row" style={{ textAlign: 'left' }}><Paw size={26} color="#d4a23a" /><div className="sp"><b>+{reward.treats} treats</b><p className="s">{set.good} good reps{reward.gift?.treats ? ` + ${reward.gift.treats} from the gift` : ''}</p></div></div>
-          {reward.gift && <div className="card white row" style={{ textAlign: 'left' }}><Icon name="star" /><div className="sp"><b>{reward.gift.title}</b><p className="s">{reward.gift.detail}</p></div></div>}
-        </> : <div className="card white" style={{ textAlign: 'left' }}><b>{catName} is done for today</b><p className="s">The set is saved. Rewards reset tomorrow, so he never gets overtrained.</p></div>}
+          {reward.gift && <div className="card white row" style={{ textAlign: 'left' }}><Icon name="star" /><div className="sp"><b>{pt(reward.gift.title)}</b><p className="s">{pt(reward.gift.detail)}</p></div></div>}
+        </> : <div className="card white" style={{ textAlign: 'left' }}><b>{catName} is done for today</b><p className="s">{pt('The set is saved. Rewards reset tomorrow, so he never gets overtrained.')}</p></div>}
       </div>
       <button className="btn" style={{ marginTop: 'auto' }} onClick={() => go('home')}>Back home</button>
     </div>
