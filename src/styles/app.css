@@ -122,3 +122,14 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .scanclose{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(255,255,255,.92)!important;color:#232320!important;min-height:40px}
 .hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:8px;color:var(--ink);font-family:inherit}
 .hit img{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#fff;flex:none}
+/* grouped settings lists */
+.lhead{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 4px 8px}
+.lgroup{background:var(--grey);border-radius:18px;overflow:hidden}
+.lrow{display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 16px;width:100%;background:none;border:0;text-align:left;font:inherit;font-size:16px;color:var(--ink)}
+.lrow + .lrow{border-top:1px solid var(--line)}
+button.lrow:active{background:var(--line)}
+.chev{color:var(--muted);font-size:22px;line-height:1;margin-left:2px}
+.switch{position:relative;width:52px;height:32px;border-radius:999px;border:0;background:var(--line);flex:none;transition:background 200ms var(--ease-out)}
+.switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 220ms var(--ease-out)}
+.switch.on{background:var(--teal)}
+.switch.on i{transform:translateX(20px)}

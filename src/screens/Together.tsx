@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { sharingConfigured } from '../sync/config';
@@ -139,46 +139,4 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
 
 function Top({ onBack, title }: { onBack: () => void; title: string }) {
   return <div className="top"><button className="iconbtn" aria-label="Back" onClick={onBack}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{title}</b></div>;
-}
-
-/** The Settings card: who trains the cat, the invite code, and sync status. */
-export function TogetherCard() {
-  const { cat, account, household, sync } = useStore();
-  const [copied, setCopied] = useState(false);
-  const savedName = household?.members.find((m) => m.userId === account?.userId)?.name || store.myName;
-  const [myName, setMyName] = useState(savedName);
-  useEffect(() => { setMyName(savedName); }, [savedName]);
-  if (!sharingConfigured() || !cat) return null;
-  if (!account) return <div className="card sky">
-    <b>Train {cat.name} together</b>
-    <p className="s" style={{ marginTop: 4 }}>Share {cat.name}’s progress with someone else, so you both see the same skills, treats and daily limits.</p>
-    <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: 'wrap' }}>
-      <button className="btn2" style={{ background: 'var(--surface)' }} onClick={() => go('together')}>Share {cat.name}</button>
-      <button className="btn2" style={{ background: 'transparent' }} onClick={() => go('join')}>I have a code</button>
-    </div>
-  </div>;
-
-  const me = account.userId;
-  const names = (household?.members ?? []).map((m) => (m.userId === me ? `${m.name || 'You'} (you)` : m.name || 'Someone'));
-  const share = async () => { if (household && (await sendInvite(cat.name, household.inviteCode))) { setCopied(true); setTimeout(() => setCopied(false), 2000); } };
-  const status = sync === 'syncing' ? 'Syncing…' : sync === 'offline' ? 'Offline. Sets are saved here and sync when you’re back online.' : 'Up to date';
-  return <div className="card sky">
-    <b>Training together</b>
-    <p className="s" style={{ marginTop: 4 }}>{names.length ? names.join(' · ') : account.email}</p>
-    <label className="field" htmlFor="myname">Your name</label>
-    <div className="row" style={{ gap: 8 }}>
-      <input id="myname" className="in" style={{ background: 'var(--surface)' }} value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="So Home can greet you" autoComplete="given-name" />
-      <button className="btn2" style={{ background: 'var(--surface)' }} disabled={!myName.trim() || myName.trim() === savedName} onClick={() => void store.renameMe(myName)}>{myName.trim() && myName.trim() === savedName ? 'Saved' : 'Save'}</button>
-    </div>
-    {household && names.length < 2 && <p className="s" style={{ marginTop: 8 }}>Invite someone with this code:</p>}
-    {household && <div className="row" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
-      <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: 3, fontVariantNumeric: 'tabular-nums' }}>{household.inviteCode}</span>
-      <button className="btn2" style={{ background: 'var(--surface)', marginLeft: 'auto' }} onClick={share}>{copied ? 'Copied' : 'Send invite'}</button>
-    </div>}
-    <p className="s" style={{ marginTop: 10 }} aria-live="polite">{status}</p>
-    <div className="row" style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}>
-      {sync === 'offline' && <button className="btn2" style={{ background: 'var(--surface)' }} onClick={() => void store.sync()}>Try again</button>}
-      <button className="btn2" style={{ background: 'transparent' }} onClick={() => void store.signOut()}>Sign out</button>
-    </div>
-  </div>;
 }
