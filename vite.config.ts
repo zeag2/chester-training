@@ -11,9 +11,9 @@ export default defineConfig({
       includeAssets: ['icon.svg', 'sfx/*.wav'],
       workbox: { globPatterns: ['**/*.{js,css,html,svg,png,wav}'] },
       manifest: {
-        name: 'Chester',
-        short_name: 'Chester',
-        description: "Chester's clicker training",
+        name: 'PalDex',
+        short_name: 'PalDex',
+        description: 'Your pet’s training, care and companion log',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#232320',
