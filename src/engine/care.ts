@@ -9,7 +9,7 @@ export type GroomWhat = 'brush' | 'nails' | 'bath' | 'teeth' | 'ears';
 export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
 
 export interface CareData {
-  food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string };
+  food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
   vet: { reason: string; clinic?: string; notes?: string };
   symptom: { what: string; worried?: boolean; notes?: string };
   weight: { lb: number };
