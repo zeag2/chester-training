@@ -1,5 +1,5 @@
 import type { Cat, SetRecord } from '../engine/types';
-import type { CareItem } from '../engine/care';
+import type { CareItem, DocReading } from '../engine/care';
 import type { Account, Member, Remote } from './remote';
 
 /** In-memory shared copy with the same rules as the database: only members see or add to a cat. */
@@ -10,6 +10,8 @@ export class FakeServer {
   passwords = new Map<string, string>();
   care = new Map<string, CareItem>();
   careTable = true;
+  files = new Map<string, Blob>();
+  reading: DocReading | null = null;
   online = true;
   private n = 0;
   isMember(catId: string, userId: string) { return (this.members.get(catId) ?? []).some((m) => m.userId === userId); }
@@ -53,4 +55,8 @@ export class FakeRemote implements Remote {
     const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist');
     for (const i of items) { if (!this.s.isMember(i.catId, u.userId)) throw new Error('denied'); this.s.care.set(i.id, { ...structuredClone(i), by: u.userId }); }
   }
+  async uploadDoc(path: string, file: Blob) { const u = this.user(); if (!this.s.isMember(path.split('/')[0], u.userId)) throw new Error('denied'); this.s.files.set(path, file); }
+  async docUrl(path: string) { this.user(); return 'blob:' + path; }
+  async removeDoc(path: string) { this.user(); this.s.files.delete(path); }
+  async readDoc(path: string) { this.user(); if (!this.s.files.has(path)) throw new Error('missing'); if (!this.s.reading) throw new Error('reader-missing'); return this.s.reading; }
 }

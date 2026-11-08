@@ -1,5 +1,5 @@
 import type { Cat, SetRecord } from '../engine/types';
-import type { CareItem } from '../engine/care';
+import type { CareItem, DocReading } from '../engine/care';
 
 export interface Account { userId: string; email: string }
 export interface Member { userId: string; name: string }
@@ -29,4 +29,11 @@ export interface Remote {
   /** Care items, deleted ones included (so a delete reaches the other phone). */
   pullCare(catId: string): Promise<CareItem[]>;
   pushCare(items: CareItem[]): Promise<void>;
+
+  /** Vet documents in the shared bucket. */
+  uploadDoc(path: string, file: Blob, mime: string): Promise<void>;
+  docUrl(path: string): Promise<string>;
+  removeDoc(path: string): Promise<void>;
+  /** Ask the server to read a stored document and suggest log entries. */
+  readDoc(path: string): Promise<DocReading>;
 }

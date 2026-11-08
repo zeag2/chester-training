@@ -1,6 +1,6 @@
 # Where we left off (2026-11-08)
 
-Live at https://zeag2.github.io/chester-training/ (deploys from `main`). Work branch: `claude/wizardly-allen-ilr861`.
+PalDex. Live at https://zeag2.github.io/chester-training/ (deploys from `main`). Work branch: `claude/wizardly-allen-ilr861`.
 
 Done
 - Shared training via Supabase (project `vtcufhddooqzckjcpzwn`): email + password accounts ("Confirm email" off),
@@ -17,8 +17,10 @@ Next, in order
 1. Chester animation pass 3: real in-between poses for hop, pounce and dance; consider real recorded meows
    (licensed) if the synth ones sound robotic. (Pass 2 done: every pose has the chain tail and head/ear lag;
    dev-only pose gallery at #/gallery.)
-2. Chester's care, part 2: document and photo uploads for vet records (Supabase Storage bucket + policies);
-   "Loves it" treats suggested for hard skills in sessions; reminders on Home for overdue items.
+2. Care, part 3: "Loves it" treats suggested for hard skills in sessions; a vet-visit summary to show the vet.
+   (Part 2 done: food lookup by barcode/name via Open Pet Food Facts; vet documents stored in the private `pet-docs`
+   bucket and read by the `read-vet-doc` Edge Function (Claude) into suggested entries the user confirms.
+   Needs SQL step 6 and the function + ANTHROPIC_API_KEY secret from docs/sharing-setup.md step 7.)
    (Part 1 done: #/care with food profiles, weight chart, symptoms, grooming, vet visits, medicine with next-due
    reminders, call-the-vet-now list; shared via the `care` table — its SQL must be run once in Supabase.)
 3. Phase 2 features from the design doc: Chester's corner (spend treats), badges/trophy case, check-ins,

@@ -7,7 +7,8 @@ import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
 import type { Account, Member, Remote } from '../sync/remote';
-import { newer, type CareData, type CareItem, type CareKind } from '../engine/care';
+import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
+import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
@@ -148,6 +149,24 @@ export class Store {
       if (this.snap.account) void this.sync();
     });
   }
+  /** Store a vet document (photo or PDF) in the shared bucket and add it to the care log. Needs an account. */
+  async addDoc(file: File): Promise<CareItem<'doc'>> {
+    const cat = this.snap.cat; const r = this.remote;
+    if (!cat || !r || !this.snap.account) throw new Error('Sign in (Settings → Train together) to store documents.');
+    const pdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const blob = pdf ? file : await shrinkImage(file);
+    const mime = pdf ? 'application/pdf' : blob.type || 'image/jpeg';
+    const ext = pdf ? 'pdf' : mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+    if (blob.size > 20 * 1024 * 1024) throw new Error('That file is over 20 MB. Try a photo of the page instead.');
+    const id = uid(); const path = `${cat.id}/${id}.${ext}`;
+    await r.uploadDoc(path, blob, mime);
+    const title = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 60) || 'Vet document';
+    return (await this.saveCare('doc', { title, path, mime, bytes: blob.size }, { id })) as CareItem<'doc'>;
+  }
+  readDoc(path: string): Promise<DocReading> { if (!this.remote) throw new Error('Sharing is off'); return this.remote.readDoc(path); }
+  docUrl(path: string): Promise<string> { if (!this.remote) throw new Error('Sharing is off'); return this.remote.docUrl(path); }
+  async removeDoc(item: CareItem<'doc'>) { await this.deleteCare(item.id); await this.remote?.removeDoc(item.data.path).catch(() => {}); }
+
   /** Newest edit wins on each side; a missing care table never breaks training sync. */
   private async syncCare(r: Remote, catId: string): Promise<'ok' | 'missing'> {
     try {

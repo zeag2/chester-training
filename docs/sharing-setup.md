@@ -15,6 +15,14 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
 
 5. **Chester's care (added later).** SQL Editor → New query, paste all of
    `supabase/migrations/20261108120000_care.sql`, Run. Until this is done, care entries stay on the phone that made them.
+6. **Vet documents (added later).** SQL Editor → New query, paste all of
+   `supabase/migrations/20261108180000_vet_docs.sql`, Run. This makes a private `pet-docs` storage bucket.
+7. **Reading documents automatically (optional).**
+   - Get a Claude API key at console.anthropic.com → API keys (it starts `sk-ant-`). Add billing; each document costs a few cents.
+   - Supabase → Edge Functions → Secrets → add `ANTHROPIC_API_KEY` with that key. Never put it in the app or send it in chat.
+   - Supabase → Edge Functions → Deploy a new function → Via editor. Name it exactly `read-vet-doc`,
+     replace the code with `supabase/functions/read-vet-doc/index.ts`, and deploy. Leave "Verify JWT" on.
+   Without this step documents are still stored; you just fill in the details yourself.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

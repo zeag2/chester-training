@@ -129,6 +129,21 @@ describe('training Chester together', () => {
     expect(josh.get().careSync).toBe('ok'); expect(server.care.size).toBe(1);
   });
 
+  it('stores a vet document for both trainers, reads it, and removes the file when deleted', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const doc = await josh.addDoc(new File(['%PDF-1.4'], 'kitten_shots-invoice.pdf', { type: 'application/pdf' }));
+    expect(doc.data).toMatchObject({ title: 'kitten shots invoice', mime: 'application/pdf' });
+    expect(server.files.has(doc.data.path)).toBe(true);
+    expect(doc.data.path.startsWith(josh.get().cat!.id + '/')).toBe(true);
+    await expect(josh.readDoc(doc.data.path)).rejects.toThrow('reader-missing');
+    server.reading = { title: 'Kitten shots', docDate: '2026-11-02', clinic: 'Northside Vet', visitReason: 'Kitten shots', vetNotes: null, weightLb: 3, items: [{ name: 'FVRCP', kind: 'vaccine', date: '2026-11-02', nextDue: '2026-11-30', notes: null }], summary: 'Invoice for kitten shots.' };
+    expect((await josh.readDoc(doc.data.path)).items[0].nextDue).toBe('2026-11-30');
+    await josh.removeDoc(doc); await josh.sync();
+    expect(server.files.size).toBe(0); expect(josh.get().care).toHaveLength(0);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });

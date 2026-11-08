@@ -2,7 +2,7 @@
    Items can be edited and deleted (unlike sets), so each carries updatedAt and a deleted flag; the newest edit wins. */
 import { daysBetween, localDay } from './day';
 
-export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med';
+export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc';
 export type Verdict = 'love' | 'ok' | 'no';
 export type FoodType = 'dry' | 'wet' | 'treat' | 'other';
 export type GroomWhat = 'brush' | 'nails' | 'bath' | 'teeth' | 'ears';
@@ -10,11 +10,20 @@ export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
 
 export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
-  vet: { reason: string; clinic?: string; notes?: string };
+  vet: { reason: string; clinic?: string; notes?: string; doc?: string };
   symptom: { what: string; worried?: boolean; notes?: string };
-  weight: { lb: number };
+  weight: { lb: number; doc?: string };
   groom: { what: GroomWhat; notes?: string };
-  med: { name: string; what: MedWhat; nextDue?: string; notes?: string };
+  med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string };
+  /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
+  doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string };
+}
+
+/** What the vet-document reader found, for the user to confirm. */
+export interface DocReading {
+  title: string; docDate: string | null; clinic: string | null; visitReason: string | null; vetNotes: string | null; weightLb: number | null;
+  items: { name: string; kind: MedWhat; date: string | null; nextDue: string | null; notes: string | null }[];
+  summary: string;
 }
 
 export interface CareItem<K extends CareKind = CareKind> {

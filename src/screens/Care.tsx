@@ -13,8 +13,8 @@ import { Scanner } from './Scanner';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
-const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: 'Weight', symptom: 'Symptom', groom: 'Grooming', vet: 'Vet visit', med: 'Medicine or vaccine' };
-const ICON: Record<CareKind, string> = { food: 'leaf', weight: 'target', symptom: 'ear', groom: 'hand', vet: 'box', med: 'check' };
+const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: 'Weight', symptom: 'Symptom', groom: 'Grooming', vet: 'Vet visit', med: 'Medicine or vaccine', doc: 'Document' };
+const ICON: Record<CareKind, string> = { food: 'leaf', weight: 'target', symptom: 'ear', groom: 'hand', vet: 'box', med: 'check', doc: 'book' };
 
 function summary(i: CareItem): string {
   const d = i.data as any;
@@ -36,7 +36,8 @@ export function Care() {
   const [flags, setFlags] = useState(false);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
-  const log = care.filter((c) => c.kind !== 'food').slice(0, 40);
+  const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc').slice(0, 40);
+  const docs = care.filter((c): c is CareItem<'doc'> => c.kind === 'doc');
   const ws = weights(care);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
   if (!cat) return null;
@@ -81,6 +82,13 @@ export function Care() {
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
 
+    <h2 style={{ marginTop: 22 }}>Vet documents</h2>
+    <DocAdder signedIn={!!account} />
+    {docs.map((d) => <button key={d.id} className="item" onClick={() => setEditing({ kind: 'doc', item: d })}>
+      <div className="ico grey"><Icon name="book" /></div>
+      <div className="sp"><b>{d.data.title}</b><p className="s">{d.data.summary ?? (d.data.mime === 'application/pdf' ? 'PDF' : 'Photo')}</p></div>
+      <span className="s">{fmt(d.data.docDate ? noon(d.data.docDate) : d.at)}</span></button>)}
+
     <h2 style={{ marginTop: 22 }}>Health log</h2>
     {log.length === 0 && <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
     {log.map((i) => <button key={i.id} className="item" onClick={() => setEditing({ kind: i.kind, item: i })}>
@@ -103,7 +111,7 @@ function Spark({ values }: { values: number[] }) {
 const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
   food: { name: '', brand: '', type: 'wet', verdict: 'love', current: true, notes: '' },
   weight: { lb: '' }, symptom: { what: '', worried: false, notes: '' }, groom: { what: 'brush', notes: '' },
-  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '' },
+  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '' }, doc: { title: '' },
 };
 
 /** Bottom sheet with the form for one kind of entry; also edits and deletes. */
@@ -113,18 +121,18 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
   const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
   const set = (k: string, v: unknown) => setF((x: any) => ({ ...x, [k]: v }));
-  const ok = kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
+  const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100 } : clean({ ...f, name: f.name?.trim?.() ?? f.name });
-    await store.saveCare(kind, data as never, { id: item?.id, at: kind === 'food' && item ? item.at : noon(day) });
+    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim() } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : noon(day) });
     audio.sparkle(); onClose();
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
     <div className="seg" role="group" aria-label={label}>{opts.map(([v, l]) => <button key={v} className={f[key] === v ? 'on' : ''} aria-pressed={f[key] === v} onClick={() => set(key, v)}>{l}</button>)}</div></>;
   const text = (label: string, key: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => <><label className="field" htmlFor={'c-' + key}>{label}</label>
     <input id={'c-' + key} className="in" value={f[key] ?? ''} onChange={(e) => set(key, e.target.value)} {...props} /></>;
-  const when = kind !== 'food' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
+  const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
   return <div className="overlay sheetbg" onClick={onClose}>
     <div className="sheet" role="dialog" aria-modal="true" aria-label={item ? 'Edit entry' : 'New entry'} onClick={(e) => e.stopPropagation()}>
@@ -138,6 +146,9 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         <label className="row" style={{ marginTop: 14, gap: 10 }}><input type="checkbox" checked={!!f.current} onChange={(e) => set('current', e.target.checked)} style={{ width: 22, height: 22 }} /><span>We’re using this now</span></label>
         {text('Notes (optional)', 'notes', { placeholder: 'Flavor, where to buy, tummy trouble…' })}
         {f.ingredients && <details style={{ marginTop: 12 }}><summary className="s" style={{ fontWeight: 700 }}>Ingredients</summary><p className="s" style={{ marginTop: 6 }}>{f.ingredients}</p></details>}</>}
+      {kind === 'doc' && item && <>{text('Name', 'title')}
+        <button className="btn2" style={{ marginTop: 12, width: '100%' }} onClick={() => void openDoc((item as CareItem<'doc'>).data.path)}>Open document</button>
+        {(item.data as CareData['doc']).summary && <p className="s" style={{ marginTop: 10 }}>{(item.data as CareData['doc']).summary}</p>}</>}
       {kind === 'weight' && <>{text('Weight in pounds', 'lb', { inputMode: 'decimal', placeholder: 'e.g. 3.4', autoFocus: !item })}{when}</>}
       {kind === 'symptom' && <><span className="field">What did you notice?</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{SYMPTOMS.map((s) => <button key={s} className={`chipbtn ${f.what === s ? 'on' : ''}`} onClick={() => set('what', s === 'Other' ? '' : s)}>{s}</button>)}</div>
@@ -153,7 +164,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
       <button className="btn" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
-      {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this entry for everyone?')) { await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
+      {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
     </div>
   </div>;
 }
@@ -200,5 +211,67 @@ function FoodFinder({ onPick }: { onPick: (h: FoodHit) => void }) {
       <span className="sp"><b style={{ fontSize: 14 }}>{h.name}</b><span className="s" style={{ display: 'block' }}>{[h.brand, h.quantity, h.forCats ? '' : 'not marked for cats'].filter(Boolean).join(' · ')}</span></span></button>)}
     {hits && hits.length === 1 && <p className="s" style={{ marginTop: 8 }} role="status">Filled in: <b>{hits[0].name}</b>. Check it below.</p>}
     <p className="s" style={{ marginTop: 8, fontSize: 11 }}>Product data from Open Pet Food Facts (open database, ODbL).</p>
+  </div>;
+}
+
+async function openDoc(path: string) {
+  // open the tab right away (phones block pop-ups opened after a wait), then point it at a short-lived link
+  const w = window.open('', '_blank');
+  try { const url = await store.docUrl(path); if (w) w.location.href = url; else location.href = url; }
+  catch { w?.close(); alert('Couldn’t open the document. Check your connection.'); }
+}
+
+type Pick = { key: string; label: string; detail: string; on: boolean; save: () => Promise<unknown> };
+
+/** Add a vet document: upload it, have it read, then confirm which entries to add to the log. */
+function DocAdder({ signedIn }: { signedIn: boolean }) {
+  const [stage, setStage] = useState<'idle' | 'upload' | 'read' | 'review' | 'error'>('idle');
+  const [msg, setMsg] = useState('');
+  const [picks, setPicks] = useState<Pick[]>([]);
+  const [doc, setDoc] = useState<CareItem<'doc'> | null>(null);
+  if (!signedIn) return <p className="s" style={{ marginTop: 8 }}>Sign in (Settings → Train together) to keep vet records here and have them read for you.</p>;
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    setStage('upload'); setMsg('');
+    let d: CareItem<'doc'>;
+    try { d = await store.addDoc(file); setDoc(d); }
+    catch (e) { setStage('error'); setMsg((e as Error).message || 'Upload failed. Check your connection.'); return; }
+    setStage('read');
+    try {
+      const r = await store.readDoc(d.data.path);
+      const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
+      await store.saveCare('doc', { ...d.data, title: r.title || d.data.title, docDate: r.docDate ?? undefined, summary: r.summary }, { id: d.id, at: d.at });
+      const list: Pick[] = [];
+      if (r.visitReason) list.push({ key: 'vet', label: 'Vet visit: ' + r.visitReason, detail: [r.clinic, r.docDate && fmt(noon(r.docDate))].filter(Boolean).join(' · '), on: true,
+        save: () => store.saveCare('vet', { reason: r.visitReason!, clinic: r.clinic ?? undefined, notes: r.vetNotes ?? undefined, doc: d.id }, { at: at(r.docDate) }) });
+      if (r.weightLb) list.push({ key: 'w', label: `Weight: ${Math.round(r.weightLb * 100) / 100} lb`, detail: r.docDate ? fmt(noon(r.docDate)) : '', on: true,
+        save: () => store.saveCare('weight', { lb: Math.round(r.weightLb! * 100) / 100, doc: d.id }, { at: at(r.docDate) }) });
+      r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
+        save: () => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc: d.id }, { at: at(it.date) }) }));
+      setPicks(list); setMsg(r.summary); setStage('review');
+    } catch (e) {
+      const m = (e as Error).message;
+      setStage('error');
+      setMsg(m === 'reader-missing' ? 'Saved. Automatic reading isn’t set up yet (see the PalDex setup notes), so add the details by hand.' : `Saved, but it couldn’t be read: ${m}`);
+    }
+  };
+
+  return <div className="card grey" style={{ marginTop: 10 }}>
+    {stage === 'idle' && <><p className="s">Snap a photo of a vet invoice, visit summary or vaccine certificate, or pick a PDF. We’ll store it and suggest log entries for you to check.</p>
+      <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a vet document
+        <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label></>}
+    {stage === 'upload' && <p className="s" aria-live="polite">Uploading…</p>}
+    {stage === 'read' && <p className="s" aria-live="polite">Reading the document… this takes up to a minute.</p>}
+    {stage === 'error' && <><p className="s" role="alert">{msg}</p><button className="btn2" style={{ marginTop: 10, background: 'var(--surface)' }} onClick={() => setStage('idle')}>OK</button></>}
+    {stage === 'review' && <>
+      <b>{doc ? 'Here’s what it says' : ''}</b>{msg && <p className="s" style={{ marginTop: 4 }}>{msg}</p>}
+      {picks.length === 0 && <p className="s" style={{ marginTop: 8 }}>Nothing to add to the log. The document is saved.</p>}
+      {picks.map((p, i) => <label key={p.key} className="row" style={{ marginTop: 10, gap: 10, alignItems: 'flex-start' }}>
+        <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
+        <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
+      <p className="s" style={{ marginTop: 10 }}>Read automatically, so check it against the document.</p>
+      <button className="btn" style={{ marginTop: 12 }} onClick={async () => { for (const p of picks) if (p.on) await p.save(); audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
+    </>}
   </div>;
 }

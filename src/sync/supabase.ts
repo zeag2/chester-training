@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
-import type { CareItem } from '../engine/care';
+import type { CareItem, DocReading } from '../engine/care';
 import type { Account, Member, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
@@ -78,5 +78,18 @@ export class SupabaseRemote implements Remote {
     if (!items.length) return;
     const rows = items.map((i) => ({ id: i.id, cat_id: i.catId, kind: i.kind, at: i.at, updated_at: i.updatedAt, deleted: !!i.deleted, data: i.data }));
     check(await this.sb.from('care').upsert(rows, { onConflict: 'id' }));
+  }
+
+  async uploadDoc(path: string, file: Blob, mime: string) { check(await this.sb.storage.from('pet-docs').upload(path, file, { contentType: mime, upsert: false })); }
+  async docUrl(path: string) { const d = check(await this.sb.storage.from('pet-docs').createSignedUrl(path, 600)); if (!d) throw new Error('No link'); return d.signedUrl; }
+  async removeDoc(path: string) { await this.sb.storage.from('pet-docs').remove([path]); }
+  async readDoc(path: string): Promise<DocReading> {
+    const { data, error } = await this.sb.functions.invoke('read-vet-doc', { body: { path } });
+    if (error) {
+      // the function answers errors as { error: "…" }; show that message when there is one
+      const body = await (error as { context?: Response }).context?.json?.().catch(() => null);
+      throw new Error(body?.error ?? (/not found|404/i.test(error.message) ? 'reader-missing' : error.message));
+    }
+    return (data as { result: DocReading }).result;
   }
 }
