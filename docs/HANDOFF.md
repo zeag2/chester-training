@@ -187,7 +187,8 @@ Roughly in the order agreed with Josh:
 1. **Next (Josh, after the demo):**
    - **Walk pose redrawn** (done, from Josh's photo of Chester standing side-on): small head on the shoulders, long
      body, tapered legs with paws, tail sweeping back. Loaf, fly and ball could get the same treatment; Josh may get
-     an artist (brief: SVG, named parts, flat colour regions, same canvas per pose).
+     an artist (brief: SVG, named parts, flat colour regions, same canvas per pose). **Style guide for redrawing every
+     pose from Josh's references: `docs/plans/2026-11-08-cat-art-style.md`.**
    - **Friends more visible + visiting**: a friends' cats strip on Home; tap a friend's cat to visit (big, pettable,
      same reactions), and **give them a free treat** once a day. Needs SQL: a `friend_treats(from, cat_id, day)` table
      plus a `give_treat(cat_id)` function; the owner's phone turns received treats into corner log entries
