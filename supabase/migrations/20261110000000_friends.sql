@@ -89,5 +89,6 @@ as $$ begin
   update public.cats set card = set_pet_card.card where id = c;
 end $$;
 
-revoke all on function public.my_friend_code(text), public.add_friend(text), public.remove_friend(uuid), public.my_friends(), public.friend_pets(), public.set_pet_card(text, jsonb) from public;
+-- Supabase gives new functions to signed-out visitors (anon) too; these are for signed-in people only
+revoke all on function public.my_friend_code(text), public.add_friend(text), public.remove_friend(uuid), public.my_friends(), public.friend_pets(), public.set_pet_card(text, jsonb) from public, anon;
 grant execute on function public.my_friend_code(text), public.add_friend(text), public.remove_friend(uuid), public.my_friends(), public.friend_pets(), public.set_pet_card(text, jsonb) to authenticated;
