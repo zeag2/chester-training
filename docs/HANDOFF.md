@@ -129,6 +129,10 @@ ready to share with friends.
   bobs under it.
 - **Head size:** `HEAD_SIZE.scale` in `src/chester/art.ts` (0.88; it was 1.0 and read as a bobblehead). It scales about
   the neck, so every pose, the rig and the outfits follow.
+- **Cats together on Home:** the other cats (up to two) sit beside the one being shown (tap to switch to them), bonk
+  heads now and then, and every minute or two (or on the yarn button) a **toy chase** plays: a yarn ball rolls in,
+  everyone runs after it, it's batted back, the lead cat pounces, they trot home (`src/chester/Chase.tsx`, ~6 s).
+  Works with one cat too.
 - **Life on Home:**
   - Sits by default and makes biscuits for about 7 seconds every 25 to 55 seconds.
   - Dozes after 90 seconds alone.
@@ -180,8 +184,7 @@ ready to share with friends.
 
 Roughly in the order agreed with Josh:
 
-1. **Next from the demo:** all cats together on Home playing; a toy-chase animation; real push notifications for new
-   friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
+1. **Next from the demo:** real push notifications for new friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
 2. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
    Bond levels don't unlock anything yet. More outfits/toys are easy to add (`SHOP` + `outfit()`).
 2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,

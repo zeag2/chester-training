@@ -10,6 +10,7 @@ import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { TodayCard } from './Care';
 import { PetSwitcher } from '../ui/PetSwitcher';
+import { Chase } from '../chester/Chase';
 import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
 import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
@@ -111,6 +112,26 @@ export function Home() {
   const [awakeUntil, setAwakeUntil] = useState(0);
   useEffect(() => { if (!awakeUntil) return; const t = window.setTimeout(() => setAwakeUntil(0), Math.max(0, awakeUntil - Date.now())); return () => window.clearTimeout(t); }, [awakeUntil]);
   const night = ph === 'night' && !awakeUntil;
+  // the other cats sit beside this one; now and then they bonk heads, and a toy rolls in for everyone to chase
+  const others = pets.filter((p) => p.id !== cat?.id).slice(0, 2);
+  const [chasing, setChasing] = useState(false);
+  const [cuteN, setCuteN] = useState(0);
+  const [meowAt, setMeowAt] = useState(0);
+  useEffect(() => { if (meowN) setMeowAt(cuteN); }, [meowN]); // eslint-disable-line react-hooks/exhaustive-deps
+  const calm = !night && !doze && !gag;
+  const startChase = () => { if (!chasing && calm) { wake(); setChasing(true); } };
+  const chaseRef = useRef(startChase); chaseRef.current = startChase;
+  useEffect(() => {
+    if (!calm) return;
+    let t = 0;
+    const next = () => { t = window.setTimeout(() => { if (!document.hidden) chaseRef.current(); next(); }, 60_000 + Math.random() * 60_000); };
+    next(); return () => window.clearTimeout(t);
+  }, [calm]);
+  useEffect(() => {
+    if (!calm || others.length === 0) return;
+    const iv = window.setInterval(() => { if (!document.hidden) setCuteN((n) => n + 1); }, 30_000 + Math.random() * 15_000);
+    return () => window.clearInterval(iv);
+  }, [calm, others.length]);
   const t = today();
   const todaySets = sets.filter((s) => s.day === t);
   const rewardedToday = todaySets.filter((s) => s.rewarded).length;
@@ -136,11 +157,15 @@ export function Home() {
         <PetSwitcher />
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('me')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
-        <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
+        {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={Math.min(360, window.innerWidth - 40)} size={104} gap={70} onDone={() => setChasing(false)} />
+        : <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
         <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : gag ? 'sit' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={gag === 'proud' ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
           raised={!gag && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
-          width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
-        <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>
+          width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={cuteN > meowAt ? 'r8' : meowN ? 'r15' : null} reactKey={meowN + cuteN * 1000} /></span></div>}
+        {!chasing && others.length > 0 && <div className="homecats">{others.map((o, i) => <button key={o.id} className="other" style={{ zIndex: 2 - i }} aria-label={`Show ${o.name}`} onClick={() => { audio.chirp(); void store.switchPet(o.id); }}>
+          <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={night || doze ? 'sleep' : 'sit'} mood={night ? 'sleepy' : 'curious'} width={84} label={o.name} react={cuteN ? 'r8' : null} reactKey={cuteN} /></button>)}</div>}
+        {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
+        {!chasing && <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
       </div>
       {movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
         <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>

@@ -37,7 +37,7 @@ export interface Snapshot {
   /** 'missing' = the shared copy has no care table yet (its setup SQL hasn't been run). */
   careSync: 'ok' | 'missing';
   /** Every pet on this phone, for the switcher. `cat` is the one being shown. */
-  pets: Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'>[];
+  pets: (Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'> & { wear?: string })[];
   /** Loaded when the Friends screen opens; null when signed out or not loaded yet. */
   friends: Friends | null;
   /** New friends whose bonus just landed, for a card on Home (`scarf`: it was the first friend). */
@@ -62,7 +62,7 @@ export class Store {
   /** Which pet is shown, remembered on this phone. */
   get activeId(): string { try { return localStorage.getItem('paldex-active-pet') ?? ''; } catch { return ''; } }
   set activeId(v: string) { try { localStorage.setItem('paldex-active-pet', v); } catch { /* private mode */ } }
-  private async petList() { return (await this.db.cats.toArray()).sort((a, b) => a.createdAt - b.createdAt).map(({ id, name, coat, eyes, sex }) => ({ id, name, coat, eyes, sex })); }
+  private async petList() { return (await this.db.cats.toArray()).sort((a, b) => a.createdAt - b.createdAt).map(({ id, name, coat, eyes, sex, corner }) => ({ id, name, coat, eyes, sex, wear: corner?.wearing })); }
 
   private nameKey(uid = this.snap.account?.userId) { return uid ? 'chester-my-name:' + uid : ''; }
   get myName(): string { try { const k = this.nameKey(); return k ? localStorage.getItem(k) ?? '' : ''; } catch { return ''; } }
