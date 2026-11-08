@@ -2,6 +2,8 @@
 import type { FoodType } from '../engine/care';
 
 const API = 'https://world.openpetfoodfacts.org';
+/** The general Open Food Facts database holds some pet foods and treats the pet one doesn't. */
+const API_FOOD = 'https://world.openfoodfacts.org';
 const FIELDS = 'code,product_name,product_name_en,brands,categories_tags,ingredients_text,ingredients_text_en,quantity,image_front_small_url';
 
 export interface FoodHit { code: string; name: string; brand?: string; type: FoodType; ingredients?: string; quantity?: string; image?: string; forCats: boolean }
@@ -45,14 +47,22 @@ export function validBarcode(code: string): boolean {
   return (10 - (sum % 10)) % 10 === check;
 }
 
-/** Look a product up by barcode. A US 12-digit UPC is also tried as its 13-digit EAN form, and the other way round. */
+/** Same product? Barcodes match with or without leading zeros (UPC-A 12 digits vs EAN-13 with a leading 0). */
+export const sameCode = (a: string, b: string) => a.replace(/\D/g, '').replace(/^0+/, '') === b.replace(/\D/g, '').replace(/^0+/, '');
+
+/** Look a product up by barcode: Open Pet Food Facts first, then Open Food Facts. Both accept a 12-digit UPC as is.
+    Throws only when neither database could be reached; null means neither knows it. */
 export async function byBarcode(code: string, signal?: AbortSignal): Promise<FoodHit | null> {
   const clean = code.replace(/\D/g, ''); if (clean.length < 8) return null;
-  const tries = [clean, clean.length === 12 ? '0' + clean : clean.length === 13 && clean.startsWith('0') ? clean.slice(1) : ''].filter(Boolean);
-  for (const c of tries) {
-    const j = await get(`${API}/api/v2/product/${c}.json?fields=${FIELDS}`, signal);
-    if (j?.status === 1 && j.product) return toHit({ ...j.product, code: j.product.code ?? c });
+  let reached = false; let lastErr: unknown = null;
+  for (const api of [API, API_FOOD]) {
+    try {
+      const j = await get(`${api}/api/v2/product/${clean}.json?fields=${FIELDS}`, signal);
+      reached = true;
+      if (j?.status === 1 && j.product) { const h = toHit({ ...j.product, code: j.product.code ?? clean }); if (h) return h; }
+    } catch (e) { if ((e as Error)?.name === 'AbortError') throw e; lastErr = e; }
   }
+  if (!reached) throw lastErr ?? new Error('Lookup failed');
   return null;
 }
 

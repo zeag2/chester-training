@@ -24,6 +24,7 @@ export function Session({ skillId }: { skillId: string }) {
   const [react, setReact] = useState<ReactionId | null>(null);
   const [line, setLine] = useState('');
   const [pressed, setPressed] = useState(0);
+  const [asking, setAsking] = useState(false);
   const startedAt = useRef(resume?.startedAt ?? Date.now());
   const firstTime = !(wallet?.hintsSeen ?? []).includes('session');
 
@@ -33,7 +34,7 @@ export function Session({ skillId }: { skillId: string }) {
     return () => window.clearInterval(iv);
   }, [running]);
   useEffect(() => {
-    if (elapsed >= SESSION_SECONDS && running) { setRunning(false); audio.sparkle(); audio.buzz([20, 60, 20]); setLine('All tangled up! Time to wrap up.'); }
+    if (elapsed >= SESSION_SECONDS && running) { setRunning(false); audio.sparkle(); audio.buzz([20, 60, 20]); setLine('All tangled up! Tap ↻ to go again, or End.'); }
   }, [elapsed, running]);
   // keep a draft so a closed app never loses a set
   useEffect(() => { if (reps > 0 || elapsed > 0) void store.saveDraft({ skillId, startedAt: startedAt.current, reps, good, seconds: elapsed }); }, [reps, good, skillId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -58,6 +59,14 @@ export function Session({ skillId }: { skillId: string }) {
   };
   const missed = () => { audio.buzz(6); markSeen(); setReps((r) => r + 1); setLine('No worries, try again'); };
   const finish = async () => { setRunning(false); await store.saveDraft({ skillId, startedAt: startedAt.current, reps, good, seconds: elapsed }); go('recap/' + skillId); };
+  /** Back to 2:00 and running. `clear` also starts the counts over. */
+  const restart = (clear: boolean) => {
+    audio.chirp(true); audio.buzz(10); setAsking(false);
+    setElapsed(0); startedAt.current = Date.now();
+    if (clear) { setReps(0); setGood(0); void store.clearDraft(); }
+    setRunning(true); setLine(clear ? 'Fresh start!' : 'Timer’s back to 2:00!');
+  };
+  const tapRestart = () => { if (reps > 0) setAsking(true); else restart(true); };
   const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
 
   return <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface)', paddingTop: 'var(--safe-t)', paddingBottom: 'calc(12px + var(--safe-b))' }}>
@@ -66,6 +75,7 @@ export function Session({ skillId }: { skillId: string }) {
         <button className="iconbtn" aria-label="Close session" onClick={finish}><Icon name="close" /></button>
         <div className="sp"><b style={{ fontSize: 16 }}>{def.name}</b><p className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Step {step + 1}: {pt(def.steps[step])}</p></div>
         <b className="num" style={{ fontSize: 22, minWidth: 54, textAlign: 'right' }} aria-live="off">{mm}:{ss}</b>
+        <button className="iconbtn" aria-label="Restart the timer" onClick={tapRestart} style={left === 0 ? { background: 'var(--mint)' } : undefined}><Icon name="restart" /></button>
       </div>
       <div className={running ? '' : 'paused'} style={{ position: 'relative', width: '100%', aspectRatio: '350 / 200', maxHeight: '30vh', margin: '2px auto 0' }}>
         <YarnBall p={prog} hop={pressed} hurry={running && left <= 10} />
@@ -79,9 +89,19 @@ export function Session({ skillId }: { skillId: string }) {
       </button>
       <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
         <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={missed}>Missed</button>
-        <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={() => { audio.chirp(!running); setRunning(!running); }} aria-label={running ? 'Pause timer' : 'Resume timer'}><Icon name={running ? 'pause' : 'play'} />&nbsp;{running ? 'Pause' : 'Resume'}</button>
+        {left === 0
+          ? <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={tapRestart}><Icon name="restart" />&nbsp;Go again</button>
+          : <button className="btn2" style={{ flex: 1, minHeight: 56 }} onClick={() => { audio.chirp(!running); setRunning(!running); }} aria-label={running ? 'Pause timer' : 'Resume timer'}><Icon name={running ? 'pause' : 'play'} />&nbsp;{running ? 'Pause' : 'Resume'}</button>}
         <button className="btn2" style={{ flex: 1, minHeight: 56, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={finish}>End</button>
       </div>
     </div>
+    {asking && <div className="overlay sheetbg" onClick={() => setAsking(false)}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label="Restart the timer" onClick={(e) => e.stopPropagation()}>
+        <b style={{ fontSize: 18 }}>Start the timer over?</b>
+        <p className="m" style={{ marginTop: 6 }}>The timer goes back to 2:00. You’ve logged {good} good and {reps - good} missed so far.</p>
+        <button className="btn" style={{ marginTop: 16 }} onClick={() => restart(false)}>Keep the {reps} {reps === 1 ? 'rep' : 'reps'}</button>
+        <button className="btn2" style={{ width: '100%', marginTop: 10 }} onClick={() => restart(true)}>Clear them too</button>
+        <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => setAsking(false)}>Cancel</button>
+      </div></div>}
   </div>;
 }

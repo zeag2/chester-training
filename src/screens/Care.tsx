@@ -9,7 +9,7 @@ import {
 import { Icon } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
-import { byBarcode, search, type FoodHit } from '../lib/petfood';
+import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
 import { Scanner } from './Scanner';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
@@ -121,6 +121,7 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
   const pt = usePetText();
+  const { care } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
   const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
@@ -142,7 +143,8 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
     <div className="sheet" role="dialog" aria-modal="true" aria-label={item ? 'Edit entry' : 'New entry'} onClick={(e) => e.stopPropagation()}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>{kind === 'food' ? (item ? 'Edit food or treat' : 'Add food or treat') : (item ? 'Edit ' : '') + TITLE[kind]}</b>
         <button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
-      {kind === 'food' && !item && <FoodFinder onPick={(h) => setF((x: any) => ({ ...x, name: h.name, brand: h.brand ?? '', type: h.type, code: h.code, ingredients: h.ingredients, image: h.image }))} />}
+      {kind === 'food' && !item && <FoodFinder known={care.filter((c): c is CareItem<'food'> => c.kind === 'food')} onCode={(code) => setF((x: any) => ({ ...x, code }))}
+        onPick={(h) => setF((x: any) => ({ ...x, name: h.name, brand: h.brand ?? '', type: h.type, code: h.code, ingredients: h.ingredients, image: h.image }))} />}
       {kind === 'food' && <>{f.image && <img src={f.image} alt="" style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 12, background: '#fff', marginTop: 12 }} />}
         {text('Name', 'name', { placeholder: 'e.g. Chicken pâté' })}{text('Brand (optional)', 'brand')}
         {seg<FoodType>('Type', 'type', [['dry', 'Dry'], ['wet', 'Wet'], ['treat', 'Treat'], ['other', 'Other']])}
@@ -186,19 +188,31 @@ export function CareCard() {
 }
 
 /** Find a food by name or barcode in Open Pet Food Facts, and fill in the form from the pick. */
-function FoodFinder({ onPick }: { onPick: (h: FoodHit) => void }) {
+function FoodFinder({ onPick, onCode, known }: { onPick: (h: FoodHit) => void; onCode: (code: string) => void; known: CareItem<'food'>[] }) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<FoodHit[] | null>(null);
   const [scan, setScan] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const run = async (fn: () => Promise<FoodHit[]>) => {
+  const run = async (fn: () => Promise<FoodHit[]>, notFound = 'Nothing matched. Fill it in below; it only takes a moment.') => {
     setBusy(true); setMsg(''); setHits(null);
-    try { const h = await fn(); setHits(h); if (!h.length) setMsg('Not found. Fill it in below; it only takes a moment.'); }
-    catch { setMsg('Can’t reach the food database right now. Fill it in below.'); }
+    try { const h = await fn(); setHits(h); if (!h.length) setMsg(notFound); }
+    catch { setMsg('Can’t reach the food databases right now (no signal?). Fill it in below.'); }
     finally { setBusy(false); }
   };
-  const lookup = (code: string) => run(async () => { const h = await byBarcode(code); if (h) { onPick(h); audio.chirp(true); } return h ? [h] : []; });
+  /** A barcode: your own saved foods first (instant, works offline), then the open databases. */
+  const lookup = (raw: string) => {
+    const code = raw.replace(/\D/g, '');
+    const mine = known.find((k) => k.data.code && sameCode(k.data.code, code));
+    if (mine) {
+      const d = mine.data; audio.chirp(true);
+      onPick({ code: d.code!, name: d.name, brand: d.brand, type: d.type, ingredients: d.ingredients, image: d.image, forCats: true });
+      setHits(null); setMsg(`You’ve added this one before: ${d.name}${d.verdict ? ` (${VERDICT_LABEL[d.verdict]})` : ''}.`); return;
+    }
+    onCode(code); // kept on the food even if the databases don't know it, so the next scan finds it in your list
+    return run(async () => { const h = await byBarcode(code); if (h) { onPick(h); audio.chirp(true); } return h ? [h] : []; },
+      'This one isn’t in the open food databases yet. Type its name below; the barcode is saved with it, so next time a scan fills it in.');
+  };
   const isCode = /^[\d\s]{8,14}$/.test(q.trim());
   return <div className="card grey" style={{ marginTop: 12 }}>
     <b>Find it</b><p className="s" style={{ marginTop: 2 }}>Scan the barcode or search by name, and we’ll fill it in.</p>
@@ -214,7 +228,7 @@ function FoodFinder({ onPick }: { onPick: (h: FoodHit) => void }) {
       {h.image ? <img src={h.image} alt="" /> : <span className="ico grey" style={{ width: 44, height: 44 }} />}
       <span className="sp"><b style={{ fontSize: 14 }}>{h.name}</b><span className="s" style={{ display: 'block' }}>{[h.brand, h.quantity, h.forCats ? '' : 'not marked for cats'].filter(Boolean).join(' · ')}</span></span></button>)}
     {hits && hits.length === 1 && <p className="s" style={{ marginTop: 8 }} role="status">Filled in: <b>{hits[0].name}</b>. Check it below.</p>}
-    <p className="s" style={{ marginTop: 8, fontSize: 11 }}>Product data from Open Pet Food Facts (open database, ODbL).</p>
+    <p className="s" style={{ marginTop: 8, fontSize: 11 }}>Product data from Open Pet Food Facts and Open Food Facts (open databases, ODbL).</p>
   </div>;
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { byBarcode, guessType, search, toHit, validBarcode } from './petfood';
+import { byBarcode, guessType, sameCode, search, toHit, validBarcode } from './petfood';
 
 afterEach(() => vi.unstubAllGlobals());
 const reply = (body: unknown, ok = true) => vi.stubGlobal('fetch', vi.fn(async () => ({ ok, status: ok ? 200 : 500, json: async () => body })));
@@ -30,11 +30,21 @@ describe('pet food lookup', () => {
     expect(validBarcode('96385074')).toBe(true);       // EAN-8
     expect(validBarcode('12345')).toBe(false);
   });
-  it('tries a 12-digit UPC again as its 13-digit form', async () => {
-    const f = vi.fn(async (url: string) => ({ ok: true, status: 200, json: async () => (url.includes('/0036000291452.') ? { status: 1, product: { product_name: 'Tuna pate', categories_tags: ['en:cat-food'] } } : { status: 0 }) }));
+  it('asks Open Food Facts when the pet database doesn’t know a barcode', async () => {
+    const f = vi.fn(async (url: string) => ({ ok: true, status: 200, json: async () => (url.startsWith('https://world.openfoodfacts.org') ? { status: 1, product: { code: '0829274512527', product_name: 'Meow Mix Tender Centers', categories_tags: ['en:cat-food'] } } : { status: 0 }) }));
     vi.stubGlobal('fetch', f);
-    expect(await byBarcode('036000291452')).toMatchObject({ name: 'Tuna pate' });
+    expect(await byBarcode('829274512527')).toMatchObject({ name: 'Meow Mix Tender Centers' });
     expect(f).toHaveBeenCalledTimes(2);
+  });
+  it('tells “not found” apart from “couldn’t reach the databases”', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ status: 0 }) })));
+    expect(await byBarcode('036000291452')).toBeNull();
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    await expect(byBarcode('036000291452')).rejects.toThrow();
+  });
+  it('matches barcodes with or without leading zeros', () => {
+    expect(sameCode('0050000429745', '050000429745')).toBe(true);
+    expect(sameCode('0050000429745', '050000429746')).toBe(false);
   });
   it('lists cat foods before other matches when searching', async () => {
     reply({ products: [{ code: '1', product_name: 'Dog chews', categories_tags: ['en:dog-treats'] }, { code: '2', product_name: 'Kitten chicken pate', categories_tags: ['en:cat-food'] }] });

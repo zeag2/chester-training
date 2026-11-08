@@ -11,7 +11,7 @@ ready to share with friends.
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 82 tests passing in 14 files; everything is on `main` and live.
+- **State at handoff:** 85 tests passing in 14 files; everything is on `main` and live.
 
 ---
 
@@ -22,7 +22,8 @@ ready to share with friends.
   invited me** (account, then invite code, then straight to the shared pets). Asks boy or girl. Setup starts empty,
   not with Chester's details.
 - **Session:** the whole screen is a "Yes!" paw button, with a yarn-ball 2-minute timer, Missed/Pause/End, and a draft
-  saved on every rep so a killed app resumes.
+  saved on every rep so a killed app resumes. **↻ next to the clock restarts the timer** (asks whether to keep or clear
+  the reps when there are some); at 0:00 the Pause button becomes "Go again".
 - **Recap and rewards:** good-rep count, mood, the pass rules, treats and a gift per set, and a celebration on a step up
   or a mastered skill.
 - **Skill tree and library:** skills by branch, with steps, tips and sources. Hidden skills unlock by mastery
@@ -120,7 +121,13 @@ ready to share with friends.
   An icon already on a Home Screen keeps its old name (long-press to rename, or remove and add it again).
 - **Barcode scanner** (`src/screens/Scanner.tsx`): the camera starts once (it used to restart whenever the Care screen
   re-rendered), asks for a sharp focused rear camera, reads only UPC/EAN, uses the phone's own reader where available,
-  checks the check digit, and has a flashlight button. A 12-digit UPC is also looked up as EAN-13.
+  checks the check digit, and has a flashlight button.
+- **Barcode lookup** (`byBarcode` in `src/lib/petfood.ts`): your own saved foods first (instant, offline, shared with the
+  household), then Open Pet Food Facts, then Open Food Facts. Both open databases allow browser requests (CORS `*`)
+  and accept a 12-digit UPC as is. **Their US coverage is thin** (about 50 Fancy Feast products, 3 Blue Buffalo), so
+  many scans come back "not found": the barcode is then saved with the food the person types in, and the next scan
+  of that bag fills in from their list. UPCitemdb was tested and ruled out (no CORS for other sites, rate-limited).
+  Better coverage would need a paid UPC API behind a Supabase Edge Function (to keep its key secret).
 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colors are tokens in `src/styles/app.css`.
@@ -310,6 +317,11 @@ here in the same commit (see `CLAUDE.md`).
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
+
+### Cloud environment
+- **`chester-training`** (personal, created 2026-11-08): package registries and MCP servers, plus
+  `world.openpetfoodfacts.org`, `world.openfoodfacts.org` and `api.upcitemdb.com`, so sessions can test food lookups.
+  The Default environment blocks those hosts. Start PalDex cloud sessions on this one.
 
 ### MCP servers (repo, `.mcp.json`)
 - `lottiefiles-creator` (`npx -y @lottiefiles/creator-mcp@latest`), added 2026-11-08. Loads from the next session;
