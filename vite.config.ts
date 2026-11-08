@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // applied by src/lib/updates.ts: right away, but never mid-session
+      injectRegister: false,
       includeAssets: ['icon.svg', 'sfx/*.wav'],
       workbox: { globPatterns: ['**/*.{js,css,html,svg,png,wav}'], globIgnores: ['ocr/**', '**/pdf.worker*'], maximumFileSizeToCacheInBytes: 3_000_000 },
       manifest: {
