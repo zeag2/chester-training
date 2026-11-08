@@ -11,8 +11,7 @@ ready to share with friends.
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 76 tests passing in 13 files. Chester's corner is on `claude/practical-einstein-7eoqfi` and
-  **not yet on `main`** (so not live) until Josh merges it.
+- **State at handoff:** 82 tests passing in 14 files; everything is on `main` and live.
 
 ---
 
@@ -102,12 +101,26 @@ ready to share with friends.
   - Dozes after 90 seconds alone.
   - Sleeps from **10:30 PM to 5 AM**; a tap wakes him (sleepy) for two minutes.
   - Random meows every 25 to 70 seconds.
-  - The **off-screen litter box gag** every 3 to 6 minutes: he walks off, digging is heard, horizontal stink lines drift in from the right, he
+  - The **off-screen litter box gag** every 3 to 6 minutes: a shifty glance over his shoulder ("Be right back."), he
+    walks all the way off, digging is heard, horizontal stink lines drift in from the right, he runs back and puffs
+    his chest out, proud (no meows or biscuits interrupt it). Sequence in `useHomeLife` in `src/screens/Home.tsx`; he
     zooms back and owns it.
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon, to an
   original ~5.4-second 8-bit tune (deliberately not the Nyan Cat song).
 - **Sounds:** clicker and reward are recorded samples (`public/sfx`). Chirp, purr, meow, litter digging and the tune
   are synthesized in `src/lib/audio.ts`.
+
+### Getting it onto phones
+- **First visit on a phone's browser** shows "Hi! Who's your kitten?": type one or more names, then **Add to Home
+  Screen**. Android/Chrome shows its own install prompt from the button; iPhone has no such API, so the button opens a
+  Share → Add to Home Screen guide. "Not now" continues in the browser (`src/screens/Install.tsx`, `src/lib/install.ts`).
+- **The app is named after the kittens** ("Chester", "Chester & Luna") on the tab, the iPhone Home Screen title and
+  the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
+  ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
+  An icon already on a Home Screen keeps its old name (long-press to rename, or remove and add it again).
+- **Barcode scanner** (`src/screens/Scanner.tsx`): the camera starts once (it used to restart whenever the Care screen
+  re-rendered), asks for a sharp focused rear camera, reads only UPC/EAN, uses the phone's own reader where available,
+  checks the check digit, and has a flashlight button. A 12-digit UPC is also looked up as EAN-13.
 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colors are tokens in `src/styles/app.css`.
@@ -257,6 +270,7 @@ npm run build      # what CI runs
 | **Self-updating PWA (`registerType: 'prompt'` + `updates.ts`)** | iPhone home-screen apps only check for updates on a cold start; this checks on return to the front and never interrupts a session. |
 | **Remembered "my name" is per account** | It used to be per phone, which put Megan's name on Josh's account. |
 | **Corner lives on the pet record, as a log merged by id** | No new SQL for Josh to run, works offline, and two phones buying at once both keep their buys. Offline double-spending can push the balance below zero; it shows as 0 and buying waits until it's positive. |
+| **Install page before setup, on phones only** | Josh's call. On iPhone, setting up in Safari and then installing would leave the data behind in Safari, so installing first is also the safe order. |
 | **No reduced-motion override** | Josh's explicit choice in Phase 1. |
 
 ---
@@ -307,7 +321,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Tools used for checks (no install needed)
-- Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode).
+- Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed
+  animations, fast-forward with `page.clock` to just before the moment, then `clock.resume()` and capture in real time:
+  CSS animations don't follow the fake clock.
+- Chromium's fake camera (`--use-file-for-fake-video-capture` with a generated barcode video) to test the scanner.
 
 ### Install commands used (to repeat in another project)
 ```bash

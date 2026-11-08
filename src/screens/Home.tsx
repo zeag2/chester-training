@@ -50,7 +50,8 @@ function useHomeMood() {
 
 const MEOWS = ['Meow.', 'Mew?', 'Mrrp!', 'Meeeow.', 'Mrrrow?'];
 const AFTER = ['I feel 3 pounds lighter.', 'Don’t go in the bathroom.', 'Someone should check the box. Not it.', 'That one was for you.', 'I have done a great thing.'];
-type Gag = null | 'out' | 'away' | 'stink' | 'back';
+type Gag = null | 'peek' | 'out' | 'away' | 'gone' | 'back' | 'proud';
+const LEAVE = ['Be right back.', 'Don’t follow me.', 'Nobody look.', 'I have business.'];
 
 /** Every so often he meows at nobody; less often he leaves the room, and the room soon knows why. */
 function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
@@ -59,11 +60,12 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
   const [gag, setGag] = useState<Gag>(null);
   const [gagLine, setGagLine] = useState('');
   const [stink, setStink] = useState(false);
+  const gagRef = useRef<Gag>(null); gagRef.current = gag;
   useEffect(() => {
     if (night || dozing) return;
     let t = 0;
     const next = () => { t = window.setTimeout(() => {
-      if (!document.hidden) { audio.meow((['mew', 'meow', 'mrrp'] as const)[Math.floor(Math.random() * 3)]); setMeowN((n) => n + 1); setMeowLine(MEOWS[Math.floor(Math.random() * MEOWS.length)]); }
+      if (!document.hidden && !gagRef.current) { audio.meow((['mew', 'meow', 'mrrp'] as const)[Math.floor(Math.random() * 3)]); setMeowN((n) => n + 1); setMeowLine(MEOWS[Math.floor(Math.random() * MEOWS.length)]); }
       next();
     }, 25_000 + Math.random() * 45_000); };
     next();
@@ -73,14 +75,17 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
   useEffect(() => {
     if (night) return;
     const ts: number[] = []; const at = (ms: number, f: () => void) => ts.push(window.setTimeout(f, ms));
+    // glance back, trot off, dig (heard, never seen), stink drifts in, zoom back, then own it proudly
     const run = () => {
       if (document.hidden) { schedule(); return; }
-      wakeRef.current(); setGag('out'); setGagLine('');
-      at(1300, () => { setGag('away'); setGagLine('*scritch scritch scritch*'); audio.litter(2.2); });
-      at(3900, () => { setGag('stink'); setGagLine('…'); setStink(true); });
-      at(10_500, () => setStink(false));
-      at(6200, () => { setGag('back'); setGagLine('Mrrp!'); audio.meow('mrrp'); });
-      at(7300, () => { setGag(null); setGagLine(AFTER[Math.floor(Math.random() * AFTER.length)]); schedule(); });
+      wakeRef.current(); setGag('peek'); setGagLine(LEAVE[Math.floor(Math.random() * LEAVE.length)]);
+      at(900, () => setGag('out'));
+      at(2500, () => { setGag('away'); setGagLine('*scritch scritch scritch*'); audio.litter(2.2); });
+      at(4600, () => { setGag('gone'); setGagLine('…'); setStink(true); });
+      at(11_000, () => setStink(false));
+      at(6400, () => { setGag('back'); setGagLine('Mrrp!'); audio.meow('mrrp'); });
+      at(7300, () => { setGag('proud'); setGagLine(AFTER[Math.floor(Math.random() * AFTER.length)]); });
+      at(9800, () => { setGag(null); schedule(); });
     };
     const schedule = () => at(180_000 + Math.random() * 180_000, run);
     at(30_000 + Math.random() * 30_000, run);
@@ -139,7 +144,7 @@ export function Home() {
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
-        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || ph === 'night' ? 'sleepy' : 'curious'}
+        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : gag ? 'sit' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={gag === 'proud' ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
           raised={!gag && !done && !night && !doze && sets.length === 0} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
           width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
         <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>
