@@ -34,9 +34,9 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 }
 
 function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
-  const [f, setF] = useState({ name: cat.name, sex: cat.sex ?? 'm', birthday: cat.birthday, homeDate: cat.homeDate, microchip: cat.microchip ?? '', altered: !!cat.altered, training: cat.training !== false });
+  const [f, setF] = useState({ name: cat.name, sex: cat.sex ?? 'm', birthday: cat.birthday, homeDate: cat.homeDate, microchip: cat.microchip ?? '', altered: !!cat.altered, training: cat.training !== false, meals: cat.mealsPerDay ?? 2 });
   const set = (k: keyof typeof f, v: unknown) => setF((x) => ({ ...x, [k]: v }));
-  const save = async () => { await store.saveCat({ ...cat, name: f.name.trim() || cat.name, sex: f.sex, birthday: f.birthday, homeDate: f.homeDate, microchip: f.microchip.replace(/\s/g, '') || undefined, altered: f.altered, training: f.training }); onClose(); };
+  const save = async () => { await store.saveCat({ ...cat, name: f.name.trim() || cat.name, sex: f.sex, birthday: f.birthday, homeDate: f.homeDate, microchip: f.microchip.replace(/\s/g, '') || undefined, altered: f.altered, training: f.training, mealsPerDay: f.meals }); onClose(); };
   return <Sheet title={`Edit ${cat.name}`} onClose={onClose}>
     <label className="field" htmlFor="pn">Name</label><input id="pn" className="in" value={f.name} onChange={(e) => set('name', e.target.value)} />
     <span className="field">Boy or girl</span>
@@ -47,7 +47,11 @@ function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
     </div>
     <label className="field" htmlFor="pm">Microchip number</label><input id="pm" className="in" inputMode="numeric" value={f.microchip} onChange={(e) => set('microchip', e.target.value)} placeholder="15 digits, from adoption or vet papers" />
     <div className="lgroup" style={{ marginTop: 16 }}><Row label={f.sex === 'f' ? 'Spayed' : 'Neutered'}><Switch on={f.altered} onChange={(v) => set('altered', v)} label={f.sex === 'f' ? 'Spayed' : 'Neutered'} /></Row>
-      <Row label="Training" sub="Adds skills, sets and rewards in the Train tab"><Switch on={f.training} onChange={(v) => set('training', v)} label="Training" /></Row></div>
+      <Row label="Training" sub="Adds skills, sets and rewards in the Train tab"><Switch on={f.training} onChange={(v) => set('training', v)} label="Training" /></Row>
+      <Row label="Meals a day" sub="For the Fed button on Home"><div className="row" style={{ gap: 6 }}>
+        <button className="iconbtn" aria-label="Fewer meals" disabled={f.meals <= 1} onClick={() => set('meals', Math.max(1, f.meals - 1))}>−</button>
+        <b className="num" style={{ minWidth: 20, textAlign: 'center' }} aria-live="polite">{f.meals}</b>
+        <button className="iconbtn" aria-label="More meals" disabled={f.meals >= 8} onClick={() => set('meals', Math.min(8, f.meals + 1))}>+</button></div></Row></div>
     <button className="btn" style={{ marginTop: 20 }} onClick={save} disabled={!f.name.trim()}>Save</button>
   </Sheet>;
 }

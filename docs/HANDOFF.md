@@ -130,7 +130,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 ### Quick log and daily check (Home, `src/ui/DailyTaps.tsx`; added 2026-11-08)
 - **Fed / Scooped / Played:** one tap each logs "now, by me" as a care item of kind `daily` (`{ what: 'fed' | 'scoop'
   | 'play' }`), with a 5-second Undo instead of a form. Tiles show today's state: "1 of 2 · 7:40 by Megan" (meals a day
-  = `Cat.mealsPerDay`, default `MEALS_PER_DAY` = 2; no setting for it yet), "Not yet today", "2× today".
+  = `Cat.mealsPerDay`, default `MEALS_PER_DAY` = 2, set in each cat's Edit sheet). After Scooped, the Undo note also
+  offers "Looked off?" (logs a Litter box change symptom and opens Health), "Not yet today", "2× today".
 - **Daily check:** "Is Chester eating, using the litter box and acting like himself?" **All normal** (one tap) or
   **Something's off** (logs it and opens the symptom form). Once done it shrinks to one line.
 - One-tap logs earn care treats like any entry (capped at 3 a day) and aren't listed in Health's log
@@ -287,9 +288,9 @@ Items marked *(art)* suit the art session.
   Still open: move the Training and corner cards below the fold if Home feels long.
 - [x] **One-tap buttons on Home** (done 2026-11-08, `DailyTaps`): **Fed**, **Scooped**, **Played**, each a single tap that logs "now, by me" with a
   quiet Undo toast instead of a form; long-press (or a small "…") for details. Most-used first.
-- [x] **Meals: who fed them and when** (done; a setting for meals a day is still to add): a "Fed" tap shows "Fed 2 of 2 today · last at 7:40 by Megan", so nobody
+- [x] **Meals: who fed them and when** (done; meals a day is set in each cat's Edit sheet): a "Fed" tap shows "Fed 2 of 2 today · last at 7:40 by Megan", so nobody
   double-feeds. Meals per day set per cat (default 2). Shared with the household like care.
-- [x] **Litter box log** (one tap done; the "something looked off" chip is still to add): "Scooped" with an optional "something looked off" chip (vets ask about this first).
+- [x] **Litter box log** (done; after Scooped, "Looked off?" logs a Litter box change symptom): "Scooped" with an optional "something looked off" chip (vets ask about this first).
 - [x] **Daily two-tap health check** (done): "Ate normally? Litter normal? Acting normal?" with all-yes as one tap; any
   "no" opens the symptom picker. Builds a baseline ("not eating since Tuesday"), earns care treats, feeds the recap
   and vet summary.

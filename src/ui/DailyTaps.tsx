@@ -51,6 +51,7 @@ export function DailyTaps() {
       </div>}
     {undo && <div className="row pop" role="status" style={{ marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)' }}>
       <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14 }}>{DONE[undo.what]} · {time(Date.now())}</span>
+      {undo.what === 'scoop' && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
       <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={() => { void store.deleteCare(undo.id); setUndo(null); }}>Undo</button>
     </div>}
   </div>;
