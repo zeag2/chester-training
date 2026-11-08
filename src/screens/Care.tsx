@@ -224,57 +224,61 @@ async function openDoc(path: string) {
   catch { w?.close(); alert('Couldn’t open the document. Check your connection.'); }
 }
 
-type Pick = { key: string; label: string; detail: string; on: boolean; save: () => Promise<unknown> };
+type Pick = { key: string; label: string; detail: string; on: boolean; save: (doc?: string) => Promise<unknown> };
 
-/** Add a vet document: upload it, have it read, then confirm which entries to add to the log. */
+/** Add a vet document: read it on the phone, store it (when sharing is set up), then confirm which entries to add. */
 function DocAdder({ signedIn }: { signedIn: boolean }) {
-  const [stage, setStage] = useState<'idle' | 'upload' | 'read' | 'review' | 'error'>('idle');
+  const [stage, setStage] = useState<'idle' | 'read' | 'review' | 'error'>('idle');
   const [msg, setMsg] = useState('');
+  const [note, setNote] = useState('');
+  const [progress, setProgress] = useState(0);
   const [picks, setPicks] = useState<Pick[]>([]);
   const [doc, setDoc] = useState<CareItem<'doc'> | null>(null);
-  if (!signedIn) return <p className="s" style={{ marginTop: 8 }}>Sign in (Settings → Train together) to keep vet records here and have them read for you.</p>;
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
-    setStage('upload'); setMsg('');
-    let d: CareItem<'doc'>;
-    try { d = await store.addDoc(file); setDoc(d); }
-    catch (e) { setStage('error'); setMsg((e as Error).message || 'Upload failed. Check your connection.'); return; }
-    setStage('read');
+    setStage('read'); setMsg(''); setNote(''); setProgress(0); setDoc(null);
+    let r;
     try {
-      const r = await store.readDoc(d.data.path);
-      const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
-      await store.saveCare('doc', { ...d.data, title: r.title || d.data.title, docDate: r.docDate ?? undefined, summary: r.summary }, { id: d.id, at: d.at });
-      const list: Pick[] = [];
-      if (r.visitReason) list.push({ key: 'vet', label: 'Vet visit: ' + r.visitReason, detail: [r.clinic, r.docDate && fmt(noon(r.docDate))].filter(Boolean).join(' · '), on: true,
-        save: () => store.saveCare('vet', { reason: r.visitReason!, clinic: r.clinic ?? undefined, notes: r.vetNotes ?? undefined, doc: d.id }, { at: at(r.docDate) }) });
-      if (r.weightLb) list.push({ key: 'w', label: `Weight: ${Math.round(r.weightLb * 100) / 100} lb`, detail: r.docDate ? fmt(noon(r.docDate)) : '', on: true,
-        save: () => store.saveCare('weight', { lb: Math.round(r.weightLb! * 100) / 100, doc: d.id }, { at: at(r.docDate) }) });
-      r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
-        save: () => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc: d.id }, { at: at(it.date) }) }));
-      setPicks(list); setMsg(r.summary); setStage('review');
-    } catch (e) {
-      const m = (e as Error).message;
-      setStage('error');
-      setMsg(m === 'reader-missing' ? 'Saved. Automatic reading isn’t set up yet (see the PalDex setup notes), so add the details by hand.' : `Saved, but it couldn’t be read: ${m}`);
+      const { textFromFile } = await import('../lib/ocr');
+      const { parseVetText } = await import('../lib/docparse');
+      r = parseVetText(await textFromFile(file, setProgress));
+    } catch {
+      setStage('error'); setMsg('Couldn’t read that file. Try a clear, flat photo in good light, or a PDF.'); return;
     }
+    // keep the file too, when sharing is set up
+    let d: CareItem<'doc'> | null = null;
+    if (signedIn) {
+      try { d = await store.addDoc(file); await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? undefined, summary: r.summary }, { id: d.id, at: d.at }); setDoc(d); }
+      catch (e) { setNote(/bucket|not found|404|row-level|policy/i.test(String((e as Error).message)) ? 'The file itself wasn’t saved: document storage isn’t set up in Supabase yet. Your log entries still save.' : 'The file itself wasn’t saved (' + (e as Error).message + '). Your log entries still save.'); }
+    } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
+    const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
+    const list: Pick[] = [];
+    if (r.visitReason) list.push({ key: 'vet', label: 'Vet visit: ' + r.visitReason, detail: [r.clinic, r.docDate && fmt(noon(r.docDate))].filter(Boolean).join(' · '), on: true,
+      save: (doc) => store.saveCare('vet', { reason: r.visitReason!, clinic: r.clinic ?? undefined, doc }, { at: at(r.docDate) }) });
+    if (r.weightLb) list.push({ key: 'w', label: `Weight: ${r.weightLb} lb`, detail: r.docDate ? fmt(noon(r.docDate)) : '', on: true,
+      save: (doc) => store.saveCare('weight', { lb: r.weightLb!, doc }, { at: at(r.docDate) }) });
+    r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
+      save: (doc) => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc }, { at: at(it.date) }) }));
+    setPicks(list); setMsg(r.summary); setStage('review');
   };
 
   return <div className="card grey" style={{ marginTop: 10 }}>
-    {stage === 'idle' && <><p className="s">Snap a photo of a vet invoice, visit summary or vaccine certificate, or pick a PDF. We’ll store it and suggest log entries for you to check.</p>
+    {stage === 'idle' && <><p className="s">Snap a photo of a vet invoice, visit summary or vaccine certificate, or pick a PDF. It’s read right on your phone (free, nothing sent anywhere to read it) and you check what it found.</p>
       <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a vet document
         <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label></>}
-    {stage === 'upload' && <p className="s" aria-live="polite">Uploading…</p>}
-    {stage === 'read' && <p className="s" aria-live="polite">Reading the document… this takes up to a minute.</p>}
+    {stage === 'read' && <><p className="s" aria-live="polite">Reading the document on your phone… {progress > 0 ? Math.round(progress * 100) + '%' : 'getting ready (the first time takes a little longer)'}</p>
+      <div className="bar" style={{ marginTop: 8 }}><i style={{ width: Math.max(4, progress * 100) + '%', animation: 'none' }} /></div></>}
     {stage === 'error' && <><p className="s" role="alert">{msg}</p><button className="btn2" style={{ marginTop: 10, background: 'var(--surface)' }} onClick={() => setStage('idle')}>OK</button></>}
     {stage === 'review' && <>
-      <b>{doc ? 'Here’s what it says' : ''}</b>{msg && <p className="s" style={{ marginTop: 4 }}>{msg}</p>}
+      <b>Here’s what it found</b>{msg && <p className="s" style={{ marginTop: 4 }}>{msg}</p>}
+      {note && <p className="s" style={{ marginTop: 6, color: 'var(--peach-ink)' }}>{note}</p>}
       {picks.length === 0 && <p className="s" style={{ marginTop: 8 }}>Nothing to add to the log. The document is saved.</p>}
       {picks.map((p, i) => <label key={p.key} className="row" style={{ marginTop: 10, gap: 10, alignItems: 'flex-start' }}>
         <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
         <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
-      <p className="s" style={{ marginTop: 10 }}>Read automatically, so check it against the document.</p>
-      <button className="btn" style={{ marginTop: 12 }} onClick={async () => { for (const p of picks) if (p.on) await p.save(); audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
+      <p className="s" style={{ marginTop: 10 }}>Read automatically, so check it against the document. Anything it missed, add with “Log something” above.</p>
+      <button className="btn" style={{ marginTop: 12 }} onClick={async () => { for (const p of picks) if (p.on) await p.save(doc?.id); audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
     </>}
   </div>;
 }

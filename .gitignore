@@ -6,3 +6,4 @@ dist
 # installed skills: skip the duplicate copy and huashu sample media (re-fetch with npx skills experimental_install)
 agent/
 .agents/skills/huashu-art-motion/assets/showcase/
+public/ocr/

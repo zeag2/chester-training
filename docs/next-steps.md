@@ -19,8 +19,10 @@ Next, in order
    meows (licensed) if the synth ones sound robotic.
 2. Care, part 3: "Loves it" treats suggested for hard skills in sessions; a vet-visit summary to show the vet.
    (Part 2 done: food lookup by barcode/name via Open Pet Food Facts; vet documents stored in the private `pet-docs`
-   bucket and read by the `read-vet-doc` Edge Function (Claude) into suggested entries the user confirms.
-   Needs SQL step 6 and the function + ANTHROPIC_API_KEY secret from docs/sharing-setup.md step 7.)
+   bucket; read ON THE PHONE (free): PDF text via pdfjs, photos via Tesseract OCR (files copied into public/ocr by
+   scripts/copy-ocr.mjs at dev/build), then rules in src/lib/docparse.ts pick out dates, weight, clinic and known
+   vaccine/flea/dewormer/medicine names with next-due dates. The Claude Edge Function in supabase/functions is an
+   optional alternative and is not used by the app. Storing the file needs SQL step 6 (pet-docs bucket).)
    (Part 1 done: #/care with food profiles, weight chart, symptoms, grooming, vet visits, medicine with next-due
    reminders, call-the-vet-now list; shared via the `care` table — its SQL must be run once in Supabase.)
 3. Phase 2 features from the design doc: Chester's corner (spend treats), badges/trophy case, check-ins,

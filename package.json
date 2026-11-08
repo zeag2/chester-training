@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/copy-ocr.mjs && vite",
+    "build": "node scripts/copy-ocr.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -14,10 +14,13 @@
     "@supabase/supabase-js": "2.119.0",
     "@zxing/browser": "0.2.1",
     "dexie": "^4.4.7",
+    "pdfjs-dist": "6.4.299",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
+    "@tesseract.js-data/eng": "1.0.0",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

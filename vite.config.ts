@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'sfx/*.wav'],
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,png,wav}'] },
+      workbox: { globPatterns: ['**/*.{js,css,html,svg,png,wav}'], globIgnores: ['ocr/**', '**/pdf.worker*'], maximumFileSizeToCacheInBytes: 3_000_000 },
       manifest: {
         name: 'PalDex',
         short_name: 'PalDex',
