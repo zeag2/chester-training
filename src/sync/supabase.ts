@@ -44,8 +44,19 @@ export class SupabaseRemote implements Remote {
   async updateCat(cat: Cat) { check(await this.sb.from('cats').update({ data: cat }).eq('id', cat.id)); }
   async join(code: string, name: string) { return check(await this.sb.rpc('join_cat', { code, name })) as string | null; }
   async members(catId: string): Promise<Member[]> {
+    // with emails and owner, once the household SQL is set up; otherwise just names
+    const people = await this.sb.rpc('cat_people', { c: catId });
+    if (!people.error && Array.isArray(people.data)) {
+      return (people.data as { user_id: string; display_name: string; email: string; sets_logged: number; is_owner: boolean }[])
+        .map((r) => ({ userId: r.user_id, name: r.display_name, email: r.email, sets: Number(r.sets_logged), owner: r.is_owner }));
+    }
     const rows = check(await this.sb.from('cat_members').select('user_id, display_name').eq('cat_id', catId).order('joined_at'));
     return (rows ?? []).map((r) => ({ userId: r.user_id as string, name: r.display_name as string }));
+  }
+  async removeMember(catId: string, userId: string) {
+    const r = await this.sb.from('cat_members').delete().eq('cat_id', catId).eq('user_id', userId).select('user_id');
+    if (r.error) throw new Error(r.error.message);
+    if (!r.data?.length) throw new Error('not-allowed');
   }
   async setName(catId: string, name: string) {
     const a = await this.account(); if (!a) return;

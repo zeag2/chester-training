@@ -254,6 +254,14 @@ export class Store {
     }).then(async (ok) => { if (ok) await this.sync(); return ok; });
   }
 
+  /** Remove someone from this pet (owner only), or leave it yourself. */
+  async removeMember(userId: string) {
+    const cat = this.snap.cat; if (!cat || !this.remote) return;
+    await this.remote.removeMember(cat.id, userId);
+    if (userId === this.snap.account?.userId) { await this.forget(cat.id); await this.rebuild(null); return; }
+    await this.sync();
+  }
+
   /** Change the name the other trainer sees, and the one Home greets on this phone. */
   async renameMe(name: string) {
     const n = name.trim().slice(0, 40); if (!n) return;

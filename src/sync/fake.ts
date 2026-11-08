@@ -43,7 +43,12 @@ export class FakeRemote implements Remote {
     const u = this.user(); const hit = [...this.s.cats].find(([, c]) => c.inviteCode === code.toUpperCase()); if (!hit) return null;
     const ms = this.s.members.get(hit[0])!; if (!ms.some((m) => m.userId === u.userId)) ms.push({ userId: u.userId, name }); return hit[0];
   }
-  async members(catId: string) { const u = this.user(); return this.s.isMember(catId, u.userId) ? structuredClone(this.s.members.get(catId)!) : []; }
+  async members(catId: string) { const u = this.user(); return this.s.isMember(catId, u.userId) ? structuredClone(this.s.members.get(catId)!).map((m, i) => ({ ...m, email: m.userId.replace(/^u:/, ''), owner: i === 0 })) : []; }
+  async removeMember(catId: string, userId: string) {
+    const u = this.user(); const ms = this.s.members.get(catId) ?? [];
+    if (u.userId !== userId && ms[0]?.userId !== u.userId) throw new Error('not-allowed');
+    this.s.members.set(catId, ms.filter((m) => m.userId !== userId));
+  }
   async setName(catId: string, name: string) { const u = this.user(); const m = this.s.members.get(catId)?.find((x) => x.userId === u.userId); if (m) m.name = name; }
   async pullSets(catId: string) { const u = this.user(); if (!this.s.isMember(catId, u.userId)) return []; return [...this.s.sets.values()].filter((s) => s.catId === catId).map((s) => structuredClone(s)); }
   async pushSets(sets: SetRecord[]) {

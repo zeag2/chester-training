@@ -14,7 +14,7 @@ describe('training Chester together', () => {
     await josh.saveCat(chester);
     await josh.logSet({ ...pass, at: Date.parse('2026-11-08T09:00:00') });
     await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
-    expect(josh.get().household?.members).toEqual([{ userId: 'u:josh@example.com', name: 'Josh' }]);
+    expect(josh.get().household?.members.map((m) => [m.userId, m.name])).toEqual([['u:josh@example.com', 'Josh']]);
     const code = josh.get().household!.inviteCode;
 
     const sam = device(server); await sam.load();
@@ -78,7 +78,7 @@ describe('training Chester together', () => {
     await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
     expect(josh.get().cat).toBeNull();
     await josh.saveCat(chester); await josh.logSet(pass); await josh.sync();
-    expect(josh.get().household?.members).toEqual([{ userId: 'u:josh@example.com', name: 'Josh' }]);
+    expect(josh.get().household?.members.map((m) => [m.userId, m.name])).toEqual([['u:josh@example.com', 'Josh']]);
     const phone2 = device(server); await phone2.load();
     await phone2.signIn('josh@example.com', 'catnip1', '', true, false);
     expect(phone2.get().cat?.name).toBe('Chester');
@@ -158,6 +158,20 @@ describe('training Chester together', () => {
     expect(names).toEqual([['u:jo@shared.test', ''], ['u:meg@shared.test', 'Megan']]);
     await phone.renameMe('Josh');
     expect(phone.get().household!.members.map((m) => m.name)).toEqual(['Josh', 'Megan']);
+  });
+
+  it('lets whoever set the cat up remove a duplicate account, and nobody else', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('owner@dupe.test', 'catnip1', 'Josh', true, true);
+    const code = josh.get().household!.inviteCode;
+    const meg1 = device(server); await meg1.load(); await meg1.signIn('meg@dupe.test', 'catnip1', 'Megan', false, true); await meg1.join(code, 'Megan');
+    const meg2 = device(server); await meg2.load(); await meg2.signIn('megg@dupe.test', 'catnip1', 'Megan', false, true); await meg2.join(code, 'Megan');
+    await josh.sync();
+    expect(josh.get().household!.members.map((m) => [m.name, m.email, m.owner])).toEqual([['Josh', 'owner@dupe.test', true], ['Megan', 'meg@dupe.test', false], ['Megan', 'megg@dupe.test', false]]);
+    await expect(meg1.removeMember('u:megg@dupe.test')).rejects.toThrow('not-allowed');
+    await josh.removeMember('u:megg@dupe.test');
+    expect(josh.get().household!.members.map((m) => m.email)).toEqual(['owner@dupe.test', 'meg@dupe.test']);
   });
 
   it('keeps treats saved up before sets remembered their gifts', async () => {

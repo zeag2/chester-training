@@ -51,12 +51,38 @@ function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
 }
 
 function EditMyName({ onClose }: { onClose: () => void }) {
-  const { household, account } = useStore();
+  const { household, account, cat } = useStore();
+  const meRow = household?.members.find((m) => m.userId === account?.userId);
   const [name, setName] = useState(household?.members.find((m) => m.userId === account?.userId)?.name || store.myName);
   return <Sheet title="Your name" onClose={onClose}>
     <p className="s" style={{ marginTop: 4 }}>Home greets you with it, and it’s what the people you train with see.</p>
     <input className="in" style={{ marginTop: 12 }} value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" autoFocus aria-label="Your name" />
     <button className="btn" style={{ marginTop: 16 }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
+    {meRow && !meRow.owner && meRow.email !== undefined && cat && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }}
+      onClick={async () => { if (confirm(`Stop training ${cat.name}? ${cat.name} is removed from this phone; you can rejoin with an invite code.`)) { await store.removeMember(meRow.userId).catch(() => {}); onClose(); } }}>Leave {cat.name}</button>}
+  </Sheet>;
+}
+
+/** Someone who trains the pet: who they are, and (for whoever set the pet up) a way to remove them. */
+function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
+  const { household, account, cat } = useStore();
+  const [err, setErr] = useState('');
+  const m = household?.members.find((x) => x.userId === userId);
+  const iOwn = !!household?.members.find((x) => x.userId === account?.userId)?.owner;
+  if (!m || !cat) return null;
+  const same = household!.members.filter((x) => x.name && x.name === m.name).length > 1;
+  return <Sheet title={m.name || 'Someone'} onClose={onClose}>
+    <p className="m" style={{ marginTop: 4 }}>{m.email ?? 'Email shows once the latest PalDex setup step is done.'}</p>
+    {m.sets !== undefined && <p className="s" style={{ marginTop: 4 }}>{m.sets} training set{m.sets === 1 ? '' : 's'} logged</p>}
+    {same && <div className="card butter" style={{ marginTop: 12 }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
+    {iOwn ? <>
+      <button className="btn" style={{ marginTop: 16, background: 'var(--rose)' }} onClick={async () => {
+        if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from ${cat.name}? Sets they logged stay.`)) return;
+        try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up ' + cat.name + ' can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
+      }}>Remove from {cat.name}</button>
+      <p className="s" style={{ marginTop: 8 }}>They lose access to {cat.name}. Everything they logged stays.</p></>
+      : <p className="s" style={{ marginTop: 14 }}>Only the person who set up {cat.name} can remove people.</p>}
+    {err && <p className="s" role="alert" style={{ marginTop: 10, color: 'var(--rose)' }}>{err}</p>}
   </Sheet>;
 }
 
@@ -74,6 +100,7 @@ export function Settings() {
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
+  const [person, setPerson] = useState('');
   const showInstall = useInstallHint();
   if (!cat) return null;
   const he = cat.sex === 'f' ? 'Girl' : 'Boy';
@@ -98,8 +125,9 @@ export function Settings() {
     </div>
 
     {sharingConfigured() && (account ? <Group title="People" foot={syncText}>
-      <Row label={me?.name || 'Add your name'} sub={account.email} value="You" onClick={() => setSheet('name')} />
-      {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} value="Trains with you" />)}
+      <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set up ' + cat.name : 'You'} onClick={() => setSheet('name')} />
+      {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
+        value={m.owner ? 'Set up ' + cat.name : 'Trains with you'} onClick={() => setPerson(m.userId)} />)}
       {household && <Row label={others.length ? 'Invite someone else' : `Invite someone to train ${cat.name}`} onClick={() => setSheet('invite')} />}
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? ${cat.name} stays on this phone; sign back in to sync again.`)) void store.signOut(); }} />
@@ -121,6 +149,7 @@ export function Settings() {
 
     {sheet === 'pet' && <EditPet cat={cat} onClose={() => setSheet('')} />}
     {sheet === 'name' && <EditMyName onClose={() => setSheet('')} />}
+    {person && <Person userId={person} onClose={() => setPerson('')} />}
     {sheet === 'invite' && household && <Invite catName={cat.name} code={household.inviteCode} onClose={() => setSheet('')} />}
     {sheet === 'install' && <Sheet title="Add to your home screen" onClose={() => setSheet('')}>
       <p className="m" style={{ marginTop: 6 }}>In Safari, tap the Share button, then “Add to Home Screen”. PalDex then opens full screen like an app and works offline.</p></Sheet>}
