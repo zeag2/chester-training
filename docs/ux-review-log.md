@@ -12,6 +12,8 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   - Visit screen (`src/screens/Visit.tsx`): a large empty gap between the speech bubble and the cat.
   - White cards (`.card.white`) blend into the white page in light mode (no visible edge).
   - The disabled "Given today" button on Visit still looks active.
+- **New on Home (2026-11-08):** the Quick log card (`src/ui/DailyTaps.tsx`: Fed, Scooped, Played, the daily check,
+  Undo) and one friends card. Review them like any new screen.
 - **Leave for the feature sessions (don't change, suggest only):** merging the two friends cards on Home (the
   friends session is doing it), the one-tap logging buttons, meals, litter and the daily health check (on the
   checklist in docs/HANDOFF.md, section 2).

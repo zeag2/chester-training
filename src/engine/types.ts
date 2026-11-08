@@ -78,6 +78,8 @@ export interface Cat {
   carry?: { treats: number; bond: number; toys: string[] };
   /** Training switched on for this cat. Missing = on (cats set up before it was optional). */
   training?: boolean;
+  /** Meals a day, for the one-tap Fed counter (missing = MEALS_PER_DAY). */
+  mealsPerDay?: number;
   /** Chester's corner: what was bought, daily gifts and play, and what he's wearing (see engine/corner.ts). */
   corner?: Corner;
 }

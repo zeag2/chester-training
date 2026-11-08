@@ -12,6 +12,8 @@ export class FakeServer {
   passwords = new Map<string, string>();
   care = new Map<string, CareItem>();
   careTable = true;
+  /** Care kinds the server accepts (null: all). Tests set it to mimic the daily-logs SQL not being run. */
+  careKinds: string[] | null = null;
   files = new Map<string, Blob>();
   reading: DocReading | null = null;
   online = true;
@@ -85,7 +87,8 @@ export class FakeRemote implements Remote {
   async pullCare(catId: string) { const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist'); if (!this.s.isMember(catId, u.userId)) return []; return [...this.s.care.values()].filter((c) => c.catId === catId).map((c) => structuredClone(c)); }
   async pushCare(items: CareItem[]) {
     const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist');
-    for (const i of items) { if (!this.s.isMember(i.catId, u.userId)) throw new Error('denied'); this.s.care.set(i.id, { ...structuredClone(i), by: u.userId }); }
+    for (const i of items) { if (this.s.careKinds && !this.s.careKinds.includes(i.kind)) throw new Error('new row for relation "care" violates check constraint "care_kind_check"');
+      if (!this.s.isMember(i.catId, u.userId)) throw new Error('denied'); this.s.care.set(i.id, { ...structuredClone(i), by: u.userId }); }
   }
   async uploadDoc(path: string, file: Blob) { const u = this.user(); if (!this.s.isMember(path.split('/')[0], u.userId)) throw new Error('denied'); this.s.files.set(path, file); }
   async docUrl(path: string) { this.user(); return 'blob:' + path; }

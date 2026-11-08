@@ -30,6 +30,8 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
 10. **Friends.** Run `supabase/migrations/20261110000000_friends.sql`.
 11. **Friends' treats.** Run `supabase/migrations/20261111000000_friend_treats.sql` (after step 10). Until then, visiting
     friends' cats works and the treat button says treats aren't switched on yet.
+12. **One-tap daily logs.** Run `supabase/migrations/20261112000000_daily_logs.sql`. Until then, Fed/Scooped/Played and
+    the daily check stay on the phone that logged them; everything else syncs.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

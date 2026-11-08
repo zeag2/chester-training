@@ -24,6 +24,13 @@ export default defineConfig({
         id: base,
         start_url: base,
         scope: base,
+        // long-press the app icon (Android): one-tap logs, the same as Home's Quick log (`#/log/<what>`)
+        shortcuts: [
+          { name: 'Fed', short_name: 'Fed', url: base + '#/log/fed' },
+          { name: 'Litter scooped', short_name: 'Scooped', url: base + '#/log/scoop' },
+          { name: 'Played', short_name: 'Played', url: base + '#/log/play' },
+          { name: 'Daily check: all normal', short_name: 'All normal', url: base + '#/log/check' },
+        ],
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },

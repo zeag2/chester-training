@@ -106,9 +106,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   (`cardFor`/`publishCard` in `store.ts`, `set_pet_card` in SQL); `friend_pets()` returns only the card plus name and look.
 - Needs `20261110000000_friends.sql` (run it in the Supabase SQL editor). Until then the screen says friends aren't
   switched on yet; nothing else is affected.
-- **Friends' cats strip on Home** (`src/ui/FriendsStrip.tsx`, one line after the Today card in `Home.tsx`): faces like
-  the cat switcher, with a little paw badge on each cat that can still get today's treat. Hidden until you have a
-  friend with a cat (or a treat just arrived). It also shows "Erin gave Chester a treat" (`treatNews` in the store).
+- **Friends' cats strip on Home** (`src/ui/FriendsStrip.tsx`, one line after the Today card in `Home.tsx`): Home's only
+  friends card (the older "Friends' cats" card was merged into it on 2026-11-08). Faces like the cat switcher, with a
+  little paw badge on each cat that can still get today's treat, and + to invite (opens the invite sheet). It also shows "Erin gave Chester a treat" (`treatNews` in the store).
 - **Visiting** (`#/visit/<catId>`, `src/screens/Visit.tsx`, also from each card on the Friends screen): the friend's cat
   big and pettable with the usual reactions (`<Chester interactive>` with the card's coat, eyes and outfit), plus the
   card's skills, streak and bond.
@@ -126,6 +126,21 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   one pet. The pet being shown is remembered.
 - Each pet has its own training, care log and documents. New pets go into the household of the pet being shown.
 - **Cats only.** Dogs would need new art and a new skill set (see section 5).
+
+### Quick log and daily check (Home, `src/ui/DailyTaps.tsx`; added 2026-11-08)
+- **Fed / Scooped / Played:** one tap each logs "now, by me" as a care item of kind `daily` (`{ what: 'fed' | 'scoop'
+  | 'play' }`), with a 5-second Undo instead of a form. Tiles show today's state: "1 of 2 · 7:40 by Megan" (meals a day
+  = `Cat.mealsPerDay`, default `MEALS_PER_DAY` = 2; no setting for it yet), "Not yet today", "2× today".
+- **Daily check:** "Is Chester eating, using the litter box and acting like himself?" **All normal** (one tap) or
+  **Something's off** (logs it and opens the symptom form). Once done it shrinks to one line.
+- One-tap logs earn care treats like any entry (capped at 3 a day) and aren't listed in Health's log
+  (`dailyToday()` in `care.ts` sums them up for Home).
+- **Shortcuts:** `#/log/fed|scoop|play|check` logs it and returns to Home (`LogLink`). The manifest's `shortcuts`
+  offer them on a long-press of the app icon (Android; iPhone ignores manifest shortcuts, and links from iPhone
+  Shortcuts open in Safari, not the Home Screen app).
+- **Needs `20261112000000_daily_logs.sql`** (adds `daily` to the care kinds). Until it's run, one-tap logs stay on the
+  phone that made them (`syncCare` pushes them separately and keeps them dirty on a check-constraint error) and
+  everything else keeps syncing; they upload once it's run.
 
 ### Health (the Health tab, `#/health`; was "Chester's care")
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
@@ -268,19 +283,19 @@ Items marked *(art)* suit the art session.
    flat colour regions, same canvas and ground line per pose, original art with full rights.
 
 ### Make logging effortless (Josh, 2026-11-08: "if it's tedious no one will do it")
-- [ ] **Home clean-up** (S–M): one friends card, not two (merge the old "Friends' cats" card's + invite into the
-  `FriendsStrip`); Home answers "anything to do today?" first, everything else a scroll down.
-- [ ] **One-tap buttons on Home** (M): **Fed**, **Scooped**, **Played**, each a single tap that logs "now, by me" with a
+- [x] **Home clean-up**: one friends card (the old card's + invite merged into `FriendsStrip`); Quick log first.
+  Still open: move the Training and corner cards below the fold if Home feels long.
+- [x] **One-tap buttons on Home** (done 2026-11-08, `DailyTaps`): **Fed**, **Scooped**, **Played**, each a single tap that logs "now, by me" with a
   quiet Undo toast instead of a form; long-press (or a small "…") for details. Most-used first.
-- [ ] **Meals: who fed them and when** (M): a "Fed" tap shows "Fed 2 of 2 today · last at 7:40 by Megan", so nobody
+- [x] **Meals: who fed them and when** (done; a setting for meals a day is still to add): a "Fed" tap shows "Fed 2 of 2 today · last at 7:40 by Megan", so nobody
   double-feeds. Meals per day set per cat (default 2). Shared with the household like care.
-- [ ] **Litter box log** (S): "Scooped" with an optional "something looked off" chip (vets ask about this first).
-- [ ] **Daily two-tap health check** (M): "Ate normally? Litter normal? Acting normal?" with all-yes as one tap; any
+- [x] **Litter box log** (one tap done; the "something looked off" chip is still to add): "Scooped" with an optional "something looked off" chip (vets ask about this first).
+- [x] **Daily two-tap health check** (done): "Ate normally? Litter normal? Acting normal?" with all-yes as one tap; any
   "no" opens the symptom picker. Builds a baseline ("not eating since Tuesday"), earns care treats, feeds the recap
   and vet summary.
 - [ ] **Smart defaults everywhere** (S): time = now, the last food used, the last weight pre-filled to nudge,
   "same as yesterday" for meds and meals.
-- [ ] **Home Screen shortcuts** (S): manifest `shortcuts` (long-press the app icon: "Fed Chester", "Weigh-in") and
+- [x] **Home Screen shortcuts** (done; Android only, see section 1): manifest `shortcuts` (long-press the app icon: "Fed Chester", "Weigh-in") and
   deep links like `#/log/fed`, which iPhone Shortcuts can open (even from an NFC sticker on the food bin).
 - [ ] **Log for several cats at once** (S): "Fed" asks nothing when there's one cat, offers "All cats" when several.
 
@@ -298,7 +313,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Water and appetite notes** (S): optional chips on the daily check.
 
 ### Treats and corner
-- [ ] **Treat balance on Home** (S): a small treat count that opens the corner, so earning feels visible.
+- [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
 
 ### Friends safety
 - [ ] **Accept friend requests** (M, SQL): "Accept Erin?" instead of instant friendship; remove a friend from their
@@ -430,6 +445,7 @@ supabase/
     20261109000000_households.sql        households, migration of existing sharing, join_household, household_people
     20261110000000_friends.sql           friend codes, friendships, pet cards, add_friend/friend_pets/set_pet_card
     20261111000000_friend_treats.sql     friends' free treats: friend_treats, give_treat/treats_given/treats_for
+    20261112000000_daily_logs.sql        adds the 'daily' care kind (one-tap Fed/Scooped/Played, daily check)
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)

@@ -16,8 +16,8 @@ import { CareTreatNote } from '../ui/CareTreatNote';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
-const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: 'Weight', symptom: 'Symptom', groom: 'Grooming', vet: 'Vet visit', med: 'Medicine or vaccine', doc: 'Document' };
-const ICON: Record<CareKind, string> = { food: 'leaf', weight: 'target', symptom: 'ear', groom: 'hand', vet: 'box', med: 'check', doc: 'book' };
+const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: 'Weight', symptom: 'Symptom', groom: 'Grooming', vet: 'Vet visit', med: 'Medicine or vaccine', doc: 'Document', daily: 'Daily' };
+const ICON: Record<CareKind, string> = { food: 'leaf', weight: 'target', symptom: 'ear', groom: 'hand', vet: 'box', med: 'check', doc: 'book', daily: 'paw' };
 
 function summary(i: CareItem): string {
   const d = i.data as any;
@@ -41,7 +41,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const [flags, setFlags] = useState(false);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
-  const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc').slice(0, 40);
+  // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
+  const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
   const docs = care.filter((c): c is CareItem<'doc'> => c.kind === 'doc');
   const ws = weights(care);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
@@ -118,7 +119,7 @@ function Spark({ values }: { values: number[] }) {
 const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
   food: { name: '', brand: '', type: 'wet', verdict: 'love', current: true, notes: '' },
   weight: { lb: '' }, symptom: { what: '', worried: false, notes: '' }, groom: { what: 'brush', notes: '' },
-  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '' }, doc: { title: '' },
+  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '' }, doc: { title: '' }, daily: { what: 'fed' },
 };
 
 /** Bottom sheet with the form for one kind of entry; also edits and deletes. */

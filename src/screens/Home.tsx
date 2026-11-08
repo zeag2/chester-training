@@ -16,6 +16,7 @@ import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
 import { InviteSheet } from './Friends';
 import { FriendsStrip } from '../ui/FriendsStrip';
+import { DailyTaps } from '../ui/DailyTaps';
 import { usePetText } from '../lib/pet';
 
 /** Part of the day from the time; night runs 10:30 PM to 5 AM. */
@@ -173,8 +174,9 @@ export function Home() {
       {movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
         <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
         <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>}
+      <DailyTaps />
       <TodayCard />
-      <FriendsStrip />
+      <FriendsStrip onInvite={() => setInvite(true)} />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
         <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
@@ -191,10 +193,6 @@ export function Home() {
           {friendNews.scarf && <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { void store.wear('scarf'); store.dismissFriendNews(); }}>Put the scarf on</button>}
           <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
       </div>}
-      {account && <div className="card sky row">
-        <a href="#/friends" className="row sp" style={{ color: 'inherit', gap: 12, textDecoration: 'none' }}><div className="ico"><Icon name="hand" /></div>
-          <div className="sp"><b>Friends’ cats</b><p className="s">{pendingFriend() ? 'A friend invited you. Tap to add them.' : `Each new friend: +${FRIEND_BONUS.treats} treats for ${cat.name}.`}</p></div></a>
-        <button className="plusbtn" aria-label="Invite a friend" onClick={() => setInvite(true)}><Icon name="plus" size={22} /></button></div>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>

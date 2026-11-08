@@ -257,15 +257,24 @@ export class Store {
   async removeDoc(item: CareItem<'doc'>) { await this.deleteCare(item.id); await this.remote?.removeDoc(item.data.path).catch(() => {}); }
 
   /** Newest edit wins on each side; a missing care table never breaks training sync. */
+  /** False once the server refused a one-tap daily log (its SQL not run yet). */
+  dailyShared: boolean | null = null;
   private async syncCare(r: Remote, catId: string): Promise<'ok' | 'missing'> {
     try {
       const theirs = await r.pullCare(catId);
       const mine = new Map((await this.db.care.where('catId').equals(catId).toArray()).map((c) => [c.id, c]));
       const take: CareRow[] = []; const known = new Map<string, CareItem>();
       for (const t of theirs) { known.set(t.id, t); const m = mine.get(t.id); if (newer(m, t) === t && (!m || t.updatedAt > m.updatedAt)) take.push({ ...t, dirty: 0 }); }
-      const send = [...mine.values()].filter((m) => m.dirty && (!known.has(m.id) || m.updatedAt > known.get(m.id)!.updatedAt)).map(({ dirty: _d, ...m }) => m as CareItem);
+      const all = [...mine.values()].filter((m) => m.dirty && (!known.has(m.id) || m.updatedAt > known.get(m.id)!.updatedAt)).map(({ dirty: _d, ...m }) => m as CareItem);
+      const send = all.filter((m) => m.kind !== 'daily'); const daily = all.filter((m) => m.kind === 'daily');
       await r.pushCare(send);
-      await this.db.care.bulkPut([...take, ...send.map((m) => ({ ...m, dirty: 0 }))]);
+      // one-tap daily logs need the daily-logs SQL; until it's run they stay on this phone (still dirty) and the rest syncs
+      let sent = send;
+      if (daily.length) {
+        try { await r.pushCare(daily); sent = all; this.dailyShared = true; }
+        catch (e) { if (!/check constraint|care_kind_check|violates|23514/i.test(String((e as Error)?.message ?? e))) throw e; this.dailyShared = false; }
+      }
+      await this.db.care.bulkPut([...take, ...sent.map((m) => ({ ...m, dirty: 0 }))]);
       return 'ok';
     } catch (e) {
       if (/care|relation|does not exist|schema cache|404/i.test(String((e as Error)?.message ?? e))) return 'missing';

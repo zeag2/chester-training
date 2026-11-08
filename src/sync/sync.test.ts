@@ -3,6 +3,7 @@ import { Store } from '../db/store';
 import { FakeServer } from './fake';
 import { owned } from '../engine/corner';
 import { localDay } from '../engine/day';
+import { dailyToday } from '../engine/care';
 
 const chester = { name: 'Chester', birthday: '2026-04', homeDate: '2026-11-01', breed: 'American Shorthair', coat: 'black', eyes: 'gold', rewards: ['treats'], outfit: '' };
 const pass = { skillId: 'clicker', reps: 10, good: 10, mood: 'Happy' as const, seconds: 90 };
@@ -369,6 +370,22 @@ describe('training Chester together', () => {
     await meg.sync(); await josh.sync();
     expect(josh.get().wallet!.treats).toBe(t0 + 7 + 2 + 2);
     expect(meg.get().wallet!.treats).toBe(josh.get().wallet!.treats);
+  });
+  it('shares one-tap daily logs, and keeps them on the phone (without stalling sync) until their SQL is run', async () => {
+    const server = new FakeServer(); server.careKinds = ['food', 'vet', 'symptom', 'weight', 'groom', 'med', 'doc'];
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const meg = device(server); await meg.load(); await meg.signIn('meg@example.com', 'catnip1', 'Megan', false, true);
+    await meg.join(josh.get().household!.inviteCode, 'Megan');
+    await meg.saveCare('daily', { what: 'fed' }); await meg.saveCare('weight', { lb: 4 });
+    await meg.sync(); await josh.sync();
+    expect(meg.get().sync).toBe('ok'); expect(meg.dailyShared).toBe(false);
+    expect(josh.get().care.map((c) => c.kind)).toEqual(['weight']); // the weigh-in still synced
+    server.careKinds = null; // Josh runs the SQL
+    await meg.sync(); await josh.sync();
+    expect(meg.dailyShared).toBe(true);
+    const fed = dailyToday(josh.get().care).fed;
+    expect(fed.map((f) => f.by)).toEqual(['u:meg@example.com']);
   });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;

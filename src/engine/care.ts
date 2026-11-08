@@ -2,7 +2,9 @@
    Items can be edited and deleted (unlike sets), so each carries updatedAt and a deleted flag; the newest edit wins. */
 import { daysBetween, localDay } from './day';
 
-export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc';
+export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc' | 'daily';
+/** One-tap everyday logs: a meal, a litter scoop, a play session, or the daily health check. */
+export type DailyWhat = 'fed' | 'scoop' | 'play' | 'check';
 export type Verdict = 'love' | 'ok' | 'no';
 export type FoodType = 'dry' | 'wet' | 'treat' | 'other';
 export type GroomWhat = 'brush' | 'nails' | 'bath' | 'teeth' | 'ears';
@@ -16,6 +18,8 @@ export interface CareData {
   groom: { what: GroomWhat; notes?: string };
   med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string };
   /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
+  /** `ok`: the daily check said all normal (false: something's off, see the symptom logged with it). */
+  daily: { what: DailyWhat; ok?: boolean; minutes?: number; notes?: string };
   doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string; categories?: ('vet' | 'esa' | 'adoption' | 'other')[] };
 }
 
@@ -99,3 +103,14 @@ export const RED_FLAGS = [
   'Can’t use his back legs, or cries out in pain.',
   'An injury that’s bleeding, or a fall or hit by something.',
 ];
+
+/** Meals a day unless the pet says otherwise. */
+export const MEALS_PER_DAY = 2;
+/** Today's one-tap logs for a pet, newest first (deleted ones left out). */
+export function dailyToday(items: CareItem[], now = Date.now()): Record<DailyWhat, CareItem<'daily'>[]> {
+  const today = localDay(now);
+  const out: Record<DailyWhat, CareItem<'daily'>[]> = { fed: [], scoop: [], play: [], check: [] };
+  for (const i of items) if (i.kind === 'daily' && !i.deleted && localDay(i.at) === today) out[(i as CareItem<'daily'>).data.what].push(i as CareItem<'daily'>);
+  for (const k of Object.keys(out) as DailyWhat[]) out[k].sort((a, b) => b.at - a.at);
+  return out;
+}

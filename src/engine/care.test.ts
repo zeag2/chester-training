@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newer, reminders, type CareItem } from './care';
+import { dailyToday, newer, reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
 const item = <K extends CareItem['kind']>(kind: K, at: string, data: CareItem<K>['data'], extra: Partial<CareItem> = {}): CareItem =>
@@ -30,5 +30,11 @@ describe('care reminders', () => {
     const a = item('food', '2026-11-01', { name: 'Tuna pate', type: 'wet', verdict: 'love', current: true }, { id: 'x', updatedAt: 5 });
     const b = { ...a, updatedAt: 9, data: { ...a.data, verdict: 'no' } } as CareItem;
     expect(newer(a, b)).toBe(b); expect(newer(b, a)).toBe(b);
+  });
+  it('counts today’s one-tap logs, newest first, leaving out other days and deleted ones', () => {
+    const now = Date.parse('2026-11-08T18:00:00');
+    const d = (id: string, what: string, at: number, deleted = false) => ({ id, catId: 'c', kind: 'daily', at, updatedAt: at, deleted, data: { what } }) as CareItem;
+    const t = dailyToday([d('a', 'fed', Date.parse('2026-11-08T07:00:00')), d('b', 'fed', Date.parse('2026-11-08T17:00:00')), d('c', 'fed', Date.parse('2026-11-07T17:00:00')), d('e', 'scoop', now, true), d('f', 'check', now)], now);
+    expect(t.fed.map((x) => x.id)).toEqual(['b', 'a']); expect(t.scoop).toEqual([]); expect(t.check.map((x) => x.id)).toEqual(['f']);
   });
 });
