@@ -137,7 +137,7 @@ export function Corner() {
           })}
         </div>
       </section>)}
-      <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>Treats come from training sets and the daily gift. Tap an outfit or cushion again to take it off.</p>
+      <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>Treats come from the daily gift, logging {cat.name}’s care (a few a day, more for weigh-ins, doses on time and vet visits), training sets and friends. Tap an outfit or cushion again to take it off.</p>
     </div>
   </div>;
 }

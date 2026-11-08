@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
+import type { CareItem } from './care';
+import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, careReward, CARE_TREATS, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
 
 const ev = (id: string, treats: number, at = 1, extra: Partial<CornerEvent> = {}): CornerEvent => ({ id, kind: 'buy', day: '2026-11-08', at, treats, bond: 0, ...extra });
 
@@ -48,5 +49,29 @@ describe('Chester’s corner', () => {
     expect(newTreats(c, got)).toEqual([{ from: 'erin', day: '2026-11-09' }, { from: 'dana', day: '2026-11-09' }]);
     expect(newTreats(undefined, [])).toEqual([]);
     expect(withCorner({ treats: 5, bond: 0, toys: [] }, c).treats).toBe(6);
+  });
+  it('pays treats for new care entries, a few a day, with bonuses for weigh-ins, meds on time and vet visits', () => {
+    const now = Date.parse('2026-11-08T12:00:00'); const day = 864e5;
+    const care = (id: string, kind: CareItem['kind'], data: object, at = now): CareItem => ({ id, catId: 'c', kind, at, updatedAt: at, data } as CareItem);
+    const paid = (id: string, treats: number, item: string, at = now) => ev('care-' + id, treats, at, { kind: 'care', item, day: new Date(at).toLocaleDateString('en-CA') });
+    expect(careReward(undefined, care('a', 'symptom', { what: 'Sneezing' }), [], now)).toEqual({ treats: 2, why: 'entry' });
+    // the same entry never pays twice; the daily cap stops a fourth
+    expect(careReward({ log: [paid('a', 2, 'symptom')] }, care('a', 'symptom', {}), [], now)).toBeNull();
+    const three = { log: [paid('x', 2, 'food'), paid('y', 2, 'food'), paid('z', 2, 'food')] };
+    expect(careReward(three, care('n', 'groom', { what: 'brush' }), [], now)).toBeNull();
+    expect(careReward(three, care('n', 'groom', {}), [], now + day)).toEqual({ treats: 2, why: 'entry' }); // a new day
+    // weigh-in bonus once a week, and only for a weigh-in that just happened
+    expect(careReward(undefined, care('w', 'weight', { lb: 4 }), [], now)).toEqual({ treats: 2 + CARE_TREATS.weighIn, why: 'weighIn' });
+    expect(careReward({ log: [paid('w0', 7, 'weight', now - 3 * day)] }, care('w', 'weight', { lb: 4 }), [], now)!.why).toBe('entry');
+    expect(careReward({ log: [paid('w0', 7, 'weight', now - 7 * day)] }, care('w', 'weight', { lb: 4 }), [], now)!.why).toBe('weighIn');
+    expect(careReward(undefined, care('w', 'weight', { lb: 4 }, now - 30 * day), [], now)!.why).toBe('entry');
+    // medicine on or before the due date the last dose set
+    const dose = care('m0', 'med', { name: 'Revolution', what: 'flea', nextDue: '2026-11-10' }, now - 30 * day);
+    expect(careReward(undefined, care('m1', 'med', { name: 'revolution ', what: 'flea' }), [dose], now)).toEqual({ treats: 2 + CARE_TREATS.medOnTime, why: 'medOnTime' });
+    expect(careReward(undefined, care('m1', 'med', { name: 'Revolution', what: 'flea' }), [{ ...dose, data: { ...dose.data, nextDue: '2026-11-01' } } as CareItem], now)!.why).toBe('entry');
+    expect(careReward(undefined, care('m1', 'med', { name: 'Revolution', what: 'flea' }), [], now)!.why).toBe('entry');
+    // a vet visit in the last week
+    expect(careReward(undefined, care('v', 'vet', { reason: 'Checkup' }, now - 2 * day), [], now)).toEqual({ treats: 2 + CARE_TREATS.vetVisit, why: 'vetVisit' });
+    expect(careReward(undefined, care('v', 'vet', { reason: 'Checkup' }, now - 60 * day), [], now)!.why).toBe('entry');
   });
 });

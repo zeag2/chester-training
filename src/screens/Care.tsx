@@ -12,6 +12,7 @@ import * as audio from '../lib/audio';
 import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
 import { Scanner } from './Scanner';
 import { PetSwitcher } from '../ui/PetSwitcher';
+import { CareTreatNote } from '../ui/CareTreatNote';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -49,6 +50,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   return <div className="screen">
     <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
     <PetSwitcher />
+    <CareTreatNote />
     <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 

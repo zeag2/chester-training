@@ -350,6 +350,26 @@ describe('training Chester together', () => {
     expect(await a.giveTreat(b.get().cat!.id)).toBe('missing');
     expect(await b.collectTreats(true)).toEqual([]);
   });
+  it('pays treats for new care entries once, on every phone, but not for edits', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const meg = device(server); await meg.load(); await meg.signIn('meg@example.com', 'catnip1', 'Megan', false, true);
+    await meg.join(josh.get().household!.inviteCode, 'Megan');
+    const t0 = josh.get().wallet!.treats;
+    const w = await josh.saveCare('weight', { lb: 4.1 });
+    expect(josh.get().wallet!.treats).toBe(t0 + 7); // entry + weekly weigh-in
+    expect(josh.get().careNews).toMatchObject({ treats: 7, why: 'weighIn' });
+    await josh.saveCare('weight', { lb: 4.2 }, { id: w!.id }); // an edit pays nothing
+    expect(josh.get().wallet!.treats).toBe(t0 + 7);
+    await josh.saveCare('symptom', { what: 'Sneezing' });
+    await josh.sync(); await meg.sync();
+    await meg.saveCare('groom', { what: 'brush' }); // the day's third entry, from the other phone
+    await meg.saveCare('groom', { what: 'nails' }); // over the cap
+    await meg.sync(); await josh.sync();
+    expect(josh.get().wallet!.treats).toBe(t0 + 7 + 2 + 2);
+    expect(meg.get().wallet!.treats).toBe(josh.get().wallet!.treats);
+  });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;
     const a = device(server); await a.load(); await a.signIn('a@example.com', 'catnip1', 'A', false, true);

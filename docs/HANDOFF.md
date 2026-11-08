@@ -152,6 +152,12 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 - **Outfits show everywhere** Chester appears for that pet (Home, session, recap, settings, skill pages). They're
   drawn in head coordinates in `outfit()` in `src/chester/art.ts`, so they follow every pose, the rig and petting.
   Tap a worn outfit or cushion again to take it off.
+- **Treats for care** (`CARE_TREATS`, `careReward` in `corner.ts`; `rewardCare` in `store.ts`): every new care entry
+  earns +2, up to 3 entries a day (the household shares the cap). Bonuses: +5 for a weigh-in (once a week, only for a
+  weigh-in from today or yesterday), +3 for a medicine or vaccine given on or before the due date the last dose set,
+  +5 for a vet visit from the last week. Logged as `care-<care item id>`, so edits and other phones never pay again;
+  deleting an entry keeps its treats. A "+7 treats for this week's weigh-in" note shows on Health
+  (`src/ui/CareTreatNote.tsx`). No SQL.
 - **Daily gift:** 2 to 6 treats once a day per pet, the same amount on every phone, shared by the household (whoever
   opens it first gets it). Home shows "New" until it's opened.
 - **Play:** toys from gifts and the shop; tapping one plays a move (hop, pounce, zoomies, play bite, belly roll).
@@ -277,6 +283,17 @@ In order:
 11. **Tidy-up:** `chester.css` has several historical layers with 23 duplicated keyframe names (later ones win); fold
     them into one set with before/after screenshots. Real recorded (licensed) meows if the synthesized ones sound robotic.
 12. **Other animals (bigger):** dogs need their own art, skills and copy.
+
+### The original phases (from the design doc, https://claude.ai/artifact/FX5FoXUmccY9j51Gzy14o9)
+- **Phase 1, train with Chester:** done.
+- **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case (item 5),
+  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album
+  (item 9), notifications (item 3), and the corner leftovers (item 8: nap tokens, bond levels unlocking idle
+  behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
+- **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
+  Left: check-ins and hidden skills (item 6), weekly recap (item 4), a glossary in the library, backup import, an App
+  Store wrapper (Capacitor) if wanted.
+- The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
 
 ### Open items for Josh
 - Try the new setup with a friend on a real iPhone: name and icon on the Home Screen, both cats in setup.
@@ -415,6 +432,7 @@ npm run build      # what CI runs
 | **Corner lives on the pet record, as a log merged by id** | No new SQL for Josh to run, works offline, and two phones buying at once both keep their buys. Offline double-spending can push the balance below zero; it shows as 0 and buying waits until it's positive. |
 | **Install page before setup, on phones only** | Josh's call. On iPhone, setting up in Safari and then installing would leave the data behind in Safari, so installing first is also the safe order. |
 | **No reduced-motion override** | Josh's explicit choice in Phase 1. |
+| **Care entries earn treats, capped at 3 a day** | Training was nearly the only way to earn treats, which doesn't fit a tracker-first app; the cap keeps self-reported logging from becoming a tap-to-win game (a design anti-goal). |
 
 ---
 

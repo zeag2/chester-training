@@ -2,6 +2,8 @@
    (merged by id across phones, so two phones never lose each other's buys); what he wears and sleeps on is a plain
    choice where the newest pet edit wins. Balance = treats the sets earned + every log entry's treats (buys are negative). */
 import type { Earned } from './derive';
+import type { CareItem } from './care';
+import { daysBetween, localDay } from './day';
 
 export type ShelfKind = 'outfit' | 'toy' | 'cushion';
 /** `special`: not for sale; earned another way (shown in the corner once earned, with how to earn it until then). */
@@ -24,10 +26,10 @@ export const SHOP: ShopItem[] = [
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 
-export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat';
+export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat' | 'care';
 export interface CornerEvent {
   /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>`, a friend bonus is `friend-<their id>`
-      and a friend's free treat is `treat-<their id>-<their day>`, so two phones can't both claim one, and a friend
+      a friend's free treat is `treat-<their id>-<their day>` and a care entry's treats are `care-<care item id>`, so two phones can't both claim one, and a friend
       removed and added again doesn't pay twice. */
   id: string;
   kind: CornerKind;
@@ -87,6 +89,32 @@ export const treatId = (from: string, day: string) => `treat-${from}-${day}`;
 export function newTreats<T extends { from: string; day: string }>(c: Corner | undefined, got: T[]): T[] {
   const have = new Set((c?.log ?? []).filter((e) => e.kind === 'treat').map((e) => e.id)); const seen = new Set<string>();
   return got.filter((t) => { const id = treatId(t.from, t.day); if (have.has(id) || seen.has(id)) return false; seen.add(id); return true; });
+}
+
+/** Treats for looking after the pet: a little for every new care entry (a few a day), more for the routines that
+    matter. Logging is self-reported, so the daily cap keeps it from being a tap-to-win game. */
+export const CARE_TREATS = { perEntry: 2, perDay: 3, weighIn: 5, weighInEveryDays: 7, medOnTime: 3, vetVisit: 5 };
+export interface CareReward { treats: number; why: 'entry' | 'weighIn' | 'medOnTime' | 'vetVisit' }
+/** What a newly saved care entry earns (null: nothing, e.g. today's cap is reached or it was already paid).
+    `history` is the pet's other care entries. Bonuses only count for things that just happened (not old entries
+    filled in from a document). */
+export function careReward(c: Corner | undefined, item: CareItem, history: CareItem[], now = Date.now()): CareReward | null {
+  const log = c?.log ?? []; const today = localDay(now);
+  if (item.deleted || log.some((e) => e.id === 'care-' + item.id)) return null;
+  if (log.filter((e) => e.kind === 'care' && e.day === today).length >= CARE_TREATS.perDay) return null;
+  const recent = (days: number) => daysBetween(localDay(item.at), today) <= days;
+  const base = CARE_TREATS.perEntry;
+  if (item.kind === 'weight' && recent(1)) {
+    const lastBonus = log.filter((e) => e.kind === 'care' && e.item === 'weight' && e.treats > base).sort((a, b) => b.at - a.at)[0];
+    if (!lastBonus || daysBetween(lastBonus.day, today) >= CARE_TREATS.weighInEveryDays) return { treats: base + CARE_TREATS.weighIn, why: 'weighIn' };
+  }
+  if (item.kind === 'vet' && recent(7)) return { treats: base + CARE_TREATS.vetVisit, why: 'vetVisit' };
+  if (item.kind === 'med' && recent(1)) {
+    const name = (item.data as { name: string }).name.trim().toLowerCase();
+    const prev = (history.filter((h) => h.kind === 'med') as CareItem<'med'>[]).filter((h) => !h.deleted && h.id !== item.id && h.at < item.at && h.data.name.trim().toLowerCase() === name).sort((a, b) => b.at - a.at)[0];
+    if (prev?.data.nextDue && localDay(item.at) <= prev.data.nextDue) return { treats: base + CARE_TREATS.medOnTime, why: 'medOnTime' };
+  }
+  return { treats: base, why: 'entry' };
 }
 
 export function canBuy(item: ShopItem, balance: number, c: Corner | undefined): boolean { return !item.special && !owned(c).has(item.id) && balance >= item.price; }

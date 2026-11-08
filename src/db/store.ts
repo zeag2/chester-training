@@ -13,7 +13,7 @@ import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
-import { FRIEND_BONUS, FRIEND_TREAT, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { FRIEND_BONUS, FRIEND_TREAT, careReward, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -46,6 +46,8 @@ export interface Snapshot {
   friendNews: { names: string[]; scarf: boolean } | null;
   /** Friends' treats that just landed for a pet, for a line on Home ("Erin gave Chester a treat"). */
   treatNews: { cat: string; names: string[] } | null;
+  /** Treats a care entry just earned, for a short note on the Health screen. */
+  careNews: (CareReward & { at: number }) | null;
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -57,7 +59,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -215,9 +217,20 @@ export class Store {
       const item: CareRow = { id: opts.id ?? uid(), catId: cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
       await this.db.care.put(item); await this.rebuild(cat);
       if (this.snap.account) void this.sync();
-      const { dirty: _d, ...out } = item; return out as CareItem;
-    });
+      const { dirty: _d, ...out } = item; return { item: out as CareItem, isNew: !old };
+    }).then(async (r) => { if (r?.isNew) await this.rewardCare(r.item); return r?.item ?? null; });
   }
+  /** A new care entry earns a few treats (see CARE_TREATS), once per entry, merged by id across phones. */
+  private async rewardCare(item: CareItem): Promise<void> {
+    let got: CareReward | null = null;
+    const ok = await this.corner((c, cat) => {
+      if (cat.id !== item.catId) return null;
+      got = careReward(c, item, this.snap.care); if (!got) return null;
+      return { ...c, log: [...c.log, this.event('care', 'care-' + item.id, got.treats, 0, item.kind)] };
+    });
+    if (ok && got) this.set({ careNews: { ...(got as CareReward), at: Date.now() } });
+  }
+  dismissCareNews() { this.set({ careNews: null }); }
   deleteCare(id: string): Promise<void> {
     return this.serial(async () => {
       const cat = this.snap.cat; const old = await this.db.care.get(id); if (!cat || !old) return;
