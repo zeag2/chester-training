@@ -184,7 +184,15 @@ ready to share with friends.
 
 Roughly in the order agreed with Josh:
 
-1. **Next from the demo:** real push notifications for new friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
+1. **Next (Josh, after the demo):**
+   - **Walk pose looks scary** (head too big on a sausage body, block legs; see `walk()` in `art.ts`). Redraw it more
+     cat-like: smaller head set lower and forward, a longer body with chest and haunch, tapered legs with paws. The sit
+     pose is fine. Optionally the same pass for loaf, fly and ball.
+   - **Friends more visible + visiting**: a friends' cats strip on Home; tap a friend's cat to visit (big, pettable,
+     same reactions), and **give them a free treat** once a day. Needs SQL: a `friend_treats(from, cat_id, day)` table
+     plus a `give_treat(cat_id)` function; the owner's phone turns received treats into corner log entries
+     (`treat-<from>-<day>`) so they count in the balance, and shows "Erin gave Chester a treat".
+   - Real push notifications for new friends (Supabase function + VAPID keys). Test the iPhone setup fix on a real phone (name, icon, second cat).
 2. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
    Bond levels don't unlock anything yet. More outfits/toys are easy to add (`SHOP` + `outfit()`).
 2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,
