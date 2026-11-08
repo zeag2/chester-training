@@ -28,7 +28,7 @@ export function Recap({ skillId }: { skillId: string }) {
   const [result, setResult] = useState<LogResult | null>(null);
   const [saving, setSaving] = useState(false);
   if (!cat || !def) return null;
-  if (result) return <RewardMoment result={result} catName={cat.name} coat={cat.coat} eyes={cat.eyes} />;
+  if (result) return <RewardMoment result={result} catName={cat.name} coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} />;
 
   const save = async () => {
     if (saving) return; setSaving(true);
@@ -37,7 +37,7 @@ export function Recap({ skillId }: { skillId: string }) {
   };
   return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="top"><button className="iconbtn" aria-label="Back to the session" onClick={() => go('session/' + skillId)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>How did it go?</b></div>
-    <div className="row" style={{ alignItems: 'flex-end' }}><Chester coat={cat.coat} eyes={cat.eyes} pose="loaf" width={96} interactive label={cat.name} /><div style={{ marginBottom: 20 }}><span className="bubble mint">{reps === 0 ? 'No reps yet. That’s okay!' : `${good} of ${reps}, nice!`}</span></div></div>
+    <div className="row" style={{ alignItems: 'flex-end' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="loaf" width={96} interactive label={cat.name} /><div style={{ marginBottom: 20 }}><span className="bubble mint">{reps === 0 ? 'No reps yet. That’s okay!' : `${good} of ${reps}, nice!`}</span></div></div>
     <h1 style={{ marginTop: 6 }}>{def.name}</h1>
     <Stepper label="Tries" value={reps} set={(n) => { setReps(n); if (good > n) setGood(n); }} />
     <Stepper label="Good ones" value={Math.min(good, reps)} set={(n) => setGood(Math.min(n, reps))} max={reps} />
@@ -49,7 +49,7 @@ export function Recap({ skillId }: { skillId: string }) {
 }
 
 const COLORS = ['#d4a23a', '#2a7a6f', '#c2563f', '#3f6fb0', '#e38b3d'];
-export function RewardMoment({ result, catName, coat, eyes }: { result: LogResult; catName: string; coat: string; eyes: string }) {
+export function RewardMoment({ result, catName, coat, eyes, wear }: { result: LogResult; catName: string; coat: string; eyes: string; wear?: string }) {
   const def = SKILL_BY_ID[result.set.skillId];
   const { event, reward, set, progress } = result;
   const pt = usePetText();
@@ -63,7 +63,7 @@ export function RewardMoment({ result, catName, coat, eyes }: { result: LogResul
   return <div className="overlay" style={{ background: big ? 'var(--butter)' : 'var(--mint)' }}>
     <div className="conf" aria-hidden="true">{Array.from({ length: big ? 22 : 12 }, (_, k) => <i key={k} style={{ left: `${(k * 37) % 100}%`, background: COLORS[k % 5], animationDelay: `${((k * 0.29) % 3).toFixed(2)}s` }} />)}</div>
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: 'calc(40px + var(--safe-t)) 20px calc(28px + var(--safe-b))', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} mood="happy" anim="dance" width={180} interactive label={catName} /></div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} wear={wear} mood="happy" anim="dance" width={180} interactive label={catName} /></div>
       <div className="stag" style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: 30, marginTop: 8 }}>{title}</h1>
         <p className="m" style={{ marginTop: 8 }}>{sub}</p>
@@ -72,7 +72,8 @@ export function RewardMoment({ result, catName, coat, eyes }: { result: LogResul
           {reward.gift && <div className="card white row" style={{ textAlign: 'left' }}><Icon name="star" /><div className="sp"><b>{pt(reward.gift.title)}</b><p className="s">{pt(reward.gift.detail)}</p></div></div>}
         </> : <div className="card white" style={{ textAlign: 'left' }}><b>{catName} is done for today</b><p className="s">{pt('The set is saved. Rewards reset tomorrow, so he never gets overtrained.')}</p></div>}
       </div>
-      <button className="btn" style={{ marginTop: 'auto' }} onClick={() => go('home')}>Back home</button>
+      {reward.rewarded && <button className="btn2" style={{ marginTop: 'auto', marginBottom: 10, background: 'var(--surface)' }} onClick={() => go('corner')}>Spend treats in {catName}’s corner</button>}
+      <button className="btn" style={{ marginTop: reward.rewarded ? 0 : 'auto' }} onClick={() => go('home')}>Back home</button>
     </div>
   </div>;
 }

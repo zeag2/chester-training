@@ -8,7 +8,7 @@ import { RainbowDash } from './RainbowDash';
 import './chester.css';
 
 export interface ChesterProps {
-  pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string;
+  pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string; wear?: string;
   interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null; reactKey?: number;
 }
 
@@ -22,8 +22,8 @@ const KICKS: Partial<Record<ReactionId, ['hop' | 'bonk' | 'shake' | 'spin' | 'fl
 
 export function Chester(p: ChesterProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const svg = useMemo(() => chesterSVG({ pose: p.pose, coat: p.coat, eyes: p.eyes, mood: p.mood, raised: p.raised, anim: p.anim, width: p.width, uid, label: p.label, extra: p.extra }),
-    [p.pose, p.coat, p.eyes, p.mood, p.raised, p.anim, p.width, uid, p.label, p.extra]);
+  const svg = useMemo(() => chesterSVG({ pose: p.pose, coat: p.coat, eyes: p.eyes, mood: p.mood, raised: p.raised, anim: p.anim, width: p.width, uid, label: p.label, extra: p.extra, wear: p.wear }),
+    [p.pose, p.coat, p.eyes, p.mood, p.raised, p.anim, p.width, uid, p.label, p.extra, p.wear]);
   const ref = useRef<HTMLButtonElement | HTMLDivElement>(null);
   const [fx, setFx] = useState('');
   const [idle, setIdle] = useState('');

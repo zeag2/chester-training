@@ -69,7 +69,7 @@ export function Session({ skillId }: { skillId: string }) {
       </div>
       <div className={running ? '' : 'paused'} style={{ position: 'relative', width: '100%', aspectRatio: '350 / 200', maxHeight: '30vh', margin: '2px auto 0' }}>
         <YarnBall p={prog} hop={pressed} hurry={running && left <= 10} />
-        <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} raised anim="bat" width={130} extra={wraps} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
+        <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} raised anim="bat" width={130} extra={wraps} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
         {(line || firstTime) && <span key={line} className="bubble butter" style={{ position: 'absolute', left: '30%', top: 0, fontSize: 13 }}>{line || 'Tap anywhere when I get it!'}</span>}
       </div>
       <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: 'var(--mint)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">

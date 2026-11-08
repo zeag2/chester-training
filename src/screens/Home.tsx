@@ -10,6 +10,7 @@ import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { CareCard } from './Care';
+import { giftClaimed } from '../engine/corner';
 import { usePetText } from '../lib/pet';
 import type { ReactionId } from '../chester/reactions';
 
@@ -138,7 +139,7 @@ export function Home() {
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
-        <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || ph === 'night' ? 'sleepy' : 'curious'}
+        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || ph === 'night' ? 'sleepy' : 'curious'}
           raised={!gag && !done && !night && !doze && sets.length === 0} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
           width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
         <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>
@@ -171,7 +172,9 @@ export function Home() {
         {learning.map((d, i) => { const p = progress[d.id] ?? { step: 0 }; return <a key={d.id} href={'#/skill/' + d.id} className={`card ${['sky', 'peach', 'butter'][i % 3]}`}>
           <div className="row"><div className="ico"><Icon name={ICON_FOR[d.branch]} /></div><div className="sp"><b style={{ fontSize: 16 }}>{d.name}</b><p className="s">Step {p.step + 1} of {d.steps.length}</p></div></div>
           <div className="bar" style={{ marginTop: 12 }}><i style={{ width: `${Math.max(6, (p.step / d.steps.length) * 100)}%` }} /></div></a>; })}</>}
-      {wallet && wallet.treats > 0 && <div className="card butter row"><Paw color="#d4a23a" size={24} /><p className="s" style={{ color: 'var(--butter-ink)' }}><b>{wallet.treats} treats saved up.</b> {cat.name}'s corner and outfits arrive in the next update.</p></div>}
+      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
+        <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
+        {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;

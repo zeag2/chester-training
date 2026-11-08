@@ -1,17 +1,18 @@
 # PalDex: handoff
 
-_Last updated 2026-11-09. Start here when picking the project back up._
+_Last updated 2026-11-08 (Chester's corner). Start here when picking the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for clicker-training a cat, keeping its care records, and sharing both
 with the people you live with. It was built for Josh's kitten **Chester** and his girlfriend **Megan**, and is now
 ready to share with friends.
 
 - **Live:** https://zeag2.github.io/chester-training/ (installable to the iPhone home screen)
-- **Deploys:** every push to `main` runs `.github/workflows/pages.yml` (tests, build, GitHub Pages). Work happens on
-  `claude/wizardly-allen-ilr861` and is pushed to both that branch and `main`.
+- **Deploys:** every push to `main` runs `.github/workflows/pages.yml` (tests, build, GitHub Pages). Work happens on a
+  `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 70 tests passing in 12 files, the working tree is clean, `main` is live.
+- **State at handoff:** 76 tests passing in 13 files. Chester's corner is on `claude/practical-einstein-7eoqfi` and
+  **not yet on `main`** (so not live) until Josh merges it.
 
 ---
 
@@ -67,6 +68,23 @@ ready to share with friends.
     expiry dates aren't treated as due dates.
   - **Storage:** files go in the private `pet-docs` bucket, readable by household members only.
 
+### Chester's corner (`#/corner`, from the yellow card on Home or "Spend treats" after a set)
+- **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 3 toys (box, laser dot,
+  crinkle tunnel) and 3 cushions (mint, heart, cloud). Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
+- **Outfits show everywhere** Chester appears for that pet (Home, session, recap, settings, skill pages). They're
+  drawn in head coordinates in `outfit()` in `src/chester/art.ts`, so they follow every pose, the rig and petting.
+  Tap a worn outfit or cushion again to take it off.
+- **Daily gift:** 2 to 6 treats once a day per pet, the same amount on every phone, shared by the household (whoever
+  opens it first gets it). Home shows "New" until it's opened.
+- **Play:** toys from gifts and the shop; tapping one plays a move (hop, pounce, zoomies, play bite, belly roll).
+  The first play each day adds 1 bond.
+- **Bond level:** 6 named levels (Getting to know you, Buddies, Pals, Best friends, Partners in crime, Soulmates)
+  with a progress bar. Bond comes from gifts in sets plus daily play.
+- **How it's stored and shared:** on the pet itself (`cat.corner`), which is already shared as JSON, so **no new SQL**.
+  Buys, gifts and plays are an append-only log merged by id on sync (two phones never lose each other's buys; the
+  gift and play ids are per day, so they can't be claimed twice). The outfit and cushion choice carry their own
+  `styledAt`, so an unrelated edit on another phone never undoes them. Balance = treats from sets + the log.
+
 ### Chester himself (the character)
 - **Physics rig** (`src/chester/rig.ts`): springs drive every pose. The body leans from the hips, the head and ears
   follow a beat late, and the tail is a 9-joint chain.
@@ -103,9 +121,8 @@ ready to share with friends.
 
 Roughly in the order agreed with Josh:
 
-1. **Chester's corner:** somewhere to spend treats (outfits, toys, cushion), bond level, the daily gift, nap tokens.
-   Treats and toys currently pile up with nowhere to go. Home says "arrives in the next update".
-   `Wallet` (`src/engine/types.ts`) already has `toys`, `playMoves`, `napTokens`, `bond`.
+1. **Corner leftovers:** nap tokens (e.g. a streak saver) aren't built; `Wallet.napTokens` and `playMoves` are unused.
+   Bond levels don't unlock anything yet. More outfits/toys are easy to add (`SHOP` + `outfit()`).
 2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,
    Megan did 3"). Sets already record `by` (account id); names come from the household members.
 3. **Badges and trophy case:** a badge per mastered skill, shelves by branch, closest badge on top. Recap currently
@@ -134,11 +151,12 @@ Roughly in the order agreed with Josh:
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router (#/home, #/session/<skill>, #/recap/<skill>, #/tree, #/library, #/skill/<id>,
-                        #/settings, #/care, #/together, #/join, #/add-pet, dev-only #/gallery)
+                        #/settings, #/care, #/corner, #/together, #/join, #/add-pet, dev-only #/gallery)
   engine/               pure logic, unit-tested, no I/O
     types.ts            Cat, SetRecord, SkillDef, Wallet, Gift, SessionDraft…
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
+    corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -160,7 +178,7 @@ src/
     RainbowDash.tsx     the dash overlay
     chester.css         CSS moves (several historical layers; later rules win; see section 6)
     spring.ts           damped spring
-  screens/              Home, Session, Recap, Tree, Library, SkillPage, Settings, Care, Onboarding,
+  screens/              Home, Session, Recap, Tree, Library, SkillPage, Settings, Care, Corner, Onboarding,
                         Together (account and invite forms), Scanner (barcode), YarnBall, Gallery (dev only)
   lib/
     audio.ts            sampled and synthesized sounds, jingle, litter, meow
@@ -235,6 +253,7 @@ npm run build      # what CI runs
 | **App name PalDex, URL unchanged** | Renaming the repo would break the URL and home-screen installs. If it ever goes public, reconsider the name: "Pokédex"/"Paldea" are Nintendo's. |
 | **Self-updating PWA (`registerType: 'prompt'` + `updates.ts`)** | iPhone home-screen apps only check for updates on a cold start; this checks on return to the front and never interrupts a session. |
 | **Remembered "my name" is per account** | It used to be per phone, which put Megan's name on Josh's account. |
+| **Corner lives on the pet record, as a log merged by id** | No new SQL for Josh to run, works offline, and two phones buying at once both keep their buys. Offline double-spending can push the balance below zero; it shows as 0 and buying waits until it's positive. |
 | **No reduced-motion override** | Josh's explicit choice in Phase 1. |
 
 ---

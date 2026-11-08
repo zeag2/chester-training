@@ -1,3 +1,4 @@
+import type { Corner } from './corner';
 export type Mood = 'Happy' | 'Distracted' | 'Stressed';
 export type Branch = 'Foundation' | 'Care' | 'Manners' | 'Adventure' | 'Tricks';
 
@@ -75,6 +76,8 @@ export interface Cat {
   updatedAt?: number;
   /** Treats, bond and toys earned before sets kept their gifts (set once when upgrading). */
   carry?: { treats: number; bond: number; toys: string[] };
+  /** Chester's corner: what was bought, daily gifts and play, and what he's wearing (see engine/corner.ts). */
+  corner?: Corner;
 }
 
 export interface Wallet {

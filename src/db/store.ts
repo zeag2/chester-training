@@ -12,6 +12,7 @@ import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
+import { ITEM_BY_ID, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -79,7 +80,7 @@ export class Store {
     this.activeId = cat.id;
     const sets = (await this.db.sets.where('catId').equals(cat.id).toArray()).sort(bySetOrder);
     const local = (await this.db.wallet.get(cat.id)) ?? newWallet(cat.id);
-    const wallet = mergeWallet(local, deriveEarned(sets, cat.carry));
+    const wallet = mergeWallet(local, withCorner(deriveEarned(sets, cat.carry), cat.corner));
     const draft = (await this.db.drafts.get(cat.id)) ?? null;
     const care = (await this.db.care.where('catId').equals(cat.id).toArray()).filter((c) => !c.deleted).map(({ dirty: _d, ...c }) => c as CareItem).sort((a, b) => b.at - a.at);
     this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, pets, ...patch });
@@ -146,6 +147,51 @@ export class Store {
     await this.rebuild(cat);
     if (this.snap.account) void this.sync();
     return { set, event, reward, progress };
+  }
+
+  // ---- Chester's corner ----
+
+  private corner(fn: (c: Corner, cat: Cat) => Corner | null): Promise<boolean> {
+    return this.serial(async () => {
+      const cat = this.snap.cat; if (!cat) return false;
+      const next = fn(cat.corner ?? { log: [] }, cat); if (!next) return false;
+      const saved: Cat = { ...cat, corner: next, updatedAt: Math.max(Date.now(), (cat.updatedAt ?? 0) + 1) };
+      await this.db.cats.put(saved); await this.rebuild(saved);
+      if (this.snap.account) void this.sync();
+      return true;
+    });
+  }
+  private event(kind: CornerEvent['kind'], id: string, treats: number, bond: number, item?: string): CornerEvent {
+    const at = Date.now();
+    return { id, kind, day: localDay(at), at, item, treats, bond, by: this.snap.account?.userId };
+  }
+  /** Spend treats on an outfit, toy or cushion. Outfits and cushions are put on straight away. */
+  buy(itemId: string): Promise<boolean> {
+    return this.corner((c) => {
+      const item = ITEM_BY_ID[itemId]; const balance = this.snap.wallet?.treats ?? 0;
+      if (!item || balance < item.price || c.log.some((e) => e.kind === 'buy' && e.item === itemId)) return null;
+      const log = [...c.log, this.event('buy', 'buy-' + uid(), -item.price, 0, itemId)];
+      return { ...c, log, ...(item.kind === 'outfit' ? { wearing: itemId, styledAt: Date.now() } : item.kind === 'cushion' ? { cushion: itemId, styledAt: Date.now() } : {}) };
+    });
+  }
+  /** Put on an outfit (or take it off with null). */
+  wear(itemId: string | null) { return this.corner((c) => ({ ...c, wearing: itemId ?? undefined, styledAt: Date.now() })); }
+  setCushion(itemId: string | null) { return this.corner((c) => ({ ...c, cushion: itemId ?? undefined, styledAt: Date.now() })); }
+  /** Today's small gift, once a day per pet (shared, so only one person in the house gets it). */
+  claimGift(): Promise<number> {
+    let got = 0;
+    return this.corner((c, cat) => {
+      const day = localDay(Date.now()); if (giftClaimed(c, day)) return null;
+      got = dailyGiftTreats(cat.id, day);
+      return { ...c, log: [...c.log, this.event('gift', 'gift-' + day, got, 0)] };
+    }).then((ok) => (ok ? got : 0));
+  }
+  /** Playing with a toy: the first play of the day adds a bond point. */
+  play(toy: string): Promise<boolean> {
+    return this.corner((c) => {
+      const day = localDay(Date.now()); if (playedToday(c, day)) return null;
+      return { ...c, log: [...c.log, this.event('play', 'play-' + day, 0, 1, toy)] };
+    });
   }
 
   // ---- Chester's care ----
@@ -222,9 +268,17 @@ export class Store {
         cat = this.snap.cat;
         const shared = await r.getCat(cat.id);
         if (!shared) { await r.createCat(cat); if (this.myName) await r.setName(cat.id, this.myName).catch(() => {}); }
-        else if ((shared.cat.updatedAt ?? 0) > (cat.updatedAt ?? 0)) { cat = { ...shared.cat, id: cat.id }; await this.db.cats.put(cat); }
-        else if (shared.cat.householdId && shared.cat.householdId !== cat.householdId) { cat = { ...cat, householdId: shared.cat.householdId }; await this.db.cats.put(cat); }
-        else if ((cat.updatedAt ?? 0) > (shared.cat.updatedAt ?? 0)) { await r.updateCat(cat); }
+        else {
+          // the newer pet edit wins, but the corner's buys and gifts from both sides are always kept
+          const local = cat; const theirsNewer = (shared.cat.updatedAt ?? 0) > (local.updatedAt ?? 0);
+          let next: Cat = theirsNewer ? { ...shared.cat, id: local.id } : shared.cat.householdId && shared.cat.householdId !== local.householdId ? { ...local, householdId: shared.cat.householdId } : local;
+          const corner = mergeCorner(next.corner, theirsNewer ? local.corner : shared.cat.corner);
+          if (corner) next = { ...next, corner };
+          const mineMissing = (corner?.log.length ?? 0) > (shared.cat.corner?.log.length ?? 0);
+          if (next !== local) await this.db.cats.put(next);
+          if ((!theirsNewer && (local.updatedAt ?? 0) > (shared.cat.updatedAt ?? 0)) || mineMissing) await r.updateCat(next);
+          cat = next;
+        }
       }
       if (!cat) { this.set({ sync: 'ok', household: null }); return; }
       const theirs = await r.pullSets(cat.id);

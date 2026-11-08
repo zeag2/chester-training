@@ -117,7 +117,7 @@ export function Settings() {
     <h1>Settings</h1>
 
     <div className="card mint row" style={{ marginTop: 16, alignItems: 'center' }}>
-      <Chester coat={cat.coat} eyes={cat.eyes} pose="sleep" width={96} interactive label={cat.name} />
+      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="sleep" width={96} interactive label={cat.name} />
       <div className="sp"><b style={{ fontSize: 18 }}>{cat.name}</b>
         <p className="s">{[he, ageText(cat.birthday).replace(/^about /, ''), cat.altered && (cat.sex === 'f' ? 'spayed' : 'neutered')].filter(Boolean).join(' · ')}</p>
         <p className="s">{sets.length} sets · {care.length} care entries{cat.microchip ? ` · chip …${cat.microchip.slice(-4)}` : ''}</p></div>

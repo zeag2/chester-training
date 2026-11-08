@@ -26,7 +26,7 @@ export function SkillPage({ id }: { id: string }) {
       <div className="ico" style={{ width: 64, height: 64, borderRadius: 20 }}><Icon name={ICON_FOR[d.branch]} size={32} /></div>
       <div><h1 style={{ fontSize: 24 }}>{d.name}</h1><p className="s">{p?.mastered ? 'Mastered' : open ? `Step ${step + 1} of ${d.steps.length}` : 'Locked'}</p></div></div>
     <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 16px 12px' }}>
-      <Chester coat={cat.coat} eyes={cat.eyes} anim={ANIM[id] ?? ''} raised={ANIM[id] === 'wave' || ANIM[id] === 'play'} pose={id === 'carrier' ? 'loaf' : 'sit'} width={140} interactive label={cat.name} />
+      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} anim={ANIM[id] ?? ''} raised={ANIM[id] === 'wave' || ANIM[id] === 'play'} pose={id === 'carrier' ? 'loaf' : 'sit'} width={140} interactive label={cat.name} />
       <p className="s" style={{ marginTop: 6, textAlign: 'center' }}>{pt(d.why)}</p></div>
     <h2 style={{ marginTop: 22 }}>Steps</h2>
     {d.steps.map((t, i) => { const done = p?.mastered || i < step; const now = !p?.mastered && i === step && open;

@@ -30,7 +30,7 @@ const SW = (c: Coat, w = 4) => `stroke="${c.line}" stroke-width="${w}" stroke-li
 const HEAD = 'M100 34 C150 34 162 66 162 92 C162 124 134 140 100 140 C66 140 38 124 38 92 C38 66 50 34 100 34 Z';
 
 /** Head drawn around center (100, 92). */
-export function head(c: Coat, eyeKey: string, mood: Mood, uid: string): string {
+export function head(c: Coat, eyeKey: string, mood: Mood, uid: string, wear = ''): string {
   const e = EYES[eyeKey] ?? EYES.gold;
   const ear = c.point ?? c.base;
   let hp = '';
@@ -77,7 +77,28 @@ export function head(c: Coat, eyeKey: string, mood: Mood, uid: string): string {
     + (mood === 'sleepy' ? '' : `<g class="eyesJoy"><path d="M62 92 Q74 78 86 92 M114 92 Q126 78 138 92" stroke="${c.line}" stroke-width="5" fill="none" stroke-linecap="round"/></g>`)
     + `<path d="M95 104 H105 C105 108 102 110 100 111 C98 110 95 108 95 104 Z" fill="${c.nose}" stroke="${c.line}" stroke-width="2" stroke-linejoin="round"/>`
     + mouth
-    + `<g class="whisk"><path d="M28 100 L46 104 M28 113 L46 111 M172 100 L154 104 M172 113 L154 111" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`;
+    + `<g class="whisk"><path d="M28 100 L46 104 M28 113 L46 111 M172 100 L154 104 M172 113 L154 111" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`
+    + outfit(c, wear);
+}
+
+/** Outfits from Chester's corner, drawn in head coordinates so they follow every pose, the rig and petting. */
+export const OUTFITS = ['bell', 'bowtie', 'bandana', 'flower', 'party', 'crown'] as const;
+export function outfit(c: Coat, wear: string): string {
+  const L = `stroke="${c.line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
+  switch (wear) {
+    case 'bell': return `<g class="wear wear-bell"><path d="M60 130 Q100 154 140 130" stroke="${c.line}" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M60 130 Q100 154 140 130" stroke="#d2493f" stroke-width="7" fill="none" stroke-linecap="round"/>`
+      + `<circle cx="100" cy="150" r="9" fill="#efc44a" ${L}/><path d="M93 151 H107 M100 151 V158" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`;
+    case 'bowtie': return `<g class="wear wear-bowtie"><path d="M100 146 L78 133 C74 140 74 152 78 159 Z" fill="#3f6fb0" ${L}/><path d="M100 146 L122 133 C126 140 126 152 122 159 Z" fill="#3f6fb0" ${L}/>`
+      + `<path d="M84 139 L84 153 M116 139 L116 153" stroke="#9fc0ea" stroke-width="3" stroke-linecap="round"/><rect x="93" y="139" width="14" height="14" rx="5" fill="#5584c6" ${L}/></g>`;
+    case 'bandana': return `<g class="wear wear-bandana"><path d="M62 128 Q100 146 138 128 L104 170 Q100 174 96 170 Z" fill="#2a7a6f" ${L}/>`
+      + `<circle cx="84" cy="142" r="3" fill="#fff"/><circle cx="104" cy="146" r="3" fill="#fff"/><circle cx="118" cy="140" r="3" fill="#fff"/><circle cx="96" cy="158" r="3" fill="#fff"/><circle cx="108" cy="160" r="2.4" fill="#fff"/></g>`;
+    case 'flower': return `<g class="wear wear-flower">${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="140" cy="38" rx="7" ry="11" fill="#fff" ${L} transform="rotate(${a} 140 48)"/>`).join('')}<circle cx="140" cy="48" r="7" fill="#efc44a" ${L}/></g>`;
+    case 'party': return `<g class="wear wear-party" transform="rotate(10 103 40)"><path d="M82 42 L102 -12 L124 42 Q103 48 82 42 Z" fill="#ef8f9a" ${L}/>`
+      + `<path d="M90 22 L114 26 M96 6 L108 8" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="102" cy="-14" r="7" fill="#efc44a" ${L}/></g>`;
+    case 'crown': return `<g class="wear wear-crown"><path d="M74 42 L72 12 L88 26 L100 4 L112 26 L128 12 L126 42 Q100 48 74 42 Z" fill="#efc44a" ${L}/>`
+      + `<circle cx="100" cy="34" r="4.5" fill="#d2493f"/><circle cx="84" cy="36" r="3.2" fill="#3f6fb0"/><circle cx="116" cy="36" r="3.2" fill="#3f6fb0"/></g>`;
+    default: return '';
+  }
 }
 
 /** Tail drawn as one smooth chain the rig bends every frame (outline under fill, so no seams). */
@@ -86,7 +107,7 @@ const rigTail = (c: Coat, d1?: string, d2?: string, amp = 1) => { const curves =
 const pad = '#f3a9b6';
 const pawFill = (c: Coat) => (c.white ? '#fbfaf7' : c.point ?? c.base);
 
-function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean): string {
+function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w = ''): string {
   const BODY = 'M64 186 C58 160 66 130 100 128 C134 130 142 160 136 186 Z';
   let bp = '';
   if (c.stripe) bp += `<path d="M66 150 Q76 152 78 160 M134 150 Q124 152 122 160 M62 168 Q72 170 74 178" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
@@ -100,10 +121,10 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean): s
     + `<g class="r-shadow"><ellipse class="shadow" cx="100" cy="190" rx="58" ry="6.5" fill="rgba(29,35,64,.12)"/></g>`
     + `<g class="r-all"><g class="all">${rigTail(c)}`
     + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}<ellipse cx="100" cy="172" rx="22" ry="27" fill="${c.white ? '#fbfaf7' : c.light}"/></g><path d="${BODY}" fill="none" ${SW(c)}/><g class="pawL"><g class="r-legL">${leg(79)}</g></g></g>`
-    + `<g class="r-head"><g class="head">${head(c, eyes, mood, uid)}</g></g>${right}</g></g>`;
+    + `<g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g>${right}</g></g>`;
 }
 
-function walk(c: Coat, eyes: string, mood: Mood, uid: string): string {
+function walk(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const leg = (x: number, cls: string, back = false) => `<g class="${cls}"><rect x="${x - 10}" y="140" width="20" height="48" rx="10" fill="${back ? c.shade : pawFill(c)}" ${SW(c)}/></g>`;
   return `<ellipse class="shadow" cx="112" cy="190" rx="78" ry="6.5" fill="rgba(29,35,64,.12)"/>`
     + `<g class="all">`
@@ -113,10 +134,10 @@ function walk(c: Coat, eyes: string, mood: Mood, uid: string): string {
     + `<path d="M70 160 C90 176 130 176 150 160 C138 168 92 170 70 160 Z" fill="${c.shade}"/><ellipse cx="132" cy="150" rx="20" ry="16" fill="${c.white ? '#fbfaf7' : c.light}"/>`
     + (c.stripe ? `<path d="M88 112 Q92 124 86 132 M104 110 Q108 122 102 130 M120 112 Q124 122 118 130" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>` : '')
     + `</g>` + leg(96, 'legBR') + leg(156, 'legFL')
-    + `<g style="transform:translate(78px,-6px) scale(.84);transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid)}</g></g></g></g>`;
+    + `<g style="transform:translate(78px,-6px) scale(.84);transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g></g></g>`;
 }
 
-function ball(c: Coat, eyes: string, mood: Mood, uid: string): string {
+function ball(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const limb = (x1: number, y1: number, x2: number, y2: number, cls: string) =>
     `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="24" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${pawFill(c)}" stroke-width="16" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="4" fill="${pad}"/></g>`;
   return `<ellipse class="shadow" cx="112" cy="190" rx="84" ry="7" fill="rgba(29,35,64,.12)"/>`
@@ -128,12 +149,12 @@ function ball(c: Coat, eyes: string, mood: Mood, uid: string): string {
     + limb(150, 140, 168, 96, 'kickB') + limb(170, 146, 192, 112, 'kickA')
     + `<g class="yarn"><circle cx="132" cy="80" r="24" fill="#ef8f9a" stroke="${c.line}" stroke-width="4"/><path d="M106 70 C120 78 136 74 150 84 M104 84 C118 80 132 92 146 96 M118 54 C126 66 132 84 130 104" stroke="#c45466" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M112 62 C118 56 126 54 132 54" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".6"/></g>`
     + limb(112, 132, 116, 98, 'armA') + limb(134, 128, 148, 100, 'armB')
-    + `<g style="transform:translate(-44px,50px) rotate(-16deg) scale(.74);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood === 'curious' ? 'open' : mood, uid)}</g></g></g></g>`;
+    + `<g style="transform:translate(-44px,50px) rotate(-16deg) scale(.74);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood === 'curious' ? 'open' : mood, uid, w)}</g></g></g></g>`;
 }
 
 /** Curled donut nap: round body, head tucked low in front on a paw, tail wrapped around the front. Only the back breathes.
     A snot bubble lives on the nose and shows with the "night" anim. */
-function sleep(c: Coat, eyes: string, uid: string): string {
+function sleep(c: Coat, eyes: string, uid: string, w = ''): string {
   const BODY = 'M46 188 C34 140 78 100 126 102 C178 104 204 146 192 188 Z';
   let bp = `<path d="M196 150 C200 186 176 198 132 194 C176 182 190 160 182 118 Z" fill="${c.shade}"/>`
     + `<path d="M84 116 C110 102 150 104 172 120" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity="${c.base === '#353746' || c.base === '#3d3330' ? 0.1 : 0.35}"/>`;
@@ -146,13 +167,13 @@ function sleep(c: Coat, eyes: string, uid: string): string {
     + `<path d="M156 132 C180 144 182 172 160 184" stroke="${c.line}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/></g>`
     + rigTail(c, 'M188 182 C180 200 132 202 106 196', 'M106 196 C90 194 78 190 72 182', 0.35)
     + `<ellipse cx="104" cy="186" rx="16" ry="7" fill="${pawFill(c)}" ${SW(c, 3.5)}/>`
-    + `<g style="transform:translate(-30px,52px) rotate(-10deg) scale(.72);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, 'sleepy', uid)}${snot}</g></g></g>`
+    + `<g style="transform:translate(-30px,52px) rotate(-10deg) scale(.72);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, 'sleepy', uid, w)}${snot}</g></g></g>`
     + `<g class="zz"><text x="150" y="70" font-size="28" font-weight="800" fill="#4a5590" font-family="Nunito,sans-serif">z</text><text x="170" y="46" font-size="20" font-weight="800" fill="#7a86b8" font-family="Nunito,sans-serif">z</text><text x="186" y="28" font-size="14" font-weight="800" fill="#a4add0" font-family="Nunito,sans-serif">z</text></g></g></g>`;
 }
 
 /** Bread loaf: one low dome, head tucked into the front, paws peeking under the chin, tail wrapped along the floor.
     knead = the same loaf standing on a pink pillow, paws pressing in turn. */
-function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false): string {
+function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false, w = ''): string {
   const BODY = 'M24 188 C14 150 34 112 92 104 C150 96 204 116 212 156 C216 176 210 188 200 188 Z';
   let bp = `<path d="M212 150 C214 184 196 196 150 192 C190 180 204 160 200 128 Z" fill="${c.shade}"/>`
     + `<path d="M118 112 C150 104 184 112 200 132" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round" opacity="${c.base === '#353746' || c.base === '#3d3330' ? 0.1 : 0.35}"/>`;
@@ -162,7 +183,7 @@ function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false): st
   const leg = (x: number, cls: string) => `<g class="${cls}"><rect x="${x - 13}" y="164" width="26" height="32" rx="13" fill="${pawFill(c)}" ${SW(c, 3.5)}/><path d="M${x - 5} 188 V194 M${x + 5} 188 V194" stroke="${c.line}" stroke-width="2.2" stroke-linecap="round"/></g>`;
   const cat = `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
     + (knead ? leg(66, 'kneadL') + leg(104, 'kneadR') : '')
-    + `<g style="transform:translate(-18px,40px) scale(.84);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood, uid)}</g></g></g>`
+    + `<g style="transform:translate(-18px,40px) scale(.84);transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g></g>`
     + (knead ? '' : paw(64) + paw(100))
     + rigTail(c, 'M200 172 C218 186 204 188 180 186', 'M180 186 C164 186 154 184 148 176', 0.5);
   const defs = `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`;
@@ -177,7 +198,7 @@ function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false): st
 
 /** Flying, superhero style: body stretched flat, head at the front at body height, front paws reaching forward,
     back legs kicked out behind, tail streaming back. Faces right. */
-function fly(c: Coat, eyes: string, mood: Mood, uid: string): string {
+function fly(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
   const BODY = 'M34 118 C34 98 66 92 104 94 C138 96 158 102 160 120 C162 140 136 148 100 148 C62 148 34 140 34 118 Z';
   const limb = (x1: number, y1: number, x2: number, y2: number, cls: string, back = false) =>
     `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="22" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${back ? c.shade : pawFill(c)}" stroke-width="14" stroke-linecap="round"/></g>`;
@@ -192,21 +213,22 @@ function fly(c: Coat, eyes: string, mood: Mood, uid: string): string {
     + limb(60, 138, 22, 150, 'legBL', true) + limb(130, 138, 172, 150, 'legFR', true)
     + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
     + limb(70, 142, 30, 160, 'legBR') + limb(140, 140, 184, 158, 'legFL')
-    + `<g style="transform:translate(62px,14px) rotate(4deg) scale(.8);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid)}</g></g>`
+    + `<g style="transform:translate(62px,14px) rotate(4deg) scale(.8);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid, w)}</g></g>`
     + `</g>`;
 }
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
-export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string }): string {
+export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string }): string {
+  const w = o.wear ?? '';
   const c = COATS[o.coat ?? 'black'] ?? COATS.black;
   const pose = o.pose ?? 'sit';
   const mood = o.mood ?? 'curious';
-  const body = pose === 'fly' ? fly(c, o.eyes ?? 'gold', mood, o.uid)
-    : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid)
-    : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid)
-    : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid)
-    : pose === 'loaf' || pose === 'knead' ? loaf(c, o.eyes ?? 'gold', mood, o.uid, pose === 'knead')
-    : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised);
+  const body = pose === 'fly' ? fly(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid, w)
+    : pose === 'loaf' || pose === 'knead' ? loaf(c, o.eyes ?? 'gold', mood, o.uid, pose === 'knead', w)
+    : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised, w);
   return `<svg class="kc pose-${pose} ${o.anim ?? ''}" viewBox="-14 -34 232 232" width="${o.width ?? 160}" role="img" aria-label="${esc(o.label ?? c.name + ' kitten')}" style="overflow:visible">${body}${o.extra ?? ''}</svg>`;
 }

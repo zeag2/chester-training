@@ -224,4 +224,34 @@ describe('training Chester together', () => {
     const b = new Store('legacy'); await b.load();
     expect(b.get().wallet).toMatchObject({ treats: 40, bond: 3, toys: ['a toy mouse'] });
   });
+  it('keeps both phones’ corner buys, shares the daily gift once, and agrees on the treat balance', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    for (let k = 0; k < 3; k++) await josh.logSet({ ...pass });
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const meg = device(server); await meg.load();
+    await meg.signIn('meg@example.com', 'catnip1', 'Megan', false, true);
+    expect(await meg.join(josh.get().household!.inviteCode, 'Megan')).toBe(true);
+    const earned = josh.get().wallet!.treats;
+    expect(earned).toBeGreaterThanOrEqual(30);
+
+    // both buy something while out of touch with each other
+    expect(await josh.buy('bell')).toBe(true);
+    expect(await meg.buy('box')).toBe(true);
+    expect(josh.get().cat!.corner!.wearing).toBe('bell');
+    const gift = await meg.claimGift();
+    expect(gift).toBeGreaterThanOrEqual(2);
+    await meg.sync(); await josh.sync(); await meg.sync();
+    expect(await josh.claimGift()).toBe(0); // already opened by Megan today
+    for (const s of [josh, meg]) {
+      expect(s.get().wallet!.treats).toBe(earned - 12 - 8 + gift);
+      expect(s.get().cat!.corner!.log.map((e) => e.item ?? e.kind).sort()).toEqual(['bell', 'box', 'gift']);
+      expect(s.get().cat!.corner!.wearing).toBe('bell');
+    }
+    expect(await meg.buy('box')).toBe(false); // already owned
+    expect(await josh.play('box')).toBe(true);
+    expect(await josh.play('box')).toBe(false); // one bond point a day
+    await josh.sync(); await meg.sync();
+    expect(meg.get().wallet!.bond).toBe(josh.get().wallet!.bond);
+  });
 });
