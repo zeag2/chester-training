@@ -76,6 +76,8 @@ export interface Cat {
   updatedAt?: number;
   /** Treats, bond and toys earned before sets kept their gifts (set once when upgrading). */
   carry?: { treats: number; bond: number; toys: string[] };
+  /** Training switched on for this cat. Missing = on (cats set up before it was optional). */
+  training?: boolean;
   /** Chester's corner: what was bought, daily gifts and play, and what he's wearing (see engine/corner.ts). */
   corner?: Corner;
 }
