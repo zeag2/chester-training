@@ -185,9 +185,9 @@ ready to share with friends.
 Roughly in the order agreed with Josh:
 
 1. **Next (Josh, after the demo):**
-   - **Walk pose looks scary** (head too big on a sausage body, block legs; see `walk()` in `art.ts`). Redraw it more
-     cat-like: smaller head set lower and forward, a longer body with chest and haunch, tapered legs with paws. The sit
-     pose is fine. Optionally the same pass for loaf, fly and ball.
+   - **Walk pose redrawn** (done, from Josh's photo of Chester standing side-on): small head on the shoulders, long
+     body, tapered legs with paws, tail sweeping back. Loaf, fly and ball could get the same treatment; Josh may get
+     an artist (brief: SVG, named parts, flat colour regions, same canvas per pose).
    - **Friends more visible + visiting**: a friends' cats strip on Home; tap a friend's cat to visit (big, pettable,
      same reactions), and **give them a free treat** once a day. Needs SQL: a `friend_treats(from, cat_id, day)` table
      plus a `give_treat(cat_id)` function; the owner's phone turns received treats into corner log entries

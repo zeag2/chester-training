@@ -137,17 +137,30 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w 
     + `<g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g>${right}</g></g>`;
 }
 
+/** Walking, side on, drawn from Chester standing on the couch: a small head on the front of the shoulders (he can
+    still look at you), a long body with the rump a touch higher than the shoulders, tapered legs with round paws and
+    thicker thighs at the back, and the tail sweeping down and back. Legs keep their classes for the walk cycle. */
 function walk(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
-  const leg = (x: number, cls: string, back = false) => `<g class="${cls}"><rect x="${x - 10}" y="140" width="20" height="48" rx="10" fill="${back ? c.shade : pawFill(c)}" ${SW(c)}/></g>`;
-  return `<ellipse class="shadow" cx="112" cy="190" rx="78" ry="6.5" fill="rgba(29,35,64,.12)"/>`
+  const leg = (x: number, cls: string, back: boolean, far: boolean) => {
+    const t = back ? 13 : 9; // half-width at the top: thighs at the back
+    const d = `M${x - t} 146 C${x - t} 162 ${x - 7} 174 ${x - 7} 182 Q${x - 8} 191 ${x + 1} 191 Q${x + 10} 191 ${x + 8} 182 C${x + 8} 174 ${x + t - 2} 160 ${x + t - 2} 146 Z`;
+    return `<g class="${cls}"><path d="${d}" fill="${far ? c.shade : pawFill(c)}" ${SW(c)}/><path d="M${x - 3} 186 V189 M${x + 3} 186 V189" stroke="${c.line}" stroke-width="1.8" stroke-linecap="round"/></g>`;
+  };
+  const BODY = 'M166 126 C173 142 166 160 148 165 C126 170 96 170 80 168 C58 166 44 154 46 136 C48 118 62 108 84 110 C106 112 130 117 148 115 C157 114 163 119 166 126 Z';
+  return `<defs><clipPath id="wb${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<ellipse class="shadow" cx="108" cy="191" rx="72" ry="6" fill="rgba(29,35,64,.12)"/>`
     + `<g class="all">`
-    + rigTail(c, 'M58 132 C34 128 26 104 32 84', 'M32 84 C36 66 50 60 58 66', 1.2)
-    + leg(78, 'legBL', true) + leg(140, 'legFR', true)
-    + `<g class="bodyg"><ellipse cx="108" cy="142" rx="60" ry="34" fill="${c.base}" ${SW(c)}/>`
-    + `<path d="M70 160 C90 176 130 176 150 160 C138 168 92 170 70 160 Z" fill="${c.shade}"/><ellipse cx="132" cy="150" rx="20" ry="16" fill="${c.white ? '#fbfaf7' : c.light}"/>`
-    + (c.stripe ? `<path d="M88 112 Q92 124 86 132 M104 110 Q108 122 102 130 M120 112 Q124 122 118 130" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>` : '')
-    + `</g>` + leg(96, 'legBR') + leg(156, 'legFL')
-    + `<g style="transform:translate(78px,-6px) scale(.84);transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g></g></g>`;
+    + rigTail(c, 'M50 130 C36 134 26 142 16 150', 'M16 150 C10 155 4 154 0 148', 1.1)
+    + leg(66, 'legBL', true, true) + leg(140, 'legFR', false, true)
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/>`
+    + `<g clip-path="url(#wb${uid})"><path d="M60 162 C92 172 132 172 160 158 L170 176 L40 176 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="74" cy="138" rx="24" ry="20" fill="${c.shade}" opacity=".35"/>`
+    + `<ellipse cx="158" cy="142" rx="11" ry="15" fill="${c.white ? '#fbfaf7' : c.light}"/>`
+    + (c.patches ? `<path d="M70 110 C90 104 110 112 108 132 C96 140 78 136 70 110 Z" fill="${c.patches[0]}"/><path d="M118 116 C134 112 150 118 146 134 C134 138 122 132 118 116 Z" fill="${c.patches[1]}"/>` : '')
+    + (c.stripe ? `<path d="M80 112 Q84 124 78 134 M98 112 Q102 124 96 134 M116 114 Q120 126 114 136" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>` : '')
+    + `</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + leg(84, 'legBR', true, false) + leg(156, 'legFL', false, false)
+    + `<g style="transform:translate(93px,40px) scale(.66);transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w)}</g></g></g></g>`;
 }
 
 function ball(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {

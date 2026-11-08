@@ -655,3 +655,6 @@ button.tapme.stroking:active{transform:none}
 /* walking: the head stays level while the body bobs under it (counter-bob), so it doesn't wobble like a bobblehead */
 .kc.pose-walk .head{animation:kheadsteady .25s var(--sine) infinite alternate}
 @keyframes kheadsteady{from{transform:translateY(0)}to{transform:translateY(2px)}}
+/* walk pose v2 (smaller head, real legs): the legs swing from their own hips */
+.kc.pose-walk .legBL{transform-origin:66px 148px}.kc.pose-walk .legBR{transform-origin:84px 148px}
+.kc.pose-walk .legFR{transform-origin:140px 148px}.kc.pose-walk .legFL{transform-origin:156px 148px}
