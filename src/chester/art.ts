@@ -90,11 +90,11 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean): s
   const leg = (x: number) => `<rect x="${x - 11}" y="146" width="22" height="42" rx="11" fill="${pawFill(c)}" ${SW(c)}/><path d="M${x - 4} 182 V187 M${x + 4} 182 V187" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/>`;
   const right = raised
     ? `<g class="pawR raised" style="transform:rotate(-160deg)"><rect x="117" y="148" width="22" height="58" rx="11" fill="${pawFill(c)}" ${SW(c)}/><ellipse cx="128" cy="189" rx="6.5" ry="5.5" fill="${pad}"/><circle cx="121.5" cy="197.5" r="2.7" fill="${pad}"/><circle cx="128" cy="200" r="2.7" fill="${pad}"/><circle cx="134.5" cy="197.5" r="2.7" fill="${pad}"/></g>`
-    : `<g class="pawR">${leg(121)}</g>`;
+    : `<g class="pawR"><g class="r-legR">${leg(121)}</g></g>`;
   return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
-    + `<ellipse class="shadow" cx="100" cy="190" rx="58" ry="6.5" fill="rgba(29,35,64,.12)"/>`
+    + `<g class="r-shadow"><ellipse class="shadow" cx="100" cy="190" rx="58" ry="6.5" fill="rgba(29,35,64,.12)"/></g>`
     + `<g class="r-all"><g class="all">${rigTail(c)}`
-    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}<ellipse cx="100" cy="172" rx="22" ry="27" fill="${c.white ? '#fbfaf7' : c.light}"/></g><path d="${BODY}" fill="none" ${SW(c)}/><g class="pawL">${leg(79)}</g></g>`
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}<ellipse cx="100" cy="172" rx="22" ry="27" fill="${c.white ? '#fbfaf7' : c.light}"/></g><path d="${BODY}" fill="none" ${SW(c)}/><g class="pawL"><g class="r-legL">${leg(79)}</g></g></g>`
     + `<g class="r-head"><g class="head">${head(c, eyes, mood, uid)}</g></g>${right}</g></g>`;
 }
 

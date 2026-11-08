@@ -14,9 +14,9 @@ Done
 - Dark mode (Settings → Appearance), Settings tab relabelled.
 
 Next, in order
-1. Chester animation pass 3: real in-between poses for hop, pounce and dance; consider real recorded meows
-   (licensed) if the synth ones sound robotic. (Pass 2 done: every pose has the chain tail and head/ear lag;
-   dev-only pose gallery at #/gallery.)
+1. Animation is done (rig on every pose; hop, pounce and dance are rig moves with wind-up, stretch, tucked legs
+   and landing squash — see MOVES in src/chester/rig.ts; dev pose gallery at #/gallery). Optional: real recorded
+   meows (licensed) if the synth ones sound robotic.
 2. Care, part 3: "Loves it" treats suggested for hard skills in sessions; a vet-visit summary to show the vet.
    (Part 2 done: food lookup by barcode/name via Open Pet Food Facts; vet documents stored in the private `pet-docs`
    bucket and read by the `read-vet-doc` Edge Function (Claude) into suggested entries the user confirms.

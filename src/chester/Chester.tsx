@@ -13,6 +13,8 @@ export interface ChesterProps {
 }
 
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
+/** Reactions the rig performs as full moves (wind-up, stretch, tucked legs, squash) instead of CSS. */
+const RIG_MOVES: Partial<Record<ReactionId, 'hop' | 'pounce'>> = { r1: 'hop', r6: 'hop', r11: 'hop', r14: 'pounce' };
 /** Which jolt the rig gives ears and tail for each reaction, and when (ms) it lands. */
 const KICKS: Partial<Record<ReactionId, ['hop' | 'bonk' | 'shake' | 'spin' | 'flick', number]>> = {
   r1: ['hop', 520], r6: ['hop', 520], r11: ['hop', 480], r8: ['bonk', 380], r10: ['shake', 300], r2: ['spin', 0], r4: ['shake', 120], r5: ['flick', 0], r9: ['flick', 200], r13: ['flick', 300], r14: ['hop', 400],
@@ -29,7 +31,9 @@ export function Chester(p: ChesterProps) {
   const timer = useRef<number>(0);
 
   const play = (id: ReactionId) => {
-    const k = KICKS[id]; if (k) rig.current?.kick(k[0], k[1]);
+    const move = RIG_MOVES[id];
+    if (move && rig.current) rig.current.play(move);
+    else { const k = KICKS[id]; if (k) rig.current?.kick(k[0], k[1]); }
     setFx('');
     requestAnimationFrame(() => setFx(id));
     window.clearTimeout(timer.current);

@@ -61,6 +61,59 @@ export function curvesOf(d1: string, d2: string): Curves {
 export const restTailPath = (curves?: Curves) => smoothPath(tailPoints(tailRest(curves), []));
 
 const sp = (): Spring => ({ x: 0, v: 0 });
+
+/** One pose on a move's timeline (t = 0..1). Missing channels hold the previous value. */
+interface Key { t: number; x?: number; y?: number; sx?: number; sy?: number; lean?: number; head?: number; hy?: number; legL?: number; legR?: number }
+type Chan = Exclude<keyof Key, 't'>;
+const CHANS: Chan[] = ['x', 'y', 'sx', 'sy', 'lean', 'head', 'hy', 'legL', 'legR'];
+const REST: Record<Chan, number> = { x: 0, y: 0, sx: 1, sy: 1, lean: 0, head: 0, hy: 0, legL: 0, legR: 0 };
+const tuck = (v: number) => ({ legL: v, legR: v });
+
+/** Hop, pounce and dance as real stages: wind-up, stretch, tucked legs in the air, squash on landing. Springs add the overshoot. */
+export const MOVES: Record<string, { ms: number; loop?: boolean; keys: Key[] }> = {
+  hop: { ms: 950, keys: [
+    { t: 0 },
+    { t: 0.13, y: 3, sx: 1.1, sy: 0.85, head: 3, hy: 4 },                    // crouch
+    { t: 0.27, y: -26, sx: 0.92, sy: 1.13, head: -4, hy: -1, ...tuck(0) },   // launch: stretch
+    { t: 0.45, y: -36, sx: 1, sy: 1, ...tuck(0.75) },                        // apex: legs tucked
+    { t: 0.6, y: -18, sx: 0.96, sy: 1.05, ...tuck(0.4) },
+    { t: 0.7, y: 0, ...tuck(0) },                                            // touch down
+    { t: 0.78, y: 2, sx: 1.13, sy: 0.83, head: 5, hy: 5 },                   // squash
+    { t: 0.9, y: 0, sx: 0.98, sy: 1.03, head: -1, hy: 0 },
+    { t: 1, ...REST },
+  ] },
+  pounce: { ms: 1700, keys: [
+    { t: 0 },
+    { t: 0.1, y: 6, sx: 1.1, sy: 0.82, head: 5, hy: 6 },                     // low stalk
+    { t: 0.18, lean: 3 }, { t: 0.24, lean: -3 }, { t: 0.3, lean: 3 }, { t: 0.36, lean: -3 }, { t: 0.42, lean: 0 }, // butt wiggle
+    { t: 0.5, y: 7, sx: 1.12, sy: 0.8 },                                     // hold…
+    { t: 0.58, x: 22, y: -24, sx: 0.9, sy: 1.16, lean: -9, head: -6, hy: -2, ...tuck(0) }, // spring!
+    { t: 0.67, x: 40, y: -14, sx: 1, sy: 1, lean: -4, ...tuck(0.6) },
+    { t: 0.74, x: 46, y: 2, sx: 1.15, sy: 0.82, lean: 2, head: 6, hy: 5, ...tuck(0) }, // land on the target
+    { t: 0.82, x: 46, y: 0, sx: 0.98, sy: 1.03, head: 0, hy: 0, lean: 0 },
+    { t: 1, ...REST },                                                        // pad back to his spot
+  ] },
+  dance: { ms: 1100, loop: true, keys: [
+    { t: 0, lean: -6, head: 7, y: 0, sx: 1.06, sy: 0.92, legL: 0, legR: 0.5 },
+    { t: 0.25, lean: 0, head: 0, y: -9, sx: 0.97, sy: 1.05, legL: 0, legR: 0 },
+    { t: 0.5, lean: 6, head: -7, y: 0, sx: 1.06, sy: 0.92, legL: 0.5, legR: 0 },
+    { t: 0.75, lean: 0, head: 0, y: -9, sx: 0.97, sy: 1.05, legL: 0, legR: 0 },
+    { t: 1, lean: -6, head: 7, y: 0, sx: 1.06, sy: 0.92, legL: 0, legR: 0.5 },
+  ] },
+};
+
+const ease = (u: number) => u * u * (3 - 2 * u);
+/** Value of every channel at time t (0..1): each channel eases between the keys that set it. */
+export function sampleMove(keys: Key[], t: number): Record<Chan, number> {
+  const out = { ...REST };
+  for (const c of CHANS) {
+    let a: Key | null = null, b: Key | null = null;
+    for (const k of keys) { if (k[c] === undefined && k.t !== 0 && k.t !== 1) continue; if (k.t <= t) a = k; else { b = k; break; } }
+    const va = a?.[c] ?? REST[c], vb = b?.[c] ?? (b ? REST[c] : va);
+    out[c] = !a ? va : !b ? va : va + (vb - va) * ease((t - a.t) / Math.max(1e-6, b.t - a.t));
+  }
+  return out;
+}
 const DEG = Math.PI / 180;
 
 export class Rig {
@@ -72,7 +125,11 @@ export class Rig {
   private amp = 1;
   /** Lying, loafing or kneading: he breathes and nuzzles but doesn't lean from the hips. */
   private lying = false;
-  private s = { lean: sp(), sq: sp(), head: sp(), hx: sp(), earL: sp(), earR: sp(), tail: Array.from({ length: N - 1 }, sp) };
+  private s = { lean: sp(), sq: sp(), head: sp(), hx: sp(), earL: sp(), earR: sp(), tail: Array.from({ length: N - 1 }, sp),
+    mx: sp(), my: sp(), msx: { x: 1, v: 0 }, msy: { x: 1, v: 0 }, mlean: sp(), mhead: sp(), mhy: sp(), legL: sp(), legR: sp() };
+  private move: { name: string; t0: number } | null = null;
+  private legs: { L: SVGGElement | null; R: SVGGElement | null } = { L: null, R: null };
+  private shadow: SVGGElement | null = null;
   private raf = 0; private last = 0; private t0 = performance.now(); private flickAt = 0; private flick = 0;
   /** Finger lean, -1..1, while stroking; null otherwise. */
   stroke: number | null = null;
@@ -86,12 +143,18 @@ export class Rig {
     if (tg?.dataset.tail) this.rest = tailRest(JSON.parse(tg.dataset.tail));
     this.amp = Number(tg?.dataset.amp ?? 1) || 1;
     this.lying = !svg.classList.contains('pose-sit');
+    this.legs = { L: q('.r-legL'), R: q('.r-legR') }; this.shadow = q('.r-shadow');
+    svg.classList.add('rigged');
+    if (svg.classList.contains('dance') && !this.lying) this.play('dance');
     this.flickAt = this.t0 + 2500 + Math.random() * 4000;
     this.start();
   }
 
   start() { if (!this.raf) { this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); } }
   stop() { cancelAnimationFrame(this.raf); this.raf = 0; }
+
+  /** Play a keyframed move (hop, pounce, dance). Dance loops until another move or stop(). */
+  play(name: keyof typeof MOVES) { if (MOVES[name] && !this.lying) this.move = { name, t0: performance.now() }; }
 
   /** A jolt for the secondary parts: ears and tail react to a hop, bonk or sneeze. */
   kick(kind: 'hop' | 'bonk' | 'shake' | 'spin' | 'flick', delayMs = 0) {
@@ -111,6 +174,20 @@ export class Rig {
     const dt = Math.min(48, now - this.last); this.last = now;
     if (!this.visible || document.hidden) { this.raf = requestAnimationFrame(this.tick); return; }
     const t = (now - this.t0) / 1000; const s = this.s;
+    let m = sampleMove([{ t: 0 }, { t: 1 }], 0);
+    if (this.move) {
+      const def = MOVES[this.move.name]; let u = (now - this.move.t0) / def.ms;
+      if (u >= 1) { if (def.loop) { u %= 1; } else { this.move = null; u = 1; } }
+      m = sampleMove(def.keys, Math.min(1, u));
+    }
+    const STIFF = { tension: 700, friction: 30 }, LAG = { tension: 260, friction: 15 };
+    const prevY = s.my.x;
+    s.mx = stepSpring(s.mx, m.x, dt, STIFF); s.my = stepSpring(s.my, m.y, dt, STIFF);
+    s.msx = stepSpring(s.msx, m.sx, dt, STIFF); s.msy = stepSpring(s.msy, m.sy, dt, STIFF);
+    s.mlean = stepSpring(s.mlean, m.lean, dt, STIFF);
+    s.mhead = stepSpring(s.mhead, m.head, dt, LAG); s.mhy = stepSpring(s.mhy, m.hy, dt, LAG);
+    s.legL = stepSpring(s.legL, m.legL, dt, STIFF); s.legR = stepSpring(s.legR, m.legR, dt, STIFF);
+    const yVel = (s.my.x - prevY) / Math.max(1, dt);
     const petting = this.stroke !== null; const lean = this.stroke ?? 0;
 
     // body leans from the hips toward the finger; head goes further and tilts into the hand
@@ -124,13 +201,13 @@ export class Rig {
     s.hx = stepSpring(s.hx, lean * 4, dt, HEAD);
 
     // ears: relax back while petted, and lag behind the head's turns
-    s.earL = stepSpring(s.earL, (petting ? -9 : 0) - headVel * 260, dt, EAR);
-    s.earR = stepSpring(s.earR, (petting ? 9 : 0) - headVel * 260, dt, EAR);
+    s.earL = stepSpring(s.earL, (petting ? -9 : 0) - headVel * 260 + yVel * 90, dt, EAR);
+    s.earR = stepSpring(s.earR, (petting ? 9 : 0) - headVel * 260 - yVel * 90, dt, EAR);
 
     // tail: a slow sway at the base, each joint following the one before (the whip), plus the odd flick
     if (now > this.flickAt) { this.flick = 1; this.flickAt = now + 4000 + Math.random() * 6000; }
     this.flick *= Math.pow(0.04, dt / 1000);
-    const sway = ((petting ? 4 : 3) * Math.sin(t * (petting ? 1.4 : 1.75)) - leanVel * 250) * this.amp;
+    const sway = ((petting ? 4 : 3) * Math.sin(t * (petting ? 1.4 : 1.75)) - leanVel * 250 + yVel * 60) * this.amp;
     s.tail.forEach((j, i) => {
       const lead = i === 0 ? sway : s.tail[i - 1].x * 0.6;
       const curl = (petting ? (i > N - 4 ? 5 : 0) : this.flick * (i > N - 4 ? 14 * Math.sin(now / 70) : 0)) * Math.max(this.amp, 0.6);
@@ -147,8 +224,16 @@ export class Rig {
     const breathe = 1 + Math.sin(t * 1.96) * 0.006;
     const sq = this.lying ? 0 : s.sq.x * 0.012;
     // skew keeps the feet line (y = 188) fixed, so he leans instead of sliding
-    this.all?.setAttribute('transform', `translate(100 188) skewX(${(-s.lean.x).toFixed(2)}) scale(${(1 + sq).toFixed(4)} ${((1 - sq) * breathe).toFixed(4)}) translate(-100 -188)`);
-    this.head?.setAttribute('transform', `rotate(${s.head.x.toFixed(2)} 100 132) translate(${s.hx.x.toFixed(2)} ${(petting ? 1.5 : 0).toFixed(1)})`);
+    const f = (n: number) => n.toFixed(3);
+    this.all?.setAttribute('transform', `translate(${f(100 + s.mx.x)} ${f(188 + s.my.x)}) skewX(${f(-s.lean.x - s.mlean.x)}) scale(${f((1 + sq) * s.msx.x)} ${f((1 - sq) * breathe * s.msy.x)}) translate(-100 -188)`);
+    this.head?.setAttribute('transform', `rotate(${f(s.head.x + s.mhead.x)} 100 132) translate(${f(s.hx.x)} ${f((petting ? 1.5 : 0) + s.mhy.x)})`);
+    // legs fold up from the hip when tucked
+    this.legs.L?.setAttribute('transform', `translate(0 148) scale(1 ${f(1 - 0.38 * Math.max(0, s.legL.x))}) translate(0 -148)`);
+    this.legs.R?.setAttribute('transform', `translate(0 148) scale(1 ${f(1 - 0.38 * Math.max(0, s.legR.x))}) translate(0 -148)`);
+    // the shadow stays on the floor: smaller and fainter the higher he is, and it follows him sideways
+    const lift = Math.max(0, -s.my.x);
+    this.shadow?.setAttribute('transform', `translate(${f(100 + s.mx.x)} 190) scale(${f(Math.max(0.45, 1 - lift / 70))} 1) translate(-100 -190)`);
+    this.shadow?.setAttribute('opacity', f(Math.max(0.35, 1 - lift / 60)));
     this.earL?.setAttribute('transform', `rotate(${s.earL.x.toFixed(2)} 62 58)`);
     this.earR?.setAttribute('transform', `rotate(${s.earR.x.toFixed(2)} 138 58)`);
     if (this.tailO && this.tailF) {

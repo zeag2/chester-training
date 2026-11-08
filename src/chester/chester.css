@@ -607,3 +607,11 @@ button.tapme.stroking:active{transform:none}
 @keyframes cMeowMouth{0%{transform:scale(0)}15%{transform:scale(.55,.7)}40%{transform:scale(.8,.9)}75%{transform:scale(.45,.5)}100%{transform:scale(0)}}
 @keyframes cMeowHide{0%,100%{opacity:1}10%,80%{opacity:0}}
 @keyframes cMeowHead{0%,100%{transform:none}35%{transform:rotate(-4deg) translateY(-3px)}70%{transform:rotate(-1deg) translateY(-1px)}}
+/* the rig performs hop, pounce and dance on a rigged (sitting) Chester: turn off the old CSS versions of those moves */
+.tapme.r1 .kc.rigged .all,.tapme.r6 .kc.rigged .all,.tapme.r11 .kc.rigged .all,.tapme.r14 .kc.rigged .all,
+.tapme.r1 .kc.rigged .shadow,.tapme.r6 .kc.rigged .shadow,.tapme.r11 .kc.rigged .shadow,.tapme.r14 .kc.rigged .shadow,
+.tapme.r1 .kc.rigged .head,.tapme.r6 .kc.rigged .head,.tapme.r14 .kc.rigged .head,
+.tapme.r1 .kc.rigged .earL,.tapme.r1 .kc.rigged .earR,.tapme.r6 .kc.rigged .earL,.tapme.r6 .kc.rigged .earR,.tapme.r14 .kc.rigged .earL,.tapme.r14 .kc.rigged .earR,
+.kc.rigged.dance .all,.kc.rigged.dance .shadow,.kc.rigged.dance .head,.kc.rigged.dance .earL,.kc.rigged.dance .earR,
+.kc.rigged.dance .pawL,.kc.rigged.dance .pawR:not(.raised){animation:none}
+.tapme.r1 .kc.rigged,.tapme.r6 .kc.rigged,.tapme.r11 .kc.rigged,.tapme.r14 .kc.rigged{animation:none}
