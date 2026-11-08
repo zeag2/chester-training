@@ -232,14 +232,16 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ---
 
-## 2. What's left
+## 2. What's left (checklist)
 
-In order:
+Tick items here when they ship (`[x]`), in the same commit. Sizes: S under an hour, M about a session, L several.
+"SQL" means Josh runs a migration. Suggested order: badges, bond unlocks + nap tokens, weekly recap, vet summary, push.
+Items marked *(art)* suit the art session.
 
-1. ~~**Friends, more visible, and visiting**~~: built and its SQL run (see section 1, Friends). Left: a real test
-   between two phones. Ideas next: a "thank you" back to the giver,
-   treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
-2. **Cat art redraw**: first pass done and live (branch `claude/chester-cat-art-redraw-xlu1vr`, merged 2026-11-08).
+### Done recently
+- [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
+- [x] **Treats for logging care** (see section 1, corner).
+- [x] **Cat art redraw** (art session's notes, kept as written): first pass done and live (branch `claude/chester-cat-art-redraw-xlu1vr`, merged 2026-11-08).
    Dev `#/gallery` shows every pose and the nuzzle. Done, to the style guide:
    - One thin outline everywhere (`LW = 3` in `art.ts`; scaled heads draw thicker lines so it stays even), flat fills
      with one shadow shape, no gloss. Simpler face: round amber eyes with one highlight, tiny nose, small "w" mouth,
@@ -264,41 +266,70 @@ In order:
      own cushion, a mirrored second cat in the nuzzle that shares one SVG so cheeks overlap exactly.
    Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
-3. **Push notifications** for new friends and treats (Web Push; iPhone only when installed): a Supabase Edge Function
-   with VAPID keys (keys via the environment's secrets, never in the repo), a `push_subscriptions` table, and a
-   trigger on `friends`. Today it's in-app only: checked on every app open, red dot on Me, a card on Home.
-4. **Weekly recap:** a "{cat}'s week" card: weight trend, health entries, and for training cats sets, success rate,
-   what improved, who did what (sets record `by`; names from household members).
-5. **Badges and trophy case:** a badge per mastered skill, shelves by branch. Recap still says badges "arrive in the
-   next update".
-6. **Check-ins:** five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
-   `hiddenUnlocks` in `rules.ts`).
-7. **Care extras:** a one-tap vet summary (weight trend, vaccines, symptoms) to show at appointments; suggest the
-   "Loves it" treat for hard skills; medicine reminders as notifications once push exists.
-8. **Corner leftovers:** nap tokens (streak saver) unbuilt (`Wallet.napTokens`, `playMoves` unused); bond levels unlock
-   nothing yet; more outfits and toys are easy (`SHOP` + `outfit()`).
-9. **Photo album:** a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).
-10. **A cleaner address:** `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken. A second Cloudflare
-    Pages project with a free name (e.g. `chesterpals`) or a custom domain would fix it; then update `MOVED_TO`.
-11. **Tidy-up:** `chester.css` has several historical layers with 23 duplicated keyframe names (later ones win); fold
-    them into one set with before/after screenshots. Real recorded (licensed) meows if the synthesized ones sound robotic.
-12. **Other animals (bigger):** dogs need their own art, skills and copy.
+
+### Phase 2: Chester's world (finish first)
+- [ ] **Badges and trophy case** (M): a badge per mastered skill, shelves by branch, closest badge on top. The recap
+  still says badges "arrive in the next update".
+- [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
+  bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
+- [ ] **Bond levels unlock things** (S–M): idle behaviours and outfits per level (they unlock nothing yet).
+- [ ] **Nap tokens** (S): one every 7 days, protects the streak on a rest day; never a broken-streak message
+  (`Wallet.napTokens` exists, unused).
+- [ ] **Mastery-only corner items** (S): e.g. a cozy box from Carrier comfort.
+- [ ] **Play moves found by petting** (S) *(art)*: a counter of moves discovered (`Wallet.playMoves`, unused).
+- [ ] **Photo album** (M): a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).
+- [ ] **Push notifications** (L, SQL): new friend, a friend's treat, medicine due, "Pet me?". Web Push via a Supabase
+  Edge Function with VAPID keys (environment secrets, never in the repo), a `push_subscriptions` table, triggers.
+  iPhone only when installed. Today everything is in-app (red dot on Me, cards on Home).
+
+### Phase 3: grow and open up
+- [ ] **Weekly recap** (M): a "{cat}'s week" card: weight trend, health entries, sets and success rate, what improved,
+  who did what (sets record `by`), treats from friends.
+- [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
+  `hiddenUnlocks` in `rules.ts`).
+- [ ] **Glossary in the library** (S).
+- [ ] **Backup import** (S): export exists, import doesn't.
+- [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
+
+### Health
+- [ ] **Vet summary** (M): one tap, weight trend, vaccines, symptoms, to show at appointments.
+- [ ] **Medicine reminders** (M): in-app now, notifications once push exists.
+- [ ] **Suggest the "Loves it" treat for hard skills** (S).
+
+### Friends
+- [ ] **Thank-you back** (S, SQL): the owner taps "Thank Erin", she sees a thank-you from the cat.
+- [ ] **A friend's cat visits your Home** (M) *(art)*: now and then sits beside yours for a bit.
+- [ ] **Friends in the weekly recap** (S): who gave treats this week (with the recap).
+
+### Treats
+- [ ] **7-day care streak bonus** (S): without any guilt for missing a day.
+- [ ] **First play of the day gives treats** (S): it gives only a bond point today.
+
+### Polish and housekeeping
+- [ ] **A cleaner address** (S): `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken; a second
+  Cloudflare Pages project with a free name or a custom domain, then update `MOVED_TO`.
+- [ ] **`chester.css` tidy-up** (M) *(art)*: 23 duplicated keyframe names across historical layers (later ones win);
+  fold into one set with before/after screenshots.
+- [ ] **Real recorded meows** (S): licensed recordings, if the synthesized ones sound robotic.
+- [ ] **More outfits and toys** (S each): `SHOP` + `outfit()`.
+- [ ] **Other animals** (L): dogs need their own art, skills and copy.
+
+### For Josh (no code)
+- [ ] Test a friend treat between two real phones.
+- [ ] Try setup with a friend on a real iPhone: name and icon on the Home Screen, both cats in setup.
+- [ ] Remove the duplicate Megan account (Me, People, the Megan with 0 sets, Remove from household) if it's still there.
+- [ ] Optional: delete the leftover GitHub branch `claude/friends-care-treats` (a duplicate of `claude/friends-visit-treat`).
 
 ### The original phases (from the design doc, https://claude.ai/artifact/FX5FoXUmccY9j51Gzy14o9)
 - **Phase 1, train with Chester:** done.
-- **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case (item 5),
-  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album
-  (item 9), notifications (item 3), and the corner leftovers (item 8: nap tokens, bond levels unlocking idle
-  behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
+- **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case,
+  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album,
+  notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
-  Left: check-ins and hidden skills (item 6), weekly recap (item 4), a glossary in the library, backup import, an App
+  Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
   Store wrapper (Capacitor) if wanted.
 - The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
-
-### Open items for Josh
-- Try the new setup with a friend on a real iPhone: name and icon on the Home Screen, both cats in setup.
-- If wanted: a cleaner address (section 2, item 10).
-- Old: remove the duplicate Megan account (Me, People, the Megan with 0 sets, Remove from household) if it's still there.
+  The checklist above is grouped the same way.
 
 ---
 
