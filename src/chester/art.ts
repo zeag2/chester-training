@@ -191,20 +191,38 @@ function walk(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
     + `<g style="transform:translate(104px,52px) scale(${s});transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w, { size: 0.82, outer: s, turn: 1 })}</g></g></g></g>`;
 }
 
+/** Playing on his back: hugging the yarn ball to his chest with both front paws, chubby back feet up against it
+    showing their toe beans, tail curled out behind, looking at the ball with a little blep. */
 function ball(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
-  const limb = (x1: number, y1: number, x2: number, y2: number, cls: string) =>
-    `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="${13 + 2 * LW}" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${pawFill(c)}" stroke-width="13" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="3.2" fill="${pad}"/></g>`;
-  const s = 0.74;
-  return shadow(112, 84)
+  const pf = pawFill(c);
+  // a short, chubby limb ending in a round paw (outline under fill so the joins stay clean)
+  const limb = (x1: number, y1: number, x2: number, y2: number, cls: string, beans = false) =>
+    `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="${16 + 2 * LW}" stroke-linecap="round"/>`
+    + `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${pf}" stroke-width="16" stroke-linecap="round"/>`
+    + (beans ? `<ellipse cx="${x2}" cy="${y2 + 1.5}" rx="4.2" ry="3.4" fill="${pad}"/><circle cx="${x2 - 4.6}" cy="${y2 - 3.6}" r="1.8" fill="${pad}"/><circle cx="${x2}" cy="${y2 - 5.4}" r="1.8" fill="${pad}"/><circle cx="${x2 + 4.6}" cy="${y2 - 3.6}" r="1.8" fill="${pad}"/>`
+      : `<path d="M${x2 - 2.5} ${y2 - 5} v3 M${x2 + 2.5} ${y2 - 5} v3" stroke="${c.line}" stroke-width="1.4" stroke-linecap="round"/>`)
+    + '</g>';
+  const BODY = 'M92 132 C100 116 132 118 160 132 C184 144 196 160 188 176 C180 190 150 190 124 180 C100 170 84 150 92 132 Z';
+  let bp = `<path d="M100 150 C112 172 150 186 184 178 C176 190 140 192 116 182 C98 172 90 160 100 150 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="132" cy="146" rx="30" ry="15" fill="${c.white ? '#fbfaf7' : c.light}" transform="rotate(24 132 146)"/>`;
+  if (c.stripe) bp += `<path d="M150 184 Q156 174 164 172 M170 184 Q172 174 180 168" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="168" cy="164" rx="20" ry="14" fill="${c.patches[0]}"/><ellipse cx="110" cy="168" rx="14" ry="10" fill="${c.patches[1]}"/>`;
+  const Y = '#ef8f9a', YS = '#d06a7c';
+  const yarn = `<g transform="translate(4 10)"><g class="yarn"><circle cx="134" cy="106" r="24" fill="${Y}" ${SW(c)}/>`
+    + `<path d="M114 96 C126 104 142 100 156 110 M112 110 C124 106 140 118 152 124 M124 84 C132 94 138 110 134 128 M146 88 C140 98 136 108 122 114" stroke="${YS}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+    + `<path d="M156 116 C168 122 170 134 162 140 C156 144 158 152 166 154" stroke="${YS}" stroke-width="3" fill="none" stroke-linecap="round"/></g></g>`;
+  const s = 0.72;
+  return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + shadow(126, 76)
     + `<g class="all">`
-    + rigTail(c, 'M172 166 C200 162 210 134 200 108', 'M200 108 C194 90 180 86 172 94', 1.4)
-    + `<g class="bodyg"><ellipse cx="126" cy="150" rx="64" ry="38" fill="${c.base}" ${SW(c)} transform="rotate(-12 126 150)"/>`
-    + `<ellipse cx="130" cy="140" rx="36" ry="20" fill="${c.white ? '#fbfaf7' : c.light}" transform="rotate(-12 130 140)"/>`
-    + `<path d="M76 176 C112 194 160 188 182 160 C170 184 114 194 76 176 Z" fill="${c.shade}"/></g>`
-    + limb(150, 140, 168, 98, 'kickB') + limb(170, 146, 192, 114, 'kickA')
-    + `<g class="yarn"><circle cx="132" cy="80" r="22" fill="#ef8f9a" ${SW(c)}/><path d="M108 70 C120 78 136 74 150 84 M106 84 C118 80 132 92 146 96 M118 56 C126 66 132 84 130 102" stroke="#c45466" stroke-width="2.6" fill="none" stroke-linecap="round"/></g>`
-    + limb(112, 134, 116, 100, 'armA') + limb(134, 130, 148, 102, 'armB')
-    + `<g style="transform:translate(-40px,58px) rotate(-16deg) scale(${s});transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood === 'curious' ? 'open' : mood, uid, w, { size: 0.84, outer: s })}</g></g></g></g>`;
+    + rigTail(c, 'M184 170 C204 174 214 158 206 142', 'M206 142 C198 126 206 112 218 116', 1.2)
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + yarn
+    + limb(180, 160, 166, 124, 'kickA', true) + limb(166, 168, 156, 142, 'kickB', true)
+    + limb(104, 142, 117, 126, 'armA') + limb(118, 150, 129, 136, 'armB')
+    + `<g style="transform:translate(-30px,26px) rotate(-14deg) scale(${s});transform-origin:100px 92px"><g class="r-head"><g class="head">${head(c, eyes, mood === 'open' ? 'curious' : mood, uid, w, { size: 0.9, outer: s, turn: 0.4 })}`
+    + `<path d="M108 112 H114 V117 A3 3 0 0 1 108 117 Z" fill="#ef8f9a" stroke="${c.line}" stroke-width="2"/></g></g></g>`
+    + `</g>`;
 }
 
 /** Curled up asleep: one soft oval, head resting on the front paws, tail round the front. Only the back breathes.

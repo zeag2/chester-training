@@ -238,11 +238,11 @@
 .kc.pose-walk .legFL{transform-origin:156px 142px}.kc.pose-walk .legFR{transform-origin:140px 142px}.kc.pose-walk .legBL{transform-origin:78px 142px}.kc.pose-walk .legBR{transform-origin:96px 142px}
 .kc.pose-walk .all{animation:kwalkbob .35s var(--sine) infinite}
 .kc.pose-walk .tailbase{transform-origin:58px 132px}.kc.pose-walk .tailtip{transform-origin:32px 84px}
-.kc.pose-ball .yarn{transform-origin:132px 80px;animation:kballroll 1.6s var(--sine) infinite}
-.kc.pose-ball .kickA{transform-origin:170px 146px;animation:kkick .5s var(--sine) infinite}
-.kc.pose-ball .kickB{transform-origin:150px 140px;animation:kkick .5s var(--sine) infinite .25s}
-.kc.pose-ball .armA{transform-origin:112px 132px;animation:kgrab 1.6s var(--sine) infinite}
-.kc.pose-ball .armB{transform-origin:134px 128px;animation:kgrab 1.6s var(--sine) infinite .2s}
+.kc.pose-ball .yarn{transform-origin:134px 106px;animation:kballroll 1.6s var(--sine) infinite}
+.kc.pose-ball .kickA{transform-origin:180px 160px;animation:kkick .7s var(--sine) infinite}
+.kc.pose-ball .kickB{transform-origin:166px 168px;animation:kkick .7s var(--sine) infinite .35s}
+.kc.pose-ball .armA{transform-origin:104px 142px;animation:kgrab 1.6s var(--sine) infinite}
+.kc.pose-ball .armB{transform-origin:118px 150px;animation:kgrab 1.6s var(--sine) infinite .2s}
 .kc.pose-ball .tailbase{transform-origin:168px 168px}.kc.pose-ball .tailtip{transform-origin:196px 110px}
 .kc.pose-sleep .bodyg{animation:kbreathe 4.6s var(--sine) infinite}
 .kc.pose-sleep .head{animation:knaphead 4.6s var(--sine) infinite}

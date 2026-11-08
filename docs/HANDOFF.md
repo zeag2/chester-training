@@ -253,7 +253,11 @@ In order:
    - **Nuzzle** (anims `nuzzle`/`nuzzleL` in `chester.css`): on Home the cat and the one beside him lean cheek to
      cheek, eyes closed, purring, instead of the head bonk.
    - **Walk:** tail up like a question mark, face turned toward where he's going (`turn` option on `head()`).
-   - Loaf, knead, ball and fly restyled with smaller heads and the thin line. Outfits checked on every pose.
+   - **Ball (play)**, redrawn after Josh found the first version "terrifying" (four stick limbs reaching over the yarn):
+     now on his back hugging the yarn to his chest with both front paws, chubby back feet against it showing toe
+     beans, tail curled out in an S, a little blep. From Josh's references (qualities only: cat on its back with a
+     yarn ball, paws round it).
+   - Loaf, knead and fly restyled with smaller heads and the thin line. Outfits checked on every pose.
    - Not done: Josh's reference images weren't attached this session, so it was drawn from the style guide's notes.
      Ideas for a next pass: a true side-profile head for walk, the drape on the real Home card edge instead of its
      own cushion, a mirrored second cat in the nuzzle that shares one SVG so cheeks overlap exactly.
