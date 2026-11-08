@@ -15,7 +15,7 @@ Real proportions come from Josh's photos of Chester: slim black kitten, amber ey
   around the body when curled up.
 - **Soft, rounded masses**: a curled-up cat is one oval with the head resting on its paws.
 
-## Poses to (re)draw, in order
+## Poses to (re)draw, in order (first pass of all of these done 2026-11-08, see HANDOFF)
 1. **Walk / trot** (done once, refine): tail up in a question-mark curve, face in profile or three-quarter, long legs.
 2. **Sit**: smaller head than today, front paws together, **tail wrapped around the front paws**.
 3. **Dozing sit**: the same, head bowed, eyes as curves (for "nap" on Home).

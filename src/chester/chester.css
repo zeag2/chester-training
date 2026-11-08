@@ -16,9 +16,9 @@
 .kc .look{transition:transform 320ms var(--ease-out)}
 .kc .whisk{transform-origin:100px 106px;animation:kwhisk 5.5s var(--sine) infinite .7s}
 .kc .blush{transform-origin:100px 108px;animation:kblush 3.2s var(--sine) infinite}
-.kc .pawR{transform-origin:121px 150px}
-.kc .pawL{transform-origin:79px 150px}
-.kc .pawR.raised{transform-origin:128px 152px}
+.kc .pawR{transform-origin:108px 146px}
+.kc .pawL{transform-origin:92px 146px}
+.kc .pawR.raised{transform-origin:116px 146px}
 .kc .tongue{transform-origin:100px 114px}
 .kc .mopen{transform-origin:100px 110px}
 @keyframes kshadow{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.03)}}
@@ -658,3 +658,21 @@ button.tapme.stroking:active{transform:none}
 /* walk pose v2 (smaller head, real legs): the legs swing from their own hips */
 .kc.pose-walk .legBL{transform-origin:66px 148px}.kc.pose-walk .legBR{transform-origin:84px 148px}
 .kc.pose-walk .legFR{transform-origin:140px 148px}.kc.pose-walk .legFL{transform-origin:156px 148px}
+
+/* ---- 2026-11 redraw: dozing sit, draped idle, two-cat nuzzle ---- */
+.kc.pose-doze .bodyg{transform-origin:100px 188px;animation:cBreath2 3.2s var(--sine) infinite}
+.kc.pose-doze .head{transform-origin:100px 132px;animation:knaphead 4.8s var(--sine) infinite}
+.kc.pose-drape .bodyg{transform-origin:110px 134px;animation:cDrapeBreath 3.6s var(--sine) infinite}
+.kc.pose-drape .dangle{transform-origin:60px 128px;animation:cDangle 3.6s var(--sine) infinite}
+.kc.pose-drape .head{transform-origin:100px 132px;animation:knaphead 7.2s var(--sine) infinite}
+@keyframes cDrapeBreath{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.035)}}
+@keyframes cDangle{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
+/* cheek to cheek: heads lean in toward each other, eyes closed, and the two cats shuffle closer */
+.kc.nuzzle .head{transform-origin:100px 132px;animation:cNuzzleR 2.8s var(--ease-in-out) both}
+.kc.nuzzleL .head{transform-origin:100px 132px;animation:cNuzzleL 2.8s var(--ease-in-out) both}
+.kc.nuzzle .bodyg,.kc.nuzzleL .bodyg{animation:kpurr .085s linear 24}
+@keyframes cNuzzleR{0%,100%{transform:none}22%,45%{transform:translate(16px,6px) rotate(18deg)}60%{transform:translate(14px,5px) rotate(14deg)}78%{transform:translate(16px,6px) rotate(18deg)}}
+@keyframes cNuzzleL{0%,100%{transform:none}22%,45%{transform:translate(-16px,6px) rotate(-18deg)}60%{transform:translate(-14px,5px) rotate(-14deg)}78%{transform:translate(-16px,6px) rotate(-18deg)}}
+.gagwrap:not(.out):not(.away):not(.gone):not(.back),.homecats .other:first-child{transition:transform .5s var(--ease-in-out)}
+.gagwrap.nuzzling{transform:translateX(6px)}
+.homecats.nuzzling .other:first-child{transform:translateX(-8px)}

@@ -40,3 +40,23 @@ describe('art safety', () => {
     for (let i = 0; i < 300; i++) { const r = pickReaction(last, Math.random, false); expect(LYING_OK).toContain(r); last = r; }
   });
 });
+
+describe('art', () => {
+  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly'] as const;
+  it('every pose draws in every coat with the parts the rig and CSS use', async () => {
+    const { COATS } = await import('./art');
+    for (const pose of poses) for (const coat of Object.keys(COATS)) {
+      const svg = chesterSVG({ pose, coat, uid: 'x', wear: 'crown' });
+      expect(svg).toContain(`pose-${pose}`);
+      expect(svg).toContain('class="head"');
+      expect(svg).toContain('wear-crown');
+      expect(svg).not.toContain('NaN');
+      if (pose !== 'fly') expect(svg).toContain('class="r-head"');
+      if (pose === 'sit' || pose === 'doze' || pose === 'drape' || pose === 'sleep') expect(svg).toContain('class="r-all"');
+    }
+  });
+  it('the sitting tail wraps round the front paws', () => {
+    const svg = chesterSVG({ pose: 'sit', uid: 'x' });
+    expect(svg).toMatch(/class="rtail" data-tail=/);
+  });
+});

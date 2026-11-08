@@ -1,7 +1,7 @@
 # PalDex: handoff
 
-_Last updated 2026-11-08, end of the session that built the corner, friends, the tracker-first layout and the new walk
-pose. Start here when picking the project back up._
+_Last updated 2026-11-08, end of the session that redrew Chester to the style guide (thin outline, small head, tail
+wrapped round the paws, new doze/drape/nuzzle). Start here when picking the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
 symptoms, vet visits, medicine and vaccines, food, documents) and **clicker training as an optional extra per cat**,
@@ -17,8 +17,8 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 95 tests passing in 17 files, typecheck and build clean, working tree clean; everything is on
-  `main` and live (last commit: the art style guide). All Supabase SQL through `20261110000000_friends.sql` has been
+- **State at handoff:** 97 tests passing in 17 files, typecheck and build clean. The cat redraw is on branch
+  `claude/chester-cat-art-redraw-xlu1vr`, **not merged to `main` yet** (Josh to look first; `main` is still the old art). All Supabase SQL through `20261110000000_friends.sql` has been
   run (checked against the live database), including the extra `revoke ... from anon` on the friend functions.
 
 ## Pick up here
@@ -178,10 +178,10 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   gentle ones play when he's lying, loafing or kneading.
 - **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle. While walking the head stays level as the body
   bobs under it.
-- **Head size:** `HEAD_SIZE.scale` in `src/chester/art.ts` (0.88; it was 1.0 and read as a bobblehead). It scales about
-  the neck, so every pose, the rig and the outfits follow.
-- **Cats together on Home:** the other cats (up to two) sit beside the one being shown (tap to switch to them), bonk
-  heads now and then, and every minute or two (or on the yarn button) a **toy chase** plays: a yarn ball rolls in,
+- **Head size:** `HEAD_SIZE.scale` in `src/chester/art.ts` (0.88) times each pose's own `size` (sit 0.84, walk 0.82…).
+  It scales about the neck, so every pose, the rig and the outfits follow.
+- **Cats together on Home:** the other cats (up to two) sit beside the one being shown (tap to switch to them), nuzzle
+  cheek to cheek now and then, and every minute or two (or on the yarn button) a **toy chase** plays: a yarn ball rolls in,
   everyone runs after it, it's batted back, the lead cat pounces, they trot home (`src/chester/Chase.tsx`, ~6 s).
   Works with one cat too.
 - **Life on Home:**
@@ -238,7 +238,7 @@ In order:
 1. ~~**Friends, more visible, and visiting**~~: built and its SQL run (see section 1, Friends). Left: a real test
    between two phones. Ideas next: a "thank you" back to the giver,
    treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
-2. **Cat art redraw**: see "Pick up here" and the style guide. Josh may also hire an artist; brief: SVG, named parts,
+2. **Cat art redraw**: first pass done (see "Pick up here"). Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
 3. **Push notifications** for new friends and treats (Web Push; iPhone only when installed): a Supabase Edge Function
    with VAPID keys (keys via the environment's secrets, never in the repo), a `push_subscriptions` table, and a
@@ -295,7 +295,7 @@ src/
     fake.ts             in-memory server with the same rules, for tests
     config.ts           Supabase URL + publishable key
   chester/              the character
-    art.ts              SVG poses: sit, walk, ball, sleep, loaf, knead, fly; shared head; chain tail
+    art.ts              SVG poses: sit, doze, walk, ball, sleep, drape, loaf, knead, fly; shared head; chain tail
     rig.ts              spring rig + keyframed MOVES (hop, pounce, dance, bat)
     Chester.tsx         the component: petting, taps, reactions, rainbow dash trigger
     reactions.ts        tap reactions and which ones are allowed lying down
@@ -455,7 +455,11 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 ### Skills actually used so far
 - In the Nov 7 sessions: **reanimate**, **earshot**/**real-sound**, **huashu-art-motion** and claudedesignskills (motion
   and sound pass).
-- In the Nov 8 session (this one): none of the installed skills were invoked; the GSAP, Lottie and LottieFiles tools
+- In the Nov 8 redraw session: no skills invoked. The `lottiefiles-creator` MCP server connected (first time) but
+  wasn't used. Checks were Playwright screenshots: a pose x coat sheet loaded straight from the Vite dev server
+  (`import('/chester-training/src/chester/art.ts')` on a non-app page) and frame strips of hop, pounce, walk and the
+  nuzzle from `#/gallery`.
+- In the earlier Nov 8 session: none of the installed skills were invoked; the GSAP, Lottie and LottieFiles tools
   were installed but not used. Good candidates next: **reanimate** to match Josh's reference GIFs when redrawing and
   re-timing poses; **earshot** before any sound change; **text-to-lottie** or LottieFiles for one-off celebrations.
 - Plugins: the Anthropic Directory's **Icons8** was offered (not enabled).
