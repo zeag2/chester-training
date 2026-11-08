@@ -121,6 +121,9 @@ ready to share with friends.
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon (wearing his
   outfit). Each 3.8 s pass swoops in fast, glides slowly across, zips out fast (`PASS_MS` in `RainbowDash.tsx`;
   keyframes follow Chester, not the long trail). The original 8-bit tune is fitted to the whole dash (~7.6 s), and is deliberately not the Nyan Cat song.
+- **Sounds after switching apps:** iPhone pauses the audio engine in the background (it comes back 'interrupted') and
+  only restarts it from a tap. `keepAlive()` in `audio.ts` pauses it cleanly when hidden, restarts it on the next tap,
+  and replaces it if it stays stuck.
 - **Sounds:** clicker and reward are recorded samples (`public/sfx`). Chirp, purr, meow, litter digging and the tune
   are synthesized in `src/lib/audio.ts`.
 

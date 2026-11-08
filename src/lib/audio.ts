@@ -4,15 +4,45 @@ let muted = false;
 export function setMuted(m: boolean) { muted = m; }
 export function isMuted() { return muted; }
 
+function make(): AudioContext | null {
+  const AC: typeof AudioContext | undefined = (globalThis as any).AudioContext || (globalThis as any).webkitAudioContext;
+  return AC ? new AC() : null;
+}
 function ac(): AudioContext | null {
   if (muted) return null;
   try {
-    const AC: typeof AudioContext | undefined = (globalThis as any).AudioContext || (globalThis as any).webkitAudioContext;
-    if (!AC) return null;
-    if (!ctx) ctx = new AC();
-    if (ctx.state === 'suspended') void ctx.resume();
+    if (!ctx || (ctx.state as string) === 'closed') ctx = make();
+    if (!ctx) return null;
+    // iPhone leaves it 'suspended' or 'interrupted' after switching apps or a call: ask it to start again
+    if (ctx.state !== 'running') void ctx.resume().catch(() => {});
     return ctx;
   } catch { return null; }
+}
+
+/** Keep sound working across app switches. iPhone pauses the audio engine when the app goes to the background and
+    only lets it start again from a tap, so: pause it cleanly when hidden, and on every tap after coming back make sure
+    it's running. If iOS left it broken (it won't start), replace it with a fresh one; decoded samples carry over. */
+export function keepAlive() {
+  const hidden = () => { if (document.visibilityState === 'hidden' && ctx?.state === 'running') void ctx.suspend().catch(() => {}); };
+  const tap = () => {
+    if (muted) return;
+    const c = ctx;
+    if (!c) { warm(); return; }
+    if (c.state === 'running') return;
+    c.resume().catch(() => {});
+    // still not running a moment later (stuck 'interrupted'): start over with a new engine, inside this tap
+    window.setTimeout(() => {
+      if (ctx !== c || c.state === 'running' || document.visibilityState !== 'visible') return;
+      try { void c.close().catch(() => {}); } catch { /* already closed */ }
+      ctx = make(); void ctx?.resume().catch(() => {});
+    }, 250);
+  };
+  document.addEventListener('visibilitychange', hidden);
+  window.addEventListener('pagehide', hidden);
+  document.addEventListener('pointerdown', tap, { passive: true, capture: true });
+  document.addEventListener('touchend', tap, { passive: true, capture: true });
+  return () => { document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', hidden);
+    document.removeEventListener('pointerdown', tap, { capture: true } as EventListenerOptions); document.removeEventListener('touchend', tap, { capture: true } as EventListenerOptions); };
 }
 
 /* Sampled sounds from the earshot bank (made in code, measured): clicker = click/double, reward = mallet/flourish.

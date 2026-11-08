@@ -18,7 +18,7 @@ import { Gallery } from './screens/Gallery';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
 import { Friends } from './screens/Friends';
-import { setMuted, warm } from './lib/audio';
+import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
 import { applyAppName, pendingPets } from './lib/appname';
@@ -35,6 +35,8 @@ export default function App() {
   useEffect(() => { setMuted(localStorage.getItem('chester-muted') === '1'); }, []);
   // iPhone only allows audio after a tap: unlock it and fetch the sampled sounds on the first one
   useEffect(() => { const f = () => warm(); document.addEventListener('pointerdown', f, { once: true, passive: true }); return () => document.removeEventListener('pointerdown', f); }, []);
+  // …and keep it working after switching apps (iPhone pauses it in the background)
+  useEffect(() => keepAlive(), []);
   // Pick up the other trainer's sets when the app comes back to the front, and every few minutes while open
   useEffect(() => {
     const f = () => { if (document.visibilityState === 'visible' && store.get().account) void store.sync(); };
