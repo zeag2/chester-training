@@ -6,10 +6,12 @@ PalDex (repo `chester-training`) is a phone web app for clicker-training a cat, 
 with the people you live with. It was built for Josh's kitten **Chester** and his girlfriend **Megan**, and is now
 ready to share with friends.
 
-- **Live:** https://zeag2.github.io/chester-training/ (installable to the iPhone home screen). **Moving to Cloudflare
-  Pages** (free `*.pages.dev` address, Josh's choice): the app builds for either host (`BASE_PATH`, see section 4).
-  Once the new address exists, put it in `MOVED_TO` (`src/lib/moved.ts`) so the old link sends people there.
-- **Deploys:** every push to `main` runs `.github/workflows/pages.yml` (tests, build, GitHub Pages). Work happens on a
+- **Live:** **https://paldex-4qh.pages.dev/** (Cloudflare Pages, project `paldex`; `paldex` itself was taken, hence the
+  suffix). Installable to the iPhone Home Screen. The old address https://zeag2.github.io/chester-training/ still
+  works: it sends new visitors to the new one and shows existing users a "PalDex has a new home" card (`MOVED_TO` in
+  `src/lib/moved.ts`).
+- **Deploys:** every push to `main` deploys both: Cloudflare Pages builds it (`BASE_PATH=/`), and
+  `.github/workflows/pages.yml` runs tests, builds and publishes the old GitHub Pages copy. Work happens on a
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
@@ -337,7 +339,8 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 
 ### Cloud environment
 - **`chester-training`** (personal, created 2026-11-08): package registries and MCP servers, plus
-  `world.openpetfoodfacts.org`, `world.openfoodfacts.org` and `api.upcitemdb.com`, so sessions can test food lookups.
+  `world.openpetfoodfacts.org`, `world.openfoodfacts.org`, `api.upcitemdb.com` (food lookups) and `paldex-4qh.pages.dev`
+  (to check the live site).
   The Default environment blocks those hosts. Start PalDex cloud sessions on this one.
 
 ### MCP servers (repo, `.mcp.json`)
