@@ -53,7 +53,12 @@ export function smoothPath(p: [number, number][]): string {
   return d;
 }
 
-export const restTailPath = () => smoothPath(tailPoints(tailRest(), []));
+type Curves = [number, number][][];
+/** Two "M x y C x y x y x y" strings (base half, tip half) → control points for tailRest. */
+export function curvesOf(d1: string, d2: string): Curves {
+  return [d1, d2].map((d) => { const n = d.match(/-?\d+(\.\d+)?/g)!.map(Number); return [[n[0], n[1]], [n[2], n[3]], [n[4], n[5]], [n[6], n[7]]] as [number, number][]; });
+}
+export const restTailPath = (curves?: Curves) => smoothPath(tailPoints(tailRest(curves), []));
 
 const sp = (): Spring => ({ x: 0, v: 0 });
 const DEG = Math.PI / 180;
@@ -63,6 +68,10 @@ export class Rig {
   private earL: SVGGElement | null; private earR: SVGGElement | null;
   private tailO: SVGPathElement | null; private tailF: SVGPathElement | null;
   private rest = tailRest();
+  /** How lively the tail is in this pose (a curled-up nap barely moves it). */
+  private amp = 1;
+  /** Lying, loafing or kneading: he breathes and nuzzles but doesn't lean from the hips. */
+  private lying = false;
   private s = { lean: sp(), sq: sp(), head: sp(), hx: sp(), earL: sp(), earR: sp(), tail: Array.from({ length: N - 1 }, sp) };
   private raf = 0; private last = 0; private t0 = performance.now(); private flickAt = 0; private flick = 0;
   /** Finger lean, -1..1, while stroking; null otherwise. */
@@ -73,6 +82,10 @@ export class Rig {
     const q = <T extends Element>(c: string) => svg.querySelector<T>(c);
     this.all = q('.r-all'); this.head = q('.r-head'); this.earL = q('.r-earL'); this.earR = q('.r-earR');
     this.tailO = q('.rt-o'); this.tailF = q('.rt-f');
+    const tg = q<SVGGElement>('.rtail');
+    if (tg?.dataset.tail) this.rest = tailRest(JSON.parse(tg.dataset.tail));
+    this.amp = Number(tg?.dataset.amp ?? 1) || 1;
+    this.lying = !svg.classList.contains('pose-sit');
     this.flickAt = this.t0 + 2500 + Math.random() * 4000;
     this.start();
   }
@@ -102,7 +115,7 @@ export class Rig {
 
     // body leans from the hips toward the finger; head goes further and tilts into the hand
     const prevLean = s.lean.x;
-    s.lean = stepSpring(s.lean, lean * 7, dt, BODY);
+    s.lean = stepSpring(s.lean, this.lying ? 0 : lean * 7, dt, BODY);
     const leanVel = (s.lean.x - prevLean) / Math.max(1, dt);
     s.sq = stepSpring(s.sq, petting ? 1.2 : 0, dt, BODY);
     const prevHead = s.head.x;
@@ -117,10 +130,10 @@ export class Rig {
     // tail: a slow sway at the base, each joint following the one before (the whip), plus the odd flick
     if (now > this.flickAt) { this.flick = 1; this.flickAt = now + 4000 + Math.random() * 6000; }
     this.flick *= Math.pow(0.04, dt / 1000);
-    const sway = (petting ? 4 : 3) * Math.sin(t * (petting ? 1.4 : 1.75)) - leanVel * 250;
+    const sway = ((petting ? 4 : 3) * Math.sin(t * (petting ? 1.4 : 1.75)) - leanVel * 250) * this.amp;
     s.tail.forEach((j, i) => {
       const lead = i === 0 ? sway : s.tail[i - 1].x * 0.6;
-      const curl = petting ? (i > N - 4 ? 5 : 0) : this.flick * (i > N - 4 ? 14 * Math.sin(now / 70) : 0);
+      const curl = (petting ? (i > N - 4 ? 5 : 0) : this.flick * (i > N - 4 ? 14 * Math.sin(now / 70) : 0)) * Math.max(this.amp, 0.6);
       const n = stepSpring(j, lead + curl, dt, TAIL(i));
       s.tail[i] = { x: Math.max(-14, Math.min(14, n.x)), v: Math.abs(n.x) >= 14 ? 0 : n.v };
     });
@@ -132,7 +145,7 @@ export class Rig {
   private render(t: number, petting: boolean) {
     const s = this.s;
     const breathe = 1 + Math.sin(t * 1.96) * 0.006;
-    const sq = s.sq.x * 0.012;
+    const sq = this.lying ? 0 : s.sq.x * 0.012;
     // skew keeps the feet line (y = 188) fixed, so he leans instead of sliding
     this.all?.setAttribute('transform', `translate(100 188) skewX(${(-s.lean.x).toFixed(2)}) scale(${(1 + sq).toFixed(4)} ${((1 - sq) * breathe).toFixed(4)}) translate(-100 -188)`);
     this.head?.setAttribute('transform', `rotate(${s.head.x.toFixed(2)} 100 132) translate(${s.hx.x.toFixed(2)} ${(petting ? 1.5 : 0).toFixed(1)})`);

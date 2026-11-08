@@ -60,7 +60,7 @@ export function Chester(p: ChesterProps) {
   const body = useRef<HTMLSpanElement>(null);
   const rig = useRef<Rig | null>(null);
   useEffect(() => {
-    const el = body.current?.querySelector('svg'); if (!el || !el.querySelector('.r-all')) return;
+    const el = body.current?.querySelector('svg'); if (!el || !el.querySelector('.rtail, .r-all')) return;
     const r = new Rig(el); rig.current = r;
     const io = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([e]) => { r.visible = e.isIntersecting; });
     io?.observe(el);
