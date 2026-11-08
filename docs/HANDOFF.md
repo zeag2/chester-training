@@ -267,6 +267,43 @@ Items marked *(art)* suit the art session.
    Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
 
+### Make logging effortless (Josh, 2026-11-08: "if it's tedious no one will do it")
+- [ ] **Home clean-up** (S–M): one friends card, not two (merge the old "Friends' cats" card's + invite into the
+  `FriendsStrip`); Home answers "anything to do today?" first, everything else a scroll down.
+- [ ] **One-tap buttons on Home** (M): **Fed**, **Scooped**, **Played**, each a single tap that logs "now, by me" with a
+  quiet Undo toast instead of a form; long-press (or a small "…") for details. Most-used first.
+- [ ] **Meals: who fed them and when** (M): a "Fed" tap shows "Fed 2 of 2 today · last at 7:40 by Megan", so nobody
+  double-feeds. Meals per day set per cat (default 2). Shared with the household like care.
+- [ ] **Litter box log** (S): "Scooped" with an optional "something looked off" chip (vets ask about this first).
+- [ ] **Daily two-tap health check** (M): "Ate normally? Litter normal? Acting normal?" with all-yes as one tap; any
+  "no" opens the symptom picker. Builds a baseline ("not eating since Tuesday"), earns care treats, feeds the recap
+  and vet summary.
+- [ ] **Smart defaults everywhere** (S): time = now, the last food used, the last weight pre-filled to nudge,
+  "same as yesterday" for meds and meals.
+- [ ] **Home Screen shortcuts** (S): manifest `shortcuts` (long-press the app icon: "Fed Chester", "Weigh-in") and
+  deep links like `#/log/fed`, which iPhone Shortcuts can open (even from an NFC sticker on the food bin).
+- [ ] **Log for several cats at once** (S): "Fed" asks nothing when there's one cat, offers "All cats" when several.
+
+### Play (virtual and real)
+- [ ] **Play with your cat on screen** (M) *(art)*: drag a wand toy or a laser dot and the cat chases, pounces and
+  bats it; uses the toys bought in the corner (box, laser, tunnel). First play of the day adds bond (and treats, see
+  Treats).
+- [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
+  (indoor cats need it), never a guilt message.
+
+### Health ideas (from the 2026-11-08 review)
+- [ ] **Kitten growth guide** (S–M): a "typical for his age" band on the weight chart, worded "ask your vet".
+- [ ] **Vaccine and checkup timeline** (M): the usual kitten schedule (core vaccines, rabies, spay/neuter) as
+  suggestions the user confirms; the document reader already finds most dates.
+- [ ] **Water and appetite notes** (S): optional chips on the daily check.
+
+### Treats and corner
+- [ ] **Treat balance on Home** (S): a small treat count that opens the corner, so earning feels visible.
+
+### Friends safety
+- [ ] **Accept friend requests** (M, SQL): "Accept Erin?" instead of instant friendship; remove a friend from their
+  cat's Visit page.
+
 ### Phase 2: Chester's world (finish first)
 - [ ] **Badges and trophy case** (M): a badge per mastered skill, shelves by branch, closest badge on top. The recap
   still says badges "arrive in the next update".
