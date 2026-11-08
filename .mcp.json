@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "lottiefiles-creator": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@lottiefiles/creator-mcp@latest"
+      ],
+      "env": {}
+    }
+  }
+}
