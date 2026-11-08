@@ -17,8 +17,10 @@ Next, in order
 1. Chester animation pass 3: real in-between poses for hop, pounce and dance; consider real recorded meows
    (licensed) if the synth ones sound robotic. (Pass 2 done: every pose has the chain tail and head/ear lag;
    dev-only pose gallery at #/gallery.)
-2. Chester's care: vet visits and documents (Supabase Storage), vaccine/flea/worm reminders, weight log,
-   symptom log with "call the vet now" signs, food and treat profiles with likes/dislikes, grooming log.
+2. Chester's care, part 2: document and photo uploads for vet records (Supabase Storage bucket + policies);
+   "Loves it" treats suggested for hard skills in sessions; reminders on Home for overdue items.
+   (Part 1 done: #/care with food profiles, weight chart, symptoms, grooming, vet visits, medicine with next-due
+   reminders, call-the-vet-now list; shared via the `care` table — its SQL must be run once in Supabase.)
 3. Phase 2 features from the design doc: Chester's corner (spend treats), badges/trophy case, check-ins,
    photo album, weekly recap ("Josh did 4 sets, Sam did 3" — sets already record who logged them).
 

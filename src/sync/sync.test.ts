@@ -100,6 +100,35 @@ describe('training Chester together', () => {
     expect(josh.get().household!.members.map((m) => m.name)).toEqual(['Josh', 'Sam']);
   });
 
+  it('shares care both ways: new items, edits and deletes, newest edit winning', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const sam = device(server); await sam.load();
+    await sam.signIn('sam@example.com', 'catnip1', 'Sam', false, true);
+    await sam.join(josh.get().household!.inviteCode, 'Sam');
+    const food = await josh.saveCare('food', { name: 'Tuna pate', type: 'wet', verdict: 'love', current: true });
+    await josh.saveCare('weight', { lb: 3.2 });
+    await josh.sync(); await sam.sync();
+    expect(sam.get().care.map((c) => c.kind).sort()).toEqual(['food', 'weight']);
+    await sam.saveCare('food', { name: 'Tuna pate', type: 'wet', verdict: 'no', current: false }, { id: food!.id });
+    await sam.sync(); await josh.sync();
+    expect((josh.get().care.find((c) => c.id === food!.id)!.data as { verdict: string }).verdict).toBe('no');
+    await josh.deleteCare(food!.id); await josh.sync(); await sam.sync();
+    expect(sam.get().care.map((c) => c.kind)).toEqual(['weight']);
+  });
+
+  it('keeps training in sync even before the care table is set up', async () => {
+    const server = new FakeServer(); server.careTable = false;
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    await josh.saveCare('symptom', { what: 'Sneezing' }); await josh.logSet(pass); await josh.sync();
+    expect(josh.get().sync).toBe('ok'); expect(josh.get().careSync).toBe('missing');
+    expect(server.sets.size).toBe(1); expect(josh.get().care).toHaveLength(1);
+    server.careTable = true; await josh.sync();
+    expect(josh.get().careSync).toBe('ok'); expect(server.care.size).toBe(1);
+  });
+
   it('keeps treats saved up before sets remembered their gifts', async () => {
     const a = new Store('legacy'); await a.load(); await a.saveCat(chester);
     await a.db.wallet.update(a.get().cat!.id, { treats: 40, bond: 3, toys: ['a toy mouse'] });

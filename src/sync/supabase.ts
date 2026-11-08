@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
+import type { CareItem } from '../engine/care';
 import type { Account, Member, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
@@ -63,5 +64,19 @@ export class SupabaseRemote implements Remote {
     if (!sets.length) return;
     const rows = sets.map((s) => ({ id: s.id, cat_id: s.catId, at: s.at, data: s }));
     check(await this.sb.from('sets').upsert(rows, { onConflict: 'id', ignoreDuplicates: true }));
+  }
+
+  async pullCare(catId: string) {
+    const out: CareItem[] = []; const page = 1000;
+    for (let from = 0; ; from += page) {
+      const rows = check(await this.sb.from('care').select('id, kind, at, updated_at, deleted, by_user, data').eq('cat_id', catId).order('id').range(from, from + page - 1)) ?? [];
+      for (const r of rows) out.push({ id: r.id, catId, kind: r.kind, at: Number(r.at), updatedAt: Number(r.updated_at), deleted: r.deleted, by: r.by_user ?? undefined, data: r.data } as CareItem);
+      if (rows.length < page) return out;
+    }
+  }
+  async pushCare(items: CareItem[]) {
+    if (!items.length) return;
+    const rows = items.map((i) => ({ id: i.id, cat_id: i.catId, kind: i.kind, at: i.at, updated_at: i.updatedAt, deleted: !!i.deleted, data: i.data }));
+    check(await this.sb.from('care').upsert(rows, { onConflict: 'id' }));
   }
 }

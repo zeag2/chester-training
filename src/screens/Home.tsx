@@ -9,6 +9,7 @@ import { dailyRates, daysHome, inProgress, streak, today, weekStats, ageText } f
 import { Icon, ICON_FOR, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { CareCard } from './Care';
 import type { ReactionId } from '../chester/reactions';
 
 const PH = (h: number) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night');
@@ -142,6 +143,7 @@ export function Home() {
           <button className="btn" style={{ marginTop: 12 }} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
         {done && <p className="s" style={{ marginTop: 10 }}>Daily goal done. {cat.name} is napping; rewards reset tomorrow.</p>}
       </div>
+      <CareCard />
       {struggling && <div className="card peach row" style={{ alignItems: 'flex-start' }}><Paw color="#c2563f" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}><b>Go easy on {struggling.name.toLowerCase()}.</b> Two tough sets in a row. Make the step easier or go back one; better treats help too.</p></div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
         <div className="card grey" style={{ margin: 0 }}><p className="s">This week</p><b className="num" style={{ fontSize: 26 }}>{c1}</b><p className="s">sets</p></div>

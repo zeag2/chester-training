@@ -13,6 +13,9 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
    - Publishable key (starts `sb_publishable_`), or the `anon` public key on older projects.
    Both are safe to put in the app. Never share the `service_role` / secret key.
 
+5. **Chester's care (added later).** SQL Editor → New query, paste all of
+   `supabase/migrations/20261108120000_care.sql`, Run. Until this is done, care entries stay on the phone that made them.
+
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 
 Notes

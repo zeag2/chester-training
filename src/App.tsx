@@ -15,6 +15,7 @@ import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
 import { Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
+import { Care } from './screens/Care';
 import { setMuted, warm } from './lib/audio';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
     case 'library': body = <Library />; tab = 'library'; break;
     case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'library'; break;
     case 'settings': body = <Settings />; tab = 'settings'; break;
+    case 'care': body = <Care />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
   return <>{body}<TabBar active={tab} onPlus={plus} /></>;

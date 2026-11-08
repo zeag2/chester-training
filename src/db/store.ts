@@ -7,6 +7,8 @@ import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
 import type { Account, Member, Remote } from '../sync/remote';
+import { newer, type CareData, type CareItem, type CareKind } from '../engine/care';
+import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
 
@@ -25,6 +27,10 @@ export interface Snapshot {
   account: Account | null;
   household: Household | null;
   sync: SyncState;
+  /** Chester's care: food profiles and the health log (deleted items left out), newest first. */
+  care: CareItem[];
+  /** 'missing' = the shared copy has no care table yet (its setup SQL hasn't been run). */
+  careSync: 'ok' | 'missing';
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -36,7 +42,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off' };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok' };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -58,12 +64,13 @@ export class Store {
 
   /** Progress and treats always come from the sets, so two trainers' phones agree. */
   private async rebuild(cat: Cat | null, patch: Partial<Snapshot> = {}) {
-    if (!cat) { this.set({ cat: null, progress: {}, sets: [], wallet: null, draft: null, household: null, ...patch }); return; }
+    if (!cat) { this.set({ cat: null, progress: {}, sets: [], wallet: null, draft: null, household: null, care: [], ...patch }); return; }
     const sets = (await this.db.sets.where('catId').equals(cat.id).toArray()).sort(bySetOrder);
     const local = (await this.db.wallet.get(cat.id)) ?? newWallet(cat.id);
     const wallet = mergeWallet(local, deriveEarned(sets, cat.carry));
     const draft = (await this.db.drafts.get(cat.id)) ?? null;
-    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, ...patch });
+    const care = (await this.db.care.where('catId').equals(cat.id).toArray()).filter((c) => !c.deleted).map(({ dirty: _d, ...c }) => c as CareItem).sort((a, b) => b.at - a.at);
+    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, ...patch });
   }
 
   async load() {
@@ -121,6 +128,43 @@ export class Store {
     return { set, event, reward, progress };
   }
 
+  // ---- Chester's care ----
+
+  /** Add or edit a care item. Saved on the phone right away, shared on the next sync. */
+  saveCare<K extends CareKind>(kind: K, data: CareData[K], opts: { id?: string; at?: number } = {}): Promise<CareItem | null> {
+    return this.serial(async () => {
+      const cat = this.snap.cat; if (!cat) return null;
+      const old = opts.id ? await this.db.care.get(opts.id) : undefined;
+      const item: CareRow = { id: opts.id ?? uid(), catId: cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
+      await this.db.care.put(item); await this.rebuild(cat);
+      if (this.snap.account) void this.sync();
+      const { dirty: _d, ...out } = item; return out as CareItem;
+    });
+  }
+  deleteCare(id: string): Promise<void> {
+    return this.serial(async () => {
+      const cat = this.snap.cat; const old = await this.db.care.get(id); if (!cat || !old) return;
+      await this.db.care.put({ ...old, deleted: true, updatedAt: Math.max(Date.now(), old.updatedAt + 1), dirty: 1 }); await this.rebuild(cat);
+      if (this.snap.account) void this.sync();
+    });
+  }
+  /** Newest edit wins on each side; a missing care table never breaks training sync. */
+  private async syncCare(r: Remote, catId: string): Promise<'ok' | 'missing'> {
+    try {
+      const theirs = await r.pullCare(catId);
+      const mine = new Map((await this.db.care.where('catId').equals(catId).toArray()).map((c) => [c.id, c]));
+      const take: CareRow[] = []; const known = new Map<string, CareItem>();
+      for (const t of theirs) { known.set(t.id, t); const m = mine.get(t.id); if (newer(m, t) === t && (!m || t.updatedAt > m.updatedAt)) take.push({ ...t, dirty: 0 }); }
+      const send = [...mine.values()].filter((m) => m.dirty && (!known.has(m.id) || m.updatedAt > known.get(m.id)!.updatedAt)).map(({ dirty: _d, ...m }) => m as CareItem);
+      await r.pushCare(send);
+      await this.db.care.bulkPut([...take, ...send.map((m) => ({ ...m, dirty: 0 }))]);
+      return 'ok';
+    } catch (e) {
+      if (/care|relation|does not exist|schema cache|404/i.test(String((e as Error)?.message ?? e))) return 'missing';
+      throw e;
+    }
+  }
+
   // ---- shared training ----
 
   /** Send what this phone has that the shared copy lacks, then take everything the shared copy has. */
@@ -148,12 +192,13 @@ export class Store {
       await r.pushSets(mine.filter((s) => !known.has(s.id)).sort(bySetOrder));
       if (theirs.length) await this.db.sets.bulkPut(theirs);
       const shared = await r.getCat(cat.id);
+      const careSync = await this.syncCare(r, cat.id);
       let household = shared ? { inviteCode: shared.inviteCode, members: await r.members(cat.id) } : null;
       // keep my name in step both ways: fill it in online if it's missing there, remember it here for offline
       const meRow = household?.members.find((m) => m.userId === account.userId);
       if (meRow && !meRow.name && this.myName) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
-      await this.rebuild(cat, { household, sync: 'ok' });
+      await this.rebuild(cat, { household, sync: 'ok', careSync });
     } catch {
       this.set({ sync: 'offline' });
     }
@@ -200,8 +245,8 @@ export class Store {
   async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off' }); }
 
   private async forget(catId: string) {
-    await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress], async () => {
-      await this.db.cats.delete(catId); await this.db.sets.where('catId').equals(catId).delete();
+    await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {
+      await this.db.cats.delete(catId); await this.db.sets.where('catId').equals(catId).delete(); await this.db.care.where('catId').equals(catId).delete();
       await this.db.wallet.delete(catId); await this.db.drafts.delete(catId); await this.db.progress.where('catId').equals(catId).delete();
     });
   }

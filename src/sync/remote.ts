@@ -1,4 +1,5 @@
 import type { Cat, SetRecord } from '../engine/types';
+import type { CareItem } from '../engine/care';
 
 export interface Account { userId: string; email: string }
 export interface Member { userId: string; name: string }
@@ -24,4 +25,8 @@ export interface Remote {
 
   pullSets(catId: string): Promise<SetRecord[]>;
   pushSets(sets: SetRecord[]): Promise<void>;
+
+  /** Care items, deleted ones included (so a delete reaches the other phone). */
+  pullCare(catId: string): Promise<CareItem[]>;
+  pushCare(items: CareItem[]): Promise<void>;
 }

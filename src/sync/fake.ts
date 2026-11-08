@@ -1,4 +1,5 @@
 import type { Cat, SetRecord } from '../engine/types';
+import type { CareItem } from '../engine/care';
 import type { Account, Member, Remote } from './remote';
 
 /** In-memory shared copy with the same rules as the database: only members see or add to a cat. */
@@ -7,6 +8,8 @@ export class FakeServer {
   members = new Map<string, Member[]>();
   sets = new Map<string, SetRecord>();
   passwords = new Map<string, string>();
+  care = new Map<string, CareItem>();
+  careTable = true;
   online = true;
   private n = 0;
   isMember(catId: string, userId: string) { return (this.members.get(catId) ?? []).some((m) => m.userId === userId); }
@@ -44,5 +47,10 @@ export class FakeRemote implements Remote {
   async pushSets(sets: SetRecord[]) {
     const u = this.user();
     for (const s of sets) { if (!this.s.isMember(s.catId, u.userId)) throw new Error('denied'); if (!this.s.sets.has(s.id)) this.s.sets.set(s.id, { ...structuredClone(s), by: u.userId }); }
+  }
+  async pullCare(catId: string) { const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist'); if (!this.s.isMember(catId, u.userId)) return []; return [...this.s.care.values()].filter((c) => c.catId === catId).map((c) => structuredClone(c)); }
+  async pushCare(items: CareItem[]) {
+    const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist');
+    for (const i of items) { if (!this.s.isMember(i.catId, u.userId)) throw new Error('denied'); this.s.care.set(i.id, { ...structuredClone(i), by: u.userId }); }
   }
 }
