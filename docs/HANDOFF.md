@@ -1,7 +1,7 @@
 # PalDex: handoff
 
-_Last updated 2026-11-08, end of the session that redrew Chester to the style guide (thin outline, small head, tail
-wrapped round the paws, new doze/drape/nuzzle). Start here when picking the project back up._
+_Last updated 2026-11-08, end of the session that built the corner, friends, the tracker-first layout and the new walk
+pose. Start here when picking the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
 symptoms, vet visits, medicine and vaccines, food, documents) and **clicker training as an optional extra per cat**,
@@ -17,8 +17,8 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 97 tests passing in 17 files, typecheck and build clean. The cat redraw is on branch
-  `claude/chester-cat-art-redraw-xlu1vr`, **not merged to `main` yet** (Josh to look first; `main` is still the old art). All Supabase SQL through `20261110000000_friends.sql` has been
+- **State at handoff:** 95 tests passing in 17 files, typecheck and build clean, working tree clean; everything is on
+  `main` and live (last commit: the art style guide). All Supabase SQL through `20261110000000_friends.sql` has been
   run (checked against the live database), including the extra `revoke ... from anon` on the friend functions.
 
 ## Pick up here
@@ -238,7 +238,26 @@ In order:
 1. ~~**Friends, more visible, and visiting**~~: built and its SQL run (see section 1, Friends). Left: a real test
    between two phones. Ideas next: a "thank you" back to the giver,
    treats in the weekly recap, push for "Erin gave Chester a treat" (item 3).
-2. **Cat art redraw**: first pass done (see "Pick up here"). Josh may also hire an artist; brief: SVG, named parts,
+2. **Cat art redraw**: first pass done, on branch `claude/chester-cat-art-redraw-xlu1vr` (not on `main` yet).
+   Josh reviews it (dev `#/gallery` shows every pose and the nuzzle) and merges when happy. Done, to the style guide:
+   - One thin outline everywhere (`LW = 3` in `art.ts`; scaled heads draw thicker lines so it stays even), flat fills
+     with one shadow shape, no gloss. Simpler face: round amber eyes with one highlight, tiny nose, small "w" mouth,
+     two whiskers a side, faint blush.
+   - **Sit:** smaller head (`SIT_HEAD`), pear body with haunches, front paws together, **tail wrapped round the paws**
+     (a rig tail with low sway; the tip still flicks).
+   - **Doze** (new pose `doze`): the sit with the head bowed and eyes as curves. Home uses it after 90 s alone
+     (night still uses the curled `sleep`).
+   - **Sleep:** one oval, head resting on the front paws, tail round the front.
+   - **Drape** (new pose `drape`): lying along a cushion, chin over the edge, one front leg dangling, tail hanging.
+     Home alternates it with kneading as the idle (14 s).
+   - **Nuzzle** (anims `nuzzle`/`nuzzleL` in `chester.css`): on Home the cat and the one beside him lean cheek to
+     cheek, eyes closed, purring, instead of the head bonk.
+   - **Walk:** tail up like a question mark, face turned toward where he's going (`turn` option on `head()`).
+   - Loaf, knead, ball and fly restyled with smaller heads and the thin line. Outfits checked on every pose.
+   - Not done: Josh's reference images weren't attached this session, so it was drawn from the style guide's notes.
+     Ideas for a next pass: a true side-profile head for walk, the drape on the real Home card edge instead of its
+     own cushion, a mirrored second cat in the nuzzle that shares one SVG so cheeks overlap exactly.
+   Josh may also hire an artist; brief: SVG, named parts,
    flat colour regions, same canvas and ground line per pose, original art with full rights.
 3. **Push notifications** for new friends and treats (Web Push; iPhone only when installed): a Supabase Edge Function
    with VAPID keys (keys via the environment's secrets, never in the repo), a `push_subscriptions` table, and a
