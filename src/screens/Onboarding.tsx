@@ -9,6 +9,7 @@ import * as audio from '../lib/audio';
 import { sharingConfigured } from '../sync/config';
 import { petText } from '../lib/pet';
 import { AccountForm, CodeForm, StepLabel } from './Together';
+import { donePendingPet, pendingPets, setPendingPets, titleFor } from '../lib/appname';
 
 const REWARDS = [
   { id: 'treats', title: 'Tasty treats', sub: 'Lickable treats, chicken, kibble', bg: 'peach', icon: 'yarn' },
@@ -33,7 +34,8 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
   const [invited, setInvited] = useState(false);
   const { account } = useStore();
   const [myName, setMyName] = useState('');
-  const [name, setName] = useState('');
+  const [waiting] = useState(pendingPets); // kittens named on the install page, set up one after another
+  const [name, setName] = useState(waiting[0] ?? '');
   const [sex, setSex] = useState<'m' | 'f'>('m');
   const [birthday, setBirthday] = useState('');
   const [homeDate, setHomeDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -53,7 +55,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
 
   if (step === 1) return wrap(<div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36 }}>
     <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '30px 16px 16px', borderRadius: 32 }}><Chester coat="black" eyes="gold" mood="happy" raised anim="wave" width={190} interactive /></div>
-    <h1 style={{ marginTop: 30, fontSize: 32 }}>Let's teach your kitten a few tricks.</h1>
+    <h1 style={{ marginTop: 30, fontSize: 32 }}>Let's teach {waiting.length ? titleFor(waiting) : 'your kitten'} a few tricks.</h1>
     <p className="m" style={{ marginTop: 12, fontSize: 16 }}>Short, fun sessions with a clicker. A few minutes a day, with steps based on cat research.</p>
     {foot(1, 'Get started', () => next(sharingConfigured() ? 2 : 4))}</div>);
 
@@ -73,11 +75,11 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
 
   if (step === 8) return wrap(<>{back(account ? 2 : 3, 'Invite code')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <StepLabel n={2} of={2} label="Invite code" />
-    <CodeForm name={myName} onDone={() => go('home')} />
+    <CodeForm name={myName} onDone={() => { setPendingPets([]); go('home'); }} />
     <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(4)}</div></div></>);
 
   if (step === 4) return wrap(<>{adding ? <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('settings')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>Add another pet</b></div> : back(!sharingConfigured() ? 1 : account ? 2 : 3, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-    <h1>Who are we training?</h1><p className="m" style={{ marginTop: 6 }}>You can change this later.</p>
+    <h1>{adding && waiting.length && name ? `Now, ${name}` : 'Who are we training?'}</h1><p className="m" style={{ marginTop: 6 }}>{waiting.length > 1 ? `${titleFor(waiting)}: one at a time. You can change this later.` : 'You can change this later.'}</p>
     <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" placeholder="Your cat’s name" />
     <span className="field">Boy or girl?</span>
     <div className="seg" role="group" aria-label="Boy or girl"><button className={sex === 'm' ? 'on' : ''} aria-pressed={sex === 'm'} onClick={() => setSex('m')}>Boy</button><button className={sex === 'f' ? 'on' : ''} aria-pressed={sex === 'f'} onClick={() => setSex('f')}>Girl</button></div>
@@ -122,9 +124,10 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
     {rule(3, 'sky', `${He} can say no`, 'Ears back or walking away means stop. Try again later.')}
     <div className="card butter"><b>First up: Charge the clicker</b><p className="s" style={{ marginTop: 2 }}>Click, treat, repeat 10 times. {name} learns that the click means something good.</p></div>
     {sharingConfigured() && <p className="s" style={{ marginTop: 12 }}>Your pet’s info is saved to PalDex’s online database so it’s backed up and can be shared with people you invite. Only you and the people you invite see it in the app; the person who runs this PalDex can see the database.</p>}
-    {foot(7, `Start ${name}'s first session`, async () => {
+    {foot(7, waiting.length > 1 ? `Next: ${waiting.find((w) => w.trim().toLowerCase() !== name.trim().toLowerCase()) ?? 'your next kitten'}` : `Start ${name}'s first session`, async () => {
       audio.sparkle();
       await store.saveCat({ name: name.trim() || 'Kitty', sex, birthday, homeDate, breed, coat, eyes, weightLb: weight ? Number(weight) : undefined, rewards, outfit: '' });
-      go('session/clicker');
+      donePendingPet(name);
+      go(pendingPets().length ? 'add-pet' : 'session/clicker'); // more kittens to set up: straight on to the next
     })}</div></>);
 }

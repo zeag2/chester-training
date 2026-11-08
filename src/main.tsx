@@ -5,5 +5,8 @@ import './styles/app.css';
 import { applyTheme, watchSystemTheme } from './lib/theme';
 applyTheme(); watchSystemTheme();
 import { startUpdates } from './lib/updates';
+import { listenForInstall } from './lib/install';
+import { takePendingFromUrl } from './lib/appname';
+listenForInstall(); takePendingFromUrl();
 startUpdates();
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);

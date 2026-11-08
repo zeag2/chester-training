@@ -114,7 +114,7 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 /* barcode scanner */
 .scanner{position:relative;border-radius:20px;overflow:hidden;background:#000;margin-top:12px;aspect-ratio:4/3}
 .scanner video{width:100%;height:100%;object-fit:cover;display:block}
-.scanframe{position:absolute;left:12%;right:12%;top:30%;bottom:30%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.scanframe{position:absolute;left:10%;right:10%;top:28%;bottom:28%;overflow:hidden;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .scanhint{position:absolute;left:12px;right:12px;bottom:56px;color:#fff!important;text-align:center;font-weight:700}
 .scanclose{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(255,255,255,.92)!important;color:#232320!important;min-height:40px}
 .hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:8px;color:var(--ink);font-family:inherit}
@@ -130,3 +130,13 @@ button.lrow:active{background:var(--line)}
 .switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 220ms var(--ease-out)}
 .switch.on{background:var(--teal)}
 .switch.on i{transform:translateX(20px)}
+/* install guide */
+.steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:12px}
+.steps li{counter-increment:st;display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.steps li::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;background:var(--mint);color:var(--teal-ink);font-weight:800;display:flex;align-items:center;justify-content:center}
+.pointdown{text-align:center;font-size:30px;font-weight:800;color:var(--teal);margin-top:6px;animation:kpointdown 1.1s var(--ease-in-out,ease-in-out) infinite}
+@keyframes kpointdown{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+.scanline{position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff5a4e;box-shadow:0 0 8px #ff5a4e;animation:kscanline 1.6s ease-in-out infinite}
+@keyframes kscanline{0%,100%{transform:translateY(-34px)}50%{transform:translateY(34px)}}
+.scantorch{position:absolute;right:10px;top:10px;background:rgba(255,255,255,.92)!important;color:#232320!important;min-height:36px;padding:0 14px}
+.scantorch[aria-pressed="true"]{background:#efc44a!important}

@@ -3,6 +3,7 @@ import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
 import { useInstallHint } from '../lib/install';
+import { titleFor } from '../lib/appname';
 import { ageText } from '../lib/stats';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { sharingConfigured } from '../sync/config';
@@ -146,7 +147,7 @@ export function Settings() {
       <Row label="Sound"><Switch on={!muted} label="Sound" onChange={(on) => { setMuted(!on); localStorage.setItem('chester-muted', on ? '0' : '1'); setM(!on); if (on) chirp(); }} /></Row>
       <div className="lrow" style={{ display: 'block' }}><span style={{ fontWeight: 600 }}>Appearance</span>
         <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 8 }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
-      {showInstall && <Row label="Add PalDex to your home screen" onClick={() => setSheet('install')} />}
+      {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
     </Group>
 
     <Group title="Your data" foot={account ? 'Saved on this phone and online.' : 'Saved on this phone only. Download a copy now and then.'}>
@@ -158,6 +159,6 @@ export function Settings() {
     {person && <Person userId={person} onClose={() => setPerson('')} />}
     {sheet === 'invite' && household && <Invite catName={cat.name} code={household.inviteCode} onClose={() => setSheet('')} />}
     {sheet === 'install' && <Sheet title="Add to your home screen" onClose={() => setSheet('')}>
-      <p className="m" style={{ marginTop: 6 }}>In Safari, tap the Share button, then “Add to Home Screen”. PalDex then opens full screen like an app and works offline.</p></Sheet>}
+      <p className="m" style={{ marginTop: 6 }}>In Safari, tap the Share button (on newer iPhones, tap ••• first), then “Add to Home Screen”. It’s named {titleFor(pets.map((p) => p.name))}, opens full screen like an app and works offline. On Android, open the browser menu ⋮ and tap Install app.</p></Sheet>}
   </div>;
 }

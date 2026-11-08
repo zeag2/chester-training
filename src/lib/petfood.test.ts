@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { byBarcode, guessType, search, toHit } from './petfood';
+import { byBarcode, guessType, search, toHit, validBarcode } from './petfood';
 
 afterEach(() => vi.unstubAllGlobals());
 const reply = (body: unknown, ok = true) => vi.stubGlobal('fetch', vi.fn(async () => ({ ok, status: ok ? 200 : 500, json: async () => body })));
@@ -22,6 +22,19 @@ describe('pet food lookup', () => {
     reply({ status: 0 });
     expect(await byBarcode('00500001234')).toBeNull();
     expect(await byBarcode('12')).toBeNull();
+  });
+  it('accepts only barcodes with a correct check digit', () => {
+    expect(validBarcode('036000291452')).toBe(true);   // UPC-A
+    expect(validBarcode('036000291453')).toBe(false);  // one digit misread
+    expect(validBarcode('4006381333931')).toBe(true);  // EAN-13
+    expect(validBarcode('96385074')).toBe(true);       // EAN-8
+    expect(validBarcode('12345')).toBe(false);
+  });
+  it('tries a 12-digit UPC again as its 13-digit form', async () => {
+    const f = vi.fn(async (url: string) => ({ ok: true, status: 200, json: async () => (url.includes('/0036000291452.') ? { status: 1, product: { product_name: 'Tuna pate', categories_tags: ['en:cat-food'] } } : { status: 0 }) }));
+    vi.stubGlobal('fetch', f);
+    expect(await byBarcode('036000291452')).toMatchObject({ name: 'Tuna pate' });
+    expect(f).toHaveBeenCalledTimes(2);
   });
   it('lists cat foods before other matches when searching', async () => {
     reply({ products: [{ code: '1', product_name: 'Dog chews', categories_tags: ['en:dog-treats'] }, { code: '2', product_name: 'Kitten chicken pate', categories_tags: ['en:cat-food'] }] });

@@ -37,10 +37,23 @@ async function get(url: string, signal?: AbortSignal) {
 }
 
 /** One product by barcode, or null when the database doesn't know it. */
+/** UPC/EAN check digit: a misread code fails this, so it's never looked up. */
+export function validBarcode(code: string): boolean {
+  if (!/^(\d{8}|\d{12}|\d{13})$/.test(code)) return false;
+  const d = code.split('').map(Number); const check = d.pop()!;
+  const sum = d.reverse().reduce((t, n, i) => t + n * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === check;
+}
+
+/** Look a product up by barcode. A US 12-digit UPC is also tried as its 13-digit EAN form, and the other way round. */
 export async function byBarcode(code: string, signal?: AbortSignal): Promise<FoodHit | null> {
   const clean = code.replace(/\D/g, ''); if (clean.length < 8) return null;
-  const j = await get(`${API}/api/v2/product/${clean}.json?fields=${FIELDS}`, signal);
-  return j?.status === 1 && j.product ? toHit({ ...j.product, code: j.product.code ?? clean }) : null;
+  const tries = [clean, clean.length === 12 ? '0' + clean : clean.length === 13 && clean.startsWith('0') ? clean.slice(1) : ''].filter(Boolean);
+  for (const c of tries) {
+    const j = await get(`${API}/api/v2/product/${c}.json?fields=${FIELDS}`, signal);
+    if (j?.status === 1 && j.product) return toHit({ ...j.product, code: j.product.code ?? c });
+  }
+  return null;
 }
 
 /** Products matching a name or brand; cat foods first. */
