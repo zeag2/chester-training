@@ -7,6 +7,7 @@ applyTheme(); watchSystemTheme();
 import { startUpdates } from './lib/updates';
 import { listenForInstall } from './lib/install';
 import { takePendingFromUrl } from './lib/appname';
-listenForInstall(); takePendingFromUrl();
+import { captureInvite } from './lib/invite';
+listenForInstall(); takePendingFromUrl(); captureInvite();
 startUpdates();
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);

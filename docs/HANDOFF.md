@@ -49,6 +49,9 @@ ready to share with friends.
 
 ### Friends (`#/friends`, from Home and Settings)
 - Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
+- **Invite:** a **+** on Home's Friends card and on the Friends screen opens an invite sheet (code, Send an invite,
+  Copy code, add a code). Invite links are `<app>#/friends/<CODE>`: opening one fills the code in, and it's kept
+  (`src/lib/invite.ts`) while a new friend sets up the app and signs in.
 - Friends see a **card** for each of each other's pets: look, outfit, age, skills mastered, streak, sets this week,
   bond. Never the pet record, care, documents or training sets. Each household publishes its pet's card on sync
   (`cardFor`/`publishCard` in `store.ts`, `set_pet_card` in SQL); `friend_pets()` returns only the card plus name and look.

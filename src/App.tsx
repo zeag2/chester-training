@@ -63,7 +63,7 @@ export default function App() {
     case 'settings': body = <Settings />; tab = 'settings'; break;
     case 'care': body = <Care />; tab = 'home'; break;
     case 'corner': body = <Corner />; tab = 'home'; break;
-    case 'friends': body = <Friends />; tab = 'home'; break;
+    case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
   return <>{body}<TabBar active={tab} onPlus={plus} /></>;

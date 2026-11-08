@@ -146,3 +146,5 @@ button.lrow:active{background:var(--line)}
 @keyframes kscanline{0%,100%{transform:translateY(-34px)}50%{transform:translateY(34px)}}
 .scantorch{position:absolute;right:10px;top:10px;background:rgba(255,255,255,.92)!important;color:#232320!important;min-height:36px;padding:0 14px}
 .scantorch[aria-pressed="true"]{background:#efc44a!important}
+.plusbtn{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--ink);color:var(--on-ink);display:flex;align-items:center;justify-content:center}
+.plusbtn svg{stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}

@@ -12,6 +12,8 @@ import * as audio from '../lib/audio';
 import { CareCard } from './Care';
 import { giftClaimed } from '../engine/corner';
 import { movedTo } from '../lib/moved';
+import { pendingFriend } from '../lib/invite';
+import { InviteSheet } from './Friends';
 import { usePetText } from '../lib/pet';
 import type { ReactionId } from '../chester/reactions';
 
@@ -102,6 +104,7 @@ export function Home() {
   const myName = me?.name || store.myName;
   const partners = (household?.members ?? []).filter((m) => m.userId !== account?.userId && m.name).map((m) => m.name);
   const [line, setLine] = useState('');
+  const [invite, setInvite] = useState(false);
   const { doze, knead, wake } = useHomeMood();
   const pt = usePetText();
   const ph0 = PH(new Date().getHours(), new Date().getMinutes());
@@ -184,8 +187,11 @@ export function Home() {
       {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
-      {account && <a href="#/friends" className="card sky row" style={{ color: 'inherit' }}><div className="ico"><Icon name="hand" /></div>
-        <div className="sp"><b>Friends’ cats</b><p className="s">Add friends with a code and see their cats next to {cat.name}.</p></div></a>}
+      {account && <div className="card sky row">
+        <a href="#/friends" className="row sp" style={{ color: 'inherit', gap: 12, textDecoration: 'none' }}><div className="ico"><Icon name="hand" /></div>
+          <div className="sp"><b>Friends’ cats</b><p className="s">{pendingFriend() ? 'A friend invited you. Tap to add them.' : `See your friends’ cats next to ${cat.name}.`}</p></div></a>
+        <button className="plusbtn" aria-label="Invite a friend" onClick={() => setInvite(true)}><Icon name="plus" size={22} /></button></div>}
+      {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;
