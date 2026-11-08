@@ -273,3 +273,42 @@ npm run build      # what CI runs
   in a temporary folder; the test fixtures use made-up details. Keep it that way.
 - **Supabase free tier:** projects pause after a week unused (Restore in the dashboard); the built-in mailer allows only
   ~2 emails an hour (not used now).
+
+---
+
+## 7. Skills, plugins and tools
+
+Keep this section current: whenever a skill, plugin or MCP server is added, removed or used for real work, note it
+here in the same commit (see `CLAUDE.md`).
+
+### Installed in the repo (load in every session here; pinned in `skills-lock.json`)
+| Skill(s) | Source | Added | Used for |
+|---|---|---|---|
+| `reanimate` | NiazMorshed2007/reanimate | 2026-11-07 | Matching Chester's timings to Josh's reference GIFs (knead, nod, chin scratch, back roll, play bite, pounce, dance, yarn batting) |
+| `earshot`, `real-sound` | Leonxlnx/earshot | 2026-11-07 | Clicker and reward samples from its sound bank (`public/sfx`); listening to and balancing sounds |
+| `huashu-art-motion` | alchaincyf/huashu-art-motion | 2026-11-07 | Motion style reference for the same pass (showcase GIFs left out to keep the repo small) |
+| claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
+| `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
+| `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
+
+Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
+`.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
+
+### MCP servers (repo, `.mcp.json`)
+- `lottiefiles-creator` (`npx -y @lottiefiles/creator-mcp@latest`), added 2026-11-08. Loads from the next session;
+  Claude Code asks once before trusting it. Not used yet.
+
+### From Josh's account (every project, not in the repo)
+- The account-wide skills (artifact-design, systematic-debugging, writing-handoffs and the other anthropic-skills).
+- Plugins: **Icons8** was offered (Anthropic Directory) but isn't turned on yet. If it is, it could replace
+  `src/ui/icons.tsx` and the corner's toy art.
+
+### Tools used for checks (no install needed)
+- Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode).
+
+### Install commands used (to repeat in another project)
+```bash
+npx -y skills add diffusionstudio/lottie --agent claude-code
+npx -y skills add https://github.com/greensock/gsap-skills --agent claude-code
+claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp@latest
+```
