@@ -504,6 +504,15 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   were invoked. Checks used Playwright (iPhone 15, light and dark, the dev store seeded with the in-memory
   `FakeServer` imported through Vite) and a local Postgres 16 for `friend_treats_test.sql`.
 
+### Scheduled tasks
+- **PalDex UX review** (created 2026-11-08 by the friends session, at Josh's request; id `trig_018ZuiMgfUdMYtXktjkp1zcn`):
+  every 4 hours (at :16, UTC) a fresh cloud session on the `chester-training` environment checks main for new
+  commits since the `last-reviewed:` line in `docs/ux-review-log.md`. If there are any, it screenshots the touched
+  screens at iPhone size (light and dark), audits them with the `anthropic-skills:design-ux` skill, makes small
+  visual fixes and opens (or adds to) one `claude/ux-review-...` pull request for Josh to merge. It never pushes to
+  main and never touches `src/chester`, `src/sync`, `src/db`, `src/engine` or `supabase`. Push notification when a run
+  finishes. Pause or change it from the scheduled tasks list on claude.ai.
+
 ### Tools used for checks (no install needed)
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed
   animations, fast-forward with `page.clock` to just before the moment, then `clock.resume()` and capture in real time:
