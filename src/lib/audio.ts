@@ -120,18 +120,35 @@ export function litter(sec = 1.8) {
   }
 }
 
-/** The rainbow-dash tune: an original bouncy 8-bit jingle (square-wave lead, triangle bass), about 3 seconds. */
+/** The rainbow-dash tune: an original bouncy 8-bit piece (square-wave lead, triangle bass) that runs the length of
+    the dash (~5.4 s): a rising phrase, the same phrase answered higher, a little bridge, and a fanfare to land on. */
 export function jingle() {
-  const c = ac(); if (!c) return; const t0 = c.currentTime + 0.02; const step = 0.115;
+  const c = ac(); if (!c) return; const t0 = c.currentTime + 0.02; const step = 0.112;
   const N = (n: string) => { const i = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(n.slice(0, -1)); return 440 * 2 ** ((i - 9) / 12 + (Number(n.slice(-1)) - 4)); };
-  // lead: up-and-over arpeggios that land on a little fanfare
-  const lead = ['E5', 'G5', 'C6', 'G5', 'D5', 'G5', 'B5', 'G5', 'C5', 'E5', 'A5', 'E5', 'F5', 'A5', 'C6', 'D6', 'E6', '-', 'D6', 'C6', 'G5', '-', 'C6', '-', '-'];
-  const bass = ['C3', '-', 'C3', '-', 'G2', '-', 'G2', '-', 'A2', '-', 'A2', '-', 'F2', '-', 'F2', '-', 'G2', '-', 'G2', '-', 'C3', '-', 'C3', '-', '-'];
+  const A = ['E5', 'G5', 'C6', 'G5', 'D5', 'G5', 'B5', 'G5', 'C5', 'E5', 'A5', 'E5', 'F5', 'A5', 'C6', 'A5'];
+  const A2 = ['E5', 'G5', 'C6', 'E6', 'D6', 'B5', 'G5', 'B5', 'C6', 'A5', 'E5', 'A5', 'F5', 'A5', 'D6', 'F6'];
+  const BR = ['E6', '-', 'D6', 'C6', 'D6', '-', 'G5', '-'];
+  const END = ['C6', 'E6', 'G6', '-', 'E6', 'C6', '-', '-'];
+  const lead = [...A, ...A2, ...BR, ...END];
+  const bassBar = (n: string, m: string) => [n, '-', m, '-'];
+  const bass = [
+    ...bassBar('C3', 'G3'), ...bassBar('G2', 'D3'), ...bassBar('A2', 'E3'), ...bassBar('F2', 'C3'),
+    ...bassBar('C3', 'G3'), ...bassBar('G2', 'D3'), ...bassBar('A2', 'E3'), ...bassBar('F2', 'C3'),
+    ...bassBar('F2', 'C3'), ...bassBar('G2', 'D3'), 'C3', '-', 'G2', '-', 'C3', '-', '-', '-',
+  ];
   const tone = (type: OscillatorType, f: number, at: number, len: number, vol: number) => {
     const o = c.createOscillator(); const g = c.createGain(); o.type = type; o.frequency.value = f;
     g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
     o.connect(g); g.connect(c.destination); o.start(at); o.stop(at + len + 0.02);
   };
-  lead.forEach((n, i) => { if (n !== '-') tone('square', N(n), t0 + i * step, step * (lead[i + 1] === '-' ? 1.9 : 0.9), 0.07); });
-  bass.forEach((n, i) => { if (n !== '-') tone('triangle', N(n), t0 + i * step, step * 1.8, 0.16); });
+  const hold = (arr: string[], i: number) => { let k = 1; while (arr[i + k] === '-') k++; return k; };
+  lead.forEach((n, i) => { if (n !== '-') tone('square', N(n), t0 + i * step, step * (hold(lead, i) > 1 ? hold(lead, i) * 0.95 : 0.9), 0.065); });
+  bass.forEach((n, i) => { if (n !== '-') tone('triangle', N(n), t0 + i * step, step * Math.min(2, hold(bass, i)) * 0.95, 0.16); });
+  // a soft tick on every beat keeps it driving
+  for (let i = 0; i < lead.length; i += 2) {
+    const at = t0 + i * step; const len = 0.03; const b = c.createBuffer(1, Math.floor(c.sampleRate * len), c.sampleRate); const d = b.getChannelData(0);
+    for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * (1 - j / d.length);
+    const src = c.createBufferSource(); src.buffer = b; const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6000;
+    const g = c.createGain(); g.gain.value = 0.05; src.connect(hp); hp.connect(g); g.connect(c.destination); src.start(at);
+  }
 }

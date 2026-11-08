@@ -94,7 +94,7 @@ export function Chester(p: ChesterProps) {
     taps.current = [...taps.current.filter((t) => now - t < 3000), now];
     if (taps.current.length >= 8 && now - dashAt.current > 10_000 && !dash) {
       taps.current = []; dashAt.current = now; setDash(true);
-      audio.buzz([20, 60, 20, 60, 40]);
+      audio.buzz([20, 60, 20, 60, 40]); audio.jingle();
       window.setTimeout(() => setDash(false), 9000); // safety net; the dash ends itself after its passes
       p.onPet?.('WHEEEE! Rainbow dash!', 'r5');
       return;
@@ -114,7 +114,7 @@ export function Chester(p: ChesterProps) {
   const inner = <>
     <span ref={body} className="strokebody" dangerouslySetInnerHTML={{ __html: svg }} style={{ display: 'block' }} />
     <span className="fxl" aria-hidden="true"><i>&#9829;</i><i>&#9829;</i><i>&#9829;</i></span>
-    {dash && <RainbowDash coat={p.coat} eyes={p.eyes} onDone={() => setDash(false)} onPass={() => audio.jingle()} />}
+    {dash && <RainbowDash coat={p.coat} eyes={p.eyes} onDone={() => setDash(false)} />}
   </>;
   if (!p.interactive) return <div ref={ref as any} className={cls} style={{ display: 'inline-block' }}>{inner}</div>;
   return <button ref={ref as any} type="button" className={cls} onClick={pet} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label={`Pet ${p.label ?? 'Chester'}`}>{inner}</button>;

@@ -20,8 +20,8 @@ function ribbon(): string {
   return out;
 }
 
-/** Three passes: across, back the other way (facing the other way), and across again, at different heights. */
-export const PASSES = [{ top: '30%', dir: 1 }, { top: '58%', dir: -1 }, { top: '16%', dir: 1 }] as const;
+/** Two passes: across, then back the other way (facing the other way), lower down. */
+export const PASSES = [{ top: '30%', dir: 1 }, { top: '56%', dir: -1 }] as const;
 
 export function RainbowDash({ coat, eyes, onDone, onPass }: { coat?: string; eyes?: string; onDone: () => void; onPass?: (i: number) => void }) {
   const cat = useMemo(() => chesterSVG({ pose: 'fly', coat, eyes, mood: 'happy', uid: 'dash', width: 130, label: 'Chester dashing on a rainbow' }), [coat, eyes]);
