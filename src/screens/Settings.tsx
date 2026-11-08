@@ -96,7 +96,7 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
 }
 
 export function Settings() {
-  const { cat, sets, account, household, sync, care } = useStore();
+  const { cat, sets, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
@@ -124,14 +124,20 @@ export function Settings() {
       <button className="btn2" style={{ background: 'var(--surface)', minHeight: 40 }} onClick={() => setSheet('pet')}>Edit</button>
     </div>
 
-    {sharingConfigured() && (account ? <Group title="People" foot={syncText}>
+    <Group title="Pets">
+      {pets.map((p) => <Row key={p.id} label={p.name} value={p.id === cat.id ? 'Showing' : 'Switch'} onClick={p.id === cat.id ? undefined : () => void store.switchPet(p.id)}>
+        <span style={{ width: 34, height: 34, marginLeft: -4, order: -1, display: 'flex' }}><Chester coat={p.coat} eyes={p.eyes} width={34} mood="happy" /></span></Row>)}
+      <Row label="Add another pet" onClick={() => go('add-pet')} />
+    </Group>
+
+    {sharingConfigured() && (account ? <Group title={`People training ${cat.name}`} foot={syncText}>
       <Row label={me?.name || 'Add your name'} sub={account.email} value={me?.owner ? 'You · set up ' + cat.name : 'You'} onClick={() => setSheet('name')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
         value={m.owner ? 'Set up ' + cat.name : 'Trains with you'} onClick={() => setPerson(m.userId)} />)}
       {household && <Row label={others.length ? 'Invite someone else' : `Invite someone to train ${cat.name}`} onClick={() => setSheet('invite')} />}
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? ${cat.name} stays on this phone; sign back in to sync again.`)) void store.signOut(); }} />
-    </Group> : <Group title="People" foot={`Share ${cat.name}’s progress so you both see the same skills, treats and limits.`}>
+    </Group> : <Group title={`People training ${cat.name}`} foot={`Share ${cat.name}’s progress so you both see the same skills, treats and limits.`}>
       <Row label={`Train ${cat.name} together`} onClick={() => go('together')} />
       <Row label="I have an invite code" onClick={() => go('join')} />
     </Group>)}

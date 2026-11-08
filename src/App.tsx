@@ -34,6 +34,7 @@ export default function App() {
   if (!snap.ready) return <div className="screen" aria-busy="true" />;
   if (import.meta.env.DEV && r0 === 'gallery') return <Gallery />;
   if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
+  if (r0 === 'add-pet') return <Onboarding adding />;
   if (!snap.cat && r0 !== 'session') return <Onboarding />;
   const plus = () => { const s = suggestNext(SKILLS, snap.progress, snap.sets, snap.unlockedHidden, today())[0]; go('session/' + (s?.skill.id ?? 'clicker')); };
   let body: React.ReactNode;

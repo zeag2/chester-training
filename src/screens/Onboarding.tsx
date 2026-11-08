@@ -27,8 +27,9 @@ function guessCoat(breed: string): string {
   if (/white/.test(b)) return 'white'; if (/tabby/.test(b)) return 'brown'; return 'black';
 }
 
-export function Onboarding() {
-  const [step, setStep] = useState(1);
+/** First-run setup; with `adding`, just the pet questions for another pet. */
+export function Onboarding({ adding = false }: { adding?: boolean }) {
+  const [step, setStep] = useState(adding ? 4 : 1);
   const [invited, setInvited] = useState(false);
   const { account } = useStore();
   const [myName, setMyName] = useState('');
@@ -75,7 +76,7 @@ export function Onboarding() {
     <CodeForm name={myName} onDone={() => go('home')} />
     <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(4)}</div></div></>);
 
-  if (step === 4) return wrap(<>{back(!sharingConfigured() ? 1 : account ? 2 : 3, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+  if (step === 4) return wrap(<>{adding ? <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('settings')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>Add another pet</b></div> : back(!sharingConfigured() ? 1 : account ? 2 : 3, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>Who are we training?</h1><p className="m" style={{ marginTop: 6 }}>You can change this later.</p>
     <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" placeholder="Your cat’s name" />
     <span className="field">Boy or girl?</span>

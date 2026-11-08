@@ -56,7 +56,7 @@ describe('training Chester together', () => {
     expect(josh.get().sync).toBe('ok');
   });
 
-  it('replaces her own practice Chester when she joins his', async () => {
+  it('adds his Chester when she joins, keeping her own practice cat (it had a set) as a second pet', async () => {
     const server = new FakeServer();
     const josh = device(server); await josh.load(); await josh.saveCat(chester);
     await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
@@ -66,6 +66,7 @@ describe('training Chester together', () => {
     await sam.join(josh.get().household!.inviteCode, 'Sam');
     expect(sam.get().cat?.name).toBe('Chester');
     expect(sam.get().sets).toHaveLength(0);
+    expect(sam.get().pets.map((p) => p.name).sort()).toEqual(['Chester', 'Practice']);
     expect(server.cats.size).toBe(1);
     const again = device(server); (again.remote as any).me = { userId: 'u:sam@example.com', email: 'sam@example.com' };
     await again.load(); await again.sync();
@@ -172,6 +173,26 @@ describe('training Chester together', () => {
     await expect(meg1.removeMember('u:megg@dupe.test')).rejects.toThrow('not-allowed');
     await josh.removeMember('u:megg@dupe.test');
     expect(josh.get().household!.members.map((m) => m.email)).toEqual(['owner@dupe.test', 'meg@dupe.test']);
+  });
+
+  it('keeps several pets apart, remembers which one is shown, and shares each separately', async () => {
+    const server = new FakeServer();
+    const a = new Store('pets1', server.device()); a.rand = () => 0.5; await a.load();
+    await a.saveCat(chester); await a.logSet(pass);
+    await a.saveCat({ ...chester, name: 'Luna', sex: 'f' }); // a second pet: becomes the one shown
+    expect(a.get().cat?.name).toBe('Luna'); expect(a.get().sets).toHaveLength(0);
+    expect(a.get().pets.map((p) => p.name)).toEqual(['Chester', 'Luna']);
+    await a.logSet(pass); await a.logSet(pass);
+    const again = new Store('pets1'); await again.load();
+    expect(again.get().cat?.name).toBe('Luna'); expect(again.get().sets).toHaveLength(2);
+    await again.switchPet(again.get().pets[0].id);
+    expect(again.get().cat?.name).toBe('Chester'); expect(again.get().sets).toHaveLength(1);
+    // both pets reach a new phone signed in to the same account
+    await a.signIn('two@pets.test', 'catnip1', 'Josh', true, true);
+    await a.switchPet(a.get().pets[0].id); await a.sync();
+    const phone2 = new Store('pets2', server.device()); await phone2.load();
+    await phone2.signIn('two@pets.test', 'catnip1', '', true, false);
+    expect(phone2.get().pets.map((p) => p.name).sort()).toEqual(['Chester', 'Luna']);
   });
 
   it('keeps treats saved up before sets remembered their gifts', async () => {

@@ -32,6 +32,8 @@ export interface Snapshot {
   care: CareItem[];
   /** 'missing' = the shared copy has no care table yet (its setup SQL hasn't been run). */
   careSync: 'ok' | 'missing';
+  /** Every pet on this phone, for the switcher. `cat` is the one being shown. */
+  pets: Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'>[];
 }
 
 export interface LogInput { skillId: string; reps: number; good: number; mood: Mood; seconds: number; note?: string; at?: number }
@@ -43,12 +45,17 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok' };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [] };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
   /** Name typed when creating the account, put on the cat once it is uploaded (set up before the cat exists).
       Kept per account, so a second person signing in on this phone never inherits the first one's name. */
+  /** Which pet is shown, remembered on this phone. */
+  get activeId(): string { try { return localStorage.getItem('paldex-active-pet') ?? ''; } catch { return ''; } }
+  set activeId(v: string) { try { localStorage.setItem('paldex-active-pet', v); } catch { /* private mode */ } }
+  private async petList() { return (await this.db.cats.toArray()).sort((a, b) => a.createdAt - b.createdAt).map(({ id, name, coat, eyes, sex }) => ({ id, name, coat, eyes, sex })); }
+
   private nameKey(uid = this.snap.account?.userId) { return uid ? 'chester-my-name:' + uid : ''; }
   get myName(): string { try { const k = this.nameKey(); return k ? localStorage.getItem(k) ?? '' : ''; } catch { return ''; } }
   set myName(v: string) { try { const k = this.nameKey(); if (k) localStorage.setItem(k, v); } catch { /* private mode */ } }
@@ -67,17 +74,20 @@ export class Store {
 
   /** Progress and treats always come from the sets, so two trainers' phones agree. */
   private async rebuild(cat: Cat | null, patch: Partial<Snapshot> = {}) {
-    if (!cat) { this.set({ cat: null, progress: {}, sets: [], wallet: null, draft: null, household: null, care: [], ...patch }); return; }
+    const pets = await this.petList();
+    if (!cat) { this.set({ cat: null, progress: {}, sets: [], wallet: null, draft: null, household: null, care: [], pets, ...patch }); return; }
+    this.activeId = cat.id;
     const sets = (await this.db.sets.where('catId').equals(cat.id).toArray()).sort(bySetOrder);
     const local = (await this.db.wallet.get(cat.id)) ?? newWallet(cat.id);
     const wallet = mergeWallet(local, deriveEarned(sets, cat.carry));
     const draft = (await this.db.drafts.get(cat.id)) ?? null;
     const care = (await this.db.care.where('catId').equals(cat.id).toArray()).filter((c) => !c.deleted).map(({ dirty: _d, ...c }) => c as CareItem).sort((a, b) => b.at - a.at);
-    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, ...patch });
+    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, pets, ...patch });
   }
 
   async load() {
-    let cat = (await this.db.cats.toCollection().first()) ?? null;
+    const want = this.activeId;
+    let cat = (want ? await this.db.cats.get(want) : undefined) ?? (await this.db.cats.orderBy('id').toArray()).sort((a, b) => a.createdAt - b.createdAt)[0] ?? null;
     if (cat && !cat.carry) {
       // Before shared training, treats lived only in the wallet. Keep whatever the sets can't explain.
       const sets = await this.db.sets.where('catId').equals(cat.id).toArray();
@@ -96,6 +106,12 @@ export class Store {
     await this.rebuild(cat);
     if (this.snap.account) void this.sync();
     return cat;
+  }
+
+  /** Show another pet. */
+  switchPet(id: string): Promise<void> {
+    return this.serial(async () => { const cat = await this.db.cats.get(id); if (!cat) return; await this.rebuild(cat, { household: null }); })
+      .then(() => { if (this.snap.account) void this.sync(); });
   }
 
   /** Only this phone's own bits are stored; treats, bond and toys come from the sets. */
@@ -197,10 +213,12 @@ export class Store {
     this.set({ account, sync: 'syncing' });
     try {
       let cat = this.snap.cat;
-      if (!cat) {
-        const [id] = await r.myCatIds();
-        if (id) cat = await this.adopt(id);
+      // bring over every pet this account trains that isn't on this phone yet
+      for (const id of await r.myCatIds()) if (!(await this.db.cats.get(id))) { const got = await this.adopt(id); cat ??= got; }
+      if (!this.snap.cat) {
+        if (cat) this.activeId = cat.id;
       } else {
+        cat = this.snap.cat;
         const shared = await r.getCat(cat.id);
         if (!shared) { await r.createCat(cat); if (this.myName) await r.setName(cat.id, this.myName).catch(() => {}); }
         else if ((shared.cat.updatedAt ?? 0) > (cat.updatedAt ?? 0)) { cat = { ...shared.cat, id: cat.id }; await this.db.cats.put(cat); }
@@ -247,8 +265,9 @@ export class Store {
   join(code: string, name: string): Promise<boolean> {
     return this.serial(async () => {
       const id = await this.remote!.join(code.trim(), name.trim()); if (!id) return false;
+      // joining adds the pet; an untouched practice pet made during setup is tidied away
       const old = this.snap.cat;
-      if (old && old.id !== id) await this.forget(old.id);
+      if (old && old.id !== id && !(await this.db.sets.where('catId').equals(old.id).count()) && !(await this.db.care.where('catId').equals(old.id).count())) await this.forget(old.id);
       await this.rebuild(await this.adopt(id));
       return true;
     }).then(async (ok) => { if (ok) await this.sync(); return ok; });
@@ -258,7 +277,7 @@ export class Store {
   async removeMember(userId: string) {
     const cat = this.snap.cat; if (!cat || !this.remote) return;
     await this.remote.removeMember(cat.id, userId);
-    if (userId === this.snap.account?.userId) { await this.forget(cat.id); await this.rebuild(null); return; }
+    if (userId === this.snap.account?.userId) { await this.forget(cat.id); const next = (await this.db.cats.toArray())[0] ?? null; await this.rebuild(next); return; }
     await this.sync();
   }
 

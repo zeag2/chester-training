@@ -13,6 +13,9 @@ Done
   random meows; off-screen litter box gag; rainbow dash after 8 quick taps.
 - Dark mode (Settings → Appearance), Settings tab relabelled.
 
+Also done: multiple pets (switcher on Home, Pets list + Add another pet in Settings; each pet has its own
+training, care, documents, people and invite code; every shared pet comes to a new phone on sign-in).
+
 Next, in order
 1. Animation is done (rig on every pose; hop, pounce and dance are rig moves with wind-up, stretch, tucked legs
    and landing squash — see MOVES in src/chester/rig.ts; dev pose gallery at #/gallery). Optional: real recorded

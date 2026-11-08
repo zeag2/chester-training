@@ -89,7 +89,7 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
 }
 
 export function Home() {
-  const { cat, progress, sets, wallet, unlockedHidden, account, household } = useStore();
+  const { cat, progress, sets, wallet, unlockedHidden, account, household, pets } = useStore();
   // whoever is signed in on this phone gets greeted by name; the other trainer shows as "training with"
   const me = household?.members.find((m) => m.userId === account?.userId);
   const myName = me?.name || store.myName;
@@ -133,6 +133,8 @@ export function Home() {
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
         {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Training {cat.name} with {partners.join(' and ')}</p>}
+        {pets.length > 1 && <div className="row" role="group" aria-label="Pets" style={{ gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          {pets.map((p) => <button key={p.id} className={`chipbtn ${p.id === cat.id ? 'on' : ''}`} aria-pressed={p.id === cat.id} style={{ minHeight: 36, padding: '0 12px' }} onClick={() => p.id !== cat.id && void store.switchPet(p.id)}>{p.name}</button>)}</div>}
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
