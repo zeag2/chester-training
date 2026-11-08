@@ -1,0 +1,256 @@
+# PalDex: handoff
+
+_Last updated 2026-11-09. Start here when picking the project back up._
+
+PalDex (repo `chester-training`) is a phone web app for clicker-training a cat, keeping its care records, and sharing both
+with the people you live with. It was built for Josh's kitten **Chester** and his girlfriend **Megan**, and is now
+ready to share with friends.
+
+- **Live:** https://zeag2.github.io/chester-training/ (installable to the iPhone home screen)
+- **Deploys:** every push to `main` runs `.github/workflows/pages.yml` (tests, build, GitHub Pages). Work happens on
+  `claude/wizardly-allen-ilr861` and is pushed to both that branch and `main`.
+- **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
+  (the publishable key is meant to be public; row-level security protects the data).
+- **State at handoff:** 70 tests passing in 12 files, the working tree is clean, `main` is live.
+
+---
+
+## 1. What's built
+
+### Training (Phase 1, from `docs/plans/2026-11-07-chester-phase1.md`)
+- **Onboarding:** Welcome, then "How are you joining?": **Set up my cat** (account, then pet questions) or **Someone
+  invited me** (account, then invite code, then straight to the shared pets). Asks boy or girl. Setup starts empty,
+  not with Chester's details.
+- **Session:** the whole screen is a "Yes!" paw button, with a yarn-ball 2-minute timer, Missed/Pause/End, and a draft
+  saved on every rep so a killed app resumes.
+- **Recap and rewards:** good-rep count, mood, the pass rules, treats and a gift per set, and a celebration on a step up
+  or a mastered skill.
+- **Skill tree and library:** skills by branch, with steps, tips and sources. Hidden skills unlock by mastery
+  (check-ins aren't built yet).
+- **Rules** (`src/engine/rules.ts`, `rewards.ts`): a pass is at least 5 reps, at least 80% good, and not Stressed.
+  Two passes in a row move up a step. At most 3 rewarded sets a day, 1 treat per good rep, and at most 30 treats a day.
+
+### Sharing: households
+- Accounts use **email and password** (Supabase Auth, "Confirm email" turned **off**; see the decisions section).
+- A **household** holds people and pets. Its people see and train every pet in it. There's **one invite code per
+  household**, and pets added later are shared automatically.
+- Whoever set the household up can **remove** people (Settings, then the person, then Remove from household); anyone
+  can **leave**. Sets they logged stay.
+- Settings shows each person's email and how many sets they've logged, and flags two people with the same name as a
+  likely duplicate account.
+- Each phone greets whoever is signed in on it ("Good morning, Josh"), and Home says "Training Chester with Megan".
+  The remembered name is stored **per account**, not per phone.
+- Works offline: sets and care save on the phone and sync when back online, never doubled.
+
+### Multiple pets
+- Settings, then Pets, then **Add another pet** (pet questions only). A switcher shows on Home when there's more than
+  one pet. The pet being shown is remembered.
+- Each pet has its own training, care log and documents. New pets go into the household of the pet being shown.
+- **Cats only.** Dogs would need new art and a new skill set (see section 5).
+
+### Chester's care (`#/care`, from the blue card on Home)
+- **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
+- **Coming up:** medicine and vaccine due dates, nails and brushing getting overdue (once started), and the yearly
+  checkup.
+- **Log something:** weight (with a chart), symptoms (quick picks plus "we're worried"), grooming, vet visits,
+  medicine and vaccines with a next-due date.
+- **Food and treats:** Loves it / It's OK / Won't eat it, and "using now". **Find it** looks a product up by barcode
+  scan, typed barcode or name in Open Pet Food Facts (free, no key).
+- **Documents:** upload a photo or a multi-page PDF. It's **read on the phone with rules** (no AI, no cost), and the
+  user checks each suggestion before it's saved:
+  - **Pages:** each page is sorted as **Vet**, **Adoption** or **ESA & housing**.
+  - **Doses:** every dose is kept (vaccines, flea, dewormer, medicine), with given and next-due dates.
+  - **Tests and surgery:** tests with results (FeLV/FIV) and surgeries (neuter/spay) are logged as visits.
+  - **Weigh-ins:** read from weight lines and weight tables.
+  - **Profile:** suggests birthday, microchip, spayed/neutered, and "home since" from the adoption contract.
+  - **What it ignores:** nothing medical or personal is taken from ESA/housing or adoption wording. Vial lot and
+    expiry dates aren't treated as due dates.
+  - **Storage:** files go in the private `pet-docs` bucket, readable by household members only.
+
+### Chester himself (the character)
+- **Physics rig** (`src/chester/rig.ts`): springs drive every pose. The body leans from the hips, the head and ears
+  follow a beat late, and the tail is a 9-joint chain.
+- **Petting:** drag across him and he leans into your finger, eyes happily closed, purring. Lying down, he nuzzles.
+- **Moves on the rig:** hop, pounce, dance and yarn batting, each with wind-up, stretch, tucked legs and a landing
+  squash.
+- **Tap reactions:** hop, purr, flop, chin scratch, play bite, head bonk, mlem, sneeze, meow, zoomies and more. Only
+  gentle ones play when he's lying, loafing or kneading.
+- **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle.
+- **Life on Home:**
+  - Sits by default and makes biscuits for about 7 seconds every 25 to 55 seconds.
+  - Dozes after 90 seconds alone.
+  - Sleeps from **10:30 PM to 5 AM**; a tap wakes him (sleepy) for two minutes.
+  - Random meows every 25 to 70 seconds.
+  - The **off-screen litter box gag** every 3 to 6 minutes: he walks off, digging is heard, stink drifts in, he
+    zooms back and owns it.
+- **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon, to an
+  original ~5.4-second 8-bit tune (deliberately not the Nyan Cat song).
+- **Sounds:** clicker and reward are recorded samples (`public/sfx`). Chirp, purr, meow, litter digging and the tune
+  are synthesized in `src/lib/audio.ts`.
+
+### App
+- **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colors are tokens in `src/styles/app.css`.
+- **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
+  Appearance), Your data (backup JSON including care).
+- **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
+  except mid-session or recap (`src/lib/updates.ts`). No more close-and-reopen.
+- Renamed to **PalDex** (home-screen name, title, manifest). The URL path stays `/chester-training/` so installs don't
+  break.
+
+---
+
+## 2. What's left
+
+Roughly in the order agreed with Josh:
+
+1. **Chester's corner:** somewhere to spend treats (outfits, toys, cushion), bond level, the daily gift, nap tokens.
+   Treats and toys currently pile up with nowhere to go. Home says "arrives in the next update".
+   `Wallet` (`src/engine/types.ts`) already has `toys`, `playMoves`, `napTokens`, `bond`.
+2. **Weekly recap:** a "Chester's week" card: sets, success rate, what improved, and who did what ("Josh did 4 sets,
+   Megan did 3"). Sets already record `by` (account id); names come from the household members.
+3. **Badges and trophy case:** a badge per mastered skill, shelves by branch, closest badge on top. Recap currently
+   says "Badges … arrive in the next update".
+4. **Check-ins:** five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
+   `hiddenUnlocks` in `rules.ts`). Some skills are locked behind these today.
+5. **Photo album:** a photo of the real pet at each mastery. It can reuse the `pet-docs` bucket pattern.
+6. **Care extras:** suggest the "Loves it" treat when training a hard skill; a one-tap vet summary (weight trend,
+   vaccines, symptoms) to show at appointments.
+7. **Animation extras (optional):** new idle behaviors like stretching after a nap, grooming a paw, chasing his tail,
+   or looking where you tap. Real recorded meows (licensed) if the synthesized ones sound robotic.
+8. **Other animals (bigger):** dogs or others need their own art (`src/chester/art.ts` is cat-only), skills and copy.
+
+### Open items for Josh
+- Remove the **duplicate Megan** account: Settings, Household, the Megan with 0 sets, Remove from household. The
+  emails only show once `20261108230000_household_tools.sql` or the households SQL (`household_people`) has run;
+  the households SQL **has** been run.
+- Confirm `20261108230000_household_tools.sql` was run. It isn't required now that households exist, but it's harmless.
+- If his name still shows wrong anywhere: Settings, then his own row, then Your name.
+
+---
+
+## 3. File structure
+
+```
+src/
+  main.tsx              entry: theme, self-updates, React root
+  App.tsx               hash router (#/home, #/session/<skill>, #/recap/<skill>, #/tree, #/library, #/skill/<id>,
+                        #/settings, #/care, #/together, #/join, #/add-pet, dev-only #/gallery)
+  engine/               pure logic, unit-tested, no I/O
+    types.ts            Cat, SetRecord, SkillDef, Wallet, Gift, SessionDraft…
+    skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
+    rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
+    rewards.ts          treats, daily caps, gift rolls
+    derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
+    plan.ts             what to train next
+    care.ts             care item types, reminders, red flags, newest-edit-wins merge
+    day.ts              local-day helpers (daily limits use the local date, never UTC)
+  db/
+    db.ts               Dexie (IndexedDB) tables: cats, sets, wallet, drafts, care, (legacy) progress
+    store.ts            the app's one store: load, log sets, care, docs, pets, households, sync
+  sync/
+    remote.ts           the Remote interface the store talks to
+    supabase.ts         Supabase implementation (+ fallback to per-pet sharing if the households SQL isn't run)
+    fake.ts             in-memory server with the same rules, for tests
+    config.ts           Supabase URL + publishable key
+  chester/              the character
+    art.ts              SVG poses: sit, walk, ball, sleep, loaf, knead, fly; shared head; chain tail
+    rig.ts              spring rig + keyframed MOVES (hop, pounce, dance, bat)
+    Chester.tsx         the component: petting, taps, reactions, rainbow dash trigger
+    reactions.ts        tap reactions and which ones are allowed lying down
+    RainbowDash.tsx     the dash overlay
+    chester.css         CSS moves (several historical layers; later rules win; see section 6)
+    spring.ts           damped spring
+  screens/              Home, Session, Recap, Tree, Library, SkillPage, Settings, Care, Onboarding,
+                        Together (account and invite forms), Scanner (barcode), YarnBall, Gallery (dev only)
+  lib/
+    audio.ts            sampled and synthesized sounds, jingle, litter, meow
+    docparse.ts         rules that read vet/adoption/ESA paperwork
+    ocr.ts              text from photos (Tesseract) and PDFs (pdf.js), loaded on demand
+    petfood.ts          Open Pet Food Facts lookups
+    pet.ts              petText(): pet's name and she/her for girls, applied to written copy
+    theme.ts            light/dark/system
+    updates.ts          service-worker update-in-place
+    images.ts, stats.ts, install.ts
+  ui/                   TabBar, icons, router
+  styles/app.css        tokens (light + dark), layout, components
+supabase/
+  migrations/           SQL, run by hand in the Supabase SQL editor, in this order:
+    20261107230000_shared_training.sql   cats, cat_members, sets, RLS, join_cat
+    20261108120000_care.sql              care table
+    20261108180000_vet_docs.sql          pet-docs storage bucket + policies, 'doc' care kind
+    20261108230000_household_tools.sql   cat_people, member removal (superseded by households, harmless)
+    20261109000000_households.sql        households, migration of existing sharing, join_household, household_people
+  tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
+  functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
+scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
+public/                 icons, sfx samples
+docs/
+  HANDOFF.md            this file
+  sharing-setup.md      step-by-step Supabase setup (all SQL steps)
+  next-steps.md         short running list (points here)
+  plans/                the original Phase 1 plan
+.agents/skills, .claude/skills   installed agent skills (reanimate, earshot, huashu-art-motion, claudedesignskills…)
+```
+
+---
+
+## 4. How to work on it
+
+```bash
+npm ci
+npm run dev        # copies OCR files, then Vite on :5173/chester-training/ ; #/gallery shows every pose
+npm test           # vitest (jsdom + fake-indexeddb + the fake server)
+npm run typecheck
+npm run build      # what CI runs
+```
+
+- **Dev store handle:** in dev builds only, `globalThis.__chesterStore` is the store. Screenshots and scripts use it to
+  seed pets (`saveCat`, `logSet`) or to set state.
+- **Database policy tests:** start a throwaway Postgres 16, load `supabase/tests/stub_auth.sql` and
+  `stub_storage.sql`, then the migrations in order, then `rls_test.sql`; run `care_test.sql`, `docs_test.sql` and
+  `household_test.sql` each in their own `psql` session (the households migration goes before them). The households
+  test removes members at the end, so run it last.
+- **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
+- **Supabase changes:** Josh runs SQL himself in the dashboard's SQL editor (cloud sessions can't reach supabase.com).
+  Keep migrations idempotent (`if not exists`, `drop policy if exists`) and paste them into chat for him.
+
+---
+
+## 5. Decisions made (and why)
+
+| Decision | Why |
+|---|---|
+| **Sets are the shared record; progress and treats are replayed from them** | Two phones can never disagree; sets are append-only, so syncing is just "send what they lack, take what I lack". |
+| **Care items: newest edit wins, deletes are tombstones** | Care can be edited and deleted (sets can't); tombstones let a delete reach the other phone. |
+| **Email + password, "Confirm email" off** | New free Supabase projects can't edit email templates without custom SMTP, and email links open Safari instead of the installed app. Passwords need no email at all. |
+| **Households, not per-pet sharing** | Josh's call: people live with several pets; one invite should cover them all, and new pets should be shared automatically. Old per-pet codes still work and the old path stays as a fallback. |
+| **Only the household creator removes people; anyone can leave** | Simple, predictable; a removed person's logged sets stay. |
+| **Vet documents are read on the phone with rules, not AI** | Free, no API key, nothing sent anywhere to be read, and friends can't run up Josh's bill. Tuned on a real rescue/clinic packet. The Claude Edge Function stays in the repo as an option. |
+| **Tesseract and pdf.js files are served by PalDex, loaded on demand, not precached** | Works on any connection, testable offline; keeps the app download small (the engine and English data are ~15 MB). |
+| **Food lookup uses Open Pet Food Facts** | Free and open (ODbL, credited in the UI); scraping stores would break their terms. |
+| **No recorded copyrighted audio; the dash tune is original** | Josh asked for a Nyan-style dash; the song and look are deliberately original (no pixel art, no pastry, no borrowed melody). |
+| **Cats only for now** | The art, skills and copy are cat-specific; dogs are a separate project. |
+| **Copy is written for "a boy named Chester" and adapted at render time** (`lib/pet.ts`) | One set of text; girls get she/her and every pet gets its own name. User-typed notes are never rewritten. |
+| **Night is 10:30 PM to 5 AM; a tap wakes him** | 9 PM was too early for evening use. |
+| **App name PalDex, URL unchanged** | Renaming the repo would break the URL and home-screen installs. If it ever goes public, reconsider the name: "Pokédex"/"Paldea" are Nintendo's. |
+| **Self-updating PWA (`registerType: 'prompt'` + `updates.ts`)** | iPhone home-screen apps only check for updates on a cold start; this checks on return to the front and never interrupts a session. |
+| **Remembered "my name" is per account** | It used to be per phone, which put Megan's name on Josh's account. |
+| **No reduced-motion override** | Josh's explicit choice in Phase 1. |
+
+---
+
+## 6. Gotchas
+
+- **`chester.css` has several historical layers** (v1, v2, v3 moves, then the rig overrides). Later rules win. When a
+  move looks wrong, search for every rule on that selector, including the old `kswat` and `yrock` that used to live in
+  `app.css`. Moves the rig performs (hop, pounce, dance, bat) are switched off in CSS on a `.rigged` Chester.
+- **CSS animations override SVG `transform` attributes.** The rig writes transforms onto wrapper groups (`.r-all`,
+  `.r-head`, `.r-earL/R`, `.r-legL/R`, `.r-shadow`) so CSS and the rig can both run.
+- **Don't delete Supabase users** to reset a password: their sets are deleted with them. Reset it in
+  Authentication, then Users.
+- **Pages served under `/chester-training/`:** use `import.meta.env.BASE_URL` for any asset path.
+- **The households SQL is detected at runtime** (`SupabaseRemote.households()`); a "no" is rechecked after a minute.
+- **Personal data:** Josh's real document packet contains his SSN digits, DOB, address and phones. It was only ever
+  in a temporary folder; the test fixtures use made-up details. Keep it that way.
+- **Supabase free tier:** projects pause after a week unused (Restore in the dashboard); the built-in mailer allows only
+  ~2 emails an hour (not used now).
