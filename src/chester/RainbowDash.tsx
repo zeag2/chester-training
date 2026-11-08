@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { chesterSVG } from './art';
 
@@ -20,15 +20,23 @@ function ribbon(): string {
   return out;
 }
 
-export function RainbowDash({ coat, eyes, onDone }: { coat?: string; eyes?: string; onDone: () => void }) {
-  const cat = useMemo(() => chesterSVG({ pose: 'walk', coat, eyes, mood: 'happy', uid: 'dash', width: 120, label: 'Chester dashing on a rainbow' }), [coat, eyes]);
+/** Three passes: across, back the other way (facing the other way), and across again, at different heights. */
+export const PASSES = [{ top: '30%', dir: 1 }, { top: '58%', dir: -1 }, { top: '16%', dir: 1 }] as const;
+
+export function RainbowDash({ coat, eyes, onDone, onPass }: { coat?: string; eyes?: string; onDone: () => void; onPass?: (i: number) => void }) {
+  const cat = useMemo(() => chesterSVG({ pose: 'fly', coat, eyes, mood: 'happy', uid: 'dash', width: 130, label: 'Chester dashing on a rainbow' }), [coat, eyes]);
+  const [pass, setPass] = useState(0);
+  useEffect(() => { onPass?.(pass); }, [pass]); // eslint-disable-line react-hooks/exhaustive-deps
+  const p = PASSES[pass];
   const trail = useMemo(ribbon, []);
   const sparkles = useMemo(() => Array.from({ length: 14 }, (_, i) => ({ x: (i * 37 + 11) % 100, y: (i * 53 + 7) % 90, d: (i % 5) * 0.18, s: 10 + (i % 3) * 6 })), []);
-  return createPortal(<div className="dash" aria-hidden="true" onAnimationEnd={(e) => { if (e.animationName === 'dashfly') onDone(); }}>
+  return createPortal(<div className="dash" aria-hidden="true" onAnimationEnd={(e) => { if (e.animationName === 'dashfly') { if (pass + 1 < PASSES.length) setPass(pass + 1); else onDone(); } }}>
     {sparkles.map((p, i) => <i key={i} className="dashstar" style={{ left: p.x + '%', top: p.y + '%', fontSize: p.s, animationDelay: p.d + 's' }}>✦</i>)}
-    <div className="dashrider">
-      <svg className="dashtrail" viewBox={`0 0 ${W} 80`} width={W} height={80}><g className="dashwave" dangerouslySetInnerHTML={{ __html: trail }} /></svg>
-      <span className="dashcat" dangerouslySetInnerHTML={{ __html: cat }} />
+    <div key={pass} className="dashrider" style={{ top: p.top, animationDirection: p.dir < 0 ? 'reverse' : 'normal' }}>
+      <div className="dashflip" style={{ transform: p.dir < 0 ? 'scaleX(-1)' : undefined }}>
+        <svg className="dashtrail" viewBox={`0 0 ${W} 80`} width={W} height={80}><g className="dashwave" dangerouslySetInnerHTML={{ __html: trail }} /></svg>
+        <span className="dashcat" dangerouslySetInnerHTML={{ __html: cat }} />
+      </div>
     </div>
   </div>, document.body);
 }

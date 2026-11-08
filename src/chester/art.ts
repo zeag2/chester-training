@@ -24,7 +24,7 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'walk' | 'ball' | 'sleep' | 'loaf' | 'knead';
+export type Pose = 'sit' | 'walk' | 'ball' | 'sleep' | 'loaf' | 'knead' | 'fly';
 
 const SW = (c: Coat, w = 4) => `stroke="${c.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 const HEAD = 'M100 34 C150 34 162 66 162 92 C162 124 134 140 100 140 C66 140 38 124 38 92 C38 66 50 34 100 34 Z';
@@ -170,13 +170,35 @@ function loaf(c: Coat, eyes: string, mood: Mood, uid: string, knead = false): st
     + `<g class="r-all"><g class="all"><g style="transform:translateY(-20px)">${cat}</g></g></g>`;
 }
 
+/** Flying, superhero style: body stretched flat, head at the front at body height, front paws reaching forward,
+    back legs kicked out behind, tail streaming back. Faces right. */
+function fly(c: Coat, eyes: string, mood: Mood, uid: string): string {
+  const BODY = 'M34 118 C34 98 66 92 104 94 C138 96 158 102 160 120 C162 140 136 148 100 148 C62 148 34 140 34 118 Z';
+  const limb = (x1: number, y1: number, x2: number, y2: number, cls: string, back = false) =>
+    `<g class="${cls}"><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.line}" stroke-width="22" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="${back ? c.shade : pawFill(c)}" stroke-width="14" stroke-linecap="round"/></g>`;
+  let bp = `<path d="M40 128 C70 150 130 152 158 128 C150 146 120 152 96 152 C66 152 44 142 40 128 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="104" cy="132" rx="36" ry="11" fill="${c.white ? '#fbfaf7' : c.light}"/>`;
+  if (c.stripe) bp += `<path d="M76 96 Q80 108 74 116 M96 94 Q100 106 94 114 M116 96 Q120 108 114 116" stroke="${c.stripe}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="70" cy="110" rx="22" ry="14" fill="${c.patches[1]}"/><ellipse cx="128" cy="104" rx="16" ry="12" fill="${c.patches[0]}"/>`;
+  const f = c.point ?? c.base;
+  return `<defs><clipPath id="bc${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<g class="all">`
+    + `<g class="flytail"><path d="M40 112 C20 104 6 116 -8 106 C-18 98 -22 92 -30 94" stroke="${c.line}" stroke-width="20" fill="none" stroke-linecap="round"/><path d="M40 112 C20 104 6 116 -8 106 C-18 98 -22 92 -30 94" stroke="${f}" stroke-width="12" fill="none" stroke-linecap="round"/></g>`
+    + limb(60, 138, 22, 150, 'legBL', true) + limb(130, 138, 172, 150, 'legFR', true)
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + limb(70, 142, 30, 160, 'legBR') + limb(140, 140, 184, 158, 'legFL')
+    + `<g style="transform:translate(62px,14px) rotate(4deg) scale(.8);transform-origin:100px 92px"><g class="head">${head(c, eyes, mood, uid)}</g></g>`
+    + `</g>`;
+}
+
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string }): string {
   const c = COATS[o.coat ?? 'black'] ?? COATS.black;
   const pose = o.pose ?? 'sit';
   const mood = o.mood ?? 'curious';
-  const body = pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid)
+  const body = pose === 'fly' ? fly(c, o.eyes ?? 'gold', mood, o.uid)
+    : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid)
     : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid)
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid)
     : pose === 'loaf' || pose === 'knead' ? loaf(c, o.eyes ?? 'gold', mood, o.uid, pose === 'knead')
