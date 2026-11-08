@@ -119,3 +119,19 @@ export function litter(sec = 1.8) {
     at += dur + (Math.random() < 0.25 ? 0.25 + Math.random() * 0.2 : 0.02 + Math.random() * 0.06); // pauses between digs
   }
 }
+
+/** The rainbow-dash tune: an original bouncy 8-bit jingle (square-wave lead, triangle bass), about 3 seconds. */
+export function jingle() {
+  const c = ac(); if (!c) return; const t0 = c.currentTime + 0.02; const step = 0.115;
+  const N = (n: string) => { const i = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(n.slice(0, -1)); return 440 * 2 ** ((i - 9) / 12 + (Number(n.slice(-1)) - 4)); };
+  // lead: up-and-over arpeggios that land on a little fanfare
+  const lead = ['E5', 'G5', 'C6', 'G5', 'D5', 'G5', 'B5', 'G5', 'C5', 'E5', 'A5', 'E5', 'F5', 'A5', 'C6', 'D6', 'E6', '-', 'D6', 'C6', 'G5', '-', 'C6', '-', '-'];
+  const bass = ['C3', '-', 'C3', '-', 'G2', '-', 'G2', '-', 'A2', '-', 'A2', '-', 'F2', '-', 'F2', '-', 'G2', '-', 'G2', '-', 'C3', '-', 'C3', '-', '-'];
+  const tone = (type: OscillatorType, f: number, at: number, len: number, vol: number) => {
+    const o = c.createOscillator(); const g = c.createGain(); o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+    o.connect(g); g.connect(c.destination); o.start(at); o.stop(at + len + 0.02);
+  };
+  lead.forEach((n, i) => { if (n !== '-') tone('square', N(n), t0 + i * step, step * (lead[i + 1] === '-' ? 1.9 : 0.9), 0.07); });
+  bass.forEach((n, i) => { if (n !== '-') tone('triangle', N(n), t0 + i * step, step * 1.8, 0.16); });
+}

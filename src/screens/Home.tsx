@@ -13,7 +13,8 @@ import { CareCard } from './Care';
 import { usePetText } from '../lib/pet';
 import type { ReactionId } from '../chester/reactions';
 
-const PH = (h: number) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night');
+/** Part of the day from the time; night runs 10:30 PM to 5 AM. */
+const PH = (h: number, m = 0) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 22 || (h === 22 && m < 30) ? 'evening' : 'night');
 const BEAM = { morning: 'rgba(255,214,130,.24)', day: 'rgba(255,236,170,.22)', evening: 'rgba(255,170,140,.22)', night: 'rgba(150,170,230,.18)' };
 const MOTE = { morning: '#f0c76a', day: '#efd27e', evening: '#f0a07e', night: '#c9d4f2' };
 const GREET = { morning: 'Good morning', day: 'Good afternoon', evening: 'Good evening', night: 'Hi, night owl' };
@@ -96,13 +97,16 @@ export function Home() {
   const [line, setLine] = useState('');
   const { doze, knead, wake } = useHomeMood();
   const pt = usePetText();
-  const ph0 = PH(new Date().getHours());
+  const ph0 = PH(new Date().getHours(), new Date().getMinutes());
   const { meowN, meowLine, gag, gagLine, stink } = useHomeLife(ph0 === 'night', doze, wake);
   const [shown, setShown] = useState<'pet' | 'meow' | 'gag'>('pet');
   useEffect(() => { if (meowN) setShown('meow'); }, [meowN]);
   useEffect(() => { if (gagLine) setShown('gag'); }, [gagLine]);
-  const ph = PH(new Date().getHours());
-  const night = ph === 'night';
+  const ph = PH(new Date().getHours(), new Date().getMinutes());
+  // at night he sleeps, but a tap wakes him (sleepy) for two minutes before he dozes off again
+  const [awakeUntil, setAwakeUntil] = useState(0);
+  useEffect(() => { if (!awakeUntil) return; const t = window.setTimeout(() => setAwakeUntil(0), Math.max(0, awakeUntil - Date.now())); return () => window.clearTimeout(t); }, [awakeUntil]);
+  const night = ph === 'night' && !awakeUntil;
   const t = today();
   const todaySets = sets.filter((s) => s.day === t);
   const rewardedToday = todaySets.filter((s) => s.rewarded).length;
@@ -132,9 +136,9 @@ export function Home() {
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         <div className={`gagwrap ${gag ?? ''}`}><span className="gagflip">
-        <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || night ? 'sleepy' : 'curious'}
+        <Chester coat={cat.coat} eyes={cat.eyes} pose={gag === 'out' || gag === 'back' ? 'walk' : night || doze ? 'sleep' : knead && !done ? 'knead' : 'sit'} mood={done || ph === 'night' ? 'sleepy' : 'curious'}
           raised={!gag && !done && !night && !doze && sets.length === 0} anim={gag ? '' : night ? 'night' : doze ? 'nap' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
-          width={104} interactive label={cat.name} onPet={(l) => { setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
+          width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>
         <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>
       </div>
       <div className="card mint" style={{ padding: 18 }}>

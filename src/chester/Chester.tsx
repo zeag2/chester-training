@@ -94,8 +94,7 @@ export function Chester(p: ChesterProps) {
     taps.current = [...taps.current.filter((t) => now - t < 3000), now];
     if (taps.current.length >= 8 && now - dashAt.current > 10_000 && !dash) {
       taps.current = []; dashAt.current = now; setDash(true);
-      audio.sparkle(); audio.buzz([20, 60, 20, 60, 40]);
-      window.setTimeout(() => audio.sparkle(), 700); window.setTimeout(() => audio.chirp(true), 1400); window.setTimeout(() => audio.sparkle(), 2100);
+      audio.jingle(); audio.buzz([20, 60, 20, 60, 40]);
       window.setTimeout(() => setDash(false), 3600);
       p.onPet?.('WHEEEE! Rainbow dash!', 'r5');
       return;
