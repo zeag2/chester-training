@@ -13,6 +13,7 @@ import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
+import { MOVE_REWARD } from '../engine/play';
 import { FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
@@ -209,6 +210,12 @@ export class Store {
       const day = localDay(Date.now()); if (playedToday(c, day)) return null;
       return { ...c, log: [...c.log, this.event('play', 'play-' + day, PLAY_REWARD.treats, PLAY_REWARD.bond, toy)] };
     });
+  }
+
+  /** A play move found for the first time (see PLAY_MOVES): a few treats, once per pet. False if already found. */
+  foundMove(toy: string, move: string): Promise<boolean> {
+    const id = `move-${toy}-${move}`;
+    return this.corner((c) => (c.log.some((e) => e.id === id) ? null : { ...c, log: [...c.log, this.event('move', id, MOVE_REWARD.treats, MOVE_REWARD.bond, toy)] }));
   }
 
   // ---- Chester's care ----

@@ -17,9 +17,9 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 126 tests passing in 24 files, typecheck and build clean. Friend requests and
-  the per-browser install guide are on `main` and live; agenda item 1 (smart defaults, all cats) is on
-  `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
+- **State at handoff (2026-11-09):** 134 tests passing in 25 files, typecheck and build clean. Friend requests and
+  the per-browser install guide are on `main` and live; agenda item 1 (smart defaults, all cats) is live;
+  item 2 (playable laser and wand) is on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
   2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
@@ -276,7 +276,7 @@ Items marked *(art)* suit the art session.
 
 ### Agenda (agreed with Josh, 2026-11-09; work top-down, tick here and in the checklist below)
 1. [x] **Smart defaults + log for several cats at once** (done 2026-11-09). Make logging effortless.
-2. [ ] **Playable toys, part 1: laser dot and wand** (M, *(art)*, no SQL). See "Play" below.
+2. [x] **Playable toys, part 1: laser dot and wand** (done 2026-11-09). See "Play" below.
 3. [ ] **Playable toys, part 2: box and tunnel** (M, *(art)*, no SQL).
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
@@ -346,8 +346,19 @@ Items marked *(art)* suit the art session.
   - **Wand** (new, free starter toy): flick a feather on a string; he leaps and bats at it.
   - **Box** (bought): he hops in and peeks out; tap the box and he pops up or swats.
   - **Tunnel** (bought): he zooms in one end and out the other, sometimes hides in the middle.
-  - Keep the first-play-of-the-day reward (`PLAY_REWARD`); add "found a new move!" moments per toy, counted in the
-    unused `Wallet.playMoves` (this covers "Play moves found by petting" too).
+  - Keep the first-play-of-the-day reward (`PLAY_REWARD`); add "found a new move!" moments per toy.
+  - **Part 1 done (2026-11-09):** `#/play/laser` and `#/play/wand` (`src/screens/Play.tsx`), opened from the corner's
+    Play shelf (the wand is free for everyone; a gifted "a feather wand" is the same toy). His brain is pure and tested
+    (`src/engine/play.ts`, `step()`): a fast dot is watched (eyes track it), a slow one walked to, then a crouch and
+    butt wiggle (new looping rig move `stalk`) and a pounce (the rig's `hop` plus a sideways arc); a catch when the dot
+    is under his paw on landing, else a miss; a dot up the wall is stared and chattered at. The feather swings on a
+    spring under your finger; low and close he swats (the CSS `bat` paw) and sometimes bites it, swishing past or just
+    above he leaps (mid-air catch at the apex). Five moves per toy (`PLAY_MOVES`), each logged once per pet as corner
+    event `move-<toy>-<move>` (+3 treats, synced like the rest); the first catch of the day pays `PLAY_REWARD`
+    (`store.play`). `Chester` takes `move`/`moveKey` to drive rig moves from outside; `Rig.halt()` stops a loop.
+    `Wallet.playMoves` stays unused (the corner log is the shared record). Ideas: a side-on crouch/pounce pose (he
+    pounces in his front-facing sit pose for now), paw-over-the-dot on a catch, a "laser frustration" fix (end on a
+    catchable toy).
   - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
     there, or with that session paused.
 - [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
@@ -677,6 +688,7 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
+- Later: playable laser dot and wand (agenda 2). No skills invoked; Playwright frame strips of a scripted drag.
 - Later: smart defaults and logging for all cats (agenda 1). No skills or MCP servers; Playwright on the dev store.
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).

@@ -10,6 +10,8 @@ import './chester.css';
 export interface ChesterProps {
   pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string; wear?: string;
   interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null; reactKey?: number;
+  /** A rig move driven from outside (the play screen): starts when it changes or `moveKey` does; null stops a loop. */
+  move?: 'hop' | 'pounce' | 'stalk' | 'bat' | null; moveKey?: number;
 }
 
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
@@ -63,9 +65,12 @@ export function Chester(p: ChesterProps) {
   // the rig: springs that give the sitting pose follow-through (lean, head lag, ears, tail chain)
   const body = useRef<HTMLSpanElement>(null);
   const rig = useRef<Rig | null>(null);
+  const moveRef = useRef(p.move); moveRef.current = p.move;
+  useEffect(() => { const r = rig.current; if (!r) return; if (p.move) { r.play(p.move); if (p.move === 'hop') r.kick('hop', 520); } else r.halt(); }, [p.move, p.moveKey]);
   useEffect(() => {
     const el = body.current?.querySelector('svg'); if (!el || !el.querySelector('.rtail, .r-all')) return;
     const r = new Rig(el); rig.current = r;
+    if (moveRef.current) r.play(moveRef.current); // a new pose's rig picks up the move that's on
     const io = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([e]) => { r.visible = e.isIntersecting; });
     io?.observe(el);
     return () => { r.stop(); io?.disconnect(); rig.current = null; };

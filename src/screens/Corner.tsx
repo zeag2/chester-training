@@ -23,7 +23,7 @@ export function CushionArt({ id, width = 220 }: { id?: string; width?: number })
 }
 
 /** Toys from gifts are names like "a crinkle ball"; bought toys are shop ids. */
-const toyName = (t: string) => ITEM_BY_ID[t]?.name ?? t.replace(/^an? /, '').replace(/^./, (c) => c.toUpperCase());
+const toyName = (t: string) => (t === 'wand' ? 'Feather wand' : ITEM_BY_ID[t]?.name ?? t.replace(/^an? /, '').replace(/^./, (c) => c.toUpperCase()));
 const TOY_MOVE: Record<string, [ReactionId, string]> = {
   box: ['r1', 'If I fits, I sits.'], laser: ['r14', 'Got it! …Where did it go?'], tunnel: ['r5', 'ZOOM. In. Out. Again!'],
   'a crinkle ball': ['r13', '*crinkle crinkle*'], 'a feather wand': ['r1', 'Mine! Mine!'], 'a toy mouse': ['r14', 'Caught one!'],
@@ -39,7 +39,7 @@ function ToyArt({ name, i }: { name: string; i: number }) {
     : name === 'tunnel' ? <><path d="M4 34 C4 14 44 14 44 34 Z" fill="#6c7bd0" {...L} /><ellipse cx="24" cy="34" rx="10" ry="8" fill="#232320" /></>
     : /mouse/.test(name) ? <><ellipse cx="22" cy="30" rx="14" ry="9" fill="#b8b8c4" {...L} /><circle cx="32" cy="22" r="5" fill="#b8b8c4" {...L} /><path d="M8 30 C2 30 2 40 10 40" fill="none" {...L} /></>
     : /fish/.test(name) ? <><path d="M6 26 C14 14 32 14 38 26 C32 38 14 38 6 26 Z M38 26 L46 18 V34 Z" fill="#a9dcc9" {...L} /><circle cx="14" cy="24" r="2" fill="#232320" /></>
-    : /feather/.test(name) ? <><path d="M6 42 L30 14" {...L} fill="none" /><path d="M30 14 C26 4 40 0 42 6 C46 14 38 22 30 14 Z" fill="#ef8f9a" {...L} /></>
+    : /feather|wand/.test(name) ? <><path d="M6 42 L30 14" {...L} fill="none" /><path d="M30 14 C26 4 40 0 42 6 C46 14 38 22 30 14 Z" fill="#ef8f9a" {...L} /></>
     : <><circle cx="24" cy="26" r="14" fill={c} {...L} /><path d="M12 20 C20 24 28 20 36 24 M14 32 C22 28 30 34 36 30" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" /></>;
   return <svg viewBox="0 0 48 48" width={40} height={40} aria-hidden="true">{art}</svg>;
 }
@@ -60,7 +60,8 @@ export function Corner() {
   const balance = Math.max(0, wallet.treats);
   const bond = bondLevel(wallet.bond);
   const giftReady = !giftClaimed(c, day);
-  const toys = [...new Set([...wallet.toys, ...SHOP.filter((i) => i.kind === 'toy' && have.has(i.id)).map((i) => i.id)])];
+  // the feather wand is free for everyone (a gifted "a feather wand" is the same toy)
+  const toys = [...new Set(['wand', ...wallet.toys.filter((t) => t !== 'a feather wand'), ...SHOP.filter((i) => i.kind === 'toy' && have.has(i.id)).map((i) => i.id)])];
   const say = (t: string) => { setToast(t); window.setTimeout(() => setToast((x) => (x === t ? '' : x)), 2600); };
   const act = async (f: () => Promise<unknown>) => { if (busy) return; setBusy(true); try { await f(); } finally { setBusy(false); } };
 
@@ -68,7 +69,8 @@ export function Corner() {
     const n = await store.claimGift();
     if (n) { audio.sparkle(); audio.buzz([10, 40, 20]); setLine(`A gift! +${n} treats`); setReact({ id: 'r6', n: Date.now() }); say(`+${n} treats from today’s gift`); }
   });
-  const playWith = (toy: string) => act(async () => {
+  const playWith = (toy: string) => { if (toy === 'laser' || toy === 'wand') { audio.chirp(); go('play/' + toy); return; } void playOld(toy); };
+  const playOld = (toy: string) => act(async () => {
     const [id, l] = TOY_MOVE[toy] ?? ['r13', 'Play time!'];
     setReact({ id, n: Date.now() }); setLine(l); audio.chirp();
     if (await store.play(toy)) say(pt('+1 bond. He loves playing with you.'));
