@@ -78,7 +78,7 @@ export function Visit({ catId }: { catId: string }) {
             <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={removing === 'busy'} onClick={() => setRemoving('')}>Keep</button>
           </div></>
           : <div className="row"><p className="s sp">{removing === 'error' ? 'Can’t reach PalDex right now. Try again in a moment.' : `Friends with ${who}`}</p>
-            <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => setRemoving('ask')}>Remove friend</button></div>}
+            <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => setRemoving('ask')}>Remove friend</button></div>}
       </div>
     </div>
   </div>;

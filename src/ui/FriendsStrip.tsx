@@ -14,8 +14,8 @@ export function FriendRequestRow({ q, style }: { q: FriendRequest; style?: React
   return <div className="pop" role="group" aria-label={`Friend request from ${name}`} style={style}>
     <b style={{ fontSize: 15 }}>{name} wants to be friends. Accept?</b>
     <div className="row" style={{ gap: 8, marginTop: 8 }}>
-    <button className="btn2" style={{ flex: 1, minHeight: 40, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={() => { audio.sparkle(); void store.answerFriend(q.userId, true).catch(() => {}); }}>Accept</button>
-    <button className="btn2" style={{ flex: 1, minHeight: 40, background: 'var(--surface)' }} onClick={() => { void store.answerFriend(q.userId, false).catch(() => {}); }}>Not now</button>
+    <button className="btn2" style={{ flex: 1, minHeight: 44, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={() => { audio.sparkle(); void store.answerFriend(q.userId, true).catch(() => {}); }}>Accept</button>
+    <button className="btn2" style={{ flex: 1, minHeight: 44, background: 'var(--surface)' }} onClick={() => { void store.answerFriend(q.userId, false).catch(() => {}); }}>Not now</button>
     </div>
   </div>;
 }
@@ -41,7 +41,7 @@ export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
       <Paw color="#d4a23a" size={22} />
       <b className="sp" style={{ fontSize: 15 }}>{treatLine(treatNews.cat, treatNews.names)}</b>
       {treatNews.items?.length ? (treatNews.thanked ? <span className="s" style={{ fontWeight: 700 }}>Thanks sent</span>
-        : <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={() => { audio.chirp(); void store.thankTreats(); }}>Say thanks</button>) : null}
+        : <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { audio.chirp(); void store.thankTreats(); }}>Say thanks</button>) : null}
       <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissTreatNews()}><Icon name="close" size={18} /></button>
     </div>}
     {thanks.length > 0 && <div className="row pop" role="status" style={{ marginBottom: 10 }}>

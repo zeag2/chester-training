@@ -13,7 +13,7 @@ export function VetSummary() {
   const { cat, care } = useStore();
   const s = useMemo(() => vetSummary(care), [care]);
   if (!cat) return null;
-  const sect = (title: string, body: React.ReactNode) => <div className="card white" style={{ border: '1px solid var(--grey)' }}><b>{title}</b><div style={{ marginTop: 6 }}>{body}</div></div>;
+  const sect = (title: string, body: React.ReactNode) => <div className="card white"><b>{title}</b><div style={{ marginTop: 6 }}>{body}</div></div>;
   const line = (a: string, b?: string) => <div className="row" style={{ marginTop: 6, alignItems: 'baseline', gap: 8 }}><span className="sp">{a}</span>{b && <span className="s">{b}</span>}</div>;
   const none = (t: string) => <p className="s">{t}</p>;
   const w0 = s.weights[0], wl = s.weights[s.weights.length - 1];

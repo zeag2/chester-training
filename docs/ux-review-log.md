@@ -1,4 +1,4 @@
-last-reviewed: 39b124c2e3b89e2cab38b3d537f782832f7cd8cd
+last-reviewed: 686bdb617e0b8a70454873e7d101fe1f98992cf8
 
 # UX review log
 
@@ -18,6 +18,20 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-09 (04:13 UTC): 39b124c..686bdb6
+Checked with fake friends (an incoming request from Dana, one sent to Sam, a treat from Erin): Home friends card
+(request row, Say thanks), Friends (requests, Waiting to accept), Visit (Remove friend), Health (Summary for the vet,
+kitten vaccine timeline, weight guide), the vet summary, light and dark.
+
+Fixed:
+- Tap targets under 44 px raised to 44: Accept / Not now (Home and Friends), Say thanks, Cancel request, Remove /
+  Keep friend (Friends and Visit), Looked off? / Undo in Quick log, and the browser chips on the install steps.
+- Vet summary sections and the kitten timeline card drew a second border on top of `.card.white`'s new edge (a double
+  ring in dark mode); the extra borders are gone.
+- Health: "Summary for the vet" sat between the title and its subtitle; it now comes after the subtitle.
+
+Suggested: see the PR's "Suggestions (not done)".
 
 ### 2026-11-09: first run (last 24 h of main, up to 39b124c)
 Checked at iPhone 15 size, light and dark, with a fake friend (Erin's Mochi): Home (Quick log, daily check, Undo

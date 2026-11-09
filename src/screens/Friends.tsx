@@ -131,15 +131,15 @@ export function Friends({ code: linkCode }: { code?: string }) {
             <h2 style={{ marginTop: 22 }}>Waiting to accept</h2>
             {requests.filter((q) => !q.incoming).map((q) => <div key={q.userId} className="card grey row" style={{ marginTop: 8 }}>
               <span className="sp"><b>{q.name || 'A friend'}</b><p className="s">Request sent</p></span>
-              <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => { void store.cancelFriendRequest(q.userId).catch(() => {}); }} aria-label={`Cancel the request to ${q.name || 'this friend'}`}>Cancel</button>
+              <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { void store.cancelFriendRequest(q.userId).catch(() => {}); }} aria-label={`Cancel the request to ${q.name || 'this friend'}`}>Cancel</button>
             </div>)}</>}
           {friends.list.length > 0 && <>
             <h2 style={{ marginTop: 22 }}>Your friends</h2>
             {friends.list.map((f) => <div key={f.userId} className="card grey row" style={{ marginTop: 8 }}>
               <b className="sp">{f.name || 'A friend'}</b>
               {removing === f.userId
-                ? <><button className="btn2" style={{ minHeight: 36, background: 'var(--peach)', color: 'var(--peach-ink)' }} onClick={() => { setRemoving(''); void store.removeFriend(f.userId); }}>Remove</button><button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => setRemoving('')}>Keep</button></>
-                : <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => setRemoving(f.userId)} aria-label={`Remove ${f.name || 'this friend'}`}>Remove</button>}
+                ? <><button className="btn2" style={{ minHeight: 44, background: 'var(--peach)', color: 'var(--peach-ink)' }} onClick={() => { setRemoving(''); void store.removeFriend(f.userId); }}>Remove</button><button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => setRemoving('')}>Keep</button></>
+                : <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => setRemoving(f.userId)} aria-label={`Remove ${f.name || 'this friend'}`}>Remove</button>}
             </div>)}</>}
         </>}
     </div>

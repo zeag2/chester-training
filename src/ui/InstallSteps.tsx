@@ -37,7 +37,7 @@ export function InstallSteps({ name }: { name: string }) {
   return <>
     <div className="row" role="group" aria-label="Which browser are you using?" style={{ gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
       {(guess === 'inapp' ? ['inapp' as Browser, ...choices] : choices).map((k) => <button key={k} className="chip" aria-pressed={b === k} onClick={() => setB(k)}
-        style={{ border: 0, minHeight: 32, background: b === k ? 'var(--ink)' : 'var(--grey)', color: b === k ? 'var(--on-ink)' : 'inherit', fontWeight: 700 }}>{NAMES[k as Exclude<Browser, 'other'>]}</button>)}
+        style={{ border: 0, minHeight: 44, padding: '0 14px', background: b === k ? 'var(--ink)' : 'var(--grey)', color: b === k ? 'var(--on-ink)' : 'inherit', fontWeight: 700 }}>{NAMES[k as Exclude<Browser, 'other'>]}</button>)}
     </div>
     <ol className="steps">{steps(os, b, name).map((s, i) => <li key={b + i}><span>{s}</span></li>)}</ol>
     {os === 'ios' && b === 'safari' && <div className="pointdown" aria-hidden="true">↓</div>}
