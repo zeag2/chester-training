@@ -19,7 +19,8 @@ shared with the people you live with, plus friends who can see each other's cats
   (the publishable key is meant to be public; row-level security protects the data).
 - **State at handoff (2026-11-09):** 120 tests passing in 23 files, typecheck and build clean. `main` has everything
   through the treat thank-yous; friend requests are on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
-  through `20261113000000_treat_thanks.sql` has been run; `20261114000000_friend_requests.sql` has **not** yet.
+  through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
+  2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
 ## Pick up here
 
@@ -32,8 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
    refuse signed-out callers). Next: try a treat between two real phones.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
 4. **Friend requests** are built (2026-11-09, branch `claude/friend-request-acceptance-zytxm7`, not on `main` yet).
-   Next: Josh runs `20261114000000_friend_requests.sql`, then merges. Either order works: before the SQL, codes still
-   make friends straight away.
+   Its SQL has been run (checked live). Next: merge to `main`, then try a request between two real phones.
 5. Then the rest of section 2.
 
 
@@ -340,7 +340,7 @@ Items marked *(art)* suit the art session.
 - [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
 
 ### Friends safety
-- [x] **Accept friend requests** (done 2026-11-09, `20261114000000_friend_requests.sql`, **not run yet**): "Accept
+- [x] **Accept friend requests** (done 2026-11-09, `20261114000000_friend_requests.sql`, run): "Accept
   Erin?" instead of instant friendship; remove a friend from their cat's Visit page (see section 1, Friends). Policy
   test: `supabase/tests/friend_requests_test.sql`. Ideas: block someone outright; a request expiry.
 
