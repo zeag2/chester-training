@@ -674,8 +674,11 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   **A bed:** if the shown cat has a cushion in use (`corner.cushion`), Home draws `CushionArt` (from `Corner.tsx`) under
   him in a `.bedspot` that doesn't move with the gag; idles are knead (its own pink pillow hidden by `.onbed`) or
   `loaf` instead of the sofa `drape`.
-- **Chase** (`Chase.tsx`): timed phases (`AT`), each cat in a wrapper moved with a CSS `transform` transition;
-  `pose="walk"` while moving and a `scaleX(-1)` wrapper to face left; the lead cat gets `react="r14"` to pounce.
+- **Chase** (`Chase.tsx`): timed phases (`AT`), each cat in a wrapper moved with a CSS `transform` transition and a
+  `scaleX(-1)` wrapper to face left. Since the 2026-11-09 consistency pass it uses the play poses: `run` while chasing
+  (run and bat phases), the lead cat `crouch`es (650 ms of wiggle) then springs in a `leap` (CSS `kchaseleap`, 0.5 s
+  arc onto the ball, in `app.css`) and sits pleased; the others head-bonk (`r8`); everyone `walk`s home.
+- **Litter gag**: walks off (`walk`), runs back (`run`, the `gagback` slide, flipped to face left).
 - **Play screen** (`src/screens/Play.tsx` + `src/engine/play.ts`): a pure `step(brain, target, dt)` decides the mode
   each frame (sit, watch, stare, walk, stalk, pounce, land, swat, happy) and emits events; the screen writes the cat's
   `translate` and `--lx/--ly` straight to the DOM every frame and only re-renders React when the mode, facing or

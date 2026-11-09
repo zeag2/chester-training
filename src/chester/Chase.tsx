@@ -7,6 +7,8 @@ export interface SceneCat { id: string; name: string; coat?: string; eyes?: stri
 
 /* A yarn ball rolls in and every cat runs after it: they chase it to the right, it gets batted back and they wheel
    round after it, the lead cat pounces, everyone's pleased, the ball rolls away and they trot back to their spots.
+   Poses (2026-11-09 pass, matching the play screen): a galloping `run` while chasing, the lead cat crouches and
+   wiggles then springs in a stretched `leap` onto the ball, everyone `walk`s home.
    About 6 seconds. Cats start and end where the Home row has them (lead at 0, the others `gap` apart). */
 type Phase = 'enter' | 'run' | 'bat' | 'pounce' | 'home';
 const AT: [Phase, number][] = [['run', 650], ['bat', 1750], ['pounce', 3050], ['home', 4500]];
@@ -17,10 +19,15 @@ const Yarn = () => <svg viewBox="0 0 40 40" width={30} height={30} aria-hidden="
 
 export function Chase({ cats, width, size, gap, onDone }: { cats: SceneCat[]; width: number; size: number; gap: number; onDone: () => void }) {
   const [phase, setPhase] = useState<Phase>('enter');
+  // the lead cat's pounce: crouch and wiggle, spring, then sit pleased with the ball
+  const [lead, setLead] = useState<'crouch' | 'leap' | 'done'>('crouch');
   const done = useRef(onDone); done.current = onDone;
   useEffect(() => {
     audio.chirp(true);
-    const ts = AT.map(([p, ms]) => window.setTimeout(() => { setPhase(p); if (p === 'bat') audio.chirp(); if (p === 'pounce') audio.purr(0.9); }, ms));
+    const ts = AT.map(([p, ms]) => window.setTimeout(() => { setPhase(p); if (p === 'bat') audio.chirp(); }, ms));
+    const pounceAt = AT.find(([p]) => p === 'pounce')![1];
+    ts.push(window.setTimeout(() => { setLead('leap'); audio.chirp(true); }, pounceAt + 650));
+    ts.push(window.setTimeout(() => { setLead('done'); audio.purr(0.9); }, pounceAt + 1150));
     ts.push(window.setTimeout(() => done.current(), DONE_MS));
     return () => ts.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -35,13 +42,15 @@ export function Chase({ cats, width, size, gap, onDone }: { cats: SceneCat[]; wi
   const moving = phase === 'run' || phase === 'bat' || phase === 'home';
   const faceLeft = phase === 'bat' || phase === 'pounce';
   const dur = phase === 'run' ? 0.95 : phase === 'bat' ? 1.2 : phase === 'home' ? 1.35 : 0.4;
-  const react = (i: number): ReactionId | null => phase === 'pounce' ? (i === 0 ? 'r14' : 'r8') : null;
+  const react = (i: number): ReactionId | null => phase === 'pounce' && i > 0 ? 'r8' : null;
+  const poseOf = (i: number) => phase === 'run' || phase === 'bat' ? 'run' : phase === 'home' ? 'walk'
+    : phase === 'pounce' && i === 0 ? (lead === 'crouch' ? 'crouch' : lead === 'leap' ? 'leap' : 'sit') : 'sit';
   return <div className="chase" style={{ width, height: size * 1.02 }} aria-hidden="true">
     <span className={`chaseball ${phase}`} style={{ transform: `translateX(${ballX}px)`, transitionDuration: phase === 'enter' ? '0.9s' : phase === 'bat' ? '1.1s' : '0.9s' }}><Yarn /></span>
     {cats.map((c, i) => <div key={c.id} className="chasecat" style={{ transform: `translateX(${catX(i)}px)`, transitionDuration: dur + 's', transitionDelay: moving ? i * 0.12 + 's' : '0s', zIndex: n - i }}>
-      <div style={{ transform: faceLeft && moving ? 'scaleX(-1)' : undefined }}>
-        <Chester coat={c.coat} eyes={c.eyes} wear={c.wear} pose={moving ? 'walk' : 'sit'} mood={phase === 'pounce' || phase === 'home' ? 'happy' : 'curious'}
-          width={i === 0 ? size : size * 0.85} label={c.name} react={react(i)} reactKey={phase === 'pounce' ? 1 : 0} /></div>
+      <div style={{ transform: faceLeft && poseOf(i) !== 'sit' ? 'scaleX(-1)' : undefined }}><div className={i === 0 && phase === 'pounce' && lead !== 'crouch' ? 'chaseleap' : undefined}>
+        <Chester coat={c.coat} eyes={c.eyes} wear={c.wear} pose={poseOf(i)} mood={phase === 'home' || (phase === 'pounce' && (i > 0 || lead === 'done')) ? 'happy' : lead === 'leap' && i === 0 ? 'open' : 'curious'}
+          width={i === 0 ? size : size * 0.85} label={c.name} react={react(i)} reactKey={phase === 'pounce' ? 1 : 0} /></div></div>
     </div>)}
   </div>;
 }

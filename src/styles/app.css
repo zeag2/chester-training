@@ -177,3 +177,7 @@ button.lrow:active{background:var(--line)}
 .bedspot .gagwrap{position:relative;z-index:1}
 /* on a real bed he kneads into it, so the knead pose's own pink pillow goes */
 .onbed .kc .pillow{display:none}
+/* the chase's pounce: the lead cat springs forward and up onto the ball, nose up then down, and lands (drawn facing
+   right; the flip wrapper turns it round) */
+.chaseleap{transform-origin:50% 70%;animation:kchaseleap .5s cubic-bezier(.3,.6,.4,1) both}
+@keyframes kchaseleap{0%{transform:none}45%{transform:translate(16px,-30px) rotate(-22deg)}80%{transform:translate(28px,0) rotate(14deg)}100%{transform:translate(28px,0) rotate(0)}}
