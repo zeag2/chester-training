@@ -1,4 +1,4 @@
-/* Friend invites. An invite link is <app>#/friends/<CODE>; opening it fills the code in, ready to tap Add. The code is
+/* Friend invites. An invite link is <app>#/friends/<CODE>; opening it fills the code in, ready to tap Add (which sends a friend request). The code is
    kept until it's used, so it survives setting up the app first (a new friend has no account yet). */
 const KEY = 'paldex-pending-friend';
 const clean = (c: string) => c.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);

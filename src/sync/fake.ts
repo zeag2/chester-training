@@ -20,6 +20,10 @@ export class FakeServer {
   friendsTable = true;
   profiles = new Map<string, { code: string; name: string }>();
   friendships = new Set<string>();
+  /** Whether the friend requests SQL is run (false: entering a code makes friends straight away, as before). */
+  requestsTable = true;
+  /** friend requests, keyed `from|to` */
+  requests = new Map<string, { declined?: boolean }>();
   cards = new Map<string, PetCard>();
   treatsTable = true;
   /** friend treats, keyed `from|cat|day` */
@@ -103,15 +107,37 @@ export class FakeRemote implements Remote {
   async addFriend(code: string) {
     const u = this.fr(); const hit = [...this.s.profiles].find(([, p]) => p.code === code.trim().toUpperCase());
     if (!hit || hit[0] === u.userId) return null;
-    this.s.friendships.add(u.userId + '|' + hit[0]); this.s.friendships.add(hit[0] + '|' + u.userId); return hit[1].name;
+    const them = hit[0]; const name = hit[1].name;
+    if (this.s.friendships.has(u.userId + '|' + them)) return { name, status: 'already' as const };
+    if (!this.s.requestsTable || this.s.requests.has(them + '|' + u.userId)) { this.befriend(u.userId, them); return { name, status: 'friends' as const }; }
+    if (!this.s.requests.has(u.userId + '|' + them)) this.s.requests.set(u.userId + '|' + them, {});
+    return { name, status: 'sent' as const };
   }
+  private befriend(a: string, b: string) {
+    this.s.friendships.add(a + '|' + b); this.s.friendships.add(b + '|' + a);
+    this.s.requests.delete(a + '|' + b); this.s.requests.delete(b + '|' + a);
+  }
+  async friendRequests() {
+    const u = this.fr(); if (!this.s.requestsTable) return [];
+    return [...this.s.requests].flatMap(([k, r]) => { const [from, to] = k.split('|');
+      if (to === u.userId && !r.declined) return [{ userId: from, name: this.s.profiles.get(from)?.name ?? '', incoming: true }];
+      if (from === u.userId) return [{ userId: to, name: this.s.profiles.get(to)?.name ?? '', incoming: false }];
+      return []; });
+  }
+  async answerFriend(userId: string, accept: boolean) {
+    const u = this.fr(); const r = this.s.requests.get(userId + '|' + u.userId); if (!r) return;
+    if (accept) this.befriend(u.userId, userId); else r.declined = true;
+  }
+  async cancelFriendRequest(userId: string) { const u = this.fr(); this.s.requests.delete(u.userId + '|' + userId); }
   async friends() { const u = this.fr(); return [...this.s.friendships].filter((f) => f.startsWith(u.userId + '|')).map((f) => { const id = f.split('|')[1]; return { userId: id, name: this.s.profiles.get(id)?.name ?? '' }; }); }
   async friendPets() {
     const u = this.fr(); const mine = new Set(this.myHouses().map((h) => h.id));
     return (await this.friends()).flatMap((f) => [...this.s.cats].filter(([, c]) => !mine.has(c.householdId) && this.s.houses.get(c.householdId)?.members.some((m) => m.userId === f.userId))
       .map(([id, c]) => ({ owner: f.userId, ownerName: f.name, catId: id, card: { ...(this.s.cards.get(id) ?? {}), name: c.cat.name, coat: c.cat.coat, eyes: c.cat.eyes, sex: c.cat.sex, birthday: c.cat.birthday } as PetCard })));
   }
-  async removeFriend(userId: string) { const u = this.fr(); this.s.friendships.delete(u.userId + '|' + userId); this.s.friendships.delete(userId + '|' + u.userId); }
+  async removeFriend(userId: string) {
+    const u = this.fr(); for (const [a, b] of [[u.userId, userId], [userId, u.userId]]) { this.s.friendships.delete(a + '|' + b); this.s.requests.delete(a + '|' + b); }
+  }
   async publishCard(catId: string, card: PetCard) { const u = this.fr(); if (!this.s.isMember(catId, u.userId)) throw new Error('not your pet'); this.s.cards.set(catId, structuredClone(card)); }
 
   private tr() { const u = this.fr(); if (!this.s.treatsTable) throw new Error('treats-missing'); return u; }

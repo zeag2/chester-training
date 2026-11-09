@@ -1,7 +1,7 @@
 # PalDex: handoff
 
-_Last updated 2026-11-08, end of the session that built the corner, friends, the tracker-first layout and the new walk
-pose. Start here when picking the project back up._
+_Last updated 2026-11-09 (friend requests, branch `claude/friend-request-acceptance-zytxm7`). Start here when picking
+the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
 symptoms, vet visits, medicine and vaccines, food, documents) and **clicker training as an optional extra per cat**,
@@ -17,9 +17,9 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 95 tests passing in 17 files, typecheck and build clean, working tree clean; everything is on
-  `main` and live (last commit: the art style guide). All Supabase SQL through `20261110000000_friends.sql` has been
-  run (checked against the live database), including the extra `revoke ... from anon` on the friend functions.
+- **State at handoff (2026-11-09):** 120 tests passing in 23 files, typecheck and build clean. `main` has everything
+  through the treat thank-yous; friend requests are on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
+  through `20261113000000_treat_thanks.sql` has been run; `20261114000000_friend_requests.sql` has **not** yet.
 
 ## Pick up here
 
@@ -31,7 +31,10 @@ shared with the people you live with, plus friends who can see each other's cats
    `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
    refuse signed-out callers). Next: try a treat between two real phones.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
-4. Then the rest of section 2.
+4. **Friend requests** are built (2026-11-09, branch `claude/friend-request-acceptance-zytxm7`, not on `main` yet).
+   Next: Josh runs `20261114000000_friend_requests.sql`, then merges. Either order works: before the SQL, codes still
+   make friends straight away.
+5. Then the rest of section 2.
 
 
 ---
@@ -92,7 +95,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 - Works offline: sets and care save on the phone and sync when back online, never doubled.
 
 ### Friends (`#/friends`, from Me, Home's Friends card and its +)
-- Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
+- Every account has a **friend code**. Entering someone's code **sends them a request** (since 2026-11-09,
+  `20261114000000_friend_requests.sql`): they see "Erin wants to be friends. Accept?" on Home's friends card and at the
+  top of Friends, and a red dot on Me ("Request" on Me's Friends row). **Accept** makes you friends both ways; **Not
+  now** is quiet (the request stays, marked declined: the sender still sees "Waiting to accept", and sending again
+  doesn't ask twice). Entering the code of someone who already asked you accepts straight away. Senders can **Cancel**
+  under "Waiting to accept". At most 30 open requests per person. The old `add_friend` now sends a request too, so
+  older app versions can't skip it. Before that SQL is run, codes make friends straight away (the app falls back to
+  `add_friend`; `friendRequests()` returns []). Incoming requests are checked when Friends loads and on sync (at most
+  once a minute, `store.requests`).
+- Either side can remove a friend: on Friends ("Your friends") or at the bottom of a friend's cat's **Visit** page
+  ("Remove friend", with a confirm). Removing also clears requests between you, so either can ask again.
 - **Friend bonus:** each new friend gives the pet being shown +15 treats and +1 bond, once per friend, for the first
   10 friends (`FRIEND_BONUS`, `unrewardedFriends` in `corner.ts`; logged as `friend-<their id>` so re-adding doesn't pay
   again). Both sides get it: the person adding right away, the other when their friends are next checked (opening
@@ -327,8 +340,9 @@ Items marked *(art)* suit the art session.
 - [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
 
 ### Friends safety
-- [ ] **Accept friend requests** (M, SQL): "Accept Erin?" instead of instant friendship; remove a friend from their
-  cat's Visit page.
+- [x] **Accept friend requests** (done 2026-11-09, `20261114000000_friend_requests.sql`, **not run yet**): "Accept
+  Erin?" instead of instant friendship; remove a friend from their cat's Visit page (see section 1, Friends). Policy
+  test: `supabase/tests/friend_requests_test.sql`. Ideas: block someone outright; a request expiry.
 
 ### Phase 2: Chester's world (finish first)
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
@@ -471,6 +485,7 @@ supabase/
     20261111000000_friend_treats.sql     friends' free treats: friend_treats, give_treat/treats_given/treats_for
     20261112000000_daily_logs.sql        adds the 'daily' care kind (one-tap Fed/Scooped/Played, daily check)
     20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
+    20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -508,7 +523,9 @@ npm run build      # what CI runs
   `friend_treats_test.sql` also sets up its own people: run it after the friend treats migration (it's fine after
   `friends_test.sql`). The full order that passed on 2026-11-08: stub_auth, stub_storage, shared_training, care,
   vet_docs, household_tools, rls_test, households, friends, friends_test, friend_treats (twice, to check it's
-  idempotent), friend_treats_test.
+  idempotent), friend_treats_test. On 2026-11-09 the whole chain passed again with daily_logs, treat_thanks,
+  treat_thanks_test, friend_requests (twice) and `friend_requests_test.sql` (last: the earlier tests use instant
+  `add_friend`).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -612,6 +629,11 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - In the friends visit + treat session (2026-11-08, `claude/friends-visit-treat`): no skills, plugins or MCP servers
   were invoked. Checks used Playwright (iPhone 15, light and dark, the dev store seeded with the in-memory
   `FakeServer` imported through Vite) and a local Postgres 16 for `friend_treats_test.sql`.
+
+- In the friend requests session (2026-11-09, `claude/friend-request-acceptance-zytxm7`): no skills, plugins or MCP
+  servers were invoked (`lottiefiles-creator` connected, unused; `sp-global` failed to connect, not needed). Checks:
+  a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
+  with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
 ### Scheduled tasks
 - **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): every 4 hours (at :13, UTC)

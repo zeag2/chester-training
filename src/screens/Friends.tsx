@@ -11,6 +11,7 @@ import * as audio from '../lib/audio';
 import { inviteText, pendingFriend, setPendingFriend } from '../lib/invite';
 import { titleFor } from '../lib/appname';
 import { FRIEND_BONUS, owned } from '../engine/corner';
+import { FriendRequestRow } from '../ui/FriendsStrip';
 
 function PetCardView({ p }: { p: FriendPet }) {
   const c = p.card; const mastered = c.mastered ?? [];
@@ -34,16 +35,22 @@ function PetCardView({ p }: { p: FriendPet }) {
 export function InvitePanel({ prefill = '' }: { prefill?: string }) {
   const { friends, pets, cat } = useStore();
   const [code, setCode] = useState(prefill || pendingFriend());
-  const [msg, setMsg] = useState(prefill || pendingFriend() ? 'A friend invited you. Tap Add to be friends.' : '');
+  const [msg, setMsg] = useState(prefill || pendingFriend() ? 'A friend invited you. Tap Add to send them a friend request.' : '');
   const [busy, setBusy] = useState(false);
   if (!friends || friends.missing) return null;
   const mine = friends.code;
   const add = async () => {
     if (busy || !code.trim()) return; setBusy(true); setMsg('');
     try {
-      const name = await store.addFriend(code);
-      if (name === null) setMsg(code.trim().toUpperCase() === mine ? 'That’s your own code. Send it to a friend instead.' : 'That code didn’t match anyone. Check the letters and try again.');
-      else { audio.sparkle(); setMsg(`You’re friends${name ? ` with ${name}` : ''}!${cat ? ` +${FRIEND_BONUS.treats} treats for ${cat.name}.` : ''}`); setCode(''); setPendingFriend(''); }
+      const res = await store.addFriend(code);
+      if (res === null) setMsg(code.trim().toUpperCase() === mine ? 'That’s your own code. Send it to a friend instead.' : 'That code didn’t match anyone. Check the letters and try again.');
+      else {
+        const who = res.name || 'them';
+        if (res.status === 'friends') { audio.sparkle(); setMsg(`You’re friends${res.name ? ` with ${res.name}` : ''}!${cat ? ` +${FRIEND_BONUS.treats} treats for ${cat.name}.` : ''}`); }
+        else if (res.status === 'already') setMsg(`You’re already friends with ${res.name || 'them'}.`);
+        else { audio.chirp(); setMsg(`Request sent. You’ll be friends once ${who} accepts.`); }
+        setCode(''); setPendingFriend('');
+      }
     } catch { setMsg('Can’t reach PalDex right now. Try again in a moment.'); }
     finally { setBusy(false); }
   };
@@ -89,7 +96,7 @@ export function InviteSheet({ onClose }: { onClose: () => void }) {
 }
 
 export function Friends({ code: linkCode }: { code?: string }) {
-  const { account, friends, cat } = useStore();
+  const { account, friends, cat, requests } = useStore();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [removing, setRemoving] = useState('');
@@ -110,11 +117,22 @@ export function Friends({ code: linkCode }: { code?: string }) {
         : err ? <div className="card peach"><p className="s" style={{ color: 'var(--peach-ink)' }}>{err}</p></div>
         : friends?.missing ? <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>Friends aren’t switched on yet</b><p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>Whoever runs this PalDex needs to run its friends setup once. Check back soon.</p></div>
         : friends && <>
+          {requests.some((q) => q.incoming) && <div className="card sky">
+            <b>Friend requests</b>
+            <p className="s" style={{ marginTop: 2 }}>Friends see your cats’ look, skills and streak. Not now is quiet: they aren’t told.</p>
+            {requests.filter((q) => q.incoming).map((q) => <FriendRequestRow key={q.userId} q={q} style={{ marginTop: 10 }} />)}
+          </div>}
           <InvitePanel prefill={linkCode} />
           <h2 style={{ marginTop: 22 }}>Friends’ cats</h2>
           {friends.pets.length === 0
             ? <div className="card grey row"><Paw size={24} color="var(--faint)" /><p className="s">{friends.list.length ? 'Your friends haven’t added a cat yet.' : `Send your code to a friend, or add theirs, and their cats will show up here next to ${cat?.name ?? 'yours'}.`}</p></div>
             : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>{friends.pets.map((p) => <PetCardView key={p.catId} p={p} />)}</div>}
+          {requests.some((q) => !q.incoming) && <>
+            <h2 style={{ marginTop: 22 }}>Waiting to accept</h2>
+            {requests.filter((q) => !q.incoming).map((q) => <div key={q.userId} className="card grey row" style={{ marginTop: 8 }}>
+              <span className="sp"><b>{q.name || 'A friend'}</b><p className="s">Request sent</p></span>
+              <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => { void store.cancelFriendRequest(q.userId).catch(() => {}); }} aria-label={`Cancel the request to ${q.name || 'this friend'}`}>Cancel</button>
+            </div>)}</>}
           {friends.list.length > 0 && <>
             <h2 style={{ marginTop: 22 }}>Your friends</h2>
             {friends.list.map((f) => <div key={f.userId} className="card grey row" style={{ marginTop: 8 }}>

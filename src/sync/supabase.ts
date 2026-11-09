@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
-import type { Account, Friend, FriendPet, Member, PetCard, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
 const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -165,7 +165,19 @@ export class SupabaseRemote implements Remote {
     return r.data as T;
   }
   friendCode(name: string) { return this.rpc<string>('my_friend_code', { name }); }
-  addFriend(code: string) { return this.rpc<string | null>('add_friend', { code }); }
+  async addFriend(code: string): Promise<AddFriendResult | null> {
+    try { return await this.rpc<AddFriendResult | null>('request_friend', { code }, 'requests-missing'); }
+    catch (e) { if ((e as Error).message !== 'requests-missing') throw e; }
+    // the friend requests SQL isn't run yet: the old instant friendship
+    const name = await this.rpc<string | null>('add_friend', { code });
+    return name === null ? null : { name, status: 'friends' };
+  }
+  async friendRequests(): Promise<FriendRequest[]> {
+    try { return ((await this.rpc<{ user_id: string; name: string; incoming: boolean }[]>('friend_requests', undefined, 'requests-missing')) ?? []).map((r) => ({ userId: r.user_id, name: r.name, incoming: r.incoming })); }
+    catch (e) { if ((e as Error).message === 'requests-missing') return []; throw e; }
+  }
+  async answerFriend(userId: string, accept: boolean) { await this.rpc('answer_friend_request', { requester: userId, accept }); }
+  async cancelFriendRequest(userId: string) { await this.rpc('cancel_friend_request', { target: userId }); }
   async friends(): Promise<Friend[]> { return ((await this.rpc<{ user_id: string; name: string }[]>('my_friends')) ?? []).map((r) => ({ userId: r.user_id, name: r.name })); }
   async friendPets(): Promise<FriendPet[]> {
     return ((await this.rpc<{ owner: string; owner_name: string; cat_id: string; card: PetCard }[]>('friend_pets')) ?? []).map((r) => ({ owner: r.owner, ownerName: r.owner_name, catId: r.cat_id, card: r.card }));

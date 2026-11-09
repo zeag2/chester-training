@@ -102,7 +102,7 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
 }
 
 export function Settings() {
-  const { cat, account, household, sync, care, pets, friendNews } = useStore();
+  const { cat, account, household, sync, care, pets, friendNews, requests } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
@@ -131,7 +131,7 @@ export function Settings() {
     </Group>
 
     {sharingConfigured() && (account ? <Group title="People" foot={household && others.length ? `Your household sees and looks after every cat here. ${syncText}.` : syncText}>
-      <Row label="Friends" sub="Your friend code, and your friends’ cats" value={friendNews ? 'New' : undefined} onClick={() => go('friends')} />
+      <Row label="Friends" sub="Your friend code, and your friends’ cats" value={requests.some((q) => q.incoming) ? 'Request' : friendNews ? 'New' : undefined} onClick={() => go('friends')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
         value={m.owner ? 'Set it up' : 'Household'} onClick={() => setPerson(m.userId)} />)}
       {household && <Row label={others.length ? 'Invite someone else to your household' : 'Invite someone you live with'} onClick={() => setSheet('invite')} />}

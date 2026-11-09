@@ -6,6 +6,19 @@ import { go } from './router';
 import * as audio from '../lib/audio';
 import { pendingFriend } from '../lib/invite';
 import { FRIEND_BONUS } from '../engine/corner';
+import type { FriendRequest } from '../sync/remote';
+
+/** "Accept Erin?" with Accept and Not now. Declining is quiet: Erin isn't told and still sees it as waiting. */
+export function FriendRequestRow({ q, style }: { q: FriendRequest; style?: React.CSSProperties }) {
+  const name = q.name || 'Someone';
+  return <div className="pop" role="group" aria-label={`Friend request from ${name}`} style={style}>
+    <b style={{ fontSize: 15 }}>{name} wants to be friends. Accept?</b>
+    <div className="row" style={{ gap: 8, marginTop: 8 }}>
+    <button className="btn2" style={{ flex: 1, minHeight: 40, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={() => { audio.sparkle(); void store.answerFriend(q.userId, true).catch(() => {}); }}>Accept</button>
+    <button className="btn2" style={{ flex: 1, minHeight: 40, background: 'var(--surface)' }} onClick={() => { void store.answerFriend(q.userId, false).catch(() => {}); }}>Not now</button>
+    </div>
+  </div>;
+}
 
 /** "Erin gave Chester a treat" / "Erin and Dana gave Chester treats". */
 export function treatLine(cat: string, names: string[]): string {
@@ -16,13 +29,14 @@ export function treatLine(cat: string, names: string[]): string {
 /** Home's one friends card: friends' cats as little faces (tap one to visit), a paw on each that can still get
     today's treat, a line when a friend gave one of your cats a treat, and + to invite someone. */
 export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
-  const { account, friends, treatNews, cat, thanks } = useStore();
+  const { account, friends, treatNews, cat, thanks, requests } = useStore();
   useEffect(() => { if (account && !friends) store.loadFriends().catch(() => {}); }, [account, friends]);
   if (!account) return null;
   const pets = friends && !friends.missing ? friends.pets : [];
   const given = new Set(friends?.given ?? []);
   const canTreat = !!friends && friends.treats !== 'missing';
   return <div className="card sky" style={{ paddingBottom: 10 }}>
+    {requests.filter((q) => q.incoming).map((q) => <FriendRequestRow key={q.userId} q={q} style={{ marginBottom: 10 }} />)}
     {treatNews && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
       <Paw color="#d4a23a" size={22} />
       <b className="sp" style={{ fontSize: 15 }}>{treatLine(treatNews.cat, treatNews.names)}</b>

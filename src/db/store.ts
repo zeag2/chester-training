@@ -6,7 +6,7 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, Friend, FriendPet, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
+import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
@@ -46,6 +46,8 @@ export interface Snapshot {
   friendNews: { names: string[]; scarf: boolean } | null;
   /** Friends' treats that just landed for a pet, for a line on Home ("Erin gave Chester a treat"). */
   treatNews: { cat: string; names: string[]; catId?: string; items?: { from: string; day: string }[]; thanked?: boolean } | null;
+  /** Friend requests: incoming ones ("Accept Erin?") and mine still waiting. Checked on sync and when Friends loads. */
+  requests: FriendRequest[];
   /** "Mochi says thank you": thank-yous for treats I gave, not dismissed yet on this phone. */
   thanks: { catId: string; catName: string; day: string }[];
   /** Treats a care entry just earned, for a short note on the Health screen. */
@@ -61,7 +63,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [] };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [], requests: [] };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -312,6 +314,7 @@ export class Store {
       let given: string[] = []; let treats: 'missing' | undefined;
       try { given = await r.treatsGiven(localDay(Date.now())); } catch (e) { if (String((e as Error)?.message).includes('treats-missing')) treats = 'missing'; else throw e; }
       this.set({ friends: { code, list, pets, given, treats } });
+      await this.loadRequests(r);
       await this.rewardFriends(list);
       await this.collectTreats(true);
       try { const seen = this.seenThanks(); this.set({ thanks: (await r.myThanks()).filter((t) => !seen.has(t.catId + '|' + t.day)) }); } catch { /* thanks SQL not run yet */ }
@@ -384,11 +387,24 @@ export class Store {
   private async checkFriends(r: Remote) {
     if (Date.now() - this.friendsCheckedAt < 60_000) return; // checked on every app open (sync runs then), at most once a minute
     this.friendsCheckedAt = Date.now();
-    try { await this.rewardFriends(await r.friends()); } catch { /* friends not set up yet, or offline */ }
+    try { await this.rewardFriends(await r.friends()); await this.loadRequests(r); } catch { /* friends not set up yet, or offline */ }
   }
-  /** Add a friend by their code: their name ('' if none), or null when the code is wrong. */
-  async addFriend(code: string): Promise<string | null> {
-    const name = await this.remote!.addFriend(code.trim()); if (name !== null) await this.loadFriends(); return name;
+  private async loadRequests(r: Remote) {
+    try { this.set({ requests: await r.friendRequests() }); } catch { /* offline: keep what we had */ }
+  }
+  /** Enter a friend's code: sends them a request ("Accept Josh?"), or makes you friends when they'd already asked you.
+      Null when the code is wrong or your own. */
+  async addFriend(code: string): Promise<AddFriendResult | null> {
+    const res = await this.remote!.addFriend(code.trim()); if (res !== null) await this.loadFriends(); return res;
+  }
+  /** Accept or decline a friend request (declining is quiet: they aren't told). */
+  async answerFriend(userId: string, accept: boolean) {
+    this.set({ requests: this.snap.requests.filter((q) => !(q.incoming && q.userId === userId)) });
+    await this.remote!.answerFriend(userId, accept); await this.loadFriends();
+  }
+  async cancelFriendRequest(userId: string) {
+    this.set({ requests: this.snap.requests.filter((q) => q.incoming || q.userId !== userId) });
+    await this.remote!.cancelFriendRequest(userId); await this.loadFriends();
   }
   async removeFriend(userId: string) { await this.remote!.removeFriend(userId); await this.loadFriends(); }
 
@@ -493,7 +509,7 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
+  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {
