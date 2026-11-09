@@ -181,3 +181,14 @@ button.lrow:active{background:var(--line)}
    right; the flip wrapper turns it round) */
 .chaseleap{transform-origin:50% 70%;animation:kchaseleap .5s cubic-bezier(.3,.6,.4,1) both}
 @keyframes kchaseleap{0%{transform:none}45%{transform:translate(16px,-30px) rotate(-22deg)}80%{transform:translate(28px,0) rotate(14deg)}100%{transform:translate(28px,0) rotate(0)}}
+/* Home's friends card: one tile per friend, their cats sitting together on a little floor, whose they are and names */
+.households{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x proximity}
+.household{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;min-width:112px;padding:8px 12px 10px;border-radius:22px;background:var(--surface);text-align:center}
+.householdcats{display:flex;align-items:flex-end;justify-content:center;height:66px;padding:0 4px;border-bottom:3px solid var(--grey);border-radius:0 0 6px 6px}
+.householdcat{position:relative;border:0;background:none;padding:0;margin:0 -14px;display:block;line-height:0;min-height:44px}
+.householdcat:first-child{margin-left:0}.householdcat:last-child{margin-right:0}
+.householdcat .tapme{display:block}
+.householdcat .treatbadge{position:absolute;top:2px;right:6px;width:20px;height:20px;border-radius:10px;background:var(--butter);display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
+.householdmore{align-self:center;margin-left:10px;font-weight:800}
+.householdwho{margin-top:6px;font-size:14px;line-height:1.2}
+.householdnames{font-size:12.5px;line-height:1.25;max-width:150px}

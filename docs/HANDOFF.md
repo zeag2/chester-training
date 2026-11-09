@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 135 tests passing in 25 files, typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 136 tests passing in 26 files, typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -122,8 +122,10 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 - Needs `20261110000000_friends.sql` (run it in the Supabase SQL editor). Until then the screen says friends aren't
   switched on yet; nothing else is affected.
 - **Friends' cats strip on Home** (`src/ui/FriendsStrip.tsx`, one line after the Today card in `Home.tsx`): Home's only
-  friends card (the older "Friends' cats" card was merged into it on 2026-11-08). Faces like the cat switcher, with a
-  little paw badge on each cat that can still get today's treat, and + to invite (opens the invite sheet). It also shows "Erin gave Chester a treat" (`treatNews` in the store).
+  friends card (the older "Friends' cats" card was merged into it on 2026-11-08). Since 2026-11-09 it shows **one tile
+  per friend** (`households()` groups `friends.pets` by owner): their cats sitting together on a little floor, then
+  "Erin's" and "Bijou & Billie" (up to 4 cats, then +N); tap a cat to visit it; a paw badge on each cat that can still
+  get today's treat; + to invite (opens the invite sheet). The Friends screen ("See all") still lists cats one card each. It also shows "Erin gave Chester a treat" (`treatNews` in the store).
 - **Visiting** (`#/visit/<catId>`, `src/screens/Visit.tsx`, also from each card on the Friends screen): the friend's cat
   big and pettable with the usual reactions (`<Chester interactive>` with the card's coat, eyes and outfit), plus the
   card's skills, streak and bond.
