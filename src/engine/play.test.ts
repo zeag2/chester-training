@@ -38,10 +38,15 @@ describe('the laser dot', () => {
     expect([...r.modes]).toEqual(['stare']);
     expect(r.moves).toEqual(['chatter']);
   });
-  it('just watches a dot that keeps dashing about', () => {
-    const r = run(newBrain(200), (t) => ({ x: 195 + Math.sin(t * 9) * 170, h: 0 }), 3);
-    expect(r.modes.has('watch')).toBe(true);
+  it('sprints after a dot that keeps dashing about (zoomies), and doesn’t pounce at it', () => {
+    const r = run(newBrain(200), (t) => ({ x: 195 + Math.sin(t * 4) * 170, h: 0 }), 3);
+    expect(r.modes.has('chase')).toBe(true);
+    expect(r.moves).toContain('zoomies');
     expect(r.events.some((e) => e.kind === 'pounce')).toBe(false);
+  });
+  it('sprints to a still dot far away instead of trotting', () => {
+    const r = run(newBrain(60), { x: 370, h: 0 }, 1);
+    expect(r.modes.has('chase')).toBe(true);
   });
   it('sits when the dot is gone', () => {
     expect(run(newBrain(200), null, 1).b.mode).toBe('sit');

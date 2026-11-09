@@ -42,7 +42,7 @@ describe('art safety', () => {
 });
 
 describe('art', () => {
-  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly', 'run', 'curl', 'full', 'sploot'] as const;
+  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly', 'run', 'curl', 'full', 'sploot', 'crouch', 'leap', 'reach'] as const;
   it('every pose draws in every coat with the parts the rig and CSS use', async () => {
     const { COATS } = await import('./art');
     for (const pose of poses) for (const coat of Object.keys(COATS)) {

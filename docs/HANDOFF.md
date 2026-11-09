@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 134 tests passing in 25 files, typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 135 tests passing in 25 files, typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -230,6 +230,8 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
 - **Zoomies** (a rare tap reaction, and the crinkle tunnel): a real sprint now, not the sitting cat sliding: he
   gallops off one side, tears back in from the other, leaps into a tucked backflip, lands and skids to a stop
   (`Zoomies.tsx`, ~2.7 s). From Josh's reference GIFs (qualities only): a rotary gallop and a curled spinning flip.
+- **His bed:** buy a cushion or bed in the corner and he sits on it on Home, kneads into it, and rests on it in a loaf.
+- **Roll:** a front-on splat that rolls over sideways onto his back and round again (from Josh's reference).
 - **Full after a meal:** tap Fed and he sits round and content for a few seconds, eyes closed, patting his belly,
   with a little puff of air (the `full` pose; from Josh's picture of a satisfied chubby cat, qualities only).
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon (wearing his
@@ -364,7 +366,11 @@ Items marked *(art)* suit the art session.
     above he leaps (mid-air catch at the apex). Five moves per toy (`PLAY_MOVES`), each logged once per pet as corner
     event `move-<toy>-<move>` (+3 treats, synced like the rest); the first catch of the day pays `PLAY_REWARD`
     (`store.play`). `Chester` takes `move`/`moveKey` to drive rig moves from outside; `Rig.halt()` stops a loop.
-    `Wallet.playMoves` stays unused (the corner log is the shared record). Ideas: a side-on crouch/pounce pose (he
+    `Wallet.playMoves` stays unused (the corner log is the shared record). **Revised 2026-11-09 (Josh: "it just looks
+    like a sprite hopping")**: real side-on play poses (`crouch`, `leap`, `reach`, plus `run`), he sprints after a
+    moving dot (`chase`, any speed over 1.5 cat-widths a second; stalks and pounces only once it's nearly still), a
+    sixth laser move "Zoomies" (1.5 s of dashing), and toy speed measured over the time since it last moved (touch
+    moves don't come every frame). Ideas: a side-on crouch/pounce pose (he
     pounces in his front-facing sit pose for now), paw-over-the-dot on a catch, a "laser frustration" fix (end on a
     catchable toy).
   - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
@@ -580,7 +586,10 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
 - **Poses** (`Pose`): `sit` (the default, the only one with the full rig), `doze`, `walk` (side view, faces **right**;
   flip with `scaleX(-1)` on a wrapper), `ball` (on his back with yarn), `sleep`, `drape`, `loaf`, `knead`, `fly`
   (rainbow dash), `run` (side on, faces right; the zoomies sprint), `curl` (tucked ball for the zoomies backflip; no
-  shadow, spun as a whole about (100, 122)), `full` (front-facing, round belly after a meal: `.pawPat`, `.puff`). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
+  shadow, spun as a whole about (100, 122)), `full` (front-facing, round belly after a meal: `.pawPat`, `.puff`),
+  `sploot` (front-on, flat on the floor, legs out, tail up: the roll), and the **play poses**, side on facing right:
+  `crouch` (stalk: shoulders low, `.rump` up and wiggling, `.pawLift`), `leap` (stretched pounce, front paws forward;
+  the play screen tilts it along the arc), `reach` (rearing up on the back legs, `.swipe` paw high, mouth open). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
 - **Head:** `head(c, eyes, mood, uid, wear, { size, outer, turn })`, scaled by `HEAD_SIZE.scale` (0.88) × the pose's
   own size about the neck. `turn` swings the face toward the side (walk). `mood`: `curious` (round eyes), `happy`
   (^ ^), `sleepy`, `open` (mouth open).
@@ -612,7 +621,10 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   diagonal pairs ±18°, `cWalkBob`/`cWalkHead` 0.4 s so the body rises twice a stride and the head stays level); the
   **run gallop** (`cRunF` front pair, `cRunB` back pair, the far leg of each 35 ms behind, `cRunBody` stretch → gather →
   push with the flight phase at 75%, 0.4 s a stride; hips at (156|142, 132) front and (84|68, 132) back); the **full**
-  pose (`cPat` belly pat 1.3 s, `cFullBreath`, `cPuff` every 3.4 s).
+  pose (`cPat` belly pat 1.3 s, `cFullBreath`, `cPuff` every 3.4 s); the **roll** (`cRoll` 2.3 s on `.pose-sploot
+  .all` under `.tapme.r7`: splat, tip over sideways about (100, 166), upside down at 46% (lifted and squashed so he
+  stays on the floor), round to 360°, bounce; the old r7 back-roll rules are switched off for this pose); the play
+  poses (`cWiggle` rump 0.5 s, `cPawLift`, `cSwipe` 0.42 s alternate, `cReachBob`).
 
 ### 3. The spring rig: `rig.ts`
 - `new Rig(svg)` (made by `Chester` whenever the SVG is rebuilt, if it has `.rtail` or `.r-all`) runs one
@@ -647,7 +659,11 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   timeline moves it: sprint off the right edge (0–650 ms, ease-in), gone, back in from the left (850–1500), leap into a
   tucked backflip (1500–2150: `curl`, arc up ~0.95 W, rotate −360°), land running and skid onto his spot
   (2150–2600), then the sitting cat reappears with a hop. The sitting cat has `gone` meanwhile. The old CSS
-  `kzoomback` slide is no longer used for `r5`.
+  `kzoomback` slide is no longer used for `r5`. Revised the same day: 3.1 s; the flip happens **mid-screen** (x = half
+  the viewport), lift = min(1.4 W, his top − 60 px, 45% of the screen) so it stays on screen, 0.9 s with the ball
+  growing ~25% mid-spin; then he runs back to his spot facing the right way (the run SVG flips).
+- **Roll** (reaction `r7`, sitting only): `Chester` swaps its own pose to `sploot` (mood happy) for `ROLL_MS` (2.3 s)
+  while the `r7` class plays `cRoll`, then goes back to the pose it was given.
 
 ### 5. Scenes that move cats around
 - **Home life** (`src/screens/Home.tsx`): `useHomeMood` picks the pose over time (sit; every 25–55 s either 7 s of
@@ -655,13 +671,20 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   random meows and the litter-box gag; the nuzzle with the cat beside uses `anim="nuzzle"`. **Just fed:** a Fed tap
   in Quick log (`DailyTaps`) fires a `paldex:fed` window event with the cat ids (the shown one, or all after "Luna
   too"); Home shows those cats in the `full` pose for 9 s with "Mmm. So full." (not during the litter gag).
+  **A bed:** if the shown cat has a cushion in use (`corner.cushion`), Home draws `CushionArt` (from `Corner.tsx`) under
+  him in a `.bedspot` that doesn't move with the gag; idles are knead (its own pink pillow hidden by `.onbed`) or
+  `loaf` instead of the sofa `drape`.
 - **Chase** (`Chase.tsx`): timed phases (`AT`), each cat in a wrapper moved with a CSS `transform` transition;
   `pose="walk"` while moving and a `scaleX(-1)` wrapper to face left; the lead cat gets `react="r14"` to pounce.
 - **Play screen** (`src/screens/Play.tsx` + `src/engine/play.ts`): a pure `step(brain, target, dt)` decides the mode
   each frame (sit, watch, stare, walk, stalk, pounce, land, swat, happy) and emits events; the screen writes the cat's
-  `translate` and `--lx/--ly` straight to the DOM every frame and only re-renders React when the mode or facing changes
-  (pose `walk` while walking; `move="stalk"` while crouched; `move="hop"` + a new `moveKey` per pounce, with the
-  sideways arc from `pounceOffset()`; `anim="bat"` while swatting; `react="r13"` on a catch).
+  `translate` and `--lx/--ly` straight to the DOM every frame and only re-renders React when the mode, facing or
+  "in the air" changes. Poses per mode (side poses flip with `scaleX(-1)` by facing): `chase` → `run` (a sprint behind
+  a moving dot at ~its speed), `walk` → `walk`, `stalk`/`land` → `crouch`, `pounce` → `crouch` at take-off and landing
+  and in the air `leap` (laser, tilted −26°→+26° along the arc on an inner wrapper) or `reach` (wand: rearing jump with
+  a paw up); `swat` → `reach`; `watch` → `crouch` (laser) or `sit` (wand); `stare`/`sit`/`happy` → `sit` (`react="r13"`
+  on a catch). Mouth open (`mood="open"`) in the air and while swatting. Dev builds expose the brain as
+  `globalThis.__playBrain` for checks.
 
 ### Checking an animation
 - `#/gallery` (dev only) shows every pose and the nuzzle. The dev store is `globalThis.__chesterStore` for seeding.
@@ -774,7 +797,8 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `world.openpetfoodfacts.org`, `world.openfoodfacts.org`, `api.upcitemdb.com` (food lookups), `paldex-4qh.pages.dev`
   (to check the live site) and `vtcufhddooqzckjcpzwn.supabase.co` (to check the SQL was run, signed out, with the
   public key). The Default environment allows none of these. Added 2026-11-09 for Josh's animation references:
-  `cdn.svgator.com`, `www.svgator.com`, `cdn.dribbble.com`, `images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com`.
+  `cdn.svgator.com`, `www.svgator.com`, `cdn.dribbble.com`, `images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com`, then
+  `i.pinimg.com` (the roll GIF) and `static.vecteezy.com` (feather-toy pictures).
   The Default environment blocks those hosts. Start PalDex cloud sessions on this one.
 
 ### MCP servers (repo, `.mcp.json`)
@@ -807,6 +831,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
+- Later: bed on Home, the flip moved mid-screen, the roll (sploot pose), play poses (crouch/leap/reach) and the laser
+  sprint. No skills invoked; references split into timed contact sheets with Pillow; checks as Playwright frame strips
+  (stepped CSS animations), a pose log during a scripted drag, and the Home bed via `page.clock` fast-forwarding.
 - Later: zoomies sprint + backflip, run/curl/full poses, walk retimed. No skills invoked; the reference GIFs (walk,
   run, flip) were downloaded and split into timed contact sheets with Pillow (frame durations from the GIF), the
   poses checked as Playwright frame strips with CSS animations paused and stepped (`getAnimations()` →

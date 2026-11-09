@@ -5,7 +5,7 @@ import type { ReactionId } from '../chester/reactions';
 /** Dev-only: every pose side by side, for checking motion. Open #/gallery in `npm run dev`. */
 export function Gallery() {
   const [r, setR] = useState<{ id: ReactionId; n: number } | null>(null);
-  const poses = [['sit', ''], ['sit', 'wave'], ['knead', ''], ['loaf', ''], ['doze', 'nap'], ['sleep', 'nap'], ['drape', ''], ['walk', ''], ['ball', 'play'], ['fly', ''], ['run', ''], ['curl', ''], ['full', ''], ['sploot', '']] as const;
+  const poses = [['sit', ''], ['sit', 'wave'], ['knead', ''], ['loaf', ''], ['doze', 'nap'], ['sleep', 'nap'], ['drape', ''], ['walk', ''], ['ball', 'play'], ['fly', ''], ['run', ''], ['curl', ''], ['full', ''], ['sploot', ''], ['crouch', ''], ['leap', ''], ['reach', '']] as const;
   return <div className="screen"><h1>Poses</h1>
     <div className="row" style={{ gap: 8, marginTop: 10 }}>{([['r1', 'Hop'], ['r14', 'Pounce']] as const).map(([id, l]) => <button key={id} className="btn2" onClick={() => setR({ id, n: (r?.n ?? 0) + 1 })}>{l}</button>)}</div>
     <div className="card mint" id="mover" style={{ display: 'flex', justifyContent: 'space-around' }}>

@@ -24,7 +24,7 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full' | 'sploot';
+export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full' | 'sploot' | 'crouch' | 'leap' | 'reach';
 
 /* Style (docs/plans/2026-11-08-cat-art-style.md): one thin, even outline; flat fills with one soft shadow shape;
    a small head on a long body; very simple faces; the tail does the acting. */
@@ -419,6 +419,66 @@ function sploot(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string 
     + `</g></g>`;
 }
 
+/* Play poses, side on and facing right like walk and run (flip with scaleX(-1)). From Josh's feather-toy references,
+   qualities only: a low stalk with the rump up, a stretched-out pounce, and rearing up to swipe at a feather. */
+const RUN_BODY = 'M172 122 C178 138 168 152 150 155 C126 158 94 158 72 156 C48 154 34 142 36 126 C38 110 54 104 78 106 C104 108 130 111 152 109 C163 108 169 114 172 122 Z';
+function bodyFill(c: Coat, uid: string, d: string, id: string): string {
+  return `<defs><clipPath id="${id}${uid}"><path d="${d}"/></clipPath></defs>`
+    + `<g class="bodyg"><path d="${d}" fill="${c.base}"/><g clip-path="url(#${id}${uid})"><path d="M30 150 C80 164 140 164 180 146 L190 200 L20 200 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="160" cy="136" rx="11" ry="15" fill="${c.white ? '#fbfaf7' : c.light}"/>`
+    + (c.patches ? `<path d="M64 106 C86 100 106 110 104 128 C92 136 72 132 64 106 Z" fill="${c.patches[0]}"/><path d="M118 112 C136 108 152 114 148 130 C136 134 122 128 118 112 Z" fill="${c.patches[1]}"/>` : '')
+    + (c.stripe ? `<path d="M76 108 Q80 120 74 130 M96 109 Q100 121 94 131 M116 111 Q120 123 114 133" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>` : '')
+    + `</g><path d="${d}" fill="none" ${SW(c)}/></g>`;
+}
+const sideHead = (c: Coat, eyes: string, mood: Mood, uid: string, w: string, tx: number, ty: number, s = 0.72) =>
+  `<g style="transform:translate(${tx}px,${ty}px) scale(${s});transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w, { size: 0.8, outer: s, turn: 1 })}</g></g></g>`;
+
+/** Stalking: shoulders and head down low, rump up (it wiggles: `.rump`, CSS `cWiggle`), tail up in an S. */
+function crouch(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const BODY = 'M168 150 C172 164 160 172 144 172 C120 174 92 170 74 162 C52 154 40 138 44 122 C48 108 64 104 82 110 C104 118 130 130 150 134 C160 136 165 142 168 150 Z';
+  const pf = pawFill(c);
+  return shadow(108, 74)
+    + `<g class="all">`
+    + openLimb(c, 140, 160, 158, 188, 15, c.shade)
+    + `<g class="rump">` + rigTail(c, 'M48 118 C30 108 24 88 30 70', 'M30 70 C36 54 56 54 54 68', 1)
+    + openLimb(c, 66, 140, 52, 186, 20, c.shade) + `</g>`
+    + bodyFill(c, uid, BODY, 'cr')
+    + `<g class="rump">` + openLimb(c, 80, 146, 70, 187, 22, pf) + `<ellipse cx="78" cy="186" rx="14" ry="6" fill="${pf}" ${SW(c)}/></g>`
+    + `<g class="pawLift">` + openLimb(c, 156, 160, 178, 186, 15, pf) + `</g>`
+    + sideHead(c, eyes, mood, uid, w, 100, 64)
+    + `</g>`;
+}
+
+/** Mid-pounce: stretched long, front paws reaching forward together, back legs pushed out behind, tail streaming.
+    The play screen tilts it along the jump. */
+function leap(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const pf = pawFill(c);
+  return `<g class="all">`
+    + rigTail(c, 'M42 120 C26 116 12 114 0 116', 'M0 116 C-10 117 -18 114 -24 108', 1.2)
+    + openLimb(c, 64, 140, 18, 158, 18, c.shade) + openLimb(c, 146, 144, 206, 150, 14, c.shade)
+    + bodyFill(c, uid, RUN_BODY, 'lp')
+    + openLimb(c, 80, 142, 30, 168, 20, pf)
+    + sideHead(c, eyes, mood, uid, w, 104, 46)
+    + openLimb(c, 152, 148, 214, 160, 15, pf)
+    + `</g>`;
+}
+
+/** Rearing up on his back legs to get the feather: body tipped up from the hips, one paw stretched high (it swipes:
+    `.swipe`, CSS `cSwipe`), the other out in front, mouth open. */
+function reach(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const pf = pawFill(c);
+  return shadow(92, 52)
+    + `<g class="all">`
+    + rigTail(c, 'M58 156 C40 160 26 170 18 156', 'M18 156 C10 142 20 126 34 130', 1)
+    + openLimb(c, 70, 150, 62, 188, 18, c.shade)
+    + `<g class="swipe">${openLimb(c, 108, 76, 182, 22, 14, c.shade)}</g>`
+    + `<g transform="rotate(-58 80 152)">` + bodyFill(c, uid, RUN_BODY, 'rc') + `</g>`
+    + sideHead(c, eyes, mood, uid, w, 44, -36)
+    + openLimb(c, 110, 88, 156, 94, 15, pf)
+    + openLimb(c, 86, 152, 84, 188, 20, pf) + `<ellipse cx="90" cy="188" rx="13" ry="5.5" fill="${pf}" ${SW(c)}/>`
+    + `</g>`;
+}
+
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string }): string {
@@ -431,6 +491,9 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
     : pose === 'curl' ? curl(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'full' ? full(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'sploot' ? sploot(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'crouch' ? crouch(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'leap' ? leap(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'reach' ? reach(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid, w)
