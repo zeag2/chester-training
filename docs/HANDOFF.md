@@ -351,7 +351,10 @@ Items marked *(art)* suit the art session.
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
-- [ ] **Vet summary** (M): one tap, weight trend, vaccines, symptoms, to show at appointments.
+- [x] **Vet summary** (done 2026-11-09): "Summary for the vet" on Health opens `#/vet-summary`
+  (`src/screens/VetSummary.tsx`, `vetSummary()` in `src/engine/vetsummary.ts`): age, sex, spay/neuter, chip, weights,
+  latest dose per medicine with next due, symptoms (60 days), daily checks (30 days), visits, current food.
+  Ideas: share or print as a PDF.
 - [ ] **Medicine reminders** (M): in-app now, notifications once push exists.
 - [ ] **Suggest the "Loves it" treat for hard skills** (S).
 
@@ -398,7 +401,7 @@ Items marked *(art)* suit the art session.
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
-                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/vet-summary, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
                         #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
                         #/settings still work.
   engine/               pure logic, unit-tested, no I/O

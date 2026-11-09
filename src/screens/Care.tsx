@@ -52,6 +52,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
     <PetSwitcher />
     <CareTreatNote />
+    <button className="btn2" style={{ marginTop: 10, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
     <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
