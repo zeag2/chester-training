@@ -26,6 +26,19 @@ export function platform(): Platform {
   return 'desktop';
 }
 
+export type Browser = 'safari' | 'chrome' | 'firefox' | 'edge' | 'samsung' | 'inapp' | 'other';
+/** Which browser this is, for the Add to Home Screen steps (they differ by browser, not just by phone).
+    `inapp`: a browser inside another app (Instagram, Facebook, TikTok…), which can't add to the Home Screen at all. */
+export function browser(ua = navigator.userAgent): Browser {
+  if (/FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|MicroMessenger|TikTok|musical_ly|Snapchat|Twitter|LinkedInApp|Pinterest|GSA\//.test(ua) || /; wv\)/.test(ua)) return 'inapp';
+  if (/EdgiOS|EdgA|Edg\//.test(ua)) return 'edge';
+  if (/SamsungBrowser/.test(ua)) return 'samsung';
+  if (/FxiOS|Firefox\//.test(ua)) return 'firefox';
+  if (/CriOS|Chrome\//.test(ua)) return 'chrome';
+  if (/Safari\//.test(ua) && /iPhone|iPad|iPod|Macintosh/.test(ua)) return 'safari';
+  return 'other';
+}
+
 const SKIP = 'paldex-install-skip';
 /** The install page shows first on a phone's browser, until it's added or skipped. */
 export function wantsInstallStep(): boolean {

@@ -3,6 +3,7 @@ import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
 import { useInstallHint } from '../lib/install';
+import { InstallSteps } from '../ui/InstallSteps';
 import { titleFor } from '../lib/appname';
 import { ageText } from '../lib/stats';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
@@ -162,6 +163,7 @@ export function Settings() {
     {person && <Person userId={person} onClose={() => setPerson('')} />}
     {sheet === 'invite' && household && <Invite catName={cat.name} code={household.inviteCode} onClose={() => setSheet('')} />}
     {sheet === 'install' && <Sheet title="Add to your home screen" onClose={() => setSheet('')}>
-      <p className="m" style={{ marginTop: 6 }}>In Safari, tap the Share button (on newer iPhones, tap ••• first), then “Add to Home Screen”. It’s named {titleFor(pets.map((p) => p.name))}, opens full screen like an app and works offline. On Android, open the browser menu ⋮ and tap Install app.</p></Sheet>}
+      <p className="m" style={{ marginTop: 6 }}>It’s named {titleFor(pets.map((p) => p.name))}, opens full screen like an app and works offline. The steps depend on your browser:</p>
+      <InstallSteps name={titleFor(pets.map((p) => p.name))} /></Sheet>}
   </div>;
 }

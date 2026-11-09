@@ -17,8 +17,8 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 120 tests passing in 23 files, typecheck and build clean. `main` has everything
-  through the treat thank-yous; friend requests are on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
+- **State at handoff (2026-11-09):** 122 tests passing in 24 files, typecheck and build clean. Friend requests are
+  on `main` and live; the per-browser install guide is on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
   2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
@@ -235,7 +235,13 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 ### Getting it onto phones
 - **First visit on a phone's browser** shows "Hi! Who's your kitten?": type one or more names, then **Add to Home
   Screen**. Android/Chrome shows its own install prompt from the button; iPhone has no such API, so the button opens a
-  Share → Add to Home Screen guide. "Not now" continues in the browser (`src/screens/Install.tsx`, `src/lib/install.ts`).
+  step-by-step guide. "Not now" continues in the browser (`src/screens/Install.tsx`, `src/lib/install.ts`).
+- **The guide is per browser** (2026-11-09, `src/ui/InstallSteps.tsx`, `browser()` in `install.ts`): the steps differ
+  by browser, so it guesses from the user agent and shows chips to switch (iPhone: Safari, Chrome, Firefox, Edge;
+  Android: Chrome, Samsung Internet, Firefox, Edge). A browser inside another app (Instagram, Facebook, TikTok, the
+  Google app…) can't add to the Home Screen at all, so it says "Another app" and how to open the page in Safari or
+  Chrome first. The same guide is behind Me → "Add … to your Home Screen". The menu names were written from each
+  browser's current layout but **not checked on real phones**; adjust the wording in `steps()` if one differs.
 - **The app is named after the kittens** ("Chester", "Chester & Luna") on the tab, the iPhone Home Screen title and
   the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
   ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
@@ -396,6 +402,8 @@ Items marked *(art)* suit the art session.
 - [x] **First play of the day gives treats** (done): +2 treats and +1 bond (`PLAY_REWARD`).
 
 ### Polish and housekeeping
+- [x] **Add to Home Screen steps per browser** (done 2026-11-09): Safari, Chrome, Firefox, Edge, Samsung Internet and
+  in-app browsers each get their own steps (see section 1, Getting it onto phones). Still to do: check each on a real phone.
 - [ ] **A cleaner address** (S): `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken; a second
   Cloudflare Pages project with a free name or a custom domain, then update `MOVED_TO`.
 - [ ] **`chester.css` tidy-up** (M) *(art)*: 23 duplicated keyframe names across historical layers (later ones win);
@@ -634,6 +642,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   servers were invoked (`lottiefiles-creator` connected, unused; `sp-global` failed to connect, not needed). Checks:
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
+
+- Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
+  Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
 
 ### Scheduled tasks
 - **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): every 4 hours (at :13, UTC)
