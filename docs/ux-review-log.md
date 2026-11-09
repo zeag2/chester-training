@@ -1,4 +1,4 @@
-last-reviewed: 686bdb617e0b8a70454873e7d101fe1f98992cf8
+last-reviewed: 32c5bbafb2c9fb06eddddfb78aa140e1e7873276
 
 # UX review log
 
@@ -18,6 +18,18 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-09 (16:17 UTC): 686bdb6..32c5bba
+Checked with two cats (Chester and Luna): Quick log with "Luna too" / "All cats", the full-belly pose after Fed,
+the Corner's Play row, Play with the laser dot and the feather wand (moves found, first-play toast), and the
+weight and medicine forms with smart defaults, in light and dark mode.
+
+Fixed:
+- Merged main into this PR. The new Quick log Undo note (with "Luna too") conflicted with this PR's polish. The
+  merge keeps main's behaviour and carries the polish over: buttons 44 px (they were 40), and a short label without the time.
+
+No other clear wins: the Play screen, Corner and the forms read well. Disabled Save on the forms now looks disabled.
+Suggested: see the PR's "Suggestions (not done)".
 
 ### 2026-11-09 (04:13 UTC): 39b124c..686bdb6
 Checked with fake friends (an incoming request from Dana, one sent to Sam, a treat from Erin): Home friends card
