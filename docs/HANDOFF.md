@@ -200,6 +200,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   `styledAt`, so an unrelated edit on another phone never undoes them. Balance = treats from sets + the log.
 
 ### Chester himself (the character)
+_How it works under the hood (SVG, CSS layers, the rig, the component, scenes): section 3a._
 - **Physics rig** (`src/chester/rig.ts`): springs drive every pose. The body leans from the hips, the head and ears
   follow a beat late, and the tail is a 9-joint chain.
 - **Petting:** drag across him and he leans into your finger, eyes happily closed, purring. Lying down, he nuzzles.
@@ -552,6 +553,102 @@ docs/
 ```
 
 ---
+
+## 3a. How the cat is drawn and animated (read before touching `src/chester`)
+
+Written 2026-11-09 so nobody has to reverse-engineer it again. Keep it current when the mechanics change.
+
+**Five layers, top to bottom.** A screen puts a `<Chester>` on the page; `Chester.tsx` turns props into an SVG string
+from `art.ts` and runs two animation systems on it: **CSS classes** (`chester.css`) for idles, reactions and named
+anims, and the **spring rig** (`rig.ts`) for physical follow-through and keyframed moves. Bigger scenes (the chase,
+the rainbow dash, the play screen) move whole `<Chester>`s around with their own transforms.
+
+### 1. The drawing: `art.ts`
+- `chesterSVG({ pose, coat, eyes, mood, raised, anim, wear, width, uid, label, extra })` returns an SVG **string**.
+  `Chester` memoizes it and injects it with `dangerouslySetInnerHTML`, so **changing `pose`, `anim`, `mood`, `wear`,
+  `coat` or `width` rebuilds the SVG** (and the rig on it). Cheap, but don't flip those props every frame.
+- **Canvas:** `viewBox="-14 -34 232 232"`, `overflow: visible`. The **feet/ground line is y = 188**; the body's middle
+  is about x = 100. At a drawn width `W` px, one unit is `W / 232` px, the feet sit `0.957 W` below the SVG's top and
+  the middle is about `0.49 W` from its left (the play screen and chase rely on this to stand him on a floor).
+- **Poses** (`Pose`): `sit` (the default, the only one with the full rig), `doze`, `walk` (side view, faces **right**;
+  flip with `scaleX(-1)` on a wrapper), `ball` (on his back with yarn), `sleep`, `drape`, `loaf`, `knead`, `fly`
+  (rainbow dash). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
+- **Head:** `head(c, eyes, mood, uid, wear, { size, outer, turn })`, scaled by `HEAD_SIZE.scale` (0.88) × the pose's
+  own size about the neck. `turn` swings the face toward the side (walk). `mood`: `curious` (round eyes), `happy`
+  (^ ^), `sleepy`, `open` (mouth open).
+- **Named groups** the animations hook into (keep these names when redrawing):
+  - CSS targets: `.all` (whole body), `.head`, `.earL/.earR`, `.eyes`, `.lids` (blinks), `.look` > `.pupils` (eye
+    direction), `.mopen/.mclosed`, `.tongue`, `.whisk`, `.blush`, `.pawL/.pawR` (`.pawR.raised` for the wave),
+    `.legFL/.legFR/.legBL/.legBR` (walk), `.bodyg`, `.flytail`, `.tailbase/.tailtip`, `.wear .wear-<id>` (outfits),
+    `.pillow`, `.dentL/.dentR` (knead), `.yarn`, `.zz`, `.snot`.
+  - Rig targets (outer wrapper groups, so CSS and the rig never fight over one `transform`): `.r-all`, `.r-head`,
+    `.r-earL/.r-earR`, `.r-legL/.r-legR`, `.r-shadow`, and the tail `.rtail` with two paths `.rt-o` (outline) and
+    `.rt-f` (fill). `.rtail` carries `data-tail` (its rest curve as JSON) and `data-amp` (how lively; a nap ≈ 0.2).
+  - The root `<svg>` gets classes `kc pose-<pose> <anim>`; the rig adds `rigged`.
+- **Eye direction:** `.tapme .look { transform: translate(var(--lx), var(--ly)) }`. Set `--lx`/`--ly` (about ±3 px /
+  ±2.4 px) on any ancestor and the pupils look that way: interactive Chesters do it toward your finger; the play
+  screen does it toward the toy every frame.
+
+### 2. CSS animation: `chester.css`
+- Classes go in two places: the **`anim` prop** puts a class on the `<svg>` (`dance`, `wave`, `bat`, `nuzzle`); the
+  **wrapper** (`.tapme`, the element around the SVG) gets the current reaction id (`r1`…`r15`), an idle (`i1`…`i5`),
+  `notice`, `stroking` or `gone` (during the rainbow dash).
+- **The file has historical layers** (sections marked `/* ---- … */` and `/* ==== … */`: idle life, named moves, tap
+  reactions, pose-specific life, "fluid reactions v2", the sleep set, dance, pounce, the "v3 timing pass" matched to
+  Josh's reference GIFs, kneading v4, stroke to pet, rig overrides at the end). **Later rules win**, and several
+  keyframe names are defined more than once. When a move looks wrong, search for **every** rule on that selector.
+- **CSS animations override SVG `transform` attributes** on the same element; that's why the rig writes to the outer
+  `.r-*` groups. Moves the rig performs (hop, pounce, dance, bat body) are switched off in CSS on a `.rigged` cat.
+- `.paused` on an ancestor freezes the CSS paw and the rig's move (training session pause).
+
+### 3. The spring rig: `rig.ts`
+- `new Rig(svg)` (made by `Chester` whenever the SVG is rebuilt, if it has `.rtail` or `.r-all`) runs one
+  `requestAnimationFrame` loop (paused when off screen or the tab is hidden) and writes transforms every frame:
+  - **Follow-through:** body lean from the hips (a `skewX` that keeps the feet on y = 188), squash, head lag, ears that
+    lag the head and react to vertical speed, a 9-joint **tail chain** (each joint follows the one before; a sway at the
+    base, a random tip flick every 4–10 s; clamped ±14°), breathing, and a shadow that shrinks and fades as he lifts.
+  - **Petting:** `rig.stroke = -1..1` while a finger drags across him (set by `Chester`): he leans into it, ears relax.
+  - **Keyframed moves:** `MOVES` = `hop` (950 ms), `pounce` (1.7 s, stalk + wiggle + leap + land + pad back), `bat`
+    (3 s loop, yarn batting), `stalk` (700 ms loop, crouched butt wiggle; added for the play screen), `dance` (1.1 s
+    loop). Keys have `t` (0..1) and channels `x, y, sx, sy, lean, head, hy, legL, legR` (units = SVG units; `legL/R`
+    0..1 tucks a leg); missing channels hold, each eases between the keys that set it (`sampleMove`), then stiff
+    springs add overshoot. `play(name)` starts one, `halt()` stops a loop, `kick('hop'|'bonk'|'shake'|'spin'|'flick',
+    delayMs)` jolts ears and tail.
+  - **Only sitting cats lean and do moves.** Any pose other than `sit` (`pose-sit` class absent) counts as "lying": it
+    breathes and the tail moves, but `play()` does nothing.
+- To **add a move**: add keys to `MOVES`, then trigger it with `Chester`'s `move` prop (below) or map a reaction to it
+  in `RIG_MOVES`. Test timings in `#/gallery` and with Playwright frames (see section 7).
+
+### 4. The component: `Chester.tsx`
+- Props: `pose, coat, eyes, mood, raised, anim, width, wear, extra, label` (the drawing); `interactive` (tappable,
+  pettable, eyes follow taps, idles every 5.2 s cycling `i1…i5`); `onPet(line, id)` (what he "says"); `react` +
+  `reactKey` (play a reaction from outside, e.g. a good rep: change `reactKey` to replay the same one); `move` +
+  `moveKey` (drive a rig move from outside: `'hop' | 'pounce' | 'stalk' | 'bat' | null`; null stops a loop; a new SVG's
+  rig picks up the move that's on).
+- **A reaction** (`reactions.ts`: id, weight, lines, sound, ms) = a CSS class on the wrapper for `ms`, plus either a
+  rig move (`RIG_MOVES`: r1/r6/r11 hop, r14 pounce) or a rig kick (`KICKS`, with the delay that lines up with the CSS).
+  Taps pick a weighted random one that never repeats; lying down only `LYING_OK` ones. `r14` (pounce) is session-only.
+- **Rainbow dash:** 8 taps in 3 s (at most every 10 s) → `RainbowDash.tsx` overlay; the cat gets `gone` meanwhile.
+
+### 5. Scenes that move cats around
+- **Home life** (`src/screens/Home.tsx`): `useHomeMood` picks the pose over time (sit; every 25–55 s either 7 s of
+  `knead` or 14 s of `drape`, taking turns; `doze` after 90 s alone; `sleep` 10:30 PM–5 AM); `useHomeLife` runs the
+  random meows and the litter-box gag; the nuzzle with the cat beside uses `anim="nuzzle"`.
+- **Chase** (`Chase.tsx`): timed phases (`AT`), each cat in a wrapper moved with a CSS `transform` transition;
+  `pose="walk"` while moving and a `scaleX(-1)` wrapper to face left; the lead cat gets `react="r14"` to pounce.
+- **Play screen** (`src/screens/Play.tsx` + `src/engine/play.ts`): a pure `step(brain, target, dt)` decides the mode
+  each frame (sit, watch, stare, walk, stalk, pounce, land, swat, happy) and emits events; the screen writes the cat's
+  `translate` and `--lx/--ly` straight to the DOM every frame and only re-renders React when the mode or facing changes
+  (pose `walk` while walking; `move="stalk"` while crouched; `move="hop"` + a new `moveKey` per pounce, with the
+  sideways arc from `pounceOffset()`; `anim="bat"` while swatting; `react="r13"` on a catch).
+
+### Checking an animation
+- `#/gallery` (dev only) shows every pose and the nuzzle. The dev store is `globalThis.__chesterStore` for seeding.
+- Playwright: screenshot frames or an element clip at intervals and tile them into a contact sheet (that's how the
+  pounce, walk and play screen were checked). For CSS timings use `page.clock` to jump to just before a moment, then
+  `clock.resume()` and capture in real time (CSS animations don't follow the fake clock).
+- Unit tests: `rig.test.ts` (move sampling), `chester.test.ts` (reaction picking, every pose × coat renders with the
+  parts the rig and CSS need), `engine/play.test.ts` (the play brain).
 
 ## 4. How to work on it
 
