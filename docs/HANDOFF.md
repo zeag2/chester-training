@@ -847,7 +847,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
 
 ### Scheduled tasks
-- **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): every 4 hours (at :13, UTC)
+- **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): **once a night at 1:45 AM
+  Eastern** (`CRON_TZ=America/New_York 45 1 * * *`; changed 2026-11-09 from every 4 hours, to save usage; it starts by
+  checking for new commits, so a night with none is a short run)
   the scheduled task `trig_01AyfUBBkAdj5EHVj45Gb12g` wakes one long-lived session, **"PalDex UX reviewer"**
   (`session_019xqnwfdJXvj4DJJnDqRx1K`, repo attached, its steps in its system prompt). It checks main for new commits
   since the `last-reviewed:` line in `docs/ux-review-log.md`, screenshots the touched screens at iPhone size (light and
