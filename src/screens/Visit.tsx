@@ -16,6 +16,7 @@ export function Visit({ catId }: { catId: string }) {
   const [loading, setLoading] = useState(!friends);
   const [line, setLine] = useState('');
   const [busy, setBusy] = useState(false);
+  const [removing, setRemoving] = useState<'' | 'ask' | 'busy' | 'error'>('');
   const [react, setReact] = useState<{ id: ReactionId; n: number } | null>(null);
   useEffect(() => { if (account) store.loadFriends().catch(() => {}).finally(() => setLoading(false)); else setLoading(false); }, [account]);
   const pet = friends?.pets.find((p) => p.catId === catId);
@@ -27,6 +28,11 @@ export function Visit({ catId }: { catId: string }) {
         <button className="btn" style={{ marginTop: 12 }} onClick={() => { location.hash = '#/friends'; }}>Friends</button></div>}
   </div>;
 
+  const who = pet.ownerName || 'this friend';
+  const remove = async () => {
+    setRemoving('busy');
+    try { await store.removeFriend(pet.owner); location.hash = '#/friends'; } catch { setRemoving('error'); }
+  };
   const c = pet.card; const he = c.sex === 'f' ? 'she' : 'he'; const him = c.sex === 'f' ? 'her' : 'him';
   const mastered = c.mastered ?? [];
   const given = !!friends?.given?.includes(catId); const off = friends?.treats === 'missing';
@@ -62,6 +68,17 @@ export function Visit({ catId }: { catId: string }) {
         </div>
         <p className="s" style={{ lineHeight: 1.35 }}>{mastered.length ? `${he[0].toUpperCase() + he.slice(1)} can: ${mastered.slice(0, 4).map((id) => SKILL_BY_ID[id]?.name ?? id).join(', ')}${mastered.length > 4 ? '…' : ''}` : 'Just getting started'}</p>
         <p className="s">Bond with {pet.ownerName || 'their person'}: {bondLevel(c.bond ?? 0).name}</p>
+      </div>
+      <div className="card grey">
+        {removing === 'ask' || removing === 'busy' ? <>
+          <b>Remove {who} as a friend?</b>
+          <p className="s" style={{ marginTop: 4 }}>You’ll stop seeing each other’s cats. They aren’t told; either of you can send a request again later.</p>
+          <div className="row" style={{ gap: 8, marginTop: 12 }}>
+            <button className="btn2" style={{ flex: 1, background: 'var(--peach)', color: 'var(--peach-ink)' }} disabled={removing === 'busy'} onClick={remove}>{removing === 'busy' ? 'Removing…' : 'Remove'}</button>
+            <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={removing === 'busy'} onClick={() => setRemoving('')}>Keep</button>
+          </div></>
+          : <div className="row"><p className="s sp">{removing === 'error' ? 'Can’t reach PalDex right now. Try again in a moment.' : `Friends with ${who}`}</p>
+            <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => setRemoving('ask')}>Remove friend</button></div>}
       </div>
     </div>
   </div>;

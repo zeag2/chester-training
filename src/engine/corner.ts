@@ -26,7 +26,7 @@ export const SHOP: ShopItem[] = [
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 
-export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat' | 'care';
+export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat' | 'care' | 'streak';
 export interface CornerEvent {
   /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>`, a friend bonus is `friend-<their id>`
       a friend's free treat is `treat-<their id>-<their day>` and a care entry's treats are `care-<care item id>`, so two phones can't both claim one, and a friend
@@ -96,7 +96,7 @@ export function newTreats<T extends { from: string; day: string }>(c: Corner | u
 /** Treats for looking after the pet: a little for every new care entry (a few a day), more for the routines that
     matter. Logging is self-reported, so the daily cap keeps it from being a tap-to-win game. */
 export const CARE_TREATS = { perEntry: 2, perDay: 3, weighIn: 5, weighInEveryDays: 7, medOnTime: 3, vetVisit: 5 };
-export interface CareReward { treats: number; why: 'entry' | 'weighIn' | 'medOnTime' | 'vetVisit' }
+export interface CareReward { treats: number; why: 'entry' | 'weighIn' | 'medOnTime' | 'vetVisit' | 'streak' }
 /** What a newly saved care entry earns (null: nothing, e.g. today's cap is reached or it was already paid).
     `history` is the pet's other care entries. Bonuses only count for things that just happened (not old entries
     filled in from a document). */
@@ -104,7 +104,7 @@ export function careReward(c: Corner | undefined, item: CareItem, history: CareI
   const log = c?.log ?? []; const today = localDay(now);
   if (item.deleted || log.some((e) => e.id === 'care-' + item.id)) return null;
   if (log.filter((e) => e.kind === 'care' && e.day === today).length >= CARE_TREATS.perDay) return null;
-  const recent = (days: number) => daysBetween(localDay(item.at), today) <= days;
+  const ago = daysBetween(localDay(item.at), today); const recent = (days: number) => ago >= 0 && ago <= days; // not future appointments
   const base = CARE_TREATS.perEntry;
   if (item.kind === 'weight' && recent(1)) {
     const lastBonus = log.filter((e) => e.kind === 'care' && e.item === 'weight' && e.treats > base).sort((a, b) => b.at - a.at)[0];
@@ -118,6 +118,19 @@ export function careReward(c: Corner | undefined, item: CareItem, history: CareI
   }
   return { treats: base, why: 'entry' };
 }
+
+/** Care logged on 7 days in a row earns a bonus, once per 7 days (`streak-<day>`). Missing a day just starts the count
+    again; nothing is ever taken away or shown as broken. */
+export const CARE_STREAK = { days: 7, treats: 10 };
+export function careStreakDue(c: Corner | undefined, care: CareItem[], now = Date.now()): string | null {
+  const today = localDay(now); const logged = new Set(care.filter((i) => !i.deleted).map((i) => localDay(i.at)));
+  for (let k = 0; k < CARE_STREAK.days; k++) if (!logged.has(localDay(now - k * 864e5))) return null;
+  const last = (c?.log ?? []).filter((e) => e.kind === 'streak').sort((a, b) => b.at - a.at)[0];
+  if (last && daysBetween(last.day, today) < CARE_STREAK.days) return null;
+  return 'streak-' + today;
+}
+/** The first play of the day: a bond point and a couple of treats. */
+export const PLAY_REWARD = { treats: 2, bond: 1 };
 
 export function canBuy(item: ShopItem, balance: number, c: Corner | undefined, bond = 0): boolean { return !item.special && !owned(c, bond).has(item.id) && balance >= item.price; }
 

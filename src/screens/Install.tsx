@@ -4,12 +4,11 @@ import { applyAppName, pendingPets, setPendingPets, titleFor, type PetLook } fro
 import { drawIcon } from '../lib/appicon';
 import { COATS, EYES } from '../chester/art';
 import { SWATCH, EYESW } from '../ui/swatches';
-import { platform, promptInstall, skipInstallStep, useInstallState } from '../lib/install';
+import { promptInstall, skipInstallStep, useInstallState } from '../lib/install';
 import { Icon } from '../ui/icons';
 import * as audio from '../lib/audio';
 
-const ShareIcon = () => <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', verticalAlign: '-5px' }}><path d="M8 9 H6 V20 H18 V9 H16 M12 3 V14 M8.5 6.5 L12 3 L15.5 6.5" /></svg>;
-const PlusBox = () => <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', verticalAlign: '-5px' }}><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8.5 V15.5 M8.5 12 H15.5" /></svg>;
+import { PlusBox, InstallSteps } from '../ui/InstallSteps';
 
 /** First page on a phone's browser: name the kitten(s), then put the app on the Home Screen under their names. */
 export function Install({ onSkip }: { onSkip: () => void }) {
@@ -19,7 +18,6 @@ export function Install({ onSkip }: { onSkip: () => void }) {
   const names = pets.map((p) => p.name);
   const [guide, setGuide] = useState(false);
   const state = useInstallState();
-  const os = platform();
   const title = titleFor(names);
   const named = names.some((n) => n.trim());
   // keep the Home Screen name in step with what's typed, so whenever they tap Add it's already right
@@ -73,17 +71,8 @@ export function Install({ onSkip }: { onSkip: () => void }) {
     {guide && <div className="overlay sheetbg" onClick={() => setGuide(false)}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label="Add to Home Screen" onClick={(e) => e.stopPropagation()}>
         <div className="row"><b className="sp" style={{ fontSize: 18 }}>Add {named ? title : 'PalDex'} to your Home Screen</b><button className="iconbtn" aria-label="Close" onClick={() => setGuide(false)}><Icon name="close" /></button></div>
-        {os === 'ios' ? <ol className="steps">
-          <li><span>Tap <b>Share</b> <ShareIcon /> in Safari’s toolbar. On newer iPhones, tap <b>•••</b> first, then Share.</span></li>
-          <li><span>Scroll down and tap <b>Add to Home Screen</b> <PlusBox /></span></li>
-          <li><span>Tap <b>Add</b>, then open <b>{named ? title : 'PalDex'}</b> from your Home Screen.</span></li>
-        </ol> : <ol className="steps">
-          <li><span>Open your browser’s menu <b>⋮</b>.</span></li>
-          <li><span>Tap <b>Add to Home screen</b> or <b>Install app</b>.</span></li>
-          <li><span>Open <b>{named ? title : 'PalDex'}</b> from your Home Screen.</span></li>
-        </ol>}
+        <InstallSteps name={named ? title : 'PalDex'} />
         <p className="s" style={{ marginTop: 10 }}>It opens full screen, works offline, and keeps everything you set up.</p>
-        {os === 'ios' && <div className="pointdown" aria-hidden="true">↓</div>}
       </div></div>}
   </div>;
 }

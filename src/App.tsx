@@ -22,6 +22,7 @@ import { Visit } from './screens/Visit';
 import { LogLink } from './ui/DailyTaps';
 import { Trophies } from './screens/Trophies';
 import { Week } from './screens/Week';
+import { VetSummary } from './screens/VetSummary';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { wantsInstallStep } from './lib/install';
@@ -69,6 +70,7 @@ export default function App() {
     case 'train': body = <Train />; tab = 'train'; break;
     case 'tree': body = <Tree />; tab = 'train'; break;
     case 'library': body = <Library />; tab = 'train'; break;
+    case 'vet-summary': body = <VetSummary />; tab = 'health'; break;
     case 'week': body = <Week />; tab = 'home'; break;
     case 'trophies': body = <Trophies />; tab = 'train'; break;
     case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'train'; break;
@@ -80,6 +82,6 @@ export default function App() {
     case 'visit': body = <Visit key={r1} catId={r1 ?? ''} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
-  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}</>;
+  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews || snap.requests.some((q) => q.incoming) ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}</>;
 }
 

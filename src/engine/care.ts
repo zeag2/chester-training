@@ -12,7 +12,8 @@ export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
 
 export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
-  vet: { reason: string; clinic?: string; notes?: string; doc?: string };
+  /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
+  vet: { reason: string; clinic?: string; notes?: string; doc?: string; time?: string };
   symptom: { what: string; worried?: boolean; notes?: string };
   weight: { lb: number; doc?: string };
   groom: { what: GroomWhat; notes?: string };
@@ -113,4 +114,13 @@ export function dailyToday(items: CareItem[], now = Date.now()): Record<DailyWha
   for (const i of items) if (i.kind === 'daily' && !i.deleted && localDay(i.at) === today) out[(i as CareItem<'daily'>).data.what].push(i as CareItem<'daily'>);
   for (const k of Object.keys(out) as DailyWhat[]) out[k].sort((a, b) => b.at - a.at);
   return out;
+}
+
+/** A rough kitten weight range for the pet's age, or null for adults (adult weight varies too much by breed).
+    Kittens gain about a pound a month until around 6 months, then slow down. A guide only; the vet decides. */
+export function typicalKittenWeight(birthday: string, now = Date.now()): { months: number; low: number; high: number } | null {
+  const [y, m, d] = birthday.split('-').map(Number); if (!y || !m) return null;
+  const born = new Date(y, m - 1, d || 15).getTime(); const months = Math.floor((now - born) / (30.44 * 864e5));
+  if (months < 2 || months >= 12) return null;
+  return months <= 6 ? { months, low: Math.round(months * 0.8 * 2) / 2, high: Math.round(months * 1.2 * 2) / 2 } : { months, low: 5, high: 10 };
 }

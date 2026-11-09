@@ -5,6 +5,10 @@ export interface Account { userId: string; email: string }
 /** What friends see of a pet: its look and a few training highlights. Never care, documents or sets. */
 export interface PetCard { name: string; coat?: string; eyes?: string; sex?: 'm' | 'f'; birthday?: string; wear?: string; cushion?: string; mastered?: string[]; setsWeek?: number; streak?: number; bond?: number }
 export interface Friend { userId: string; name: string }
+/** A friend request: `incoming` = they asked me ("Accept Erin?"), otherwise I asked them and it's waiting. */
+export interface FriendRequest { userId: string; name: string; incoming: boolean }
+/** What entering a code did: `sent` a request, made you `friends` (they'd already asked you), or you were `already` friends. */
+export interface AddFriendResult { name: string; status: 'sent' | 'friends' | 'already' }
 export interface FriendPet { owner: string; ownerName: string; catId: string; card: PetCard }
 /** A free treat a friend gave one of my pets on their local day. */
 export interface ReceivedTreat { from: string; fromName: string; day: string }
@@ -48,8 +52,15 @@ export interface Remote {
 
   /** Friends. These throw 'friends-missing' until the friends SQL has been run. */
   friendCode(name: string): Promise<string>;
-  /** Their name ('' if none), or null when the code is wrong or your own. */
-  addFriend(code: string): Promise<string | null>;
+  /** Send a friend request by code (accepts theirs if they'd already asked). Null when the code is wrong or your own.
+      Before the friend requests SQL is run this falls back to the old instant friendship (status 'friends'). */
+  addFriend(code: string): Promise<AddFriendResult | null>;
+  /** Requests waiting on me and mine waiting on them ([] before the friend requests SQL is run). */
+  friendRequests(): Promise<FriendRequest[]>;
+  /** Accept (friends both ways) or decline a request someone sent me. */
+  answerFriend(userId: string, accept: boolean): Promise<void>;
+  /** Take back a request I sent. */
+  cancelFriendRequest(userId: string): Promise<void>;
   friends(): Promise<Friend[]>;
   friendPets(): Promise<FriendPet[]>;
   removeFriend(userId: string): Promise<void>;
@@ -63,4 +74,8 @@ export interface Remote {
   treatsGiven(day: string): Promise<string[]>;
   /** Treats my pet got from friends (the last 30 days). */
   treatsFor(catId: string): Promise<ReceivedTreat[]>;
+  /** Thank a friend for a treat my pet got (throws 'thanks-missing' until its SQL is run). */
+  thankTreat(from: string, catId: string, day: string): Promise<void>;
+  /** Thank-yous for treats I gave (last 7 days). */
+  myThanks(): Promise<{ catId: string; catName: string; day: string }[]>;
 }

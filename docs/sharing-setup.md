@@ -32,6 +32,9 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
     friends' cats works and the treat button says treats aren't switched on yet.
 12. **One-tap daily logs.** Run `supabase/migrations/20261112000000_daily_logs.sql`. Until then, Fed/Scooped/Played and
     the daily check stay on the phone that logged them; everything else syncs.
+13. **Thank-yous for treats.** Run `supabase/migrations/20261113000000_treat_thanks.sql` (after step 11).
+14. **Friend requests.** Run `supabase/migrations/20261114000000_friend_requests.sql` (after step 10). Until then,
+    entering a code makes you friends straight away, as before.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

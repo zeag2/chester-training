@@ -38,3 +38,14 @@ describe('care reminders', () => {
     expect(t.fed.map((x) => x.id)).toEqual(['b', 'a']); expect(t.scoop).toEqual([]); expect(t.check.map((x) => x.id)).toEqual(['f']);
   });
 });
+
+import { typicalKittenWeight } from './care';
+describe('kitten weight guide', () => {
+  it('is about a pound a month to 6 months, wider after, and nothing for adults or newborns', () => {
+    const at = (s: string) => Date.parse(s + 'T12:00:00');
+    expect(typicalKittenWeight('2026-08', at('2026-11-20'))).toEqual({ months: 3, low: 2.5, high: 3.5 });
+    expect(typicalKittenWeight('2026-04', at('2026-11-20'))).toEqual({ months: 7, low: 5, high: 10 });
+    expect(typicalKittenWeight('2025-01', at('2026-11-20'))).toBeNull();
+    expect(typicalKittenWeight('2026-11', at('2026-11-20'))).toBeNull();
+  });
+});

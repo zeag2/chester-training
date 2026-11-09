@@ -3,10 +3,12 @@ import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import {
-  dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, weights,
+  dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon } from '../ui/icons';
+import { kittenPlan } from '../engine/kittenplan';
+import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
@@ -45,6 +47,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
   const docs = care.filter((c): c is CareItem<'doc'> => c.kind === 'doc');
   const ws = weights(care);
+  const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
   if (!cat) return null;
 
@@ -52,6 +55,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
     <PetSwitcher />
     <CareTreatNote />
+    <button className="btn2" style={{ marginTop: 10, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
     <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
@@ -65,10 +69,20 @@ export function Care({ open }: { open?: CareKind } = {}) {
     </button>
 
     {due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
-      {due.map((r) => <button key={r.id} className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row`} style={{ marginTop: 10 }}
+      {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
         onClick={() => setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } })}>
         <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' ? 'box' : 'check'} /></div>
-        <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>)}</>}
+        <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
+        {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
+          onClick={() => downloadIcs({ title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail })}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
+    {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
+      <div className="card white" style={{ border: '1px solid var(--grey)' }}>
+        {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
+          onClick={() => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset })} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}. Tap to log it.`}>
+          <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
+          <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>)}
+        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>}
 
     <h2 style={{ marginTop: 22 }}>Log something</h2>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
@@ -79,7 +93,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
-      <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p></div>}
+      <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
+      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>}
 
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
     {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
@@ -126,7 +141,7 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
   const pt = usePetText();
-  const { care } = useStore();
+  const { care, cat } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
   const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
@@ -142,7 +157,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
     <div className="seg" role="group" aria-label={label}>{opts.map(([v, l]) => <button key={v} className={f[key] === v ? 'on' : ''} aria-pressed={f[key] === v} onClick={() => set(key, v)}>{l}</button>)}</div></>;
   const text = (label: string, key: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => <><label className="field" htmlFor={'c-' + key}>{label}</label>
     <input id={'c-' + key} className="in" value={f[key] ?? ''} onChange={(e) => set(key, e.target.value)} {...props} /></>;
-  const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
+  const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={kind === 'vet' ? undefined : localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
   return <div className="overlay sheetbg" onClick={onClose}>
     <div className="sheet" role="dialog" aria-modal="true" aria-label={item ? 'Edit entry' : 'New entry'} onClick={(e) => e.stopPropagation()}>
@@ -169,12 +184,20 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         <p className="s" style={{ marginTop: 10, color: 'var(--peach-ink)' }}>If it’s on the “call the vet now” list, call now rather than waiting.</p></>}
       {kind === 'groom' && <>{seg<GroomWhat>('What', 'what', [['brush', 'Brush'], ['nails', 'Nails'], ['bath', 'Bath'], ['teeth', 'Teeth'], ['ears', 'Ears']])}{text('Notes (optional)', 'notes')}{when}
         {f.what === 'bath' && <p className="s" style={{ marginTop: 10 }}>{pt('Most cats don’t need baths: only when he gets into something, or the vet says so.')}</p>}</>}
-      {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}</>}
+      {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}{day > localDay(Date.now()) && text('Time (optional)', 'time', { type: 'time' })}</>}
       {kind === 'med' && <>{text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
       <button className="btn" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
+      {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
+        const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
+        return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
+          <div className="row" style={{ gap: 8, marginTop: 6 }}>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => downloadIcs(ev)}>iPhone / Apple</button>
+            <a className="btn2" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', color: 'inherit' }} href={googleCalendarUrl(ev)} target="_blank" rel="noreferrer">Google</a></div>
+          <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
+      })()}
       {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
     </div>
   </div>;

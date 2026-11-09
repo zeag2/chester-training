@@ -1,7 +1,7 @@
 # PalDex: handoff
 
-_Last updated 2026-11-08, end of the session that built the corner, friends, the tracker-first layout and the new walk
-pose. Start here when picking the project back up._
+_Last updated 2026-11-09 (friend requests, branch `claude/friend-request-acceptance-zytxm7`). Start here when picking
+the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
 symptoms, vet visits, medicine and vaccines, food, documents) and **clicker training as an optional extra per cat**,
@@ -17,9 +17,10 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff:** 95 tests passing in 17 files, typecheck and build clean, working tree clean; everything is on
-  `main` and live (last commit: the art style guide). All Supabase SQL through `20261110000000_friends.sql` has been
-  run (checked against the live database), including the extra `revoke ... from anon` on the friend functions.
+- **State at handoff (2026-11-09):** 122 tests passing in 24 files, typecheck and build clean. Friend requests and
+  the per-browser install guide are on `main` and live. All Supabase SQL
+  through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
+  2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
 ## Pick up here
 
@@ -31,7 +32,9 @@ shared with the people you live with, plus friends who can see each other's cats
    `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
    refuse signed-out callers). Next: try a treat between two real phones.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
-4. Then the rest of section 2.
+4. **Friend requests** are live (2026-11-09) and their SQL has been run. Next: try a request between two real phones,
+   and check the per-browser Add to Home Screen steps on a real iPhone and Android phone.
+5. Then the rest of section 2.
 
 
 ---
@@ -92,7 +95,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 - Works offline: sets and care save on the phone and sync when back online, never doubled.
 
 ### Friends (`#/friends`, from Me, Home's Friends card and its +)
-- Every account has a **friend code**; entering someone's code makes you friends both ways. Either side can remove.
+- Every account has a **friend code**. Entering someone's code **sends them a request** (since 2026-11-09,
+  `20261114000000_friend_requests.sql`): they see "Erin wants to be friends. Accept?" on Home's friends card and at the
+  top of Friends, and a red dot on Me ("Request" on Me's Friends row). **Accept** makes you friends both ways; **Not
+  now** is quiet (the request stays, marked declined: the sender still sees "Waiting to accept", and sending again
+  doesn't ask twice). Entering the code of someone who already asked you accepts straight away. Senders can **Cancel**
+  under "Waiting to accept". At most 30 open requests per person. The old `add_friend` now sends a request too, so
+  older app versions can't skip it. Before that SQL is run, codes make friends straight away (the app falls back to
+  `add_friend`; `friendRequests()` returns []). Incoming requests are checked when Friends loads and on sync (at most
+  once a minute, `store.requests`).
+- Either side can remove a friend: on Friends ("Your friends") or at the bottom of a friend's cat's **Visit** page
+  ("Remove friend", with a confirm). Removing also clears requests between you, so either can ask again.
 - **Friend bonus:** each new friend gives the pet being shown +15 treats and +1 bond, once per friend, for the first
   10 friends (`FRIEND_BONUS`, `unrewardedFriends` in `corner.ts`; logged as `friend-<their id>` so re-adding doesn't pay
   again). Both sides get it: the person adding right away, the other when their friends are next checked (opening
@@ -222,7 +235,13 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 ### Getting it onto phones
 - **First visit on a phone's browser** shows "Hi! Who's your kitten?": type one or more names, then **Add to Home
   Screen**. Android/Chrome shows its own install prompt from the button; iPhone has no such API, so the button opens a
-  Share → Add to Home Screen guide. "Not now" continues in the browser (`src/screens/Install.tsx`, `src/lib/install.ts`).
+  step-by-step guide. "Not now" continues in the browser (`src/screens/Install.tsx`, `src/lib/install.ts`).
+- **The guide is per browser** (2026-11-09, `src/ui/InstallSteps.tsx`, `browser()` in `install.ts`): the steps differ
+  by browser, so it guesses from the user agent and shows chips to switch (iPhone: Safari, Chrome, Firefox, Edge;
+  Android: Chrome, Samsung Internet, Firefox, Edge). A browser inside another app (Instagram, Facebook, TikTok, the
+  Google app…) can't add to the Home Screen at all, so it says "Another app" and how to open the page in Safari or
+  Chrome first. The same guide is behind Me → "Add … to your Home Screen". The menu names were written from each
+  browser's current layout but **not checked on real phones**; adjust the wording in `steps()` if one differs.
 - **The app is named after the kittens** ("Chester", "Chester & Luna") on the tab, the iPhone Home Screen title and
   the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
   ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
@@ -253,6 +272,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 Tick items here when they ship (`[x]`), in the same commit. Sizes: S under an hour, M about a session, L several.
 "SQL" means Josh runs a migration. Suggested order: badges, bond unlocks + nap tokens, weekly recap, vet summary, push.
 Items marked *(art)* suit the art session.
+
+### Agenda (agreed with Josh, 2026-11-09; work top-down, tick here and in the checklist below)
+1. [ ] **Smart defaults + log for several cats at once** (S + S, no SQL). Make logging effortless.
+2. [ ] **Playable toys, part 1: laser dot and wand** (M, *(art)*, no SQL). See "Play" below.
+3. [ ] **Playable toys, part 2: box and tunnel** (M, *(art)*, no SQL).
+4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
+5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
+   medicine due).
+6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
+- For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
+  real iPhone and Android phone.
 
 ### Done recently
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -301,24 +331,44 @@ Items marked *(art)* suit the art session.
 - [ ] **Log for several cats at once** (S): "Fed" asks nothing when there's one cat, offers "All cats" when several.
 
 ### Play (virtual and real)
-- [ ] **Play with your cat on screen** (M) *(art)*: drag a wand toy or a laser dot and the cat chases, pounces and
-  bats it; uses the toys bought in the corner (box, laser, tunnel). First play of the day adds bond (and treats, see
-  Treats).
+- [ ] **Playable toys** (agenda 2 and 3; M each) *(art)*: today tapping a bought toy in the corner (`playWith` in
+  `Corner.tsx`) only plays a canned reaction (`TOY_MOVE`) and `store.play()` gives the daily bond and treats. Make each
+  one a real game:
+  - **Laser dot** (bought): drag a red dot; the cat's eyes track it, he crouches and wiggles, then pounces; catches
+    sometimes, misses sometimes.
+  - **Wand** (new, free starter toy): flick a feather on a string; he leaps and bats at it.
+  - **Box** (bought): he hops in and peeks out; tap the box and he pops up or swats.
+  - **Tunnel** (bought): he zooms in one end and out the other, sometimes hides in the middle.
+  - Keep the first-play-of-the-day reward (`PLAY_REWARD`); add "found a new move!" moments per toy, counted in the
+    unused `Wallet.playMoves` (this covers "Play moves found by petting" too).
+  - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
+    there, or with that session paused.
 - [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
   (indoor cats need it), never a guilt message.
 
+- [x] **Add vet visits to the calendar** (done 2026-11-09): a vet visit can be dated in the future (an upcoming
+  appointment, with an optional time); its form then offers **iPhone / Apple** (an `.ics` file) or **Google** (a link),
+  with a reminder the day before (`src/lib/calendar.ts`). Future visits don't earn the vet-visit treat bonus. Not
+  checked on a real iPhone yet: whether the installed app opens the .ics in Calendar (Safari does). "Coming up" items
+  (medicine due dates, grooming, the yearly checkup) also have a calendar button (all-day, .ics).
+
 ### Health ideas (from the 2026-11-08 review)
-- [ ] **Kitten growth guide** (S–M): a "typical for his age" band on the weight chart, worded "ask your vet".
-- [ ] **Vaccine and checkup timeline** (M): the usual kitten schedule (core vaccines, rabies, spay/neuter) as
-  suggestions the user confirms; the document reader already finds most dates.
+- [x] **Kitten growth guide** (done 2026-11-09): under the weight chart on Health, "Typical at about 7 months: roughly
+  5–10 lb. A rough guide only; ask your vet." (`typicalKittenWeight()` in `care.ts`: about a pound a month to 6
+  months, 5–10 lb from 7 to 11, nothing for adults). A band drawn on the chart needs a dated x-axis first.
+- [x] **Vaccine and checkup timeline** (done 2026-11-09): "Kitten vaccines and checkups" on Health for pets under 18
+  months (`kittenPlan()` in `src/engine/kittenplan.ts`): core FVRCP series, rabies, FeLV, spay/neuter, one-year
+  boosters, ticked off by matching logged doses by name (FVRCP/distemper, rabies, FeLV/leukemia) or `Cat.altered`; tap a
+  row to log it. Worded as a guide; the vet sets the real schedule.
 - [ ] **Water and appetite notes** (S): optional chips on the daily check.
 
 ### Treats and corner
 - [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
 
 ### Friends safety
-- [ ] **Accept friend requests** (M, SQL): "Accept Erin?" instead of instant friendship; remove a friend from their
-  cat's Visit page.
+- [x] **Accept friend requests** (done 2026-11-09, `20261114000000_friend_requests.sql`, run): "Accept
+  Erin?" instead of instant friendship; remove a friend from their cat's Visit page (see section 1, Friends). Policy
+  test: `supabase/tests/friend_requests_test.sql`. Ideas: block someone outright; a request expiry.
 
 ### Phase 2: Chester's world (finish first)
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
@@ -334,7 +384,14 @@ Items marked *(art)* suit the art session.
   it agrees on every phone (`Wallet.napTokens` stays unused).
 - [ ] **Mastery-only corner items** (S): e.g. a cozy box from Carrier comfort.
 - [ ] **Play moves found by petting** (S) *(art)*: a counter of moves discovered (`Wallet.playMoves`, unused).
-- [ ] **Photo album** (M): a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).
+- [ ] **Photo feed** (agenda 4; L, SQL): real photos of your cats and your friends' cats in one feed, newest first,
+  with a paw reaction and a short caption. Also offered at each mastered skill (this replaces the old Photo album
+  item).
+  - SQL: a `pet_photos` table (cat, path, caption, by, created_at) and a **new** storage bucket readable by the pet's
+    household and its friends; never the `pet-docs` bucket (vet documents stay household-only). Reactions table.
+  - Shrink on the phone before upload (e.g. 1600 px long side, JPEG ~0.8) to stay inside Supabase's free storage.
+  - Safety: removing a friend hides your photos from them at once (policies check `friends`, not a copy); delete
+    your own photos; "hide" for a friend's photo; think about report or block before it grows past close friends.
 - [ ] **Push notifications** (L, SQL): new friend, a friend's treat, medicine due, "Pet me?". Web Push via a Supabase
   Edge Function with VAPID keys (environment secrets, never in the repo), a `push_subscriptions` table, triggers.
   iPhone only when installed. Today everything is in-app (red dot on Me, cards on Home).
@@ -351,20 +408,29 @@ Items marked *(art)* suit the art session.
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
-- [ ] **Vet summary** (M): one tap, weight trend, vaccines, symptoms, to show at appointments.
+- [x] **Vet summary** (done 2026-11-09): "Summary for the vet" on Health opens `#/vet-summary`
+  (`src/screens/VetSummary.tsx`, `vetSummary()` in `src/engine/vetsummary.ts`): age, sex, spay/neuter, chip, weights,
+  latest dose per medicine with next due, symptoms (60 days), daily checks (30 days), visits, current food.
+  Ideas: share or print as a PDF.
 - [ ] **Medicine reminders** (M): in-app now, notifications once push exists.
 - [ ] **Suggest the "Loves it" treat for hard skills** (S).
 
 ### Friends
-- [ ] **Thank-you back** (S, SQL): the owner taps "Thank Erin", she sees a thank-you from the cat.
+- [x] **Thank-you back** (done 2026-11-09; `20261113000000_treat_thanks.sql` run): the "Erin gave Chester a treat"
+  line has **Say thanks** (`thankTreats` → `thank_treat`, household only); Erin's friends card then shows "Chester says
+  thank you for the treat!" (`my_thanks()`, last 7 days; dismissed per phone). Before the SQL is run, Say thanks does
+  nothing visible and no thank-yous show. Policy test: `supabase/tests/treat_thanks_test.sql` (after friend_treats_test).
 - [ ] **A friend's cat visits your Home** (M) *(art)*: now and then sits beside yours for a bit.
 - [x] **Friends in the weekly recap**: treats from friends are counted (names still to add).
 
 ### Treats
-- [ ] **7-day care streak bonus** (S): without any guilt for missing a day.
-- [ ] **First play of the day gives treats** (S): it gives only a bond point today.
+- [x] **7-day care streak bonus** (done 2026-11-09): care logged 7 days in a row: +10 treats and +1 bond, once per 7
+  days (`careStreakDue()`, logged `streak-<day>`); a gap just restarts the count, never shown as broken.
+- [x] **First play of the day gives treats** (done): +2 treats and +1 bond (`PLAY_REWARD`).
 
 ### Polish and housekeeping
+- [x] **Add to Home Screen steps per browser** (done 2026-11-09): Safari, Chrome, Firefox, Edge, Samsung Internet and
+  in-app browsers each get their own steps (see section 1, Getting it onto phones). Still to do: check each on a real phone.
 - [ ] **A cleaner address** (S): `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken; a second
   Cloudflare Pages project with a free name or a custom domain, then update `MOVED_TO`.
 - [ ] **`chester.css` tidy-up** (M) *(art)*: 23 duplicated keyframe names across historical layers (later ones win);
@@ -398,7 +464,7 @@ Items marked *(art)* suit the art session.
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
-                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/vet-summary, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
                         #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
                         #/settings still work.
   engine/               pure logic, unit-tested, no I/O
@@ -453,6 +519,8 @@ supabase/
     20261110000000_friends.sql           friend codes, friendships, pet cards, add_friend/friend_pets/set_pet_card
     20261111000000_friend_treats.sql     friends' free treats: friend_treats, give_treat/treats_given/treats_for
     20261112000000_daily_logs.sql        adds the 'daily' care kind (one-tap Fed/Scooped/Played, daily check)
+    20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
+    20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -490,7 +558,9 @@ npm run build      # what CI runs
   `friend_treats_test.sql` also sets up its own people: run it after the friend treats migration (it's fine after
   `friends_test.sql`). The full order that passed on 2026-11-08: stub_auth, stub_storage, shared_training, care,
   vet_docs, household_tools, rls_test, households, friends, friends_test, friend_treats (twice, to check it's
-  idempotent), friend_treats_test.
+  idempotent), friend_treats_test. On 2026-11-09 the whole chain passed again with daily_logs, treat_thanks,
+  treat_thanks_test, friend_requests (twice) and `friend_requests_test.sql` (last: the earlier tests use instant
+  `add_friend`).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -595,14 +665,25 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   were invoked. Checks used Playwright (iPhone 15, light and dark, the dev store seeded with the in-memory
   `FakeServer` imported through Vite) and a local Postgres 16 for `friend_treats_test.sql`.
 
+- In the friend requests session (2026-11-09, `claude/friend-request-acceptance-zytxm7`): no skills, plugins or MCP
+  servers were invoked (`lottiefiles-creator` connected, unused; `sp-global` failed to connect, not needed). Checks:
+  a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
+  with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
+
+- Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
+  Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
+
 ### Scheduled tasks
-- **PalDex UX review** (created 2026-11-08 by the friends session, at Josh's request; id `trig_018ZuiMgfUdMYtXktjkp1zcn`):
-  every 4 hours (at :16, UTC) a fresh cloud session on the `chester-training` environment checks main for new
-  commits since the `last-reviewed:` line in `docs/ux-review-log.md`. If there are any, it screenshots the touched
-  screens at iPhone size (light and dark), audits them with the `anthropic-skills:design-ux` skill, makes small
-  visual fixes and opens (or adds to) one `claude/ux-review-...` pull request for Josh to merge. It never pushes to
-  main and never touches `src/chester`, `src/sync`, `src/db`, `src/engine` or `supabase`. Push notification when a run
-  finishes. Pause or change it from the scheduled tasks list on claude.ai.
+- **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): every 4 hours (at :13, UTC)
+  the scheduled task `trig_01AyfUBBkAdj5EHVj45Gb12g` wakes one long-lived session, **"PalDex UX reviewer"**
+  (`session_019xqnwfdJXvj4DJJnDqRx1K`, repo attached, its steps in its system prompt). It checks main for new commits
+  since the `last-reviewed:` line in `docs/ux-review-log.md`, screenshots the touched screens at iPhone size (light and
+  dark), audits them with `anthropic-skills:design-ux` and the notes in that file, makes small visual fixes and opens
+  (or adds to) one `claude/ux-review-...` pull request for Josh to merge. Never pushes to main; never touches
+  `src/chester`, `src/sync`, `src/db`, `src/engine` or `supabase`. Why one long-lived session: scheduled tasks that start
+  a fresh session can't attach a repo from a tool call (the first try, 2026-11-08, could read but not push or open a
+  PR). To change what it reviews, edit "Notes from Josh" in `docs/ux-review-log.md`; pause it from the scheduled
+  tasks list on claude.ai.
 
 ### Tools used for checks (no install needed)
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed

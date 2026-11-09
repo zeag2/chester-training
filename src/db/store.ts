@@ -6,14 +6,14 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, Friend, FriendPet, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
+import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
-import { FRIEND_BONUS, FRIEND_TREAT, careReward, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -45,7 +45,11 @@ export interface Snapshot {
   /** New friends whose bonus just landed, for a card on Home (`scarf`: it was the first friend). */
   friendNews: { names: string[]; scarf: boolean } | null;
   /** Friends' treats that just landed for a pet, for a line on Home ("Erin gave Chester a treat"). */
-  treatNews: { cat: string; names: string[] } | null;
+  treatNews: { cat: string; names: string[]; catId?: string; items?: { from: string; day: string }[]; thanked?: boolean } | null;
+  /** Friend requests: incoming ones ("Accept Erin?") and mine still waiting. Checked on sync and when Friends loads. */
+  requests: FriendRequest[];
+  /** "Mochi says thank you": thank-yous for treats I gave, not dismissed yet on this phone. */
+  thanks: { catId: string; catName: string; day: string }[];
   /** Treats a care entry just earned, for a short note on the Health screen. */
   careNews: (CareReward & { at: number }) | null;
 }
@@ -59,7 +63,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [], requests: [] };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -203,7 +207,7 @@ export class Store {
   play(toy: string): Promise<boolean> {
     return this.corner((c) => {
       const day = localDay(Date.now()); if (playedToday(c, day)) return null;
-      return { ...c, log: [...c.log, this.event('play', 'play-' + day, 0, 1, toy)] };
+      return { ...c, log: [...c.log, this.event('play', 'play-' + day, PLAY_REWARD.treats, PLAY_REWARD.bond, toy)] };
     });
   }
 
@@ -225,8 +229,12 @@ export class Store {
     let got: CareReward | null = null;
     const ok = await this.corner((c, cat) => {
       if (cat.id !== item.catId) return null;
-      got = careReward(c, item, this.snap.care); if (!got) return null;
-      return { ...c, log: [...c.log, this.event('care', 'care-' + item.id, got.treats, 0, item.kind)] };
+      got = careReward(c, item, this.snap.care);
+      const streak = careStreakDue(c, this.snap.care);
+      const add = [...(got ? [this.event('care', 'care-' + item.id, got.treats, 0, item.kind)] : []), ...(streak && !c.log.some((e) => e.id === streak) ? [this.event('streak', streak, CARE_STREAK.treats, 1)] : [])];
+      if (!add.length) return null;
+      if (streak && add.some((e) => e.kind === 'streak')) got = { treats: (got?.treats ?? 0) + CARE_STREAK.treats, why: 'streak' };
+      return { ...c, log: [...c.log, ...add] };
     });
     if (ok && got) this.set({ careNews: { ...(got as CareReward), at: Date.now() } });
   }
@@ -306,8 +314,10 @@ export class Store {
       let given: string[] = []; let treats: 'missing' | undefined;
       try { given = await r.treatsGiven(localDay(Date.now())); } catch (e) { if (String((e as Error)?.message).includes('treats-missing')) treats = 'missing'; else throw e; }
       this.set({ friends: { code, list, pets, given, treats } });
+      await this.loadRequests(r);
       await this.rewardFriends(list);
       await this.collectTreats(true);
+      try { const seen = this.seenThanks(); this.set({ thanks: (await r.myThanks()).filter((t) => !seen.has(t.catId + '|' + t.day)) }); } catch { /* thanks SQL not run yet */ }
     } catch (e) {
       if (String((e as Error)?.message).includes('friends-missing')) this.set({ friends: { code: '', list: [], pets: [], missing: true } });
       else throw e;
@@ -359,21 +369,42 @@ export class Store {
     });
     if (!ok) return [];
     const names = [...new Set(fresh.map((t) => t.fromName || 'A friend'))];
-    const prev = this.snap.treatNews?.cat === cat.name ? this.snap.treatNews.names : [];
-    this.set({ treatNews: { cat: cat.name, names: [...new Set([...prev, ...names])] } });
+    const keep = this.snap.treatNews?.catId === cat.id ? this.snap.treatNews : null;
+    this.set({ treatNews: { cat: cat.name, catId: cat.id, names: [...new Set([...(keep?.names ?? []), ...names])], items: [...(keep?.items ?? []), ...fresh.map((t) => ({ from: t.from, day: t.day }))] } });
     return names;
   }
   dismissTreatNews() { this.set({ treatNews: null }); }
+  /** Say thank you for the treats in the Home card (needs the thanks SQL; quietly does nothing until then). */
+  async thankTreats(): Promise<boolean> {
+    const n = this.snap.treatNews; const r = this.remote; if (!n?.catId || !n.items?.length || !r) return false;
+    try { for (const t of n.items) await r.thankTreat(t.from, n.catId, t.day); } catch { return false; }
+    this.set({ treatNews: { ...n, thanked: true } }); return true;
+  }
+  private seenThanks(): Set<string> { try { return new Set(JSON.parse(localStorage.getItem('paldex-thanks-seen') ?? '[]')); } catch { return new Set(); } }
+  dismissThanks() { const seen = this.seenThanks(); for (const t of this.snap.thanks) seen.add(t.catId + '|' + t.day); try { localStorage.setItem('paldex-thanks-seen', JSON.stringify([...seen].slice(-200))); } catch { /* private mode */ } this.set({ thanks: [] }); }
   private friendsCheckedAt = 0;
   /** Every so often during sync: has someone added my code? Then their bonus lands here too. */
   private async checkFriends(r: Remote) {
     if (Date.now() - this.friendsCheckedAt < 60_000) return; // checked on every app open (sync runs then), at most once a minute
     this.friendsCheckedAt = Date.now();
-    try { await this.rewardFriends(await r.friends()); } catch { /* friends not set up yet, or offline */ }
+    try { await this.rewardFriends(await r.friends()); await this.loadRequests(r); } catch { /* friends not set up yet, or offline */ }
   }
-  /** Add a friend by their code: their name ('' if none), or null when the code is wrong. */
-  async addFriend(code: string): Promise<string | null> {
-    const name = await this.remote!.addFriend(code.trim()); if (name !== null) await this.loadFriends(); return name;
+  private async loadRequests(r: Remote) {
+    try { this.set({ requests: await r.friendRequests() }); } catch { /* offline: keep what we had */ }
+  }
+  /** Enter a friend's code: sends them a request ("Accept Josh?"), or makes you friends when they'd already asked you.
+      Null when the code is wrong or your own. */
+  async addFriend(code: string): Promise<AddFriendResult | null> {
+    const res = await this.remote!.addFriend(code.trim()); if (res !== null) await this.loadFriends(); return res;
+  }
+  /** Accept or decline a friend request (declining is quiet: they aren't told). */
+  async answerFriend(userId: string, accept: boolean) {
+    this.set({ requests: this.snap.requests.filter((q) => !(q.incoming && q.userId === userId)) });
+    await this.remote!.answerFriend(userId, accept); await this.loadFriends();
+  }
+  async cancelFriendRequest(userId: string) {
+    this.set({ requests: this.snap.requests.filter((q) => q.incoming || q.userId !== userId) });
+    await this.remote!.cancelFriendRequest(userId); await this.loadFriends();
   }
   async removeFriend(userId: string) { await this.remote!.removeFriend(userId); await this.loadFriends(); }
 
@@ -478,7 +509,7 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
+  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {

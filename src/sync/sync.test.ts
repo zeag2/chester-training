@@ -9,6 +9,8 @@ const chester = { name: 'Chester', birthday: '2026-04', homeDate: '2026-11-01', 
 const pass = { skillId: 'clicker', reps: 10, good: 10, mood: 'Happy' as const, seconds: 90 };
 let n = 0;
 const device = (server: FakeServer) => { const s = new Store('sync' + ++n, server.device()); s.rand = () => 0.5; return s; };
+/** a sends b a friend request by code and b accepts it */
+const befriend = async (a: Store, b: Store) => { await a.addFriend(b.get().friends!.code); await b.loadFriends(); await b.answerFriend(a.get().account!.userId, true); await a.loadFriends(); };
 
 describe('training Chester together', () => {
   it('shares his progress both ways, with daily limits and treats counted across both phones', async () => {
@@ -274,7 +276,21 @@ describe('training Chester together', () => {
     expect(await josh.addFriend('WRONG')).toBeNull();
     expect(await josh.addFriend(josh.get().friends!.code)).toBeNull(); // not yourself
     const before = josh.get().wallet!.treats, bondBefore = josh.get().wallet!.bond;
-    expect(await josh.addFriend(code.toLowerCase())).toBe('Erin');
+    // entering Erin's code sends her a request: not friends yet, no bonus, no cards
+    expect(await josh.addFriend(code.toLowerCase())).toEqual({ name: 'Erin', status: 'sent' });
+    expect(josh.get().friends!.list).toEqual([]); expect(josh.get().friends!.pets).toEqual([]);
+    expect(josh.get().wallet!.treats).toBe(before);
+    expect(josh.get().requests).toEqual([{ userId: 'u:erin@example.com', name: 'Erin', incoming: false }]);
+    expect(await josh.addFriend(code)).toEqual({ name: 'Erin', status: 'sent' }); // asking twice is still one request
+    // Erin sees "Accept Josh?" and accepts
+    const erinBefore = erin.get().wallet!.treats;
+    await erin.loadFriends();
+    expect(erin.get().requests).toEqual([{ userId: 'u:josh@example.com', name: 'Josh', incoming: true }]);
+    await erin.answerFriend('u:josh@example.com', true);
+    expect(erin.get().requests).toEqual([]);
+    expect(erin.get().wallet!.treats).toBe(erinBefore + 15); // her bonus lands when she accepts
+    expect(erin.get().friendNews?.names).toEqual(['Josh']);
+    await josh.loadFriends(); expect(josh.get().requests).toEqual([]);
     // a bonus for making a friend: treats, bond and the Friendship scarf; Home gets a card
     expect(josh.get().wallet!.treats).toBe(before + 15); expect(josh.get().wallet!.bond).toBe(bondBefore + 1);
     expect(owned(josh.get().cat!.corner).has('scarf')).toBe(true);
@@ -284,10 +300,8 @@ describe('training Chester together', () => {
     expect(mochi.map((p) => [p.ownerName, p.card.name, p.card.coat])).toEqual([['Erin', 'Mochi', 'orange']]);
     expect(mochi[0].card.setsWeek).toBe(0);
 
-    const erinBefore = erin.get().wallet!.treats;
-    await erin.loadFriends(); // both ways (her bonus lands too), and her view shows Chester's published card
+    await erin.loadFriends(); // both ways, and her view shows Chester's published card
     expect(erin.get().wallet!.treats).toBe(erinBefore + 15);
-    expect(erin.get().friendNews?.names).toEqual(['Josh']);
     const ch = erin.get().friends!.pets[0];
     expect([ch.ownerName, ch.card.name, ch.card.setsWeek]).toEqual(['Josh', 'Chester', 1]);
 
@@ -296,8 +310,10 @@ describe('training Chester together', () => {
     expect(josh.get().friends!.list).toEqual([]); expect(josh.get().friends!.pets).toEqual([]);
     // friends again: no second bonus for the same friend
     const again = josh.get().wallet!.treats;
-    expect(await josh.addFriend(code)).toBe('Erin');
+    await befriend(josh, erin);
+    expect(josh.get().friends!.list.map((f) => f.name)).toEqual(['Erin']);
     expect(josh.get().wallet!.treats).toBe(again);
+    expect(await josh.addFriend(code)).toEqual({ name: 'Erin', status: 'already' });
   });
   it('lets a friend give each friend’s pet one free treat a day, counted once in the owner’s corner', async () => {
     const server = new FakeServer();
@@ -308,7 +324,7 @@ describe('training Chester together', () => {
     const erin = device(server); await erin.load(); await erin.saveCat({ ...chester, name: 'Mochi', coat: 'orange' });
     await erin.signIn('erin@example.com', 'catnip1', 'Erin', true, true);
     await josh.loadFriends(); await erin.loadFriends();
-    await josh.addFriend(erin.get().friends!.code); await erin.loadFriends();
+    await befriend(josh, erin); await erin.loadFriends();
     const chesterId = josh.get().cat!.id, mochiId = erin.get().cat!.id;
     expect(erin.get().friends!.given).toEqual([]);
 
@@ -323,10 +339,14 @@ describe('training Chester together', () => {
     const before = josh.get().wallet!.treats;
     expect(await josh.collectTreats(true)).toEqual(['Erin']);
     expect(josh.get().wallet!.treats).toBe(before + 1);
-    expect(josh.get().treatNews).toEqual({ cat: 'Chester', names: ['Erin'] });
+    expect(josh.get().treatNews).toMatchObject({ cat: 'Chester', names: ['Erin'], catId: chesterId });
     expect(josh.get().cat!.corner!.log.filter((e) => e.kind === 'treat').map((e) => [e.id, e.treats, e.by])).toEqual([['treat-u:erin@example.com-' + localDay(Date.now()), 1, 'u:erin@example.com']]);
     expect(await josh.collectTreats(true)).toEqual([]);
     expect(josh.get().wallet!.treats).toBe(before + 1);
+    // Josh says thanks; Erin's Home shows Chester's thank-you until she dismisses it
+    expect(await josh.thankTreats()).toBe(true); expect(josh.get().treatNews?.thanked).toBe(true);
+    await erin.loadFriends(); expect(erin.get().thanks.map((t) => t.catName)).toEqual(['Chester']);
+    erin.dismissThanks(); await erin.loadFriends(); expect(erin.get().thanks).toEqual([]);
     josh.dismissTreatNews(); expect(josh.get().treatNews).toBeNull();
 
     // Megan's phone (same household) gets Josh's entry by sync, so the treat is never counted twice
@@ -344,7 +364,7 @@ describe('training Chester together', () => {
     const server = new FakeServer(); server.treatsTable = false;
     const a = device(server); await a.load(); await a.saveCat(chester); await a.signIn('a@example.com', 'catnip1', 'A', true, true);
     const b = device(server); await b.load(); await b.saveCat({ ...chester, name: 'Mochi' }); await b.signIn('b@example.com', 'catnip1', 'B', true, true);
-    await a.loadFriends(); await b.loadFriends(); await a.addFriend(b.get().friends!.code);
+    await a.loadFriends(); await b.loadFriends(); await befriend(a, b);
     expect(a.get().friends!.missing).toBeUndefined();
     expect(a.get().friends!.treats).toBe('missing');
     expect(a.get().friends!.pets.map((p) => p.card.name)).toEqual(['Mochi']);
@@ -386,6 +406,35 @@ describe('training Chester together', () => {
     expect(meg.dailyShared).toBe(true);
     const fed = dailyToday(josh.get().care).fed;
     expect(fed.map((f) => f.by)).toEqual(['u:meg@example.com']);
+  });
+  it('declines quietly, cancels, accepts by entering their code, and removes', async () => {
+    const server = new FakeServer();
+    const a = device(server); await a.load(); await a.saveCat(chester); await a.signIn('a@example.com', 'catnip1', 'Ann', true, true);
+    const b = device(server); await b.load(); await b.saveCat({ ...chester, name: 'Mochi' }); await b.signIn('b@example.com', 'catnip1', 'Bo', true, true);
+    await a.loadFriends(); await b.loadFriends();
+    await a.addFriend(b.get().friends!.code); await b.loadFriends();
+    await b.answerFriend('u:a@example.com', false); // Not now
+    expect(b.get().requests).toEqual([]); expect(b.get().friends!.list).toEqual([]);
+    await a.loadFriends(); expect(a.get().requests.map((q) => q.incoming)).toEqual([false]); // still "waiting" for Ann
+    await a.addFriend(b.get().friends!.code); await b.loadFriends(); expect(b.get().requests).toEqual([]); // not asked twice
+    await a.cancelFriendRequest('u:b@example.com'); expect(a.get().requests).toEqual([]);
+    // Bo asks; Ann entering Bo's code accepts straight away
+    await b.addFriend(a.get().friends!.code);
+    expect(await a.addFriend(b.get().friends!.code)).toEqual({ name: 'Bo', status: 'friends' });
+    expect(a.get().friends!.pets.map((p) => p.card.name)).toEqual(['Mochi']);
+    expect(a.get().requests).toEqual([]);
+    // removing (from the Visit page) ends it both ways
+    await a.removeFriend('u:b@example.com'); await b.loadFriends();
+    expect(a.get().friends!.list).toEqual([]); expect(b.get().friends!.list).toEqual([]);
+  });
+  it('makes friends straight away until the friend requests SQL is run', async () => {
+    const server = new FakeServer(); server.requestsTable = false;
+    const a = device(server); await a.load(); await a.signIn('a@example.com', 'catnip1', 'Ann', true, true);
+    const b = device(server); await b.load(); await b.signIn('b@example.com', 'catnip1', 'Bo', true, true);
+    await a.loadFriends(); await b.loadFriends();
+    expect(await a.addFriend(b.get().friends!.code)).toEqual({ name: 'Bo', status: 'friends' });
+    expect(a.get().requests).toEqual([]);
+    await b.loadFriends(); expect(b.get().friends!.list.map((f) => f.name)).toEqual(['Ann']);
   });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;
