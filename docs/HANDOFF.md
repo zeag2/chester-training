@@ -308,7 +308,9 @@ Items marked *(art)* suit the art session.
   (indoor cats need it), never a guilt message.
 
 ### Health ideas (from the 2026-11-08 review)
-- [ ] **Kitten growth guide** (S–M): a "typical for his age" band on the weight chart, worded "ask your vet".
+- [x] **Kitten growth guide** (done 2026-11-09): under the weight chart on Health, "Typical at about 7 months: roughly
+  5–10 lb. A rough guide only; ask your vet." (`typicalKittenWeight()` in `care.ts`: about a pound a month to 6
+  months, 5–10 lb from 7 to 11, nothing for adults). A band drawn on the chart needs a dated x-axis first.
 - [ ] **Vaccine and checkup timeline** (M): the usual kitten schedule (core vaccines, rabies, spay/neuter) as
   suggestions the user confirms; the document reader already finds most dates.
 - [ ] **Water and appetite notes** (S): optional chips on the daily check.

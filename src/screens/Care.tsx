@@ -3,7 +3,7 @@ import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import {
-  dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, weights,
+  dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon } from '../ui/icons';
@@ -80,7 +80,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
-      <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p></div>}
+      <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
+      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>}
 
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
     {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
