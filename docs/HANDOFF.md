@@ -139,9 +139,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 - **Shortcuts:** `#/log/fed|scoop|play|check` logs it and returns to Home (`LogLink`). The manifest's `shortcuts`
   offer them on a long-press of the app icon (Android; iPhone ignores manifest shortcuts, and links from iPhone
   Shortcuts open in Safari, not the Home Screen app).
-- **Needs `20261112000000_daily_logs.sql`** (adds `daily` to the care kinds). Until it's run, one-tap logs stay on the
+- **`20261112000000_daily_logs.sql` has been run (2026-11-09)** (adds `daily` to the care kinds). Before it was run, one-tap logs stay on the
   phone that made them (`syncCare` pushes them separately and keeps them dirty on a check-constraint error) and
-  everything else keeps syncing; they upload once it's run.
+  everything else kept syncing; they upload once it's run (that fallback stays in place for new Supabase projects).
 
 ### Health (the Health tab, `#/health`; was "Chester's care")
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
