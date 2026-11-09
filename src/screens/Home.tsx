@@ -145,7 +145,7 @@ export function Home() {
   const done = rewardedToday >= DAILY_REWARDED_SETS;
   const lines = ['Pet me!', 'Hi! Scratches?', 'Mrrp.', 'Is it dinner time?', 'I was napping. Hi.'];
   const idleLine = cat.training === false ? `Hi! I'm ${cat.name}. ${lines[new Date().getMinutes() % lines.length]}`
-    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Ready for ${next.skill.name.toLowerCase()}?` : 'Pet me!';
+    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Next up: ${next.skill.name}. Ready?` : 'Pet me!';
 
   return <div className="screen">
     <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>

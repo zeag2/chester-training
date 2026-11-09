@@ -6,7 +6,7 @@ import { go } from './router';
 import * as audio from '../lib/audio';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-const DONE: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Litter scooped', play: 'Playtime logged', check: 'Daily check saved' };
+const DONE: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Playtime logged', check: 'Check saved' };
 
 /** Home: one tap each for the everyday things (Fed, Scooped, Played) and a two-tap daily health check, with Undo
     instead of forms. Shared with the household, so "Fed 1 of 2 · 7:40 by Megan" stops anyone double-feeding. */
@@ -30,7 +30,7 @@ export function DailyTaps() {
     { what: 'scoop', label: 'Scooped', icon: 'box', done: scoop.length > 0, sub: scoop.length ? `${time(scoop[0].at)}${who(scoop[0]) === 'you' ? '' : ` by ${who(scoop[0])}`}` : 'Not yet today' },
     { what: 'play', label: 'Played', icon: 'yarn', done: play.length > 0, sub: play.length ? `${play.length}× today` : 'Not yet today' },
   ];
-  return <div className="card white" style={{ border: '1px solid var(--grey)' }}>
+  return <div className="card white">
     <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b>
       <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
@@ -46,12 +46,12 @@ export function DailyTaps() {
         <b style={{ fontSize: 15 }}>Daily check</b>
         <p className="s" style={{ marginTop: 2 }}>Is {cat.name} eating, using the litter box and acting like {cat.sex === 'f' ? 'herself' : 'himself'}?</p>
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
-          <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={!!busy} onClick={() => void log('check', { ok: true })}>All normal</button>
-          <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={!!busy} onClick={async () => { await log('check', { ok: false }); go('health/log/symptom'); }}>Something’s off</button>
+          <button className="btn2" style={{ flex: 1, padding: '0 10px', background: 'var(--surface)' }} disabled={!!busy} onClick={() => void log('check', { ok: true })}>All normal</button>
+          <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={async () => { await log('check', { ok: false }); go('health/log/symptom'); }}>Something’s off</button>
         </div>
       </div>}
-    {undo && <div className="row pop" role="status" style={{ marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)' }}>
-      <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14 }}>{DONE[undo.what]} · {time(Date.now())}</span>
+    {undo && <div className="row pop" role="status" style={{ marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)', gap: 6 }}>
+      <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{DONE[undo.what]}</span>
       {undo.what === 'scoop' && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
       <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={() => { void store.deleteCare(undo.id); setUndo(null); }}>Undo</button>
     </div>}
