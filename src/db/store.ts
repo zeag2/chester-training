@@ -213,12 +213,14 @@ export class Store {
 
   // ---- Chester's care ----
 
-  /** Add or edit a care item. Saved on the phone right away, shared on the next sync. */
-  saveCare<K extends CareKind>(kind: K, data: CareData[K], opts: { id?: string; at?: number } = {}): Promise<CareItem | null> {
+  /** Add or edit a care item. Saved on the phone right away, shared on the next sync. `catId`: for another of my pets
+      than the one shown (e.g. "Fed" for all cats); those don't earn the shown pet's care treats. */
+  saveCare<K extends CareKind>(kind: K, data: CareData[K], opts: { id?: string; at?: number; catId?: string } = {}): Promise<CareItem | null> {
     return this.serial(async () => {
       const cat = this.snap.cat; if (!cat) return null;
+      if (opts.catId && opts.catId !== cat.id && !(await this.db.cats.get(opts.catId))) return null;
       const old = opts.id ? await this.db.care.get(opts.id) : undefined;
-      const item: CareRow = { id: opts.id ?? uid(), catId: cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
+      const item: CareRow = { id: opts.id ?? uid(), catId: opts.catId ?? cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
       await this.db.care.put(item); await this.rebuild(cat);
       if (this.snap.account) void this.sync();
       const { dirty: _d, ...out } = item; return { item: out as CareItem, isNew: !old };
@@ -447,6 +449,11 @@ export class Store {
       if (theirs.length) await this.db.sets.bulkPut(theirs);
       const shared = await r.getCat(cat.id);
       const careSync = await this.syncCare(r, cat.id);
+      // care logged here for my other pets (e.g. "Fed" for all cats) goes up now, not when that pet is next shown
+      if (careSync === 'ok') {
+        const others = new Set((await this.db.care.filter((c) => !!c.dirty && c.catId !== cat.id).toArray()).map((c) => c.catId));
+        for (const id of others) await this.syncCare(r, id).catch(() => {});
+      }
       let household = shared ? { inviteCode: shared.inviteCode, members: await r.members(cat.id) } : null;
       // keep my name in step both ways: fill it in online if it's missing there, remember it here for offline
       const meRow = household?.members.find((m) => m.userId === account.userId);

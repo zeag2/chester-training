@@ -17,8 +17,9 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 122 tests passing in 24 files, typecheck and build clean. Friend requests and
-  the per-browser install guide are on `main` and live. All Supabase SQL
+- **State at handoff (2026-11-09):** 126 tests passing in 24 files, typecheck and build clean. Friend requests and
+  the per-browser install guide are on `main` and live; agenda item 1 (smart defaults, all cats) is on
+  `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
   2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
@@ -274,7 +275,7 @@ Tick items here when they ship (`[x]`), in the same commit. Sizes: S under an ho
 Items marked *(art)* suit the art session.
 
 ### Agenda (agreed with Josh, 2026-11-09; work top-down, tick here and in the checklist below)
-1. [ ] **Smart defaults + log for several cats at once** (S + S, no SQL). Make logging effortless.
+1. [x] **Smart defaults + log for several cats at once** (done 2026-11-09). Make logging effortless.
 2. [ ] **Playable toys, part 1: laser dot and wand** (M, *(art)*, no SQL). See "Play" below.
 3. [ ] **Playable toys, part 2: box and tunnel** (M, *(art)*, no SQL).
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
@@ -324,11 +325,17 @@ Items marked *(art)* suit the art session.
 - [x] **Daily two-tap health check** (done): "Ate normally? Litter normal? Acting normal?" with all-yes as one tap; any
   "no" opens the symptom picker. Builds a baseline ("not eating since Tuesday"), earns care treats, feeds the recap
   and vet summary.
-- [ ] **Smart defaults everywhere** (S): time = now, the last food used, the last weight pre-filled to nudge,
-  "same as yesterday" for meds and meals.
+- [x] **Smart defaults** (done 2026-11-09; helpers in `care.ts`: `entryTime`, `lastOf`, `recentMeds`, `nextDueLike`):
+  entries for today get the time now (they used to all be stamped noon; other days still get noon, and an edit keeps
+  its time if its day stays); weight shows the last weigh-in as the placeholder plus "Last time: 6.2 lb on Nov 1";
+  medicine has "Same as last time" chips (up to 3 recent names) that fill name, kind and notes and set next due with
+  last time's gap; vet fills the last clinic; grooming starts on what you did last. Not done: a food on "Fed" taps.
 - [x] **Home Screen shortcuts** (done; Android only, see section 1): manifest `shortcuts` (long-press the app icon: "Fed Chester", "Weigh-in") and
   deep links like `#/log/fed`, which iPhone Shortcuts can open (even from an NFC sticker on the food bin).
-- [ ] **Log for several cats at once** (S): "Fed" asks nothing when there's one cat, offers "All cats" when several.
+- [x] **Log for several cats at once** (done 2026-11-09): Fed, Scooped and Played still log the shown cat in one tap;
+  with more cats the toast offers "Luna too" (or "All cats"), and Undo takes back all of them. `saveCare(..., { catId })`
+  logs for another of my pets (no care treats for it: the corner reward is the shown pet's); sync now also pushes
+  waiting care for my other pets, not only the shown one.
 
 ### Play (virtual and real)
 - [ ] **Playable toys** (agenda 2 and 3; M each) *(art)*: today tapping a bought toy in the corner (`playWith` in
@@ -670,6 +677,7 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
+- Later: smart defaults and logging for all cats (agenda 1). No skills or MCP servers; Playwright on the dev store.
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
 

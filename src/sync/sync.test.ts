@@ -436,6 +436,19 @@ describe('training Chester together', () => {
     expect(a.get().requests).toEqual([]);
     await b.loadFriends(); expect(b.get().friends!.list.map((f) => f.name)).toEqual(['Ann']);
   });
+  it('logs Fed for another of my cats and shares it without showing that cat first', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const luna = await josh.saveCat({ ...chester, name: 'Luna' });
+    const ch = await josh.saveCat({ ...chester }); await josh.sync();
+    expect(josh.get().cat!.id).toBe(ch.id);
+    const it = await josh.saveCare('daily', { what: 'fed' }, { catId: luna.id });
+    expect(it?.catId).toBe(luna.id);
+    expect(josh.get().care.filter((c) => c.kind === 'daily')).toEqual([]); // Chester's log is untouched
+    await josh.sync();
+    expect([...server.care.values()].filter((c) => c.catId === luna.id).map((c) => (c.data as { what: string }).what)).toEqual(['fed']);
+    expect(await josh.saveCare('daily', { what: 'fed' }, { catId: 'not-mine' })).toBeNull();
+  });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;
     const a = device(server); await a.load(); await a.signIn('a@example.com', 'catnip1', 'A', false, true);
