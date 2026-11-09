@@ -49,8 +49,8 @@ export function Visit({ catId }: { catId: string }) {
       <p className="m">{pet.ownerName ? `${pet.ownerName}’s cat` : 'A friend’s cat'}{c.birthday ? ` · ${ageText(c.birthday)}` : ''}</p>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
         <div style={{ minHeight: 44 }}><span key={line + (react?.n ?? 0)} className="bubble mint">{line || `Hi! I’m ${c.name}. Pet me!`}</span></div>
-        <Chester coat={c.coat} eyes={c.eyes} wear={c.wear} mood="happy" width={200} interactive label={c.name}
-          onPet={(l) => setLine(l)} react={react?.id ?? null} reactKey={react?.n ?? 0} />
+        <div style={{ marginTop: -36 }}><Chester coat={c.coat} eyes={c.eyes} wear={c.wear} mood="happy" width={200} interactive label={c.name}
+          onPet={(l) => setLine(l)} react={react?.id ?? null} reactKey={react?.n ?? 0} /></div>
       </div>
       <div className="card butter" style={{ textAlign: 'center' }}>
         {off ? <><b style={{ color: 'var(--butter-ink)' }}>Treats aren’t switched on yet</b>
@@ -64,7 +64,7 @@ export function Visit({ catId }: { catId: string }) {
         <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
           <span className="chip" style={{ background: 'var(--mint)' }}>{mastered.length} {mastered.length === 1 ? 'skill' : 'skills'}</span>
           {(c.streak ?? 0) > 0 && <span className="chip" style={{ background: 'var(--butter)', color: 'var(--butter-ink)' }}>{c.streak}-day streak</span>}
-          {(c.setsWeek ?? 0) > 0 && <span className="chip">{c.setsWeek} sets this week</span>}
+          {(c.setsWeek ?? 0) > 0 && <span className="chip" style={{ background: 'var(--grey)' }}>{c.setsWeek} sets this week</span>}
         </div>
         <p className="s" style={{ lineHeight: 1.35 }}>{mastered.length ? `${he[0].toUpperCase() + he.slice(1)} can: ${mastered.slice(0, 4).map((id) => SKILL_BY_ID[id]?.name ?? id).join(', ')}${mastered.length > 4 ? '…' : ''}` : 'Just getting started'}</p>
         <p className="s">Bond with {pet.ownerName || 'their person'}: {bondLevel(c.bond ?? 0).name}</p>
@@ -78,7 +78,7 @@ export function Visit({ catId }: { catId: string }) {
             <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={removing === 'busy'} onClick={() => setRemoving('')}>Keep</button>
           </div></>
           : <div className="row"><p className="s sp">{removing === 'error' ? 'Can’t reach PalDex right now. Try again in a moment.' : `Friends with ${who}`}</p>
-            <button className="btn2" style={{ minHeight: 36, background: 'var(--surface)' }} onClick={() => setRemoving('ask')}>Remove friend</button></div>}
+            <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => setRemoving('ask')}>Remove friend</button></div>}
       </div>
     </div>
   </div>;

@@ -55,8 +55,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
     <PetSwitcher />
     <CareTreatNote />
-    <button className="btn2" style={{ marginTop: 10, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
     <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
+    <button className="btn2" style={{ marginTop: 12, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
     <button className="card peach row" style={{ alignItems: 'flex-start' }} onClick={() => setFlags(!flags)} aria-expanded={flags}>
@@ -77,7 +77,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
           onClick={() => downloadIcs({ title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail })}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
     {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
-      <div className="card white" style={{ border: '1px solid var(--grey)' }}>
+      <div className="card white">
         {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
           onClick={() => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset })} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}. Tap to log it.`}>
           <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
