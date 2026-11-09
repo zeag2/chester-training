@@ -17,9 +17,10 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 134 tests passing in 25 files, typecheck and build clean. Friend requests and
-  the per-browser install guide are on `main` and live; agenda item 1 (smart defaults, all cats) is live;
-  item 2 (playable laser and wand) is on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
+- **State at handoff (2026-11-09):** 134 tests passing in 25 files, typecheck and build clean, everything on `main`
+  and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
+  and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
+  `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
   2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
