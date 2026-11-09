@@ -15,6 +15,8 @@ export interface ChesterProps {
   move?: 'hop' | 'pounce' | 'stalk' | 'bat' | null; moveKey?: number;
 }
 
+/** How long the roll's splat pose stays on (matches cRoll in chester.css). */
+const ROLL_MS = 2300;
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
 /** Reactions the rig performs as full moves (wind-up, stretch, tucked legs, squash) instead of CSS. */
 const RIG_MOVES: Partial<Record<ReactionId, 'hop' | 'pounce'>> = { r1: 'hop', r6: 'hop', r11: 'hop', r14: 'pounce' };
@@ -25,8 +27,11 @@ const KICKS: Partial<Record<ReactionId, ['hop' | 'bonk' | 'shake' | 'spin' | 'fl
 
 export function Chester(p: ChesterProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const svg = useMemo(() => chesterSVG({ pose: p.pose, coat: p.coat, eyes: p.eyes, mood: p.mood, raised: p.raised, anim: p.anim, width: p.width, uid, label: p.label, extra: p.extra, wear: p.wear }),
-    [p.pose, p.coat, p.eyes, p.mood, p.raised, p.anim, p.width, uid, p.label, p.extra, p.wear]);
+  // the roll (r7) needs its own pose: he splats flat, then rolls over like a wheel (CSS on .pose-sploot)
+  const [rolling, setRolling] = useState(false);
+  const pose = rolling ? 'sploot' : p.pose, mood = rolling ? 'happy' : p.mood, anim = rolling ? '' : p.anim, raised = rolling ? false : p.raised;
+  const svg = useMemo(() => chesterSVG({ pose, coat: p.coat, eyes: p.eyes, mood, raised, anim, width: p.width, uid, label: p.label, extra: p.extra, wear: p.wear }),
+    [pose, p.coat, p.eyes, mood, raised, anim, p.width, uid, p.label, p.extra, p.wear]);
   const ref = useRef<HTMLButtonElement | HTMLDivElement>(null);
   const [fx, setFx] = useState('');
   const [idle, setIdle] = useState('');
@@ -35,7 +40,9 @@ export function Chester(p: ChesterProps) {
 
   // zoomies: a real sprint off screen and back with a backflip (an overlay, like the dash), not a CSS slide
   const [zoom, setZoom] = useState<DOMRect | null>(null);
+  const rollT = useRef(0);
   const play = (id: ReactionId) => {
+    if (id === 'r7' && (p.pose ?? 'sit') === 'sit') { setRolling(true); window.clearTimeout(rollT.current); rollT.current = window.setTimeout(() => setRolling(false), ROLL_MS); }
     if (id === 'r5') { const r = (body.current?.querySelector('svg') ?? ref.current)?.getBoundingClientRect(); if (r && r.width) { setFx(''); setZoom(r); return; } }
     const move = RIG_MOVES[id];
     if (move && rig.current) rig.current.play(move);
@@ -108,7 +115,7 @@ export function Chester(p: ChesterProps) {
       p.onPet?.('WHEEEE! Rainbow dash!', 'r5');
       return;
     }
-    const id = pickReaction(last.current, Math.random, (p.pose ?? 'sit') === 'sit'); last.current = id;
+    const id = pickReaction(last.current, Math.random, (pose ?? 'sit') === 'sit'); last.current = id;
     const r = REACTIONS.find((x) => x.id === id)!;
     if (r.sound === 'purr') { audio.purr(id === 'r12' ? 3.4 : 1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
     else if (r.sound === 'sparkle') { audio.sparkle(); audio.buzz([10, 30, 30]); }
