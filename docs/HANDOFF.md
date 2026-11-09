@@ -369,7 +369,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Suggest the "Loves it" treat for hard skills** (S).
 
 ### Friends
-- [x] **Thank-you back** (done 2026-11-09, **needs `20261113000000_treat_thanks.sql`**): the "Erin gave Chester a treat"
+- [x] **Thank-you back** (done 2026-11-09; `20261113000000_treat_thanks.sql` run): the "Erin gave Chester a treat"
   line has **Say thanks** (`thankTreats` → `thank_treat`, household only); Erin's friends card then shows "Chester says
   thank you for the treat!" (`my_thanks()`, last 7 days; dismissed per phone). Before the SQL is run, Say thanks does
   nothing visible and no thank-yous show. Policy test: `supabase/tests/treat_thanks_test.sql` (after friend_treats_test).
