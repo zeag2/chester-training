@@ -728,3 +728,13 @@ button.tapme.stroking:active{transform:none}
   80%{transform:translate(0,0) rotate(360deg) scale(1)}
   90%{transform:translate(0,-12px) rotate(360deg) scale(.94,1.06)}
   100%{transform:translate(0,0) rotate(360deg) scale(1)}}
+
+/* play poses: the stalk's butt wiggle (rump rocks about the hips), a paw lifted and set down, the reach's swipes */
+.kc.pose-crouch .rump{transform-origin:76px 140px;animation:cWiggle .5s var(--sine) infinite}
+@keyframes cWiggle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-1px)}}
+.kc.pose-crouch .pawLift{transform-origin:156px 160px;animation:cPawLift 1.6s var(--sine) infinite}
+@keyframes cPawLift{0%,55%,100%{transform:rotate(0)}70%,85%{transform:rotate(-28deg) translateY(-4px)}}
+.kc.pose-reach .swipe{transform-origin:108px 76px;animation:cSwipe .42s var(--ease-in-out) infinite alternate}
+@keyframes cSwipe{from{transform:rotate(-26deg)}to{transform:rotate(22deg)}}
+.kc.pose-reach .all{transform-origin:84px 188px;animation:cReachBob .84s var(--sine) infinite}
+@keyframes cReachBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px) rotate(-2deg)}}

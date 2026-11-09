@@ -4,7 +4,7 @@ import type { ReactionId } from '../chester/reactions';
 import { store, useStore } from '../db/store';
 import { playedToday } from '../engine/corner';
 import { localDay } from '../engine/day';
-import { MOVE_REWARD, movesFound, newBrain, PLAY_MOVES, pounceOffset, step, type Brain, type Mode, type PlayEvent, type Target, type Toy } from '../engine/play';
+import { MOVE_REWARD, movesFound, newBrain, PLAY_MOVES, POUNCE_S, pounceOffset, step, type Brain, type Mode, type PlayEvent, type Target, type Toy } from '../engine/play';
 import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
 import { Icon } from '../ui/icons';
@@ -14,7 +14,7 @@ const TITLE: Record<Toy, string> = { laser: 'Laser dot', wand: 'Feather wand' };
 const HINT: Record<Toy, string> = { laser: 'Drag your finger to move the dot. Keep it still and he’ll pounce.', wand: 'Drag to swish the feather. Dangle it low, or just above him.' };
 const LINES: Partial<Record<Mode, string[]>> = {
   stare: ['It’s up there…', '*chatter chatter*', 'Get down here!'], watch: ['Where’s it going?', 'Ooh ooh ooh', '…'], stalk: ['*wiggle wiggle*', 'Don’t. Move.'],
-  swat: ['Swat! Swat!', 'Mine!'], walk: ['Coming!', 'I see you…'],
+  swat: ['Swat! Swat!', 'Mine!'], walk: ['Coming!', 'I see you…'], chase: ['ZOOMIES!', 'Gotta go fast!', 'Come back here!'],
 };
 /** Toys you can play with here: the free wand, and the laser once bought. */
 export const PLAYABLE: Toy[] = ['laser', 'wand'];
@@ -31,7 +31,9 @@ export function Play({ toy: raw }: { toy?: string }) {
   const [box, setBox] = useState({ w: 340, h: 400 });
   const [mode, setMode] = useState<Mode>('sit');
   const [face, setFace] = useState<1 | -1>(1);
-  const [hop, setHop] = useState(0);
+  // mid-jump (the middle of a pounce): drawn in the air pose, tilted along the arc
+  const [air, setAir] = useState(false);
+  const tiltEl = useRef<HTMLDivElement>(null);
   const [react, setReact] = useState<{ id: ReactionId; n: number } | null>(null);
   const [line, setLine] = useState('');
   const [toast, setToast] = useState('');
@@ -43,6 +45,8 @@ export function Play({ toy: raw }: { toy?: string }) {
   const finger = useRef<{ x: number; y: number } | null>(null);
   const feather = useRef({ x: 0, y: 0, vx: 0, vy: 0 });
   const brain = useRef<Brain>(newBrain(box.w / 2));
+  const airRef = useRef(false);
+  if (import.meta.env.DEV) (globalThis as { __playBrain?: unknown }).__playBrain = brain; // for checks and screenshots
 
   useEffect(() => {
     const el = stage.current; if (!el) return;
@@ -56,7 +60,7 @@ export function Play({ toy: raw }: { toy?: string }) {
   const found = useRef(new Set<string>());
   const handle = async (events: PlayEvent[]) => {
     for (const e of events) {
-      if (e.kind === 'pounce') { setHop((n) => n + 1); audio.chirp(true); audio.buzz(12); }
+      if (e.kind === 'pounce') { audio.chirp(true); audio.buzz(12); }
       if (e.kind === 'swat') { audio.chirp(false); audio.buzz(8); }
       if (e.kind === 'miss') { setLine(toy === 'laser' ? 'Where did it go?!' : 'So close!'); if (Math.random() < 0.4) audio.meow('mrrp'); }
       if (e.kind === 'catch') {
@@ -97,6 +101,10 @@ export function Play({ toy: raw }: { toy?: string }) {
       if (r.b.face !== was.face) setFace(r.b.face);
       if (r.events.length) void handle(r.events);
       const at = pounceOffset(r.b);
+      // in the air for the middle of a pounce: nose up on the way up, nose down on the way down (laser leaps only)
+      const u = r.b.mode === 'pounce' ? r.b.t / POUNCE_S : -1; const flying = u > 0.15 && u < 0.85;
+      if (flying !== airRef.current) { airRef.current = flying; setAir(flying); }
+      if (tiltEl.current) tiltEl.current.style.transform = flying && toy === 'laser' ? `rotate(${(-26 * Math.cos(Math.PI * Math.min(1, Math.max(0, (u - 0.15) / 0.7)))).toFixed(1)}deg)` : '';
       if (catEl.current) {
         catEl.current.style.transform = `translate(${(at.x - S / 2).toFixed(1)}px, ${(-at.lift).toFixed(1)}px)`;
         // eyes follow the toy
@@ -120,8 +128,11 @@ export function Play({ toy: raw }: { toy?: string }) {
   if (!cat) return null;
   const have = movesFound(cat.corner?.log, toy);
   const next = PLAY_MOVES[toy].find((m) => !have.includes(m.id));
-  const walking = mode === 'walk';
-  const rigMove = mode === 'stalk' ? 'stalk' : mode === 'pounce' ? 'hop' : null;
+  // what he looks like in each mode: side-on play poses (they face the way he's heading), the sit for the calm moments
+  const pose = mode === 'walk' ? 'walk' : mode === 'chase' ? 'run' : mode === 'stalk' || mode === 'land' ? 'crouch'
+    : mode === 'pounce' ? (air ? (toy === 'wand' ? 'reach' : 'leap') : 'crouch')
+    : mode === 'swat' ? 'reach' : mode === 'watch' ? (toy === 'laser' ? 'crouch' : 'sit') : 'sit';
+  const side = pose !== 'sit';
 
   return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="top"><button className="iconbtn" aria-label="Back to the corner" onClick={() => go('corner')}><Icon name="back" /></button>
@@ -134,10 +145,10 @@ export function Play({ toy: raw }: { toy?: string }) {
       style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 8, borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
       {!touched && <p className="s" style={{ position: 'absolute', top: 14, left: 16, right: 16, textAlign: 'center', pointerEvents: 'none' }}>{HINT[toy]}</p>}
       <div ref={catEl} style={{ position: 'absolute', left: 0, top: floor - S * 0.957, width: S, pointerEvents: 'none', willChange: 'transform' }}>
-        <div style={{ transform: walking && face < 0 ? 'scaleX(-1)' : undefined }}>
-          <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} width={S} label={cat.name} pose={walking ? 'walk' : 'sit'}
-            mood={mode === 'happy' ? 'happy' : 'curious'} anim={mode === 'swat' ? 'bat' : undefined}
-            move={rigMove} moveKey={hop} react={react?.id ?? null} reactKey={react?.n} /></div>
+        <div style={{ transform: side && face < 0 ? 'scaleX(-1)' : undefined }}><div ref={tiltEl} style={{ transformOrigin: '51% 70%' }}>
+          <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} width={S} label={cat.name} pose={pose}
+            mood={mode === 'happy' ? 'happy' : air || mode === 'swat' ? 'open' : 'curious'}
+            react={react?.id ?? null} reactKey={react?.n} /></div></div>
       </div>
       {toy === 'laser' && <div ref={dotEl} aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, width: 18, height: 18, borderRadius: 9, background: '#ff3b3b', boxShadow: '0 0 10px 4px rgba(255,59,59,.55)', opacity: 0, pointerEvents: 'none' }} />}
       {toy === 'wand' && <svg ref={wandEl} aria-hidden="true" width={box.w} height={box.h} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>

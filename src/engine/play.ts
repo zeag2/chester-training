@@ -7,7 +7,7 @@
 
 export type Toy = 'laser' | 'wand';
 export interface Target { x: number; h: number }
-export type Mode = 'sit' | 'watch' | 'stare' | 'walk' | 'stalk' | 'pounce' | 'land' | 'swat' | 'happy';
+export type Mode = 'sit' | 'watch' | 'stare' | 'walk' | 'chase' | 'stalk' | 'pounce' | 'land' | 'swat' | 'happy';
 
 export interface Brain {
   mode: Mode;
@@ -29,6 +29,10 @@ export interface Brain {
   clock: number;
   /** Whether this pounce already caught (or missed) its target. */
   done: boolean;
+  /** When the toy last moved (clock seconds), for its speed. */
+  movedAt?: number;
+  /** Seconds the laser has been dashing about without a break (for the zoomies move). */
+  dash?: number;
 }
 
 export type PlayEvent = { kind: 'move'; move: string } | { kind: 'catch' } | { kind: 'miss' } | { kind: 'pounce' } | { kind: 'swat' };
@@ -37,6 +41,7 @@ export type PlayEvent = { kind: 'move'; move: string } | { kind: 'catch' } | { k
 export const PLAY_MOVES: Record<Toy, { id: string; name: string; hint: string }[]> = {
   laser: [
     { id: 'wiggle', name: 'Butt wiggle', hint: 'Hold the dot still near him.' },
+    { id: 'zoomies', name: 'Zoomies', hint: 'Whip the dot back and forth across the floor.' },
     { id: 'pounce', name: 'Big pounce', hint: 'Let him get close, then keep still.' },
     { id: 'catch', name: 'Got it!', hint: 'Keep the dot still while he pounces.' },
     { id: 'chatter', name: 'Wall chatter', hint: 'Hold the dot up high on the wall.' },
@@ -78,9 +83,13 @@ export function step(b0: Brain, target: Target | null, dt: number, o: StepOpts):
   const rand = o.rand ?? Math.random;
   const S = o.size; const ev: PlayEvent[] = [];
   const b: Brain = { ...b0, t: b0.t + dt, clock: b0.clock + dt, catches: b0.catches };
-  // toy speed, smoothed so a single jump of the finger doesn't count as a dash
-  if (target && b.prev && dt > 0) { const v = Math.hypot(target.x - b.prev.x, target.h - b.prev.h) / dt; b.speed = b.speed * 0.8 + v * 0.2; }
-  else if (!target) b.speed = 0;
+  // toy speed: distance over the time since it last moved (touch moves don't arrive every frame), smoothed so a single
+  // jump of the finger doesn't count as a dash; it only fades once the toy has really stopped (0.15 s)
+  if (target && b.prev && dt > 0) {
+    const moved = Math.hypot(target.x - b.prev.x, target.h - b.prev.h);
+    if (moved > 0.5) { const gap = Math.max(dt, b.clock - (b.movedAt ?? b.clock - dt)); b.speed = b.speed * 0.6 + (moved / gap) * 0.4; b.movedAt = b.clock; }
+    else if (b.clock - (b.movedAt ?? 0) > 0.15) b.speed *= Math.exp(-dt * 6);
+  } else if (!target) b.speed = 0;
   b.prev = target ? { ...target } : null;
   const to = (m: Mode) => { b.mode = m; b.t = 0; };
   const reach = S * 0.95;
@@ -118,10 +127,24 @@ export function step(b0: Brain, target: Target | null, dt: number, o: StepOpts):
       else if (b.t >= 2.5 && b.t - dt < 2.5) ev.push({ kind: 'move', move: 'chatter' });
       return { b, events: ev };
     }
-    if (b.speed > S * 3) { if (b.mode === 'walk' || b.mode === 'stalk' || b.mode === 'sit' || b.mode === 'stare' || b.mode === 'land' || b.mode === 'happy') to('watch'); return { b, events: ev }; }
-    if (dist > reach * 1.25 && b.mode !== 'stalk') {             // walk over to it
-      if (b.mode !== 'walk') to('walk');
-      b.face = facing; b.x = clampX(b.x + facing * Math.min(dist - reach, S * 1.7 * dt));
+    // the dot is on the move: sprint after it (zoomies), and just watch it, crouched, once he's on top of it;
+    // he only stalks and pounces once it's (nearly) still
+    const was = b.dash ?? 0; b.dash = b.speed > S * 2 ? was + dt : Math.max(0, was - dt * 0.5); // turnarounds don't reset it
+    if (was < 1.5 && b.dash >= 1.5) ev.push({ kind: 'move', move: 'zoomies' });
+    if (b.speed > S * 1.5) {
+      // run behind it at about its own speed (so it's a sprint, not catch-up-and-stop); a gap between "start running"
+      // and "stop and watch" so he doesn't flicker between the two
+      if (b.mode === 'chase' ? dist > S * 0.2 : dist > S * 0.5) {
+        if (b.mode !== 'chase') to('chase');
+        const v = Math.min(S * 5.5, b.speed * 0.75 + dist * 1.5);
+        b.face = facing; b.x = clampX(b.x + facing * Math.min(dist - S * 0.15, v * dt));
+      } else if (b.mode !== 'watch') to('watch');
+      return { b, events: ev };
+    }
+    if (dist > reach * 1.25 && b.mode !== 'stalk') {             // go over to it: a trot when close, a sprint when far
+      const far = dist > S * 2.5;
+      if (b.mode !== (far ? 'chase' : 'walk')) to(far ? 'chase' : 'walk');
+      b.face = facing; b.x = clampX(b.x + facing * Math.min(dist - reach, S * (far ? 5 : 1.7) * dt));
       return { b, events: ev };
     }
     if (b.mode !== 'stalk') { to('stalk'); b.face = facing; b.stalkFor = 0.6 + rand() * 0.7; return { b, events: ev }; }
