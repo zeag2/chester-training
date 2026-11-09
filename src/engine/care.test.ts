@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dailyToday, newer, reminders, type CareItem } from './care';
+import { dailyToday, entryTime, lastOf, newer, nextDueLike, recentMeds, reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
 const item = <K extends CareItem['kind']>(kind: K, at: string, data: CareItem<K>['data'], extra: Partial<CareItem> = {}): CareItem =>
@@ -47,5 +47,33 @@ describe('kitten weight guide', () => {
     expect(typicalKittenWeight('2026-04', at('2026-11-20'))).toEqual({ months: 7, low: 5, high: 10 });
     expect(typicalKittenWeight('2025-01', at('2026-11-20'))).toBeNull();
     expect(typicalKittenWeight('2026-11', at('2026-11-20'))).toBeNull();
+  });
+});
+
+describe('smart defaults', () => {
+  it('stamps today’s entries with the time now, other days with noon, and keeps an edit’s time if its day stays', () => {
+    const now = Date.parse('2026-11-09T08:15:00');
+    expect(entryTime('2026-11-09', now)).toBe(now);
+    expect(entryTime('2026-11-07', now)).toBe(day('2026-11-07'));
+    const was = Date.parse('2026-11-07T19:40:00');
+    expect(entryTime('2026-11-07', now, was)).toBe(was);
+    expect(entryTime('2026-11-06', now, was)).toBe(day('2026-11-06'));
+  });
+  it('finds the newest entry of a kind, skipping deleted ones', () => {
+    const items = [item('weight', '2026-11-01', { lb: 6 }), item('weight', '2026-11-08', { lb: 6.4 }, { deleted: true }), item('weight', '2026-10-20', { lb: 5.8 })];
+    expect((lastOf(items, 'weight') as CareItem<'weight'>).data.lb).toBe(6);
+    expect(lastOf(items, 'vet')).toBeUndefined();
+  });
+  it('offers recent medicines once each, newest first, and repeats last time’s gap to the next dose', () => {
+    const items = [
+      item('med', '2026-09-01', { name: 'Revolution', what: 'flea', nextDue: '2026-10-01' }),
+      item('med', '2026-10-01', { name: 'revolution ', what: 'flea', nextDue: '2026-10-31', notes: '0.25 ml' }),
+      item('med', '2026-10-15', { name: 'FVRCP booster', what: 'vaccine' }),
+      item('med', '2026-11-01', { name: 'Dewormer', what: 'worm' }, { deleted: true }),
+    ];
+    const r = recentMeds(items) as CareItem<'med'>[];
+    expect(r.map((m) => m.data.name)).toEqual(['FVRCP booster', 'revolution ']);
+    expect(nextDueLike(r[1], '2026-11-09')).toBe('2026-12-09');
+    expect(nextDueLike(r[0], '2026-11-09')).toBe('');
   });
 });

@@ -5,11 +5,14 @@ import * as audio from '../lib/audio';
 import { leanFor } from './spring';
 import { Rig } from './rig';
 import { DASH_MS, RainbowDash } from './RainbowDash';
+import { Zoomies } from './Zoomies';
 import './chester.css';
 
 export interface ChesterProps {
   pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; anim?: string; width?: number; extra?: string; wear?: string;
   interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null; reactKey?: number;
+  /** A rig move driven from outside (the play screen): starts when it changes or `moveKey` does; null stops a loop. */
+  move?: 'hop' | 'pounce' | 'stalk' | 'bat' | null; moveKey?: number;
 }
 
 const IDLES = ['i1', 'i3', 'i4', 'i2', 'i5', 'i3', 'i1'];
@@ -30,7 +33,10 @@ export function Chester(p: ChesterProps) {
   const last = useRef<ReactionId | null>(null);
   const timer = useRef<number>(0);
 
+  // zoomies: a real sprint off screen and back with a backflip (an overlay, like the dash), not a CSS slide
+  const [zoom, setZoom] = useState<DOMRect | null>(null);
   const play = (id: ReactionId) => {
+    if (id === 'r5') { const r = (body.current?.querySelector('svg') ?? ref.current)?.getBoundingClientRect(); if (r && r.width) { setFx(''); setZoom(r); return; } }
     const move = RIG_MOVES[id];
     if (move && rig.current) rig.current.play(move);
     else { const k = KICKS[id]; if (k) rig.current?.kick(k[0], k[1]); }
@@ -63,9 +69,12 @@ export function Chester(p: ChesterProps) {
   // the rig: springs that give the sitting pose follow-through (lean, head lag, ears, tail chain)
   const body = useRef<HTMLSpanElement>(null);
   const rig = useRef<Rig | null>(null);
+  const moveRef = useRef(p.move); moveRef.current = p.move;
+  useEffect(() => { const r = rig.current; if (!r) return; if (p.move) { r.play(p.move); if (p.move === 'hop') r.kick('hop', 520); } else r.halt(); }, [p.move, p.moveKey]);
   useEffect(() => {
     const el = body.current?.querySelector('svg'); if (!el || !el.querySelector('.rtail, .r-all')) return;
     const r = new Rig(el); rig.current = r;
+    if (moveRef.current) r.play(moveRef.current); // a new pose's rig picks up the move that's on
     const io = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([e]) => { r.visible = e.isIntersecting; });
     io?.observe(el);
     return () => { r.stop(); io?.disconnect(); rig.current = null; };
@@ -110,11 +119,12 @@ export function Chester(p: ChesterProps) {
     p.onPet?.(r.lines[Math.floor(Math.random() * r.lines.length)], id);
   };
 
-  const cls = `tapme ${stroking ? 'stroking' : fx || idle}${dash ? ' gone' : ''}`;
+  const cls = `tapme ${stroking ? 'stroking' : fx || idle}${dash || zoom ? ' gone' : ''}`;
   const inner = <>
     <span ref={body} className="strokebody" dangerouslySetInnerHTML={{ __html: svg }} style={{ display: 'block' }} />
     <span className="fxl" aria-hidden="true"><i>&#9829;</i><i>&#9829;</i><i>&#9829;</i></span>
     {dash && <RainbowDash coat={p.coat} eyes={p.eyes} wear={p.wear} onDone={() => setDash(false)} />}
+    {zoom && <Zoomies from={zoom} coat={p.coat} eyes={p.eyes} wear={p.wear} onDone={() => { setZoom(null); setFx(''); requestAnimationFrame(() => setFx('r1')); window.setTimeout(() => setFx(''), 1100); rig.current?.play('hop'); }} />}
   </>;
   if (!p.interactive) return <div ref={ref as any} className={cls} style={{ display: 'inline-block' }}>{inner}</div>;
   return <button ref={ref as any} type="button" className={cls} onClick={pet} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label={`Pet ${p.label ?? 'Chester'}`}>{inner}</button>;

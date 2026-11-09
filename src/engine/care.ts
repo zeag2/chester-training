@@ -124,3 +124,36 @@ export function typicalKittenWeight(birthday: string, now = Date.now()): { month
   if (months < 2 || months >= 12) return null;
   return months <= 6 ? { months, low: Math.round(months * 0.8 * 2) / 2, high: Math.round(months * 1.2 * 2) / 2 } : { months, low: 5, high: 10 };
 }
+
+// ---- smart defaults for the log forms ----
+
+/** When a new entry happened: now if it's for today, otherwise noon that day (an edit that keeps its day keeps its time). */
+export function entryTime(day: string, now = Date.now(), keep?: number): number {
+  if (keep !== undefined && localDay(keep) === day) return keep;
+  return day === localDay(now) ? now : Date.parse(day + 'T12:00:00');
+}
+
+/** The newest live entry of a kind. */
+export function lastOf<K extends CareKind>(items: CareItem[], kind: K): CareItem<K> | undefined {
+  let best: CareItem<K> | undefined;
+  for (const i of items) if (i.kind === kind && !i.deleted && (!best || i.at > best.at)) best = i as CareItem<K>;
+  return best;
+}
+
+/** Medicines given before, newest first, one per name (up to `n`), for "same as last time" chips. */
+export function recentMeds(items: CareItem[], n = 3): CareItem<'med'>[] {
+  const seen = new Set<string>(); const out: CareItem<'med'>[] = [];
+  for (const m of items.filter((i): i is CareItem<'med'> => i.kind === 'med' && !i.deleted).sort((a, b) => b.at - a.at)) {
+    const k = m.data.name.trim().toLowerCase(); if (!k || seen.has(k)) continue;
+    seen.add(k); out.push(m); if (out.length >= n) break;
+  }
+  return out;
+}
+
+/** Repeating a medicine: the same gap to the next dose as last time ("" when last time had no next due date). */
+export function nextDueLike(prev: CareItem<'med'>, day: string): string {
+  if (!prev.data.nextDue) return '';
+  const gap = daysBetween(localDay(prev.at), prev.data.nextDue); if (gap <= 0) return '';
+  const [y, m, d] = day.split('-').map(Number);
+  return localDay(new Date(y, m - 1, d + gap, 12).getTime());
+}

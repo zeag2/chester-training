@@ -6,13 +6,16 @@ import { go } from './router';
 import * as audio from '../lib/audio';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+/** Tell Home a cat was just fed, so it shows him round and content for a moment. */
+const fedEvent = (ids: string[]) => window.dispatchEvent(new CustomEvent('paldex:fed', { detail: ids }));
 const DONE: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Playtime logged', check: 'Check saved' };
 
 /** Home: one tap each for the everyday things (Fed, Scooped, Played) and a two-tap daily health check, with Undo
     instead of forms. Shared with the household, so "Fed 1 of 2 · 7:40 by Megan" stops anyone double-feeding. */
 export function DailyTaps() {
-  const { cat, care, account, household } = useStore();
-  const [undo, setUndo] = useState<{ id: string; what: DailyWhat } | null>(null);
+  const { cat, care, account, household, pets } = useStore();
+  /** `ids`: everything the last tap logged (one per cat once "All cats" is tapped), so Undo takes all of it back. */
+  const [undo, setUndo] = useState<{ ids: string[]; what: DailyWhat; all?: boolean } | null>(null);
   const [busy, setBusy] = useState<DailyWhat | null>(null);
   useEffect(() => { if (!undo) return; const t = window.setTimeout(() => setUndo(null), 5000); return () => window.clearTimeout(t); }, [undo]);
   const today = useMemo(() => dailyToday(care), [care]);
@@ -21,8 +24,18 @@ export function DailyTaps() {
   const meals = cat.mealsPerDay ?? MEALS_PER_DAY;
   const log = async (what: DailyWhat, extra: { ok?: boolean } = {}) => {
     if (busy) return; setBusy(what);
-    try { const it = await store.saveCare('daily', { what, ...extra }); if (it) { audio.chirp(); setUndo({ id: it.id, what }); } }
+    try { const it = await store.saveCare('daily', { what, ...extra }); if (it) { audio.chirp(); setUndo({ ids: [it.id], what }); if (what === 'fed') fedEvent([it.catId]); } }
     finally { setBusy(null); }
+  };
+  // with more than one cat: log the same thing for the others too, from the toast (one more tap, never a question first)
+  const others = pets.filter((p) => p.id !== cat.id);
+  const alsoLabel = others.length === 1 ? `${others[0].name} too` : 'All cats';
+  const logOthers = async () => {
+    if (!undo || undo.all) return;
+    const ids: string[] = [];
+    for (const p of others) { const it = await store.saveCare('daily', { what: undo.what }, { catId: p.id }); if (it) ids.push(it.id); }
+    audio.chirp(); setUndo({ ...undo, ids: [...undo.ids, ...ids], all: true });
+    if (undo.what === 'fed') fedEvent(others.map((p) => p.id));
   };
   const fed = today.fed, scoop = today.scoop, play = today.play, check = today.check[0];
   const tiles: { what: DailyWhat; label: string; icon: string; sub: string; done: boolean }[] = [
@@ -50,10 +63,11 @@ export function DailyTaps() {
           <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={async () => { await log('check', { ok: false }); go('health/log/symptom'); }}>Something’s off</button>
         </div>
       </div>}
-    {undo && <div className="row pop" role="status" style={{ marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)', gap: 6 }}>
-      <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{DONE[undo.what]}</span>
-      {undo.what === 'scoop' && <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
-      <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { void store.deleteCare(undo.id); setUndo(null); }}>Undo</button>
+    {undo && <div className="row pop" role="status" style={{ flexWrap: 'wrap', gap: 6, marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)' }}>
+      <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{DONE[undo.what]}{undo.all ? ' for all cats' : ''}</span>
+      {others.length > 0 && undo.what !== 'check' && !undo.all && <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => void logOthers()}>{alsoLabel}</button>}
+      {undo.what === 'scoop' && !undo.all && <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
+      <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { for (const id of undo.ids) void store.deleteCare(id); setUndo(null); }}>Undo</button>
     </div>}
   </div>;
 }

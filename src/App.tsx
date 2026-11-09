@@ -25,6 +25,7 @@ import { Week } from './screens/Week';
 import { VetSummary } from './screens/VetSummary';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
+import { Play } from './screens/Play';
 import { wantsInstallStep } from './lib/install';
 import { applyAppName, pendingPets } from './lib/appname';
 import { movedTo } from './lib/moved';
@@ -75,6 +76,7 @@ export default function App() {
     case 'trophies': body = <Trophies />; tab = 'train'; break;
     case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'train'; break;
     case 'corner': body = <Corner />; tab = 'train'; break;
+    case 'play': return <Play key={r1} toy={r1} />;
     // Me: your cats, people (household and friends), app settings, your data
     case 'me': case 'settings': body = <Settings />; tab = 'me'; break;
     case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'me'; break;

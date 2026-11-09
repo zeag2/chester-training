@@ -3,7 +3,7 @@ import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import {
-  dueText, GROOM, MED_LABEL, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
+  dueText, entryTime, GROOM, lastOf, MED_LABEL, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon } from '../ui/icons';
@@ -144,13 +144,21 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
   const { care, cat } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
-  const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
+  // smart defaults for a new entry: the clinic from the last visit, the grooming you did last
+  const [f, setF] = useState<any>(() => {
+    const smart: Record<string, unknown> = {};
+    if (!item && kind === 'vet') { const v = lastOf(care, 'vet'); if (v?.data.clinic) smart.clinic = v.data.clinic; }
+    if (!item && kind === 'groom') { const g = lastOf(care, 'groom'); if (g) smart.what = g.data.what; }
+    return { ...DEFAULTS[kind], ...smart, ...d0 };
+  });
+  const lastWeight = kind === 'weight' && !item ? lastOf(care, 'weight') : undefined;
+  const repeats = kind === 'med' && !item && !editing.preset ? recentMeds(care) : [];
   const set = (k: string, v: unknown) => setF((x: any) => ({ ...x, [k]: v }));
   const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100 } : clean({ ...f, name: f.name?.trim?.() ?? f.name });
-    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim() } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : noon(day) });
+    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim() } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
@@ -175,7 +183,8 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
       {kind === 'doc' && item && <>{text('Name', 'title')}
         <button className="btn2" style={{ marginTop: 12, width: '100%' }} onClick={() => void openDoc((item as CareItem<'doc'>).data.path)}>Open document</button>
         {(item.data as CareData['doc']).summary && <p className="s" style={{ marginTop: 10 }}>{(item.data as CareData['doc']).summary}</p>}</>}
-      {kind === 'weight' && <>{text('Weight in pounds', 'lb', { inputMode: 'decimal', placeholder: 'e.g. 3.4', autoFocus: !item })}{when}</>}
+      {kind === 'weight' && <>{text('Weight in pounds', 'lb', { inputMode: 'decimal', placeholder: lastWeight ? String(lastWeight.data.lb) : 'e.g. 3.4', autoFocus: !item })}
+        {lastWeight && <p className="s" style={{ marginTop: 6 }}>Last time: {lastWeight.data.lb} lb on {fmt(lastWeight.at)}</p>}{when}</>}
       {kind === 'symptom' && <><span className="field">What did you notice?</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{SYMPTOMS.map((s) => <button key={s} className={`chipbtn ${f.what === s ? 'on' : ''}`} onClick={() => set('what', s === 'Other' ? '' : s)}>{s}</button>)}</div>
         {(!SYMPTOMS.includes(f.what) || f.what === '') && text('Describe it', 'what', { placeholder: 'What happened?' })}
@@ -185,7 +194,10 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
       {kind === 'groom' && <>{seg<GroomWhat>('What', 'what', [['brush', 'Brush'], ['nails', 'Nails'], ['bath', 'Bath'], ['teeth', 'Teeth'], ['ears', 'Ears']])}{text('Notes (optional)', 'notes')}{when}
         {f.what === 'bath' && <p className="s" style={{ marginTop: 10 }}>{pt('Most cats don’t need baths: only when he gets into something, or the vet says so.')}</p>}</>}
       {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}{day > localDay(Date.now()) && text('Time (optional)', 'time', { type: 'time' })}</>}
-      {kind === 'med' && <>{text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
+      {kind === 'med' && <>{repeats.length > 0 && <><span className="field">Same as last time</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{repeats.map((m) => <button key={m.id} className={`chipbtn ${f.name === m.data.name ? 'on' : ''}`}
+          onClick={() => setF((x: any) => ({ ...x, name: m.data.name, what: m.data.what, notes: m.data.notes ?? '', nextDue: nextDueLike(m, day) }))}>{m.data.name}</button>)}</div></>}
+        {text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}

@@ -105,6 +105,12 @@ export const MOVES: Record<string, { ms: number; loop?: boolean; keys: Key[] }> 
     { t: 0.75, head: 4 },
     { t: 1, head: 5, hy: 1 },
   ] },
+  // crouched low, eyes on the prize, back end wiggling (loops until the pounce)
+  stalk: { ms: 700, loop: true, keys: [
+    { t: 0, y: 6, sx: 1.1, sy: 0.82, head: 5, hy: 6, lean: 0 },
+    { t: 0.25, lean: 3 }, { t: 0.5, lean: -3 }, { t: 0.75, lean: 3 },
+    { t: 1, y: 6, sx: 1.1, sy: 0.82, head: 5, hy: 6, lean: 0 },
+  ] },
   dance: { ms: 1100, loop: true, keys: [
     { t: 0, lean: -6, head: 7, y: 0, sx: 1.06, sy: 0.92, legL: 0, legR: 0.5 },
     { t: 0.25, lean: 0, head: 0, y: -9, sx: 0.97, sy: 1.05, legL: 0, legR: 0 },
@@ -170,6 +176,8 @@ export class Rig {
 
   /** Play a keyframed move (hop, pounce, dance). Dance loops until another move or stop(). */
   play(name: keyof typeof MOVES) { if (MOVES[name] && !this.lying) this.move = { name, t0: performance.now() }; }
+  /** Stop a move (a looping one like dance or stalk); the springs settle him back. */
+  halt() { this.move = null; }
 
   /** A jolt for the secondary parts: ears and tail react to a hop, bonk or sneeze. */
   kick(kind: 'hop' | 'bonk' | 'shake' | 'spin' | 'flick', delayMs = 0) {
