@@ -104,7 +104,7 @@ export function careReward(c: Corner | undefined, item: CareItem, history: CareI
   const log = c?.log ?? []; const today = localDay(now);
   if (item.deleted || log.some((e) => e.id === 'care-' + item.id)) return null;
   if (log.filter((e) => e.kind === 'care' && e.day === today).length >= CARE_TREATS.perDay) return null;
-  const recent = (days: number) => daysBetween(localDay(item.at), today) <= days;
+  const ago = daysBetween(localDay(item.at), today); const recent = (days: number) => ago >= 0 && ago <= days; // not future appointments
   const base = CARE_TREATS.perEntry;
   if (item.kind === 'weight' && recent(1)) {
     const lastBonus = log.filter((e) => e.kind === 'care' && e.item === 'weight' && e.treats > base).sort((a, b) => b.at - a.at)[0];

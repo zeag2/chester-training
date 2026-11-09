@@ -307,6 +307,12 @@ Items marked *(art)* suit the art session.
 - [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
   (indoor cats need it), never a guilt message.
 
+- [x] **Add vet visits to the calendar** (done 2026-11-09): a vet visit can be dated in the future (an upcoming
+  appointment, with an optional time); its form then offers **iPhone / Apple** (an `.ics` file) or **Google** (a link),
+  with a reminder the day before (`src/lib/calendar.ts`). Future visits don't earn the vet-visit treat bonus. Not
+  checked on a real iPhone yet: whether the installed app opens the .ics in Calendar (Safari does). Ideas: the same
+  button on "Coming up" items (medicine due dates, the yearly checkup).
+
 ### Health ideas (from the 2026-11-08 review)
 - [x] **Kitten growth guide** (done 2026-11-09): under the weight chart on Health, "Typical at about 7 months: roughly
   5–10 lb. A rough guide only; ask your vet." (`typicalKittenWeight()` in `care.ts`: about a pound a month to 6

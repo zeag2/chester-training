@@ -7,6 +7,7 @@ import {
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon } from '../ui/icons';
+import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
@@ -128,7 +129,7 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
   const pt = usePetText();
-  const { care } = useStore();
+  const { care, cat } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
   const [f, setF] = useState<any>(() => ({ ...DEFAULTS[kind], ...d0 }));
@@ -144,7 +145,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
     <div className="seg" role="group" aria-label={label}>{opts.map(([v, l]) => <button key={v} className={f[key] === v ? 'on' : ''} aria-pressed={f[key] === v} onClick={() => set(key, v)}>{l}</button>)}</div></>;
   const text = (label: string, key: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => <><label className="field" htmlFor={'c-' + key}>{label}</label>
     <input id={'c-' + key} className="in" value={f[key] ?? ''} onChange={(e) => set(key, e.target.value)} {...props} /></>;
-  const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
+  const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={kind === 'vet' ? undefined : localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
   return <div className="overlay sheetbg" onClick={onClose}>
     <div className="sheet" role="dialog" aria-modal="true" aria-label={item ? 'Edit entry' : 'New entry'} onClick={(e) => e.stopPropagation()}>
@@ -171,12 +172,20 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         <p className="s" style={{ marginTop: 10, color: 'var(--peach-ink)' }}>If it’s on the “call the vet now” list, call now rather than waiting.</p></>}
       {kind === 'groom' && <>{seg<GroomWhat>('What', 'what', [['brush', 'Brush'], ['nails', 'Nails'], ['bath', 'Bath'], ['teeth', 'Teeth'], ['ears', 'Ears']])}{text('Notes (optional)', 'notes')}{when}
         {f.what === 'bath' && <p className="s" style={{ marginTop: 10 }}>{pt('Most cats don’t need baths: only when he gets into something, or the vet says so.')}</p>}</>}
-      {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}</>}
+      {kind === 'vet' && <>{text('Why you went', 'reason', { placeholder: 'e.g. Kitten shots, checkup', autoFocus: !item })}{text('Clinic (optional)', 'clinic')}{text('What the vet said (optional)', 'notes')}{when}{day > localDay(Date.now()) && text('Time (optional)', 'time', { type: 'time' })}</>}
       {kind === 'med' && <>{text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
       <button className="btn" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
+      {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
+        const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
+        return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
+          <div className="row" style={{ gap: 8, marginTop: 6 }}>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => downloadIcs(ev)}>iPhone / Apple</button>
+            <a className="btn2" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', color: 'inherit' }} href={googleCalendarUrl(ev)} target="_blank" rel="noreferrer">Google</a></div>
+          <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
+      })()}
       {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
     </div>
   </div>;
