@@ -24,7 +24,7 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full';
+export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full' | 'sploot';
 
 /* Style (docs/plans/2026-11-08-cat-art-style.md): one thin, even outline; flat fills with one soft shadow shape;
    a small head on a long body; very simple faces; the tail does the acting. */
@@ -400,6 +400,25 @@ function full(c: Coat, eyes: string, uid: string, w = ''): string {
     + `</g></g>`;
 }
 
+/** Splatted flat on the floor, facing you, all four legs out to the sides and the tail up behind: the start of a
+    roll (the roll itself is CSS on `.all`: he tips over sideways onto his back and round again). */
+function sploot(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const BODY = 'M100 146 C140 146 170 156 170 170 C170 184 140 190 100 190 C60 190 30 184 30 170 C30 156 60 146 100 146 Z';
+  let bp = `<path d="M40 178 C70 192 130 192 160 178 L170 196 L30 196 Z" fill="${c.shade}"/>`;
+  if (c.stripe) bp += `<path d="M58 152 Q62 162 56 172 M142 152 Q138 162 144 172" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="54" cy="166" rx="18" ry="14" fill="${c.patches[1]}"/><ellipse cx="148" cy="164" rx="16" ry="13" fill="${c.patches[0]}"/>`;
+  const paw = (x1: number, y1: number, x2: number, y2: number) => openLimb(c, x1, y1, x2, y2, 15, pawFill(c));
+  return `<defs><clipPath id="sp${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<g class="r-shadow">${shadow(100, 74)}</g>`
+    + `<g class="r-all"><g class="all">`
+    + rigTail(c, 'M112 150 C122 132 136 120 132 100', 'M132 100 C128 84 140 74 150 78', 0.9)
+    + paw(58, 164, 18, 156) + paw(142, 164, 182, 156)
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#sp${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + paw(74, 178, 34, 186) + paw(126, 178, 166, 186)
+    + `<g transform="translate(0 42)"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w, { size: 0.9 })}</g></g></g>`
+    + `</g></g>`;
+}
+
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string }): string {
@@ -411,6 +430,7 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
     : pose === 'run' ? run(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'curl' ? curl(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'full' ? full(c, o.eyes ?? 'gold', o.uid, w)
+    : pose === 'sploot' ? sploot(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid, w)
