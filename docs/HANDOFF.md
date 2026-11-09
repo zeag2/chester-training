@@ -596,13 +596,16 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `FakeServer` imported through Vite) and a local Postgres 16 for `friend_treats_test.sql`.
 
 ### Scheduled tasks
-- **PalDex UX review** (created 2026-11-08 by the friends session, at Josh's request; id `trig_018ZuiMgfUdMYtXktjkp1zcn`):
-  every 4 hours (at :16, UTC) a fresh cloud session on the `chester-training` environment checks main for new
-  commits since the `last-reviewed:` line in `docs/ux-review-log.md`. If there are any, it screenshots the touched
-  screens at iPhone size (light and dark), audits them with the `anthropic-skills:design-ux` skill, makes small
-  visual fixes and opens (or adds to) one `claude/ux-review-...` pull request for Josh to merge. It never pushes to
-  main and never touches `src/chester`, `src/sync`, `src/db`, `src/engine` or `supabase`. Push notification when a run
-  finishes. Pause or change it from the scheduled tasks list on claude.ai.
+- **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): every 4 hours (at :13, UTC)
+  the scheduled task `trig_01AyfUBBkAdj5EHVj45Gb12g` wakes one long-lived session, **"PalDex UX reviewer"**
+  (`session_019xqnwfdJXvj4DJJnDqRx1K`, repo attached, its steps in its system prompt). It checks main for new commits
+  since the `last-reviewed:` line in `docs/ux-review-log.md`, screenshots the touched screens at iPhone size (light and
+  dark), audits them with `anthropic-skills:design-ux` and the notes in that file, makes small visual fixes and opens
+  (or adds to) one `claude/ux-review-...` pull request for Josh to merge. Never pushes to main; never touches
+  `src/chester`, `src/sync`, `src/db`, `src/engine` or `supabase`. Why one long-lived session: scheduled tasks that start
+  a fresh session can't attach a repo from a tool call (the first try, 2026-11-08, could read but not push or open a
+  PR). To change what it reviews, edit "Notes from Josh" in `docs/ux-review-log.md`; pause it from the scheduled
+  tasks list on claude.ai.
 
 ### Tools used for checks (no install needed)
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed
