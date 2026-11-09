@@ -310,15 +310,17 @@ Items marked *(art)* suit the art session.
 - [x] **Add vet visits to the calendar** (done 2026-11-09): a vet visit can be dated in the future (an upcoming
   appointment, with an optional time); its form then offers **iPhone / Apple** (an `.ics` file) or **Google** (a link),
   with a reminder the day before (`src/lib/calendar.ts`). Future visits don't earn the vet-visit treat bonus. Not
-  checked on a real iPhone yet: whether the installed app opens the .ics in Calendar (Safari does). Ideas: the same
-  button on "Coming up" items (medicine due dates, the yearly checkup).
+  checked on a real iPhone yet: whether the installed app opens the .ics in Calendar (Safari does). "Coming up" items
+  (medicine due dates, grooming, the yearly checkup) also have a calendar button (all-day, .ics).
 
 ### Health ideas (from the 2026-11-08 review)
 - [x] **Kitten growth guide** (done 2026-11-09): under the weight chart on Health, "Typical at about 7 months: roughly
   5–10 lb. A rough guide only; ask your vet." (`typicalKittenWeight()` in `care.ts`: about a pound a month to 6
   months, 5–10 lb from 7 to 11, nothing for adults). A band drawn on the chart needs a dated x-axis first.
-- [ ] **Vaccine and checkup timeline** (M): the usual kitten schedule (core vaccines, rabies, spay/neuter) as
-  suggestions the user confirms; the document reader already finds most dates.
+- [x] **Vaccine and checkup timeline** (done 2026-11-09): "Kitten vaccines and checkups" on Health for pets under 18
+  months (`kittenPlan()` in `src/engine/kittenplan.ts`): core FVRCP series, rabies, FeLV, spay/neuter, one-year
+  boosters, ticked off by matching logged doses by name (FVRCP/distemper, rabies, FeLV/leukemia) or `Cat.altered`; tap a
+  row to log it. Worded as a guide; the vet sets the real schedule.
 - [ ] **Water and appetite notes** (S): optional chips on the daily check.
 
 ### Treats and corner

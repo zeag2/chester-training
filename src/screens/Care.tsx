@@ -7,6 +7,7 @@ import {
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon } from '../ui/icons';
+import { kittenPlan } from '../engine/kittenplan';
 import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
@@ -46,6 +47,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
   const docs = care.filter((c): c is CareItem<'doc'> => c.kind === 'doc');
   const ws = weights(care);
+  const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
   if (!cat) return null;
 
@@ -67,10 +69,20 @@ export function Care({ open }: { open?: CareKind } = {}) {
     </button>
 
     {due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
-      {due.map((r) => <button key={r.id} className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row`} style={{ marginTop: 10 }}
+      {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
         onClick={() => setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } })}>
         <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' ? 'box' : 'check'} /></div>
-        <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>)}</>}
+        <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
+        {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
+          onClick={() => downloadIcs({ title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail })}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
+    {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
+      <div className="card white" style={{ border: '1px solid var(--grey)' }}>
+        {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
+          onClick={() => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset })} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}. Tap to log it.`}>
+          <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
+          <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>)}
+        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>}
 
     <h2 style={{ marginTop: 22 }}>Log something</h2>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
