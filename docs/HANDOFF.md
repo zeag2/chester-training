@@ -17,8 +17,8 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 122 tests passing in 24 files, typecheck and build clean. Friend requests are
-  on `main` and live; the per-browser install guide is on `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
+- **State at handoff (2026-11-09):** 122 tests passing in 24 files, typecheck and build clean. Friend requests and
+  the per-browser install guide are on `main` and live. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
   2026-11-09: the table and all six functions exist and refuse signed-out callers).
 
@@ -32,8 +32,8 @@ shared with the people you live with, plus friends who can see each other's cats
    `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
    refuse signed-out callers). Next: try a treat between two real phones.
 3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
-4. **Friend requests** are built (2026-11-09, branch `claude/friend-request-acceptance-zytxm7`, not on `main` yet).
-   Its SQL has been run (checked live). Next: merge to `main`, then try a request between two real phones.
+4. **Friend requests** are live (2026-11-09) and their SQL has been run. Next: try a request between two real phones,
+   and check the per-browser Add to Home Screen steps on a real iPhone and Android phone.
 5. Then the rest of section 2.
 
 
