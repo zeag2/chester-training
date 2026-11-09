@@ -115,6 +115,15 @@ export function Home() {
   const [awakeUntil, setAwakeUntil] = useState(0);
   useEffect(() => { if (!awakeUntil) return; const t = window.setTimeout(() => setAwakeUntil(0), Math.max(0, awakeUntil - Date.now())); return () => window.clearTimeout(t); }, [awakeUntil]);
   const night = ph === 'night' && !awakeUntil;
+  // just fed (a Fed tap in Quick log): round, content and patting his belly for a few seconds; "Luna too" fills her up too
+  const [fed, setFed] = useState<string[]>([]);
+  useEffect(() => {
+    let t = 0;
+    const f = (e: Event) => { const ids = (e as CustomEvent<string[]>).detail ?? []; wake(); setFed((x) => [...new Set([...x, ...ids])]); setLine(['Mmm. So full.', '*contented sigh*', 'That hit the spot.'][Math.floor(Math.random() * 3)]); setShown('pet');
+      window.clearTimeout(t); t = window.setTimeout(() => setFed([]), 9000); };
+    window.addEventListener('paldex:fed', f); return () => { window.removeEventListener('paldex:fed', f); window.clearTimeout(t); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const full = !!cat && fed.includes(cat.id) && !gag;
   // the other cats sit beside this one; now and then two of them nuzzle, and a toy rolls in for everyone to chase
   const others = pets.filter((p) => p.id !== cat?.id).slice(0, 2);
   const [chasing, setChasing] = useState(false);
@@ -163,11 +172,11 @@ export function Home() {
       <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
         {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={Math.min(360, window.innerWidth - 40)} size={104} gap={70} onDone={() => setChasing(false)} />
         : <div className={`gagwrap ${gag ?? ''}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
-        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : gag ? 'sit' : night ? 'sleep' : doze ? 'doze' : knead && !done ? knead : 'sit'} mood={gag === 'proud' || (nuzzle && calm && !knead) ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
-          raised={!gag && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
+        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' || gag === 'back' ? 'walk' : gag ? 'sit' : full ? 'full' : night ? 'sleep' : doze ? 'doze' : knead && !done ? knead : 'sit'} mood={gag === 'proud' || (nuzzle && calm && !knead) ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
+          raised={!gag && !full && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag || full ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
           width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div>}
         {!chasing && others.length > 0 && <div className={`homecats${nuzzle && calm && !knead ? ' nuzzling' : ''}`}>{others.map((o, i) => <button key={o.id} className="other" style={{ zIndex: 2 - i }} aria-label={`Show ${o.name}`} onClick={() => { audio.chirp(); void store.switchPet(o.id); }}>
-          <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={night ? 'sleep' : doze ? 'doze' : 'sit'} mood={night ? 'sleepy' : nuzzle && i === 0 ? 'happy' : 'curious'} anim={doze ? 'nap' : nuzzle && i === 0 && !knead ? 'nuzzleL' : ''} width={84} label={o.name} /></button>)}</div>}
+          <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={fed.includes(o.id) ? 'full' : night ? 'sleep' : doze ? 'doze' : 'sit'} mood={night ? 'sleepy' : nuzzle && i === 0 ? 'happy' : 'curious'} anim={doze ? 'nap' : nuzzle && i === 0 && !knead ? 'nuzzleL' : ''} width={84} label={o.name} /></button>)}</div>}
         {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
         {!chasing && <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
       </div>

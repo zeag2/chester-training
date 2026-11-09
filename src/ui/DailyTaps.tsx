@@ -6,6 +6,8 @@ import { go } from './router';
 import * as audio from '../lib/audio';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+/** Tell Home a cat was just fed, so it shows him round and content for a moment. */
+const fedEvent = (ids: string[]) => window.dispatchEvent(new CustomEvent('paldex:fed', { detail: ids }));
 const DONE: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Litter scooped', play: 'Playtime logged', check: 'Daily check saved' };
 
 /** Home: one tap each for the everyday things (Fed, Scooped, Played) and a two-tap daily health check, with Undo
@@ -22,7 +24,7 @@ export function DailyTaps() {
   const meals = cat.mealsPerDay ?? MEALS_PER_DAY;
   const log = async (what: DailyWhat, extra: { ok?: boolean } = {}) => {
     if (busy) return; setBusy(what);
-    try { const it = await store.saveCare('daily', { what, ...extra }); if (it) { audio.chirp(); setUndo({ ids: [it.id], what }); } }
+    try { const it = await store.saveCare('daily', { what, ...extra }); if (it) { audio.chirp(); setUndo({ ids: [it.id], what }); if (what === 'fed') fedEvent([it.catId]); } }
     finally { setBusy(null); }
   };
   // with more than one cat: log the same thing for the others too, from the toast (one more tap, never a question first)
@@ -33,6 +35,7 @@ export function DailyTaps() {
     const ids: string[] = [];
     for (const p of others) { const it = await store.saveCare('daily', { what: undo.what }, { catId: p.id }); if (it) ids.push(it.id); }
     audio.chirp(); setUndo({ ...undo, ids: [...undo.ids, ...ids], all: true });
+    if (undo.what === 'fed') fedEvent(others.map((p) => p.id));
   };
   const fed = today.fed, scoop = today.scoop, play = today.play, check = today.check[0];
   const tiles: { what: DailyWhat; label: string; icon: string; sub: string; done: boolean }[] = [

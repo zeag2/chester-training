@@ -13,7 +13,7 @@ export const REACTIONS: { id: ReactionId; name: string; weight: number; lines: s
   { id: 'r7', name: 'Belly roll', weight: 8, lines: ['Belly up!', 'Roll time!', 'Wiggle wiggle'], sound: 'chirp', ms: 3500 },
   { id: 'r15', name: 'Meow', weight: 8, lines: ['Meow!', 'Mew?', 'Mrrrow.', 'Mrrp!'], sound: 'meow', ms: 900 },
   { id: 'r10', name: 'Sneeze', weight: 4, lines: ['Achoo!', 'Pfft!'], sound: 'sneeze', ms: 1300 },
-  { id: 'r5', name: 'Zoomies', weight: 3, lines: ['ZOOMIES!!', 'Gotta go fast!'], sound: 'sparkle', ms: 1600 },
+  { id: 'r5', name: 'Zoomies', weight: 3, lines: ['ZOOMIES!!', 'Gotta go fast!'], sound: 'sparkle', ms: 2700 }, // the sprint and flip are an overlay (Zoomies.tsx)
   { id: 'r11', name: 'Golden purr', weight: 1, lines: ['Golden purr! So rare!'], sound: 'sparkle', ms: 1400 },
 ];
 

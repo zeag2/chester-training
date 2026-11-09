@@ -208,7 +208,8 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   squash.
 - **Tap reactions:** hop, purr, flop, chin scratch, play bite, head bonk, mlem, sneeze, meow, zoomies and more. Only
   gentle ones play when he's lying, loafing or kneading.
-- **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle. While walking the head stays level as the body
+- **Eyes and walking:** real eyelid blinks, and a diagonal-pair walk cycle (retimed 2026-11-09 to Josh's SVGator
+  reference: a calmer 0.8 s stride with a bob twice a stride). While walking the head stays level as the body
   bobs under it.
 - **Head size:** `HEAD_SIZE.scale` in `src/chester/art.ts` (0.88) times each pose's own `size` (sit 0.84, walk 0.82…).
   It scales about the neck, so every pose, the rig and the outfits follow.
@@ -225,6 +226,11 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
     walks all the way off, digging is heard, horizontal stink lines drift in from the right, he runs back and puffs
     his chest out, proud (no meows or biscuits interrupt it). Sequence in `useHomeLife` in `src/screens/Home.tsx`; he
     zooms back and owns it.
+- **Zoomies** (a rare tap reaction, and the crinkle tunnel): a real sprint now, not the sitting cat sliding: he
+  gallops off one side, tears back in from the other, leaps into a tucked backflip, lands and skids to a stop
+  (`Zoomies.tsx`, ~2.7 s). From Josh's reference GIFs (qualities only): a rotary gallop and a curled spinning flip.
+- **Full after a meal:** tap Fed and he sits round and content for a few seconds, eyes closed, patting his belly,
+  with a little puff of air (the `full` pose; from Josh's picture of a satisfied chubby cat, qualities only).
 - **Rainbow dash:** tap him 8 times in 3 seconds. He flies across twice in a **fly** pose on a pastel ribbon (wearing his
   outfit). Each 3.8 s pass swoops in fast, glides slowly across, zips out fast (`PASS_MS` in `RainbowDash.tsx`;
   keyframes follow Chester, not the long trail). The original 8-bit tune is fitted to the whole dash (~7.6 s), and is deliberately not the Nyan Cat song.
@@ -572,7 +578,8 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   the middle is about `0.49 W` from its left (the play screen and chase rely on this to stand him on a floor).
 - **Poses** (`Pose`): `sit` (the default, the only one with the full rig), `doze`, `walk` (side view, faces **right**;
   flip with `scaleX(-1)` on a wrapper), `ball` (on his back with yarn), `sleep`, `drape`, `loaf`, `knead`, `fly`
-  (rainbow dash). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
+  (rainbow dash), `run` (side on, faces right; the zoomies sprint), `curl` (tucked ball for the zoomies backflip; no
+  shadow, spun as a whole about (100, 122)), `full` (front-facing, round belly after a meal: `.pawPat`, `.puff`). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
 - **Head:** `head(c, eyes, mood, uid, wear, { size, outer, turn })`, scaled by `HEAD_SIZE.scale` (0.88) × the pose's
   own size about the neck. `turn` swings the face toward the side (walk). `mood`: `curious` (round eyes), `happy`
   (^ ^), `sleepy`, `open` (mouth open).
@@ -600,6 +607,11 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
 - **CSS animations override SVG `transform` attributes** on the same element; that's why the rig writes to the outer
   `.r-*` groups. Moves the rig performs (hop, pounce, dance, bat body) are switched off in CSS on a `.rigged` cat.
 - `.paused` on an ancestor freezes the CSS paw and the rig's move (training session pause).
+- **Newest layer (2026-11-09, at the end of the file):** the walk retimed to Josh's reference (`cWalkLeg` 0.8 s stride,
+  diagonal pairs ±18°, `cWalkBob`/`cWalkHead` 0.4 s so the body rises twice a stride and the head stays level); the
+  **run gallop** (`cRunF` front pair, `cRunB` back pair, the far leg of each 35 ms behind, `cRunBody` stretch → gather →
+  push with the flight phase at 75%, 0.4 s a stride; hips at (156|142, 132) front and (84|68, 132) back); the **full**
+  pose (`cPat` belly pat 1.3 s, `cFullBreath`, `cPuff` every 3.4 s).
 
 ### 3. The spring rig: `rig.ts`
 - `new Rig(svg)` (made by `Chester` whenever the SVG is rebuilt, if it has `.rtail` or `.r-all`) runs one
@@ -629,11 +641,19 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   rig move (`RIG_MOVES`: r1/r6/r11 hop, r14 pounce) or a rig kick (`KICKS`, with the delay that lines up with the CSS).
   Taps pick a weighted random one that never repeats; lying down only `LYING_OK` ones. `r14` (pounce) is session-only.
 - **Rainbow dash:** 8 taps in 3 s (at most every 10 s) → `RainbowDash.tsx` overlay; the cat gets `gone` meanwhile.
+- **Zoomies** (reaction `r5`, from a tap or `react="r5"`, e.g. the crinkle tunnel): `play('r5')` measures the drawn SVG
+  and opens `Zoomies.tsx`, a portal overlay (like the dash) with a `run` and a `curl` SVG at 0.9× his width; a rAF
+  timeline moves it: sprint off the right edge (0–650 ms, ease-in), gone, back in from the left (850–1500), leap into a
+  tucked backflip (1500–2150: `curl`, arc up ~0.95 W, rotate −360°), land running and skid onto his spot
+  (2150–2600), then the sitting cat reappears with a hop. The sitting cat has `gone` meanwhile. The old CSS
+  `kzoomback` slide is no longer used for `r5`.
 
 ### 5. Scenes that move cats around
 - **Home life** (`src/screens/Home.tsx`): `useHomeMood` picks the pose over time (sit; every 25–55 s either 7 s of
   `knead` or 14 s of `drape`, taking turns; `doze` after 90 s alone; `sleep` 10:30 PM–5 AM); `useHomeLife` runs the
-  random meows and the litter-box gag; the nuzzle with the cat beside uses `anim="nuzzle"`.
+  random meows and the litter-box gag; the nuzzle with the cat beside uses `anim="nuzzle"`. **Just fed:** a Fed tap
+  in Quick log (`DailyTaps`) fires a `paldex:fed` window event with the cat ids (the shown one, or all after "Luna
+  too"); Home shows those cats in the `full` pose for 9 s with "Mmm. So full." (not during the litter gag).
 - **Chase** (`Chase.tsx`): timed phases (`AT`), each cat in a wrapper moved with a CSS `transform` transition;
   `pose="walk"` while moving and a `scaleX(-1)` wrapper to face left; the lead cat gets `react="r14"` to pounce.
 - **Play screen** (`src/screens/Play.tsx` + `src/engine/play.ts`): a pure `step(brain, target, dt)` decides the mode
@@ -752,7 +772,8 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - **`chester-training`** (personal, created 2026-11-08): package registries and MCP servers, plus
   `world.openpetfoodfacts.org`, `world.openfoodfacts.org`, `api.upcitemdb.com` (food lookups), `paldex-4qh.pages.dev`
   (to check the live site) and `vtcufhddooqzckjcpzwn.supabase.co` (to check the SQL was run, signed out, with the
-  public key). The Default environment allows none of these.
+  public key). The Default environment allows none of these. Added 2026-11-09 for Josh's animation references:
+  `cdn.svgator.com`, `www.svgator.com`, `cdn.dribbble.com`, `images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com`.
   The Default environment blocks those hosts. Start PalDex cloud sessions on this one.
 
 ### MCP servers (repo, `.mcp.json`)
@@ -785,6 +806,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
+- Later: zoomies sprint + backflip, run/curl/full poses, walk retimed. No skills invoked; the reference GIFs (walk,
+  run, flip) were downloaded and split into timed contact sheets with Pillow (frame durations from the GIF), the
+  poses checked as Playwright frame strips with CSS animations paused and stepped (`getAnimations()` →
+  `currentTime`), and the zoomies as a real-time screenshot strip.
 - Later: playable laser dot and wand (agenda 2). No skills invoked; Playwright frame strips of a scripted drag.
 - Later: smart defaults and logging for all cats (agenda 1). No skills or MCP servers; Playwright on the dev store.
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with

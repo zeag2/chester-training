@@ -42,7 +42,7 @@ describe('art safety', () => {
 });
 
 describe('art', () => {
-  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly'] as const;
+  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly', 'run', 'curl', 'full'] as const;
   it('every pose draws in every coat with the parts the rig and CSS use', async () => {
     const { COATS } = await import('./art');
     for (const pose of poses) for (const coat of Object.keys(COATS)) {
@@ -52,7 +52,9 @@ describe('art', () => {
       expect(svg).toContain('wear-crown');
       expect(svg).not.toContain('NaN');
       if (pose !== 'fly') expect(svg).toContain('class="r-head"');
-      if (pose === 'sit' || pose === 'doze' || pose === 'drape' || pose === 'sleep') expect(svg).toContain('class="r-all"');
+      if (pose === 'sit' || pose === 'doze' || pose === 'drape' || pose === 'sleep' || pose === 'full') expect(svg).toContain('class="r-all"');
+      if (pose === 'run') for (const l of ['legFL', 'legFR', 'legBL', 'legBR']) expect(svg).toContain(`class="${l}"`);
+      if (pose === 'full') { expect(svg).toContain('class="pawPat"'); expect(svg).toContain('class="puff"'); }
     }
   });
   it('the sitting tail wraps round the front paws', () => {

@@ -676,3 +676,38 @@ button.tapme.stroking:active{transform:none}
 .gagwrap:not(.out):not(.away):not(.gone):not(.back),.homecats .other:first-child{transition:transform .5s var(--ease-in-out)}
 .gagwrap.nuzzling{transform:translateX(12px)}
 .homecats.nuzzling .other:first-child{transform:translateX(-16px)}
+
+/* ==== 2026-11-09: walk retimed, run (gallop), curl (zoomies flip), full (after a meal) ==== */
+/* walk, from Josh's reference: a calmer 0.8 s stride, diagonal pairs swinging ±18° from the hip, the body rising as
+   the legs pass under it (twice a stride) and the head counter-bobbing so it stays level */
+.kc.pose-walk .legFL,.kc.pose-walk .legBR{animation:cWalkLeg .8s var(--sine) infinite}
+.kc.pose-walk .legFR,.kc.pose-walk .legBL{animation:cWalkLeg .8s var(--sine) infinite -.4s}
+@keyframes cWalkLeg{0%,100%{transform:rotate(18deg)}25%{transform:rotate(0deg) translateY(-3px)}50%{transform:rotate(-18deg)}75%{transform:rotate(0deg)}}
+.kc.pose-walk .all{animation:cWalkBob .4s var(--sine) infinite}
+@keyframes cWalkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.kc.pose-walk .head{animation:cWalkHead .4s var(--sine) infinite}
+@keyframes cWalkHead{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+
+/* run: a rotary gallop. Stretched out (front legs reaching, back legs pushing back), then gathered (front legs swept
+   back under, back legs forward under the belly, body short and arched), then the push into the next stretch.
+   Front and back pairs move together, the far leg of each pair a beat behind. 0.4 s a stride: a sprint. */
+.kc.pose-run .legFL{transform-origin:156px 132px;animation:cRunF .4s linear infinite}
+.kc.pose-run .legFR{transform-origin:142px 132px;animation:cRunF .4s linear infinite -.035s}
+.kc.pose-run .legBR{transform-origin:84px 132px;animation:cRunB .4s linear infinite}
+.kc.pose-run .legBL{transform-origin:68px 132px;animation:cRunB .4s linear infinite -.035s}
+@keyframes cRunF{0%,100%{transform:rotate(-62deg)}25%{transform:rotate(4deg)}50%{transform:rotate(40deg)}75%{transform:rotate(-24deg)}}
+@keyframes cRunB{0%,100%{transform:rotate(56deg)}25%{transform:rotate(14deg)}50%{transform:rotate(-50deg)}75%{transform:rotate(18deg)}}
+.kc.pose-run .all{transform-origin:104px 150px;animation:cRunBody .4s linear infinite}
+@keyframes cRunBody{0%,100%{transform:translateY(-2px) scaleX(1.07) rotate(0deg)}25%{transform:translateY(2px) scaleX(1) rotate(3deg)}50%{transform:translateY(-1px) scaleX(.9) rotate(0deg)}75%{transform:translateY(-10px) scaleX(1) rotate(-4deg)}}
+.kc.pose-run .head{animation:cRunHead .4s linear infinite}
+@keyframes cRunHead{0%,100%{transform:translateY(1px)}25%{transform:translateY(-2px)}50%{transform:translateY(0)}75%{transform:translateY(6px)}}
+.kc.pose-run .shadow{transform-origin:104px 190px;animation:cRunShadow .4s linear infinite}
+@keyframes cRunShadow{0%,50%,100%{transform:scaleX(1);opacity:1}75%{transform:scaleX(.8);opacity:.6}}
+
+/* full: a slow pat on the belly, a bigger, slower breath, and a contented puff of air now and then */
+.kc.pose-full .pawPat{transform-origin:70px 130px;animation:cPat 1.3s var(--sine) infinite}
+@keyframes cPat{0%,60%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(0)}50%{transform:rotate(-5deg)}}
+.kc.pose-full .bodyg{transform-origin:100px 190px;animation:cFullBreath 3.4s var(--sine) infinite}
+@keyframes cFullBreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.025,1.04)}}
+.kc.pose-full .puff{transform-origin:122px 106px;animation:cPuff 3.4s var(--ease-out) infinite}
+@keyframes cPuff{0%,46%{opacity:0;transform:scale(.3)}56%{opacity:1;transform:scale(1)}80%{opacity:.9;transform:translate(6px,-4px) scale(1.08)}92%,100%{opacity:0;transform:translate(12px,-8px) scale(1.15)}}

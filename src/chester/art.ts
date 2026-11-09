@@ -24,7 +24,7 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly';
+export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full';
 
 /* Style (docs/plans/2026-11-08-cat-art-style.md): one thin, even outline; flat fills with one soft shadow shape;
    a small head on a long body; very simple faces; the tail does the acting. */
@@ -328,6 +328,78 @@ function fly(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
     + `</g>`;
 }
 
+/** Running flat out, side on (faces right like walk): a long low body that stretches and gathers, front legs as a
+    pair and back legs as a pair (the gallop is CSS: `cRunF`/`cRunB`), head forward and level, tail streaming behind. */
+function run(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const leg = (x: number, cls: string, back: boolean, far: boolean) => {
+    const t = back ? 12 : 8.5;
+    const edge = `M${x - t} 132 C${x - t} 156 ${x - 6} 170 ${x - 6} 180 Q${x - 7.5} 189 ${x + 1} 189 Q${x + 9.5} 189 ${x + 7} 180 C${x + 7} 170 ${x + t - 2} 154 ${x + t - 2} 132`;
+    return `<g class="${cls}"><path d="${edge} Z" fill="${far ? c.shade : pawFill(c)}"/><path d="${edge}" fill="none" ${SW(c)}/></g>`;
+  };
+  const BODY = 'M172 122 C178 138 168 152 150 155 C126 158 94 158 72 156 C48 154 34 142 36 126 C38 110 54 104 78 106 C104 108 130 111 152 109 C163 108 169 114 172 122 Z';
+  const s = 0.72;
+  return `<defs><clipPath id="rb${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + shadow(104, 76)
+    + `<g class="all">`
+    + rigTail(c, 'M42 120 C26 116 12 114 0 116', 'M0 116 C-10 117 -18 114 -24 108', 1.2)
+    + leg(68, 'legBL', true, true) + leg(142, 'legFR', false, true)
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/>`
+    + `<g clip-path="url(#rb${uid})"><path d="M52 150 C90 162 134 162 168 146 L176 172 L30 172 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="160" cy="136" rx="10" ry="14" fill="${c.white ? '#fbfaf7' : c.light}"/>`
+    + (c.patches ? `<path d="M64 106 C86 100 106 110 104 128 C92 136 72 132 64 106 Z" fill="${c.patches[0]}"/><path d="M118 112 C136 108 152 114 148 130 C136 134 122 128 118 112 Z" fill="${c.patches[1]}"/>` : '')
+    + (c.stripe ? `<path d="M76 108 Q80 120 74 130 M96 109 Q100 121 94 131 M116 111 Q120 123 114 133" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>` : '')
+    + `</g><path d="${BODY}" fill="none" ${SW(c)}/></g>`
+    + leg(84, 'legBR', true, false) + leg(156, 'legFL', false, false)
+    + `<g style="transform:translate(116px,58px) scale(${s});transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w, { size: 0.8, outer: s, turn: 1 })}</g></g></g></g>`;
+}
+
+/** Tucked into a ball mid-flip: one round body, the head tucked at the front, paws folded in, the tail wrapped round.
+    Spun as a whole by the zoomies (it's airborne, so no shadow). */
+function curl(c: Coat, eyes: string, uid: string, w = ''): string {
+  const f = c.point ?? c.base;
+  const s = 0.6;
+  return `<defs><clipPath id="cb${uid}"><circle cx="100" cy="122" r="50"/></clipPath></defs>`
+    + `<g class="all">`
+    + `<path d="M58 152 C40 128 50 88 84 76" stroke="${c.line}" stroke-width="${10 + 2 * LW}" fill="none" stroke-linecap="round"/><path d="M58 152 C40 128 50 88 84 76" stroke="${f}" stroke-width="10" fill="none" stroke-linecap="round"/>`
+    + `<g class="bodyg"><circle cx="100" cy="122" r="50" fill="${c.base}"/>`
+    + `<g clip-path="url(#cb${uid})"><path d="M60 150 C90 176 140 170 152 130 L160 180 L50 180 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="126" cy="138" rx="20" ry="16" fill="${c.white ? '#fbfaf7' : c.light}"/>`
+    + (c.stripe ? `<path d="M70 86 Q78 96 72 108 M88 76 Q96 88 90 100" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>` : '')
+    + (c.patches ? `<ellipse cx="78" cy="104" rx="22" ry="18" fill="${c.patches[1]}"/>` : '')
+    + `</g><circle cx="100" cy="122" r="50" fill="none" ${SW(c)}/></g>`
+    + `<ellipse cx="118" cy="150" rx="11" ry="8" fill="${pawFill(c)}" ${SW(c)}/><ellipse cx="136" cy="140" rx="11" ry="8" fill="${pawFill(c)}" ${SW(c)}/>`
+    + `<g style="transform:translate(86px,46px) scale(${s});transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, 'happy', uid, w, { size: 0.9, outer: s, turn: 0.6 })}</g></g></g>`
+    + `</g>`;
+}
+
+/** Full after a meal, facing you: a round, satisfied belly with one paw patting it, eyes closed, and a little
+    contented puff of air (the puff and the pat are CSS: `cPuff`, `cPat`). */
+function full(c: Coat, eyes: string, uid: string, w = ''): string {
+  const BODY = 'M100 110 C138 110 166 138 166 166 C166 182 156 190 140 190 L60 190 C44 190 34 182 34 166 C34 138 62 110 100 110 Z';
+  let bp = '';
+  if (c.stripe) bp += `<path d="M46 150 Q56 152 58 162 M154 150 Q144 152 142 162" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<ellipse cx="52" cy="160" rx="20" ry="22" fill="${c.patches[1]}"/><ellipse cx="148" cy="166" rx="18" ry="20" fill="${c.patches[0]}"/>`;
+  bp += `<path d="M146 130 C172 152 166 196 128 194 C152 180 156 156 140 136 Z" fill="${c.shade}"/>`;
+  bp += `<ellipse cx="102" cy="160" rx="38" ry="30" fill="${c.white ? '#fbfaf7' : c.light}"/>`;
+  const foot = (x: number) => `<ellipse cx="${x}" cy="184" rx="17" ry="9" fill="${pawFill(c)}" ${SW(c)}/><path d="M${x - 5} 185 V189 M${x} 186 V190 M${x + 5} 185 V189" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/>`;
+  const tail = rigTail(c, 'M150 180 C170 182 172 196 150 196', 'M150 196 C130 197 106 198 80 195', 0.3);
+  const k = SIT_HEAD.size;
+  return `<defs><clipPath id="fb${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<g class="r-shadow">${shadow(100, 68)}</g>`
+    + `<g class="r-all"><g class="all">`
+    + tail
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#fb${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/>`
+    + `<path d="M84 168 Q100 174 116 168" fill="none" ${SW(c, LW * 0.7)} opacity=".45"/></g>`
+    + foot(64) + foot(136)
+    + `<g class="pawRest">${openLimb(c, 136, 128, 142, 160, 16, pawFill(c))}</g>`
+    + `<g class="pawPat">${openLimb(c, 70, 130, 96, 152, 16, pawFill(c))}</g>`
+    + `<g transform="translate(0 ${SIT_HEAD.lift + 2})"><g class="r-head"><g class="head">${head(c, eyes, 'sleepy', uid, w, { size: k })}</g></g></g>`
+    + `<g class="puff"><g transform="translate(122 106) scale(1.45) translate(-122 -106)"><path d="M118 104 H128 M117 110 H126" stroke="${c.line}" stroke-width="2" stroke-linecap="round" opacity=".6"/>`
+    + `<g fill="#fff" ${SW(c, 2.4)}><circle cx="136" cy="102" r="7"/><circle cx="145" cy="96" r="8"/><circle cx="147" cy="108" r="7"/><circle cx="155" cy="102" r="6"/></g>`
+    + `<path d="M135 102 C137 97 143 93 148 96 M146 107 C150 109 154 106 155 102" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/></g></g>`
+    + `</g></g>`;
+}
+
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string }): string {
@@ -336,6 +408,9 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
   const pose = o.pose ?? 'sit';
   const mood = o.mood ?? 'curious';
   const body = pose === 'fly' ? fly(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'run' ? run(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'curl' ? curl(c, o.eyes ?? 'gold', o.uid, w)
+    : pose === 'full' ? full(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'walk' ? walk(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'ball' ? ball(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid, w)
