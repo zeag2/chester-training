@@ -273,6 +273,17 @@ Tick items here when they ship (`[x]`), in the same commit. Sizes: S under an ho
 "SQL" means Josh runs a migration. Suggested order: badges, bond unlocks + nap tokens, weekly recap, vet summary, push.
 Items marked *(art)* suit the art session.
 
+### Agenda (agreed with Josh, 2026-11-09; work top-down, tick here and in the checklist below)
+1. [ ] **Smart defaults + log for several cats at once** (S + S, no SQL). Make logging effortless.
+2. [ ] **Playable toys, part 1: laser dot and wand** (M, *(art)*, no SQL). See "Play" below.
+3. [ ] **Playable toys, part 2: box and tunnel** (M, *(art)*, no SQL).
+4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
+5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
+   medicine due).
+6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
+- For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
+  real iPhone and Android phone.
+
 ### Done recently
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
 - [x] **Treats for logging care** (see section 1, corner).
@@ -320,9 +331,18 @@ Items marked *(art)* suit the art session.
 - [ ] **Log for several cats at once** (S): "Fed" asks nothing when there's one cat, offers "All cats" when several.
 
 ### Play (virtual and real)
-- [ ] **Play with your cat on screen** (M) *(art)*: drag a wand toy or a laser dot and the cat chases, pounces and
-  bats it; uses the toys bought in the corner (box, laser, tunnel). First play of the day adds bond (and treats, see
-  Treats).
+- [ ] **Playable toys** (agenda 2 and 3; M each) *(art)*: today tapping a bought toy in the corner (`playWith` in
+  `Corner.tsx`) only plays a canned reaction (`TOY_MOVE`) and `store.play()` gives the daily bond and treats. Make each
+  one a real game:
+  - **Laser dot** (bought): drag a red dot; the cat's eyes track it, he crouches and wiggles, then pounces; catches
+    sometimes, misses sometimes.
+  - **Wand** (new, free starter toy): flick a feather on a string; he leaps and bats at it.
+  - **Box** (bought): he hops in and peeks out; tap the box and he pops up or swats.
+  - **Tunnel** (bought): he zooms in one end and out the other, sometimes hides in the middle.
+  - Keep the first-play-of-the-day reward (`PLAY_REWARD`); add "found a new move!" moments per toy, counted in the
+    unused `Wallet.playMoves` (this covers "Play moves found by petting" too).
+  - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
+    there, or with that session paused.
 - [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
   (indoor cats need it), never a guilt message.
 
@@ -364,7 +384,14 @@ Items marked *(art)* suit the art session.
   it agrees on every phone (`Wallet.napTokens` stays unused).
 - [ ] **Mastery-only corner items** (S): e.g. a cozy box from Carrier comfort.
 - [ ] **Play moves found by petting** (S) *(art)*: a counter of moves discovered (`Wallet.playMoves`, unused).
-- [ ] **Photo album** (M): a photo of the real pet at each mastery (reuse the `pet-docs` bucket pattern).
+- [ ] **Photo feed** (agenda 4; L, SQL): real photos of your cats and your friends' cats in one feed, newest first,
+  with a paw reaction and a short caption. Also offered at each mastered skill (this replaces the old Photo album
+  item).
+  - SQL: a `pet_photos` table (cat, path, caption, by, created_at) and a **new** storage bucket readable by the pet's
+    household and its friends; never the `pet-docs` bucket (vet documents stay household-only). Reactions table.
+  - Shrink on the phone before upload (e.g. 1600 px long side, JPEG ~0.8) to stay inside Supabase's free storage.
+  - Safety: removing a friend hides your photos from them at once (policies check `friends`, not a copy); delete
+    your own photos; "hide" for a friend's photo; think about report or block before it grows past close friends.
 - [ ] **Push notifications** (L, SQL): new friend, a friend's treat, medicine due, "Pet me?". Web Push via a Supabase
   Edge Function with VAPID keys (environment secrets, never in the repo), a `push_subscriptions` table, triggers.
   iPhone only when installed. Today everything is in-app (red dot on Me, cards on Home).
