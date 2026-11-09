@@ -16,7 +16,7 @@ export function treatLine(cat: string, names: string[]): string {
 /** Home's one friends card: friends' cats as little faces (tap one to visit), a paw on each that can still get
     today's treat, a line when a friend gave one of your cats a treat, and + to invite someone. */
 export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
-  const { account, friends, treatNews, cat } = useStore();
+  const { account, friends, treatNews, cat, thanks } = useStore();
   useEffect(() => { if (account && !friends) store.loadFriends().catch(() => {}); }, [account, friends]);
   if (!account) return null;
   const pets = friends && !friends.missing ? friends.pets : [];
@@ -26,7 +26,14 @@ export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
     {treatNews && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
       <Paw color="#d4a23a" size={22} />
       <b className="sp" style={{ fontSize: 15 }}>{treatLine(treatNews.cat, treatNews.names)}</b>
+      {treatNews.items?.length ? (treatNews.thanked ? <span className="s" style={{ fontWeight: 700 }}>Thanks sent</span>
+        : <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={() => { audio.chirp(); void store.thankTreats(); }}>Say thanks</button>) : null}
       <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissTreatNews()}><Icon name="close" size={18} /></button>
+    </div>}
+    {thanks.length > 0 && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
+      <Paw color="#d4a23a" size={22} />
+      <b className="sp" style={{ fontSize: 15 }}>{[...new Set(thanks.map((t) => t.catName || 'A friend’s cat'))].join(' and ')} {thanks.length === 1 ? 'says' : 'say'} thank you for the treat!</b>
+      <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissThanks()}><Icon name="close" size={18} /></button>
     </div>}
     <div className="row" style={{ gap: 8 }}>
       <a href="#/friends" className="sp" style={{ color: 'inherit', textDecoration: 'none' }}><b>Friends’ cats</b>

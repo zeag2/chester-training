@@ -45,7 +45,9 @@ export interface Snapshot {
   /** New friends whose bonus just landed, for a card on Home (`scarf`: it was the first friend). */
   friendNews: { names: string[]; scarf: boolean } | null;
   /** Friends' treats that just landed for a pet, for a line on Home ("Erin gave Chester a treat"). */
-  treatNews: { cat: string; names: string[] } | null;
+  treatNews: { cat: string; names: string[]; catId?: string; items?: { from: string; day: string }[]; thanked?: boolean } | null;
+  /** "Mochi says thank you": thank-yous for treats I gave, not dismissed yet on this phone. */
+  thanks: { catId: string; catName: string; day: string }[];
   /** Treats a care entry just earned, for a short note on the Health screen. */
   careNews: (CareReward & { at: number }) | null;
 }
@@ -59,7 +61,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [] };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -312,6 +314,7 @@ export class Store {
       this.set({ friends: { code, list, pets, given, treats } });
       await this.rewardFriends(list);
       await this.collectTreats(true);
+      try { const seen = this.seenThanks(); this.set({ thanks: (await r.myThanks()).filter((t) => !seen.has(t.catId + '|' + t.day)) }); } catch { /* thanks SQL not run yet */ }
     } catch (e) {
       if (String((e as Error)?.message).includes('friends-missing')) this.set({ friends: { code: '', list: [], pets: [], missing: true } });
       else throw e;
@@ -363,11 +366,19 @@ export class Store {
     });
     if (!ok) return [];
     const names = [...new Set(fresh.map((t) => t.fromName || 'A friend'))];
-    const prev = this.snap.treatNews?.cat === cat.name ? this.snap.treatNews.names : [];
-    this.set({ treatNews: { cat: cat.name, names: [...new Set([...prev, ...names])] } });
+    const keep = this.snap.treatNews?.catId === cat.id ? this.snap.treatNews : null;
+    this.set({ treatNews: { cat: cat.name, catId: cat.id, names: [...new Set([...(keep?.names ?? []), ...names])], items: [...(keep?.items ?? []), ...fresh.map((t) => ({ from: t.from, day: t.day }))] } });
     return names;
   }
   dismissTreatNews() { this.set({ treatNews: null }); }
+  /** Say thank you for the treats in the Home card (needs the thanks SQL; quietly does nothing until then). */
+  async thankTreats(): Promise<boolean> {
+    const n = this.snap.treatNews; const r = this.remote; if (!n?.catId || !n.items?.length || !r) return false;
+    try { for (const t of n.items) await r.thankTreat(t.from, n.catId, t.day); } catch { return false; }
+    this.set({ treatNews: { ...n, thanked: true } }); return true;
+  }
+  private seenThanks(): Set<string> { try { return new Set(JSON.parse(localStorage.getItem('paldex-thanks-seen') ?? '[]')); } catch { return new Set(); } }
+  dismissThanks() { const seen = this.seenThanks(); for (const t of this.snap.thanks) seen.add(t.catId + '|' + t.day); try { localStorage.setItem('paldex-thanks-seen', JSON.stringify([...seen].slice(-200))); } catch { /* private mode */ } this.set({ thanks: [] }); }
   private friendsCheckedAt = 0;
   /** Every so often during sync: has someone added my code? Then their bonus lands here too. */
   private async checkFriends(r: Remote) {

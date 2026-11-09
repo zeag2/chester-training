@@ -23,7 +23,7 @@ export class FakeServer {
   cards = new Map<string, PetCard>();
   treatsTable = true;
   /** friend treats, keyed `from|cat|day` */
-  treats = new Map<string, { from: string; catId: string; day: string }>();
+  treats = new Map<string, { from: string; catId: string; day: string; thanked?: boolean }>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -126,4 +126,6 @@ export class FakeRemote implements Remote {
     const u = this.tr(); if (!this.s.isMember(catId, u.userId)) return [];
     return [...this.s.treats.values()].filter((t) => t.catId === catId).map((t) => ({ from: t.from, fromName: this.s.profiles.get(t.from)?.name ?? '', day: t.day }));
   }
+  async thankTreat(from: string, catId: string, day: string) { const u = this.tr(); if (!this.s.isMember(catId, u.userId)) throw new Error('not your pet'); const t = this.s.treats.get(from + '|' + catId + '|' + day); if (t) t.thanked = true; }
+  async myThanks() { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.thanked).map((t) => ({ catId: t.catId, catName: this.s.cats.get(t.catId)?.cat.name ?? '', day: t.day })); }
 }

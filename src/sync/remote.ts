@@ -63,4 +63,8 @@ export interface Remote {
   treatsGiven(day: string): Promise<string[]>;
   /** Treats my pet got from friends (the last 30 days). */
   treatsFor(catId: string): Promise<ReceivedTreat[]>;
+  /** Thank a friend for a treat my pet got (throws 'thanks-missing' until its SQL is run). */
+  thankTreat(from: string, catId: string, day: string): Promise<void>;
+  /** Thank-yous for treats I gave (last 7 days). */
+  myThanks(): Promise<{ catId: string; catName: string; day: string }[]>;
 }

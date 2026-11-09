@@ -178,4 +178,6 @@ export class SupabaseRemote implements Remote {
   async treatsFor(catId: string): Promise<ReceivedTreat[]> {
     return ((await this.rpc<{ from_user: string; from_name: string; day: string }[]>('treats_for', { c: catId }, 'treats-missing')) ?? []).map((r) => ({ from: r.from_user, fromName: r.from_name, day: r.day }));
   }
+  async thankTreat(from: string, catId: string, day: string) { await this.rpc('thank_treat', { giver: from, c: catId, d: day }, 'thanks-missing'); }
+  async myThanks() { return ((await this.rpc<{ cat_id: string; cat_name: string; day: string }[]>('my_thanks', undefined, 'thanks-missing')) ?? []).map((r) => ({ catId: r.cat_id, catName: r.cat_name, day: r.day })); }
 }

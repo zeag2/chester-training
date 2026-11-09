@@ -323,10 +323,14 @@ describe('training Chester together', () => {
     const before = josh.get().wallet!.treats;
     expect(await josh.collectTreats(true)).toEqual(['Erin']);
     expect(josh.get().wallet!.treats).toBe(before + 1);
-    expect(josh.get().treatNews).toEqual({ cat: 'Chester', names: ['Erin'] });
+    expect(josh.get().treatNews).toMatchObject({ cat: 'Chester', names: ['Erin'], catId: chesterId });
     expect(josh.get().cat!.corner!.log.filter((e) => e.kind === 'treat').map((e) => [e.id, e.treats, e.by])).toEqual([['treat-u:erin@example.com-' + localDay(Date.now()), 1, 'u:erin@example.com']]);
     expect(await josh.collectTreats(true)).toEqual([]);
     expect(josh.get().wallet!.treats).toBe(before + 1);
+    // Josh says thanks; Erin's Home shows Chester's thank-you until she dismisses it
+    expect(await josh.thankTreats()).toBe(true); expect(josh.get().treatNews?.thanked).toBe(true);
+    await erin.loadFriends(); expect(erin.get().thanks.map((t) => t.catName)).toEqual(['Chester']);
+    erin.dismissThanks(); await erin.loadFriends(); expect(erin.get().thanks).toEqual([]);
     josh.dismissTreatNews(); expect(josh.get().treatNews).toBeNull();
 
     // Megan's phone (same household) gets Josh's entry by sync, so the treat is never counted twice

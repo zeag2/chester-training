@@ -369,7 +369,10 @@ Items marked *(art)* suit the art session.
 - [ ] **Suggest the "Loves it" treat for hard skills** (S).
 
 ### Friends
-- [ ] **Thank-you back** (S, SQL): the owner taps "Thank Erin", she sees a thank-you from the cat.
+- [x] **Thank-you back** (done 2026-11-09, **needs `20261113000000_treat_thanks.sql`**): the "Erin gave Chester a treat"
+  line has **Say thanks** (`thankTreats` → `thank_treat`, household only); Erin's friends card then shows "Chester says
+  thank you for the treat!" (`my_thanks()`, last 7 days; dismissed per phone). Before the SQL is run, Say thanks does
+  nothing visible and no thank-yous show. Policy test: `supabase/tests/treat_thanks_test.sql` (after friend_treats_test).
 - [ ] **A friend's cat visits your Home** (M) *(art)*: now and then sits beside yours for a bit.
 - [x] **Friends in the weekly recap**: treats from friends are counted (names still to add).
 
@@ -467,6 +470,7 @@ supabase/
     20261110000000_friends.sql           friend codes, friendships, pet cards, add_friend/friend_pets/set_pet_card
     20261111000000_friend_treats.sql     friends' free treats: friend_treats, give_treat/treats_given/treats_for
     20261112000000_daily_logs.sql        adds the 'daily' care kind (one-tap Fed/Scooped/Played, daily check)
+    20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
