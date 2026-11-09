@@ -374,8 +374,9 @@ Items marked *(art)* suit the art session.
 - [x] **Friends in the weekly recap**: treats from friends are counted (names still to add).
 
 ### Treats
-- [ ] **7-day care streak bonus** (S): without any guilt for missing a day.
-- [ ] **First play of the day gives treats** (S): it gives only a bond point today.
+- [x] **7-day care streak bonus** (done 2026-11-09): care logged 7 days in a row: +10 treats and +1 bond, once per 7
+  days (`careStreakDue()`, logged `streak-<day>`); a gap just restarts the count, never shown as broken.
+- [x] **First play of the day gives treats** (done): +2 treats and +1 bond (`PLAY_REWARD`).
 
 ### Polish and housekeeping
 - [ ] **A cleaner address** (S): `paldex-4qh.pages.dev` has a random suffix because `paldex` was taken; a second

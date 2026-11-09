@@ -110,7 +110,7 @@ export function Corner() {
         : <div className="card grey row"><div className="ico"><Icon name="check" /></div><div className="sp"><b>Today’s gift opened</b><p className="s">+{dailyGiftTreats(cat.id, day)} treats. Another one tomorrow.</p></div></div>}
 
       {toys.length > 0 && <>
-        <div className="row" style={{ marginTop: 22 }}><h2 className="sp">Play</h2><span className="s">{playedToday(c, day) ? 'Bond point earned today' : 'First play today: +1 bond'}</span></div>
+        <div className="row" style={{ marginTop: 22 }}><h2 className="sp">Play</h2><span className="s">{playedToday(c, day) ? 'Bond point earned today' : 'First play today: +1 bond, +2 treats'}</span></div>
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 2px 4px', margin: '0 -2px' }}>
           {toys.map((t, i) => <button key={t} className="card white" style={{ margin: 0, flex: 'none', width: 104, border: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: 12, color: 'inherit' }} onClick={() => playWith(t)} aria-label={`Play with ${toyName(t)}`}>
             <ToyArt name={t} i={i} /><span className="s" style={{ fontWeight: 700, color: 'var(--ink)', textAlign: 'center', lineHeight: 1.2 }}>{toyName(t)}</span></button>)}

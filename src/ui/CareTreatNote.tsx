@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { store, useStore } from '../db/store';
 import { Paw } from './icons';
 
-const WHY = { entry: 'for logging', weighIn: 'for this week’s weigh-in', medOnTime: 'for a dose on time', vetVisit: 'for the vet visit' };
+const WHY = { entry: 'for logging', weighIn: 'for this week’s weigh-in', medOnTime: 'for a dose on time', vetVisit: 'for the vet visit', streak: 'for a whole week of care' };
 
 /** "+7 treats for this week's weigh-in": a short note after a care entry earns treats. Goes away by itself. */
 export function CareTreatNote() {

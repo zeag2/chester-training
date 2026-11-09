@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CareItem } from './care';
-import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, bondGiftLevel, careReward, CARE_TREATS, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
+import { bondLevel, canBuy, dailyGiftTreats, FRIEND_BONUS, ITEM_BY_ID, mergeCorner, newTreats, bondGiftLevel, careStreakDue, careReward, CARE_TREATS, owned, treatId, unrewardedFriends, withCorner, type CornerEvent } from './corner';
 
 const ev = (id: string, treats: number, at = 1, extra: Partial<CornerEvent> = {}): CornerEvent => ({ id, kind: 'buy', day: '2026-11-08', at, treats, bond: 0, ...extra });
 
@@ -80,5 +80,14 @@ describe('Chester’s corner', () => {
     expect([...owned(undefined, 40)].sort()).toEqual(['bell', 'bowtie', 'crown', 'flower', 'party']);
     expect(canBuy(ITEM_BY_ID.bell, 99, undefined, 3)).toBe(false);
     expect(bondGiftLevel('crown')?.name).toBe('Soulmates');
+  });
+  it('pays the care streak after 7 days in a row, then not again for a week', () => {
+    const now = Date.parse('2026-11-09T12:00:00'); const day = 864e5;
+    const item = (ago: number) => ({ id: 'i' + ago, catId: 'c', kind: 'symptom', at: now - ago * day, updatedAt: 1, data: {} }) as CareItem;
+    const week = [0, 1, 2, 3, 4, 5, 6].map(item);
+    expect(careStreakDue(undefined, week, now)).toBe('streak-2026-11-09');
+    expect(careStreakDue(undefined, week.filter((_, i) => i !== 3), now)).toBeNull(); // a gap
+    expect(careStreakDue({ log: [ev('streak-2026-11-05', 10, now - 4 * day, { kind: 'streak', day: '2026-11-05' })] }, week, now)).toBeNull();
+    expect(careStreakDue({ log: [ev('streak-2026-11-02', 10, now - 7 * day, { kind: 'streak', day: '2026-11-02' })] }, week, now)).toBe('streak-2026-11-09');
   });
 });

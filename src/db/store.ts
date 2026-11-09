@@ -13,7 +13,7 @@ import { shrinkImage } from '../lib/images';
 import type { CareRow } from './db';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
-import { FRIEND_BONUS, FRIEND_TREAT, careReward, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -203,7 +203,7 @@ export class Store {
   play(toy: string): Promise<boolean> {
     return this.corner((c) => {
       const day = localDay(Date.now()); if (playedToday(c, day)) return null;
-      return { ...c, log: [...c.log, this.event('play', 'play-' + day, 0, 1, toy)] };
+      return { ...c, log: [...c.log, this.event('play', 'play-' + day, PLAY_REWARD.treats, PLAY_REWARD.bond, toy)] };
     });
   }
 
@@ -225,8 +225,12 @@ export class Store {
     let got: CareReward | null = null;
     const ok = await this.corner((c, cat) => {
       if (cat.id !== item.catId) return null;
-      got = careReward(c, item, this.snap.care); if (!got) return null;
-      return { ...c, log: [...c.log, this.event('care', 'care-' + item.id, got.treats, 0, item.kind)] };
+      got = careReward(c, item, this.snap.care);
+      const streak = careStreakDue(c, this.snap.care);
+      const add = [...(got ? [this.event('care', 'care-' + item.id, got.treats, 0, item.kind)] : []), ...(streak && !c.log.some((e) => e.id === streak) ? [this.event('streak', streak, CARE_STREAK.treats, 1)] : [])];
+      if (!add.length) return null;
+      if (streak && add.some((e) => e.kind === 'streak')) got = { treats: (got?.treats ?? 0) + CARE_STREAK.treats, why: 'streak' };
+      return { ...c, log: [...c.log, ...add] };
     });
     if (ok && got) this.set({ careNews: { ...(got as CareReward), at: Date.now() } });
   }
