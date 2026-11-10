@@ -16,9 +16,9 @@ import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
 import { Scanner } from './Scanner';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { CareTreatNote } from '../ui/CareTreatNote';
-import { VetCard, VisitsCard, visitEvent } from '../ui/VetCards';
+import { BookSheet, VetCard, VisitsCard, visitEvent, type BookPreset } from '../ui/VetCards';
 import { NO_VISIT, docVisitId, findDocs, guessDocType, visitOfDoc } from '../engine/docs';
-import { isBooked } from '../engine/vets';
+import { bookingDay, isBooked } from '../engine/vets';
 import { DocRow, openDoc } from '../ui/DocRow';
 import { DailyLogSheet } from '../ui/DailyLogSheet';
 
@@ -48,6 +48,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   // opened from the + sheet: go straight to that log form
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
   const [calFor, setCalFor] = useState<CalEvent | null>(null);
+  const [book, setBook] = useState<BookPreset | null>(null);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
@@ -78,7 +79,11 @@ export function Care({ open }: { open?: CareKind } = {}) {
           setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } }); }}>
         <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' || r.kind === 'visit' ? 'box' : 'check'} /></div>
         <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
-        {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
+        {/* the yearly checkup and vaccine boosters: Book, with the reason and a day near the due date filled in */}
+        {(r.kind === 'vet' || r.what === 'vaccine') ? <button className="card grey bookdue" style={{ margin: 0, width: 64, flex: 'none', padding: 0 }} aria-label={`Book a visit: ${r.title}`}
+          onClick={() => { audio.chirp(); setBook(r.kind === 'vet' ? { reason: 'Checkup', day: bookingDay(r.dueDay), notes: 'Yearly checkup' } : { reason: 'Vaccines', day: bookingDay(r.dueDay), notes: `${r.title} due ${fmt(noon(r.dueDay))}` }); }}>
+          <Icon name="cal" size={20} /><span>Book</span></button>
+        : r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
           onClick={() => { const booked = r.kind === 'visit' ? care.find((c): c is CareItem<'vet'> => c.id === r.id.slice(6) && c.kind === 'vet') : undefined;
             setCalFor(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
@@ -130,6 +135,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
+    {book && <BookSheet preset={book} onClose={() => setBook(null)} />}
   </div>;
 }
 

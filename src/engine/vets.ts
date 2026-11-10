@@ -74,3 +74,24 @@ export function visits(care: CareItem[], now = Date.now()): { next?: CareItem<'v
 }
 
 export const VISIT_REASONS = ['Checkup', 'Vaccines', 'Sick', 'Follow-up'] as const;
+
+/** A date to book for something due on `due`: that day, or tomorrow when it's today or past, moved off a Sunday
+    (most clinics are closed). The person can change it; it just starts near the right day. */
+export function bookingDay(due: string, now = Date.now()): string {
+  const tomorrow = localDay(now + 864e5);
+  const d = new Date((due > tomorrow ? due : tomorrow) + 'T12:00:00');
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return localDay(d.getTime());
+}
+
+/** After a visit: the vaccines it gave whose next dose is still to come, soonest first, for "Book the next one?".
+    Nothing when a visit is already booked from today on (that one is the next one). */
+export function nextVaccines(doses: CareItem[], care: CareItem[], now = Date.now()): { due: string; names: string[] } | null {
+  const today = localDay(now);
+  if (care.some((i) => i.kind === 'vet' && !i.deleted && isBooked(i, now) && localDay(i.at) >= today)) return null;
+  const vs = doses.filter((d): d is CareItem<'med'> => d.kind === 'med' && !d.deleted).filter((d) => d.data.what === 'vaccine' && !!d.data.nextDue && d.data.nextDue > today)
+    .sort((a, b) => a.data.nextDue!.localeCompare(b.data.nextDue!));
+  if (!vs.length) return null;
+  const due = vs[0].data.nextDue!;
+  return { due, names: vs.filter((v) => v.data.nextDue === due).map((v) => v.data.name) };
+}

@@ -3,12 +3,12 @@ import { store, useStore } from '../db/store';
 import { MED_LABEL, type CareItem } from '../engine/care';
 import { localDay } from '../engine/day';
 import { visitLinks } from '../engine/docs';
-import { fmtTime, isBooked, mapsHref, telHref, yourVets } from '../engine/vets';
+import { bookingDay, fmtTime, isBooked, mapsHref, nextVaccines, telHref, yourVets } from '../engine/vets';
 import type { CalEvent } from '../lib/calendar';
 import { Icon } from '../ui/icons';
 import { back as goBack } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
-import { visitEvent } from '../ui/VetCards';
+import { BookSheet, visitEvent, type BookPreset } from '../ui/VetCards';
 import { CalendarSheet } from '../ui/CalendarChoice';
 import { CareSheet, DocAdder, type Editing } from './Care';
 
@@ -17,12 +17,14 @@ import { CareSheet, DocAdder, type Editing } from './Care';
    calendar, and once its day has passed asks how it went. */
 
 const fmtDay = (ms: number) => new Date(ms).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+const fmtShortDay = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 const fmtShort = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 
 export function VisitPage({ id }: { id: string }) {
   const { cat, care, vets, account } = useStore();
   const [editing, setEditing] = useState<Editing>(null);
   const [calFor, setCalFor] = useState<CalEvent | null>(null);
+  const [book, setBook] = useState<BookPreset | null>(null);
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
@@ -39,7 +41,11 @@ export function VisitPage({ id }: { id: string }) {
   const day = localDay(visit.at);
   const passed = day < localDay(Date.now());
   const { docs, doses, weight } = visitLinks(care, visit);
-  const tel = telHref(vet?.data.phone); const maps = vet ? mapsHref(vet.data) : null;
+  // a saved vet's phone and address, or a one-off clinic's kept on the visit
+  const tel = telHref(vet?.data.phone ?? visit.data.phone);
+  const maps = vet ? mapsHref(vet.data) : visit.data.address ? mapsHref({ kind: 'primary', clinic: visit.data.clinic ?? '', address: visit.data.address }) : null;
+  // after the visit: the vaccines it gave that are due again, for "Book the next one?"
+  const again = !booked || passed ? nextVaccines(doses, care) : null;
   const log = (kind: 'med' | 'weight') => setEditing({ kind, preset: { visitId: visit.id } as never, day: passed || !booked ? day : localDay(Date.now()) });
   const h = (t: string) => <h2 style={{ marginTop: 20, fontSize: 17 }}>{t}</h2>;
 
@@ -76,6 +82,10 @@ export function VisitPage({ id }: { id: string }) {
         </div>
       </>}
 
+      {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }}
+        onClick={() => setBook({ reason: 'Vaccines', day: bookingDay(again.due), notes: `${again.names.join(', ')} due ${fmtShortDay(again.due)}` })}>
+        <span className="sp"><b>Book the next one?</b><span className="s" style={{ display: 'block' }}>{again.names.join(', ')} due again {fmtShortDay(again.due)}</span></span><span className="chip">Book</span></button>}
+
       {h('Documents')}
       {docs.map((d) => <DocRow key={d.id} doc={d} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
       {docs.length === 0 && <p className="s">{booked && !passed ? 'After the visit, add a photo of the invoice or certificate here.' : 'A photo of the invoice, certificate or discharge notes goes here.'}</p>}
@@ -88,5 +98,6 @@ export function VisitPage({ id }: { id: string }) {
     </div>
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
+    {book && <BookSheet preset={book} onClose={() => setBook(null)} />}
   </div>;
 }

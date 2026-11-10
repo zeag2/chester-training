@@ -7,6 +7,7 @@ import { Icon, Paw } from './icons';
 import { go } from './router';
 import * as audio from '../lib/audio';
 import { DailyLogSheet } from './DailyLogSheet';
+import { hideToast } from './Toast';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 /** Tell Home a cat was just fed, so it shows him round and content for a moment. */
@@ -29,6 +30,8 @@ export function DailyTaps() {
   /** Today's entries sheet (to fix a mistaken tap): one kind from a done tile, or 'all' from "Fix a mistake". */
   const [entries, setEntries] = useState<DailyWhat | 'all' | null>(null);
   useEffect(() => { if (!undo) return; const t = window.setTimeout(() => setUndo(null), 5000); return () => window.clearTimeout(t); }, [undo]);
+  // one toast at a time: this Undo replaces a booking's "Booked … · Undo" note still showing from Health
+  useEffect(() => { if (undo) hideToast(); }, [undo]);
   const today = useMemo(() => dailyToday(care), [care]);
   if (!cat) return null;
   const who = (i?: CareItem) => (!i ? '' : !i.by || i.by === account?.userId ? 'you' : household?.members.find((m) => m.userId === i.by)?.name || 'someone');
