@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBooked, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
+import { fmtTime, isBooked, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
 import { reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
@@ -39,5 +39,11 @@ describe('visits', () => {
     const r = reminders([vet('2025-12-01', { reason: 'Checkup' }), vet('2026-11-24', { reason: 'Booster', status: 'booked', clinic: 'Maple' })], NOW);
     expect(r.find((x) => x.kind === 'visit')).toMatchObject({ title: 'Vet: Booster', dueDay: '2026-11-24', daysLeft: 14 });
     expect(r.find((x) => x.id === 'vet:yearly')?.dueDay).toBe('2026-12-01'); // a year after the real last checkup
+  });
+});
+
+describe('visit times', () => {
+  it('shows 12-hour times', () => {
+    expect([fmtTime('14:30'), fmtTime('09:05'), fmtTime('00:15'), fmtTime('12:00'), fmtTime(undefined)]).toEqual(['2:30 PM', '9:05 AM', '12:15 AM', '12:00 PM', '']);
   });
 });

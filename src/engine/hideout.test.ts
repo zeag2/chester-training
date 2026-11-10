@@ -91,15 +91,24 @@ describe('the tunnel', () => {
   it('sometimes stops to hide, then peeks out of an end and comes out', () => {
     const r = run('tunnel', 8, tapAt(0.1, 195, 30), undefined, () => 0.1); // 0.1: always stops
     expect(r.modes.slice(0, 5)).toEqual(['sit', 'zoom', 'hide', 'peek', 'zoom']);
-    expect(r.moves).toEqual(expect.arrayContaining(['hide', 'peek']));
+    expect(r.moves).toContain('peek');
+    expect(r.moves).not.toContain('hide'); // stopping inside on his own isn't Hide and seek: you have to find him
     expect(r.moves).not.toContain('zoom'); // came back out the same end: not a lap
   });
-  it('bursts out when you tap the bump where he hides', () => {
+  it('bursts out when you tap the bump where he hides (Hide and seek: you found him)', () => {
     let hid = -1;
     const r = run('tunnel', 3, (t, b) => { if (t < 1 / 60) return { tap: { x: 195, h: 30 } }; if (hid < 0 && b.mode === 'hide') hid = t; return hid >= 0 && t > hid + 0.3 && t < hid + 0.32 ? { tap: { x: b.x, h: 40 } } : {}; }, undefined, () => 0.1);
-    expect(r.moves).toContain('ambush');
+    expect(r.moves).toContain('hide');
+    expect(r.moves).not.toContain('ambush');
     expect(r.modes).toContain('leap');
     expect(r.events.some((e) => e.kind === 'catch')).toBe(true);
+  });
+  it('ambushes when you tap him as he peeks out of an end', () => {
+    let tapped = false;
+    const r = run('tunnel', 6, (t, b) => { if (t < 1 / 60) return { tap: { x: 195, h: 30 } }; if (!tapped && b.mode === 'peek') { tapped = true; return { tap: { x: b.x, h: 30 } }; } return {}; }, undefined, () => 0.1);
+    expect(r.moves).toContain('ambush');
+    expect(r.moves).not.toContain('hide');
+    expect(r.modes).toContain('leap');
   });
   it('pokes a paw out at a finger by an end while he hides', () => {
     let hid = false;

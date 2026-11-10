@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../db/store';
 import { DOC_FILTERS, findDocs, visitOfDoc, type DocFilter } from '../engine/docs';
 import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { back as goBack, go } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
 import { CareSheet, DocAdder, type Editing } from './Care';
 
@@ -18,7 +18,7 @@ export function Documents() {
   const list = useMemo(() => findDocs(care, q, filter), [care, q, filter]);
   if (!cat) return null;
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : go('health'))}><Icon name="back" /></button>
+    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => goBack('health')}><Icon name="back" /></button>
       <b className="sp" style={{ fontSize: 17 }}>{cat.name}’s documents</b>
       <button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--bg)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => setAdding(!adding)}><Icon name="plus" /></button></div>
     {(adding || all.length === 0) && <DocAdder signedIn={!!account} />}

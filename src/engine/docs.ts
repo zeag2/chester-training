@@ -24,10 +24,23 @@ export function guessDocType(text: string): DocType {
   return 'other';
 }
 
-/** The visit a document belongs to: its `visitId`, else a visit saved from it (`vet.doc`). */
+/** `visitId` on a document unlinked from a visit that was saved from it (`vet.doc`), so the old link no longer counts. */
+export const NO_VISIT = 'none';
+
+/** The visit a document belongs to: its `visitId`, else a visit saved from it (`vet.doc`), unless it was unlinked. */
 export function visitOfDoc(care: CareItem[], doc: CareItem<'doc'>): CareItem<'vet'> | undefined {
+  if (doc.data.visitId === NO_VISIT) return undefined;
   const vs = live(care, 'vet');
   return (doc.data.visitId ? vs.find((v) => v.id === doc.data.visitId) : undefined) ?? vs.find((v) => v.data.doc === doc.id);
+}
+
+/** The `visitId` to save after the "From the visit" picker: a visit's id, or for "Not from a visit" nothing, or
+    `NO_VISIT` when a visit was saved from this document (else the old `vet.doc` link would still find it).
+    `picked` undefined: the picker wasn't touched, so it stays as it was. */
+export function docVisitId(care: CareItem[], doc: CareItem<'doc'>, picked: string | undefined): string | undefined {
+  if (picked === undefined) return doc.data.visitId;
+  if (picked && picked !== NO_VISIT) return picked;
+  return live(care, 'vet').some((v) => v.data.doc === doc.id) ? NO_VISIT : undefined;
 }
 
 /** Everything linked to a visit: its documents, the doses given and the weight (newest weigh-in if there are several). */

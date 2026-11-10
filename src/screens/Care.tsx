@@ -16,7 +16,7 @@ import { Scanner } from './Scanner';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { CareTreatNote } from '../ui/CareTreatNote';
 import { VetCard, VisitsCard, visitEvent } from '../ui/VetCards';
-import { findDocs, guessDocType, visitOfDoc } from '../engine/docs';
+import { NO_VISIT, docVisitId, findDocs, guessDocType, visitOfDoc } from '../engine/docs';
 import { isBooked } from '../engine/vets';
 import { DocRow, openDoc } from '../ui/DocRow';
 
@@ -159,7 +159,7 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
     const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
-    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: f.visitId || undefined } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
+    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: docVisitId(care, item as CareItem<'doc'>, f.visitId) } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
@@ -291,7 +291,7 @@ function FoodFinder({ onPick, onCode, known }: { onPick: (h: FoodHit) => void; o
 /** Which visit a document came from (newest visits first). */
 function DocVisitPicker({ care, doc, value, onChange }: { care: CareItem[]; doc: CareItem<'doc'>; value?: string; onChange: (id: string) => void }) {
   const vs = care.filter((c): c is CareItem<'vet'> => c.kind === 'vet' && !c.deleted).sort((a, b) => b.at - a.at).slice(0, 30);
-  const current = value ?? visitOfDoc(care, doc)?.id ?? '';
+  const current = value === NO_VISIT ? '' : value ?? visitOfDoc(care, doc)?.id ?? '';
   if (!vs.length) return null;
   return <><label className="field" htmlFor="c-visit">From the visit</label>
     <select id="c-visit" className="in" value={current} onChange={(e) => onChange(e.target.value)}>

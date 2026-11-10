@@ -42,8 +42,24 @@ describe('vet summary: visits, documents and the text to share', () => {
     const t = summaryText('Chester', '6 months · male', s, { kind: 'primary', clinic: 'Maple Street Vet', vetName: 'Dr. Patel', phone: '555-0100' });
     expect(t.split('\n').slice(0, 3)).toEqual(['Chester: health summary', '6 months · male', 'Vet: Maple Street Vet, Dr. Patel, 555-0100']);
     expect(t).toContain('- Oct 20, 2026: Checkup at Maple Street Vet. Healthy');
-    expect(t).toContain('Next visit\n- Nov 24, 2026 10:30: Booster');
+    expect(t).toContain('Next visit\n- Nov 24, 2026 10:30 AM: Booster');
     expect(t).toContain('- Rabies certificate (Jun 1, 2026)');
     expect(t).toContain('Medicine and vaccines\nNone logged.');
+  });
+});
+
+describe('vet summary: a booked visit whose day passed', () => {
+  const at = (day: string) => Date.parse(day + 'T12:00:00');
+  const item = (id: string, day: string, data: object): CareItem => ({ id, catId: 'c', kind: 'vet', at: at(day), updatedAt: 1, data } as CareItem);
+  const s = vetSummary([item('v1', '2026-10-20', { reason: 'Checkup', status: 'done' }), item('v2', '2026-11-05', { reason: 'Booster', time: '14:30', status: 'booked' }),
+    item('v3', '2026-11-09', { reason: 'Recheck', time: '14:30', status: 'booked' })], now);
+  it('shows in recent visits, marked as not confirmed (today’s booked visit is still next)', () => {
+    expect(s.visits.map((v) => [v.id, !!v.unconfirmed])).toEqual([['v2', true], ['v1', false]]);
+    expect(s.next?.id).toBe('v3');
+  });
+  it('says so in the shared text, and the next visit’s time is 12-hour', () => {
+    const t = summaryText('Chester', '', s);
+    expect(t).toContain('- Nov 5, 2026: Booster (booked, not marked done)');
+    expect(t).toContain('- Nov 9, 2026 2:30 PM: Recheck');
   });
 });

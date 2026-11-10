@@ -3,10 +3,10 @@ import { store, useStore } from '../db/store';
 import { MED_LABEL, type CareItem } from '../engine/care';
 import { localDay } from '../engine/day';
 import { visitLinks } from '../engine/docs';
-import { isBooked, mapsHref, telHref, yourVets } from '../engine/vets';
+import { fmtTime, isBooked, mapsHref, telHref, yourVets } from '../engine/vets';
 import { downloadIcs } from '../lib/calendar';
 import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { back as goBack, go } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
 import { visitEvent } from '../ui/VetCards';
 import { CareSheet, DocAdder, type Editing } from './Care';
@@ -17,14 +17,13 @@ import { CareSheet, DocAdder, type Editing } from './Care';
 
 const fmtDay = (ms: number) => new Date(ms).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 const fmtShort = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-const fmtTime = (t?: string) => (t ? new Date(`2000-01-01T${t}:00`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 
 export function VisitPage({ id }: { id: string }) {
   const { cat, care, vets, account } = useStore();
   const [editing, setEditing] = useState<Editing>(null);
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
-  const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => (history.length > 1 ? history.back() : go('health'))}><Icon name="back" /></button>
+  const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
     <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{visit ? visit.data.reason : 'Visit'}</b></div>;
   if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 16 }}>This visit was deleted, or hasn’t reached this phone yet.</p>
     <button className="btn2" style={{ marginTop: 12 }} onClick={() => go('health')}>Back to Health</button></div>;
