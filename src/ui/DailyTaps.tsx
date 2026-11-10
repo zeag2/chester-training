@@ -20,6 +20,8 @@ export function DailyTaps() {
   const [busy, setBusy] = useState<DailyWhat | null>(null);
   /** After "Something's off": the symptom chips, likely ones preselected, so saving is one more tap (not the full form). */
   const [off, setOff] = useState<{ chips: string[]; picked: string[] } | null>(null);
+  // the symptom picker belongs to one cat: close it when the shown cat changes, so Save never logs to the wrong one
+  useEffect(() => setOff(null), [cat?.id]);
   useEffect(() => { if (!undo) return; const t = window.setTimeout(() => setUndo(null), 5000); return () => window.clearTimeout(t); }, [undo]);
   const today = useMemo(() => dailyToday(care), [care]);
   if (!cat) return null;
@@ -65,8 +67,8 @@ export function DailyTaps() {
         <div className="row" style={{ gap: 8, marginTop: 10 }}>
           <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} onClick={() => { setOff(null); go('health/log/symptom'); }}>Other or details…</button>
           <button className="btn" style={{ flex: 1, width: 'auto', minHeight: 48, fontSize: 15 }} disabled={!off.picked.length || !!busy} onClick={async () => {
-            for (const what of off.picked) await store.saveCare('symptom', { what });
-            audio.chirp(); setOff(null); }}>Save{off.picked.length > 1 ? ` (${off.picked.length})` : ''}</button>
+            if (busy) return; setBusy('check');
+            try { for (const what of off.picked) await store.saveCare('symptom', { what }); audio.chirp(); setOff(null); } finally { setBusy(null); } }}>Save{off.picked.length > 1 ? ` (${off.picked.length})` : ''}</button>
         </div>
       </div>
       : check ? <p className="s row" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{check.data.ok === false ? `Today’s check: something was off (${time(check.at)}).` : `Today’s check: all normal (${time(check.at)}${who(check) === 'you' ? '' : `, ${who(check)}`}).`}</p>
