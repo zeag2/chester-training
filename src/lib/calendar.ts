@@ -11,7 +11,17 @@ function span(e: CalEvent): [string, string, boolean] {
   const s = new Date(`${e.day}T${e.time}:00`); return [stamp(s), stamp(new Date(s.getTime() + (e.minutes ?? 60) * 6e4)), false];
 }
 
-export function icsFor(e: CalEvent, uid = e.uid ?? Math.random().toString(36).slice(2)): string {
+const DAY = 864e5;
+const today = (now: number) => { const d = new Date(now); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+/** The day a week before the appointment, when it's booked more than 7 days out (else null): such visits get a
+    reminder a week ahead too, to arrange a carrier, time off, fasting. */
+export function weekBefore(e: CalEvent, now = Date.now()): string | null {
+  const day = new Date(e.day + 'T00:00:00').getTime();
+  if (!Number.isFinite(day) || Math.round((day - today(now)) / DAY) <= 7) return null;
+  const w = new Date(day - 7 * DAY + 12 * 36e5); return `${w.getFullYear()}-${pad(w.getMonth() + 1)}-${pad(w.getDate())}`;
+}
+
+export function icsFor(e: CalEvent, uid = e.uid ?? Math.random().toString(36).slice(2), now = Date.now()): string {
   const [a, b, allDay] = span(e);
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PalDex//EN', 'BEGIN:VEVENT', `UID:${uid}@paldex`, `DTSTAMP:${stamp(new Date())}`,
     allDay ? `DTSTART;VALUE=DATE:${a}` : `DTSTART:${a}`, allDay ? `DTEND;VALUE=DATE:${b}` : `DTEND:${b}`, `SUMMARY:${esc(e.title)}`,
@@ -19,14 +29,19 @@ export function icsFor(e: CalEvent, uid = e.uid ?? Math.random().toString(36).sl
     'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)}`, 'END:VALARM',
     // a timed appointment also reminds 2 hours before
     ...(allDay ? [] : ['BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)}`, 'END:VALARM']),
+    // booked more than a week out: a week before as well
+    ...(weekBefore(e, now) ? ['BEGIN:VALARM', 'TRIGGER:-P7D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)} (in a week)`, 'END:VALARM'] : []),
     'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
 }
 
-export function googleCalendarUrl(e: CalEvent): string {
+export function googleCalendarUrl(e: CalEvent, now = Date.now()): string {
   const [a, b] = span(e);
+  // a Google link can't set reminders, so say when the week-before one would be in the details
+  const wk = weekBefore(e, now);
+  const details = [e.notes, wk && `Reminder: a week before, ${new Date(wk + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}`].filter(Boolean).join('\n');
   // times are the phone's local time: say which zone, so Google doesn't read them in the calendar's own zone
   let ctz = ''; try { ctz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; } catch { /* old browser */ }
-  const q = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates: `${a}/${b}`, ...(ctz ? { ctz } : {}), ...(e.place ? { location: e.place } : {}), ...(e.notes ? { details: e.notes } : {}) });
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates: `${a}/${b}`, ...(ctz ? { ctz } : {}), ...(e.place ? { location: e.place } : {}), ...(details ? { details } : {}) });
   return 'https://calendar.google.com/calendar/render?' + q.toString();
 }
 
