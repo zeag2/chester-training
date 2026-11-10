@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (audit fixes, branch `claude/features-audit-fixes`, pull request open; UX quick wins merged). Start here when picking
+_Last updated 2026-11-10 (vet booking fixes, branch `claude/features-vet-booking-fixes`, pull request open; audit fixes merged). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups; 183 in 32 after the audit fixes), typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups; 183 in 32 after the audit fixes; 186 in 33 after the vet booking fixes), typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -180,6 +180,20 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   as the place, the phone in the notes, reminders the day before and 2 h before, and a stable UID per visit). Visits
   carry `status: 'booked' | 'done'` and `vetId` in their care data; `reminders()` lists booked visits in Coming up and
   no longer counts them as the last checkup (the bug the audit found).
+- **Booking fixes (2026-11-10, Josh's feedback, Features worker, branch `claude/features-vet-booking-fixes`):**
+  - **Bug: spaces couldn't be typed** in Book a visit's clinic name. The "Somewhere else" input used a `' '` sentinel
+    in its state and showed `other.trim()` as its value, so every trailing space was erased on the next render. The
+    free-typed clinic is gone (below); the new fields keep exactly what's typed and trim only on save
+    (`src/ui/booking.test.tsx` types "Maple Street Vet" a keystroke at a time).
+  - **The vet:** Book a visit shows the household vet (and the emergency vet) as a selectable card. With no vet saved,
+    **+ Add vet** opens name, phone and address right in the sheet; saving the visit saves them as the household's
+    vet (`kind: 'primary'`, prefilled with `suggestClinic`) and links the visit to it. You can still book with no vet.
+  - **Which calendar is asked**, never assumed: the sheet has Apple Calendar / Google Calendar / Don't add, with the
+    phone's last choice preselected (`paldex-calendar` in localStorage; nothing preselected the first time, and Save
+    waits for a pick). Every other Add to calendar (Health's Next visit, the visit page, Coming up) opens **"Add to
+    which calendar?"** with the last-used one first (`src/ui/CalendarChoice.tsx`: `CalendarSheet`, `addToCalendar`,
+    `lastCalendar`). Apple = the .ics; Google = `calendar.google.com/calendar/render?action=TEMPLATE` with title,
+    dates, location and details. The Log something vet sheet's buttons now read Apple Calendar / Google Calendar.
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -965,6 +979,12 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   invoked (`lottiefiles-creator` connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 13, light and
   dark) of Home (picker, status line and toast with two cats), Health, and a passed and an upcoming booking, seeded by
   importing `/src/db/store.ts` from the Vite dev server in `page.evaluate`.
+
+- 2026-11-10, vet booking fixes (Features worker, `claude/features-vet-booking-fixes`): no skills, plugins or MCP
+  servers invoked (`lottiefiles-creator` connected, unused). Checks: tests (a new `src/ui/booking.test.tsx` with the
+  calendar module mocked and `window.open` stubbed), typecheck, build; Playwright (iPhone 13, light and dark, dev
+  server with `VITE_SUPABASE_URL=`, store seeded via `import('/chester-training/src/db/store.ts')`) typing the vet's
+  name with real keystrokes, the calendar choice, the saved-vet card and "Add to which calendar?".
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
