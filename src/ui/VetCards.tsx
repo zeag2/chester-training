@@ -3,6 +3,7 @@ import { store, useStore } from '../db/store';
 import { RED_FLAGS, type CareItem } from '../engine/care';
 import { localDay } from '../engine/day';
 import { mapsHref, suggestClinic, telHref, visits, VISIT_REASONS, yourVets, type Vet, type VetData, type VetKind } from '../engine/vets';
+import { visitLinks } from '../engine/docs';
 import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
@@ -117,7 +118,7 @@ export function VisitsCard({ onOpen }: { onOpen: (v: CareItem<'vet'>) => void })
   const { primary } = yourVets(vets);
   const vetOf = (v: CareItem<'vet'>) => vets.find((x) => x.id === v.data.vetId) ?? primary;
   const line = (v: CareItem<'vet'>, withTime = false) => [fmtDay(localDay(v.at)), withTime && fmtTime(v.data.time), v.data.reason].filter(Boolean).join(' · ');
-  const nDocs = (v: CareItem<'vet'>) => care.filter((c) => c.kind === 'doc' && !c.deleted && localDay(c.at) === localDay(v.at)).length + (v.data.doc ? 1 : 0);
+  const nDocs = (v: CareItem<'vet'>) => visitLinks(care, v).docs.length;
   return <>
     <div className="card white" aria-label="Visits">
       <span className="s" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Visits</span>

@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-09 (friend requests, branch `claude/friend-request-acceptance-zytxm7`). Start here when picking
+_Last updated 2026-11-10 (vet redesign steps 3–5, branch `claude/features-vet-redesign-3-5`, pull request open). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 143 tests passing in 27 files, typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10), typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -174,8 +174,29 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   **Save and add to calendar**: Apple .ics by default, Google remembered per phone; the event has the clinic's address
   as the place, the phone in the notes, reminders the day before and 2 h before, and a stable UID per visit). Visits
   carry `status: 'booked' | 'done'` and `vetId` in their care data; `reminders()` lists booked visits in Coming up and
-  no longer counts them as the last checkup (the bug the audit found). Next: steps 3–5 (visit page with linked
-  documents, All documents with search, a better Summary for the vet), see section 2.
+  no longer counts them as the last checkup (the bug the audit found).
+- **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
+  `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
+  `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
+  document is read). Older entries are read the other way round: a visit's `doc`, and doses/weights saved from the same
+  document (`visitLinks`, `visitOfDoc`, `findDocs` in `src/engine/docs.ts`).
+  - **Visit page** (`#/health/visit/<id>`, `src/screens/VisitPage.tsx`): date, time, clinic, Call / Directions (the
+    visit's vet, else your vet when the clinic matches), Booked + Add to calendar, "How did it go?" once the day has
+    passed, What the vet said, **Given** (doses and the weight; + Dose or vaccine / + Weight log them linked to the visit
+    on its day), **Documents** (+ Add a document reads it as usual, but links the document, doses and weight to this
+    visit and offers what the vet said for this visit's notes instead of a new visit), Edit / Delete. Every visit opens
+    it: Health's Next/Last, Coming up, the Health log and the summary.
+  - **Documents:** Health shows the newest 3 and **All documents (n)**; once there's one, the adder is a single
+    "+ Add a document" button. **All documents** (`#/health/docs`, `src/screens/Documents.tsx`): search (title, the
+    reader's summary, the visit's reason, clinic and notes; all on the phone), filters All / Vet / Vaccines / Adoption /
+    ESA, newest first. **Tapping a document opens it**; "…" opens the sheet to rename, link it to a visit ("From the
+    visit"), go to the visit, or delete. Shared row and opener: `src/ui/DocRow.tsx`. A document read as a visit is
+    linked to the visit it created.
+  - **Summary for the vet** (`#/vet-summary`): your vet's clinic, name and phone (with Call) under the pet's line,
+    medicine rows on two lines, recent visits (done only) that open the visit page with their notes and document
+    count, the next booked visit, the newest vaccine paperwork then the newest documents (tap opens), and **Share**
+    (the Web Share sheet with a plain-text version, `summaryText()`; copies to the clipboard where sharing isn't
+    available).
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
 - **Coming up:** medicine and vaccine due dates, nails and brushing getting overdue (once started), and the yearly
   checkup.
@@ -309,7 +330,7 @@ Items marked *(art)* suit the art session.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
 6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
-7. [ ] **Vet redesign, steps 3–5** (Josh, 2026-11-09; plan `docs/plans/2026-11-09-vet-redesign.md`, steps 1–2 done):
+7. [x] **Vet redesign, steps 3–5** (done 2026-11-10, pull request from `claude/features-vet-redesign-3-5`; no SQL) (Josh, 2026-11-09; plan `docs/plans/2026-11-09-vet-redesign.md`, steps 1–2 done):
    a page per visit (`#/health/visit/<id>`) with its documents, doses and weight linked by `visitId`; All documents
    (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
    Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
@@ -465,7 +486,7 @@ Items marked *(art)* suit the art session.
 - [x] **Vet summary** (done 2026-11-09): "Summary for the vet" on Health opens `#/vet-summary`
   (`src/screens/VetSummary.tsx`, `vetSummary()` in `src/engine/vetsummary.ts`): age, sex, spay/neuter, chip, weights,
   latest dose per medicine with next due, symptoms (60 days), daily checks (30 days), visits, current food.
-  Ideas: share or print as a PDF.
+  Since 2026-11-10: the vet header, tappable visits, the next visit, documents and Share (plain text). Idea: print as PDF.
 - [ ] **Medicine reminders** (M): in-app now, notifications once push exists.
 - [ ] **Suggest the "Loves it" treat for hard skills** (S).
 
@@ -518,7 +539,7 @@ Items marked *(art)* suit the art session.
 src/
   main.tsx              entry: theme, self-updates, React root
   App.tsx               hash router: tabs #/home, #/health (#/health/log/<kind>), #/train, #/me; under Train #/tree,
-                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/vet-summary, #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
+                        #/library, #/skill/<id>, #/corner, #/trophies; #/week, #/vet-summary, #/health/visit/<id> (a vet visit), #/health/docs (all documents), #/visit/<cat>, #/log/<what>; #/session/<skill>, #/recap/<skill>, #/friends(/<code>),
                         #/together, #/join, #/add-pet, #/another (end of setup), dev-only #/gallery. Old #/care and
                         #/settings still work.
   engine/               pure logic, unit-tested, no I/O
@@ -530,6 +551,9 @@ src/
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
     care.ts             care item types, reminders, red flags, newest-edit-wins merge
+    vets.ts             your vet and emergency vet, Call/Directions links, booked vs done visits
+    docs.ts             what belongs to a visit (docs, doses, weight), document search and filters
+    vetsummary.ts       the summary for the vet, and its plain text for Share
     day.ts              local-day helpers (daily limits use the local date, never UTC)
   db/
     db.ts               Dexie (IndexedDB) tables: cats, sets, wallet, drafts, care, (legacy) progress
@@ -548,7 +572,7 @@ src/
     chester.css         CSS moves (several historical layers; later rules win; see section 6)
     spring.ts           damped spring
   screens/              Home, Train, QuickLog, Session, Recap, Tree, Library, SkillPage, Settings (Me), Care (Health),
-                        Corner, Friends, Visit (a friend's cat), Install, Onboarding,
+                        Corner, Friends, Visit (a friend's cat), VisitPage (a vet visit), Documents, VetSummary, Install, Onboarding,
                         Together (account and invite forms), Scanner (barcode), YarnBall, Gallery (dev only)
   lib/
     audio.ts            sampled and synthesized sounds, jingle, litter, meow
@@ -870,6 +894,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - Later: smart defaults and logging for all cats (agenda 1). No skills or MCP servers; Playwright on the dev store.
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
+- 2026-11-10, vet redesign steps 3–5 (Features worker, `claude/features-vet-redesign-3-5`): no skills, plugins or MCP
+  servers invoked. Checks: unit tests, a screen test on the real store with fake IndexedDB (`src/screens/visit.test.tsx`),
+  and a few Playwright shots (iPhone 15, light) of the visit page, All documents, the summary and Health's documents,
+  with the dev store seeded through `import('/chester-training/src/db/store.ts')`.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
