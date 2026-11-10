@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import type { ReactionId } from '../chester/reactions';
-import { store, useStore } from '../db/store';
-import { playedToday } from '../engine/corner';
-import { localDay } from '../engine/day';
-import { MOVE_REWARD, movesFound, newBrain, PLAY_MOVES, POUNCE_S, pounceOffset, step, type Brain, type Mode, type PlayEvent, type Target, type Toy } from '../engine/play';
-import { usePetText } from '../lib/pet';
+import { useStore } from '../db/store';
+import { newBrain, POUNCE_S, pounceOffset, step, type AnyToy, type Brain, type Mode, type PlayEvent, type Target, type Toy } from '../engine/play';
 import * as audio from '../lib/audio';
-import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { Hideout } from './Hideout';
+import { PlayShell, usePlayTalk } from './PlayShell';
 
 const TITLE: Record<Toy, string> = { laser: 'Laser dot', wand: 'Feather wand' };
 const HINT: Record<Toy, string> = { laser: 'Drag your finger to move the dot. Keep it still and he’ll pounce.', wand: 'Drag to swish the feather. Dangle it low, or just above him.' };
@@ -16,14 +13,18 @@ const LINES: Partial<Record<Mode, string[]>> = {
   stare: ['It’s up there…', '*chatter chatter*', 'Get down here!'], watch: ['Where’s it going?', 'Ooh ooh ooh', '…'], stalk: ['*wiggle wiggle*', 'Don’t. Move.'],
   swat: ['Swat! Swat!', 'Mine!'], walk: ['Coming!', 'I see you…'], chase: ['ZOOMIES!', 'Gotta go fast!', 'Come back here!'],
 };
-/** Toys you can play with here: the free wand, and the laser once bought. */
-export const PLAYABLE: Toy[] = ['laser', 'wand'];
+/** Toys with their own game here: the free wand, and the others once bought. */
+export const PLAYABLE: AnyToy[] = ['laser', 'wand', 'box', 'tunnel'];
 
-/** Playing with a toy: drag the laser dot or the feather and he chases, stalks, pounces, swats and leaps on his own. */
+/** Playing with a toy: the box and tunnel are hiding games (`Hideout.tsx`); the laser and wand are chasing games. */
 export function Play({ toy: raw }: { toy?: string }) {
-  const toy: Toy = raw === 'wand' ? 'wand' : 'laser';
+  if (raw === 'box' || raw === 'tunnel') return <Hideout toy={raw} />;
+  return <ChaseToy toy={raw === 'wand' ? 'wand' : 'laser'} />;
+}
+
+/** The chasing toys: drag the laser dot or the feather and he chases, stalks, pounces, swats and leaps on his own. */
+function ChaseToy({ toy }: { toy: Toy }) {
   const { cat } = useStore();
-  const pt = usePetText();
   const stage = useRef<HTMLDivElement>(null);
   const catEl = useRef<HTMLDivElement>(null);
   const dotEl = useRef<HTMLDivElement>(null);
@@ -35,8 +36,7 @@ export function Play({ toy: raw }: { toy?: string }) {
   const [air, setAir] = useState(false);
   const tiltEl = useRef<HTMLDivElement>(null);
   const [react, setReact] = useState<{ id: ReactionId; n: number } | null>(null);
-  const [line, setLine] = useState('');
-  const [toast, setToast] = useState('');
+  const { line, setLine, toast, played, foundMove } = usePlayTalk(toy);
   const [touched, setTouched] = useState(false);
 
   const S = Math.round(Math.min(140, box.w * 0.34));
@@ -56,8 +56,6 @@ export function Play({ toy: raw }: { toy?: string }) {
   }, []);
   useEffect(() => { brain.current = { ...brain.current, x: Math.min(brain.current.x, box.w - S / 2) }; if (toy === 'wand' && !finger.current) { feather.current = { x: box.w * 0.7, y: floor - S * 2.6, vx: 0, vy: 0 }; } }, [box.w, box.h]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const say = (t: string) => { setToast(t); window.setTimeout(() => setToast((x) => (x === t ? '' : x)), 2600); };
-  const found = useRef(new Set<string>());
   const handle = async (events: PlayEvent[]) => {
     for (const e of events) {
       if (e.kind === 'pounce') { audio.chirp(true); audio.buzz(12); }
@@ -65,13 +63,9 @@ export function Play({ toy: raw }: { toy?: string }) {
       if (e.kind === 'miss') { setLine(toy === 'laser' ? 'Where did it go?!' : 'So close!'); if (Math.random() < 0.4) audio.meow('mrrp'); }
       if (e.kind === 'catch') {
         audio.sparkle(); audio.buzz([10, 40, 20]); setReact({ id: 'r13', n: Date.now() }); setLine(toy === 'laser' ? 'Got it! …I think?' : 'GOT IT. Nom nom.');
-        const c = store.get().cat;
-        if (c && !playedToday(c.corner, localDay(Date.now())) && await store.play(toy)) say(pt('+2 treats and +1 bond: first play today. He loves this.'));
+        await played();
       }
-      if (e.kind === 'move' && !found.current.has(e.move)) {
-        found.current.add(e.move);
-        if (await store.foundMove(toy, e.move)) { const m = PLAY_MOVES[toy].find((x) => x.id === e.move); say(`New move: ${m?.name ?? e.move}! +${MOVE_REWARD.treats} treats`); audio.sparkle(); }
-      }
+      if (e.kind === 'move') await foundMove(e.move);
     }
   };
 
@@ -126,20 +120,13 @@ export function Play({ toy: raw }: { toy?: string }) {
     if (!touched) setTouched(true);
   };
   if (!cat) return null;
-  const have = movesFound(cat.corner?.log, toy);
-  const next = PLAY_MOVES[toy].find((m) => !have.includes(m.id));
   // what he looks like in each mode: side-on play poses (they face the way he's heading), the sit for the calm moments
   const pose = mode === 'walk' ? 'walk' : mode === 'chase' ? 'run' : mode === 'stalk' || mode === 'land' ? 'crouch'
     : mode === 'pounce' ? (air ? (toy === 'wand' ? 'reach' : 'leap') : 'crouch')
     : mode === 'swat' ? 'reach' : mode === 'watch' ? (toy === 'laser' ? 'crouch' : 'sit') : 'sit';
   const side = pose !== 'sit';
 
-  return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
-    <div className="top"><button className="iconbtn" aria-label="Back to the corner" onClick={() => go('corner')}><Icon name="back" /></button>
-      <b className="sp" style={{ fontSize: 17 }}>{TITLE[toy]} with {cat.name}</b>
-      <span className="chip num" style={{ background: 'var(--mint)', minHeight: 32 }} aria-label={`${have.length} of ${PLAY_MOVES[toy].length} moves found`}>{have.length}/{PLAY_MOVES[toy].length}</span></div>
-    <div style={{ minHeight: 46, display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-      {(toast || line) && <span key={toast + line} className={`bubble ${toast ? 'butter' : 'mint'}`} role="status" style={toast ? { background: 'var(--butter)', color: 'var(--butter-ink)' } : undefined}>{toast || line}</span>}</div>
+  return <PlayShell toy={toy} title={TITLE[toy]} toast={toast} line={line}>
     <div ref={stage} className="playstage" onPointerDown={(e) => { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); point(e); }} onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') point(e); }}
       role="application" aria-label={`Play area. ${HINT[toy]}`}
       style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 8, borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
@@ -157,12 +144,5 @@ export function Play({ toy: raw }: { toy?: string }) {
           <path d="M2 2 C10 10 12 24 6 34 C2 26 0 14 2 2 Z" fill="#9fc0ea" stroke="#232320" strokeWidth={2} /></g>
       </svg>}
     </div>
-    <div className="card grey" style={{ marginTop: 14 }}>
-      <div className="row"><b className="sp">Moves found</b><span className="s num">{have.length} of {PLAY_MOVES[toy].length} · +{MOVE_REWARD.treats} treats each</span></div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-        {PLAY_MOVES[toy].map((m) => { const on = have.includes(m.id); return <span key={m.id} className="chip" style={{ background: on ? 'var(--mint)' : 'var(--surface)', opacity: on ? 1 : 0.7 }}>{on ? <Icon name="check" size={14} /> : null}{on ? m.name : '???'}</span>; })}
-      </div>
-      <p className="s" style={{ marginTop: 10 }}>{next ? `Next one: ${next.hint}` : pt('Every move found. He’s a pro.')}</p>
-    </div>
-  </div>;
+  </PlayShell>;
 }

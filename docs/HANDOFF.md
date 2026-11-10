@@ -229,8 +229,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   (`src/ui/CareTreatNote.tsx`). No SQL.
 - **Daily gift:** 2 to 6 treats once a day per pet, the same amount on every phone, shared by the household (whoever
   opens it first gets it). Home shows "New" until it's opened.
-- **Play:** toys from gifts and the shop; tapping one plays a move (hop, pounce, zoomies, play bite, belly roll).
-  The first play each day adds 1 bond.
+- **Play:** the laser dot, feather wand, box and tunnel each open their own game (`#/play/<toy>`, section 2 "Play");
+  other gifted toys (crinkle ball, toy mouse…) still just play a move (hop, pounce, play bite, belly roll). The first
+  play each day adds 1 bond.
 - **Bond level:** 6 named levels (Getting to know you, Buddies, Pals, Best friends, Partners in crime, Soulmates)
   with a progress bar. Bond comes from gifts in sets plus daily play.
 - **How it's stored and shared:** on the pet itself (`cat.corner`), which is already shared as JSON, so **no new SQL**.
@@ -325,7 +326,7 @@ Items marked *(art)* suit the art session.
 ### Agenda (agreed with Josh, 2026-11-09; work top-down, tick here and in the checklist below)
 1. [x] **Smart defaults + log for several cats at once** (done 2026-11-09). Make logging effortless.
 2. [x] **Playable toys, part 1: laser dot and wand** (done 2026-11-09). See "Play" below.
-3. [ ] **Playable toys, part 2: box and tunnel** (M, *(art)*, no SQL).
+3. [x] **Playable toys, part 2: box and tunnel** (done 2026-11-10, branch `claude/features-box-tunnel`). See "Play" below.
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
@@ -416,6 +417,21 @@ Items marked *(art)* suit the art session.
     moves don't come every frame). Ideas: a side-on crouch/pounce pose (he
     pounces in his front-facing sit pose for now), paw-over-the-dot on a catch, a "laser frustration" fix (end on a
     catchable toy).
+  - **Part 2 done (2026-11-10):** `#/play/box` and `#/play/tunnel` (`src/screens/Hideout.tsx`; brain
+    `src/engine/hideout.ts`, `stepHide()`, pure and tested in `hideout.test.ts`), opened from the corner once bought.
+    **Box:** he hops in (the `leap` pose over the rim) and sits; then ducks down to his ear tips, peeks with his eyes
+    over the rim, pops up when you tap the box ("BOO!", the box jolts), sticks a paw out (`reach`) at a finger held
+    beside it while he peeks, and springs out at a finger that waits there while he's ducked (lands on it, or misses
+    if you pull away), then hops back in. Moves: If I fits I sits, Peekaboo, Boo!, Paw out, Box ambush.
+    **Tunnel:** a tap sends him zooming through (`run` pose behind the tunnel, a small bump travels with him, a
+    synthesized crinkle, `audio.crinkle()`); 35% of runs he stops to hide (a big rustling bump), then peeks his head
+    out of the nearer end and comes out; a finger by an end while he hides gets a paw poke, a tap on the bump makes
+    him burst out with a leap; he also goes through on his own every few seconds. Moves: Zoom through, Hide and seek,
+    Peekaboo, Paw poke, Ambush!, Laps (3 runs through within 10 s). Same rewards as part 1 (+3 treats per move found,
+    `move-box-…`/`move-tunnel-…`; the first "catch" of the day pays `PLAY_REWARD`). The shared header, speech bubble,
+    rewards and moves card moved to `src/screens/PlayShell.tsx` (`PlayShell`, `usePlayTalk`). No new poses: drawn
+    with the existing sit/crouch/leap/reach/run, sunk behind the box front (`SINK` per mode) and clipped at the floor.
+    Not checked on a real iPhone. Ideas: a lying-in-the-box pose, a tail sticking out of the tunnel while he hides.
   - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
     there, or with that session paused.
 - [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
@@ -726,6 +742,10 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   (run and bat phases), the lead cat `crouch`es (650 ms of wiggle) then springs in a `leap` (CSS `kchaseleap`, 0.5 s
   arc onto the ball, in `app.css`) and sits pleased; the others head-bonk (`r8`); everyone `walk`s home.
 - **Litter gag**: walks off (`walk`), runs back (`run`, the `gagback` slide, flipped to face left).
+- **Hiding toys** (`src/screens/Hideout.tsx` + `src/engine/hideout.ts`): same pattern as the play screen below.
+  The cat sits in a floor-clipped layer between the toy's back and front SVGs (box: back wall and flaps behind, front
+  panel in front; tunnel: all in front while he's in it); `inside()` decides the z-order and `SINK` how far he drops
+  into the box. The tunnel outline is rebuilt each frame with a bump where he is. Dev: `globalThis.__hideBrain`.
 - **Play screen** (`src/screens/Play.tsx` + `src/engine/play.ts`): a pure `step(brain, target, dt)` decides the mode
   each frame (sit, watch, stare, walk, stalk, pounce, land, swat, happy) and emits events; the screen writes the cat's
   `translate` and `--lx/--ly` straight to the DOM every frame and only re-renders React when the mode, facing or
@@ -892,6 +912,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `currentTime`), and the zoomies as a real-time screenshot strip.
 - Later: playable laser dot and wand (agenda 2). No skills invoked; Playwright frame strips of a scripted drag.
 - Later: smart defaults and logging for all cats (agenda 1). No skills or MCP servers; Playwright on the dev store.
+- 2026-11-10, Features worker, box and tunnel games (`claude/features-box-tunnel`): no skills, plugins or MCP servers
+  invoked (`lottiefiles-creator` connected, unused). Checks: Playwright (iPhone 13 size, light and dark) with forced
+  brain states via `__hideBrain` and scripted taps, tiled into contact sheets with Pillow.
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
 - 2026-11-10, vet redesign steps 3–5 (Features worker, `claude/features-vet-redesign-3-5`): no skills, plugins or MCP

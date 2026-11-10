@@ -8,6 +8,7 @@ import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { usePetText } from '../lib/pet';
+import { PLAYABLE } from './Play';
 
 /** Cushions drawn under him in the corner. */
 export function CushionArt({ id, width = 220 }: { id?: string; width?: number }) {
@@ -25,7 +26,6 @@ export function CushionArt({ id, width = 220 }: { id?: string; width?: number })
 /** Toys from gifts are names like "a crinkle ball"; bought toys are shop ids. */
 const toyName = (t: string) => (t === 'wand' ? 'Feather wand' : ITEM_BY_ID[t]?.name ?? t.replace(/^an? /, '').replace(/^./, (c) => c.toUpperCase()));
 const TOY_MOVE: Record<string, [ReactionId, string]> = {
-  box: ['r1', 'If I fits, I sits.'], laser: ['r14', 'Got it! …Where did it go?'], tunnel: ['r5', 'ZOOM. In. Out. Again!'],
   'a crinkle ball': ['r13', '*crinkle crinkle*'], 'a feather wand': ['r1', 'Mine! Mine!'], 'a toy mouse': ['r14', 'Caught one!'],
   'a catnip fish': ['r7', 'Oh wow. Oh WOW.'], 'a jingle ball': ['r2', '*jingle jingle*'],
 };
@@ -69,7 +69,7 @@ export function Corner() {
     const n = await store.claimGift();
     if (n) { audio.sparkle(); audio.buzz([10, 40, 20]); setLine(`A gift! +${n} treats`); setReact({ id: 'r6', n: Date.now() }); say(`+${n} treats from today’s gift`); }
   });
-  const playWith = (toy: string) => { if (toy === 'laser' || toy === 'wand') { audio.chirp(); go('play/' + toy); return; } void playOld(toy); };
+  const playWith = (toy: string) => { if ((PLAYABLE as string[]).includes(toy)) { audio.chirp(); go('play/' + toy); return; } void playOld(toy); };
   const playOld = (toy: string) => act(async () => {
     const [id, l] = TOY_MOVE[toy] ?? ['r13', 'Play time!'];
     setReact({ id, n: Date.now() }); setLine(l); audio.chirp();
