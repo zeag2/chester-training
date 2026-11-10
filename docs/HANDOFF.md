@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (UX quick wins, branch `claude/features-ux-quick-wins`, pull request open; the QA follow-ups are merged). Start here when picking
+_Last updated 2026-11-10 (audit fixes, branch `claude/features-audit-fixes`, pull request open; UX quick wins merged). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups), typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups; 183 in 32 after the audit fixes), typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -352,8 +352,19 @@ Items marked *(art)* suit the art session.
    text). A booked visit whose day passed without being marked done shows in the Summary's recent visits as "booked,
    not marked done". Back on the visit page and All documents uses `back(fallback)` from `src/ui/router.ts`, which
    counts in-app pages in `history.state` (opened straight from a link, Back goes to Health instead of leaving the
-   app; SkillPage, Together and the friend Visit page still use `history.length` and could switch). Tunnel: Hide and
+   app; SkillPage, Together and the friend Visit page now use it too, since the audit fixes). Tunnel: Hide and
    seek is found only by tapping the bump while he hides; Ambush! is now tapping him as he peeks out of an end.
+- [x] **Audit fixes** (2026-11-10, pull request from `claude/features-audit-fixes`; no SQL). Quick log
+   (`src/ui/DailyTaps.tsx`): the Undo toast remembers which cat it logged for (`undo.catId`), names it when there's
+   more than one cat ("Chester: Fed"), and "<other cat> too" means the cats other than that one, even after switching
+   (test: `src/ui/dailytaps.test.tsx`). The toast is hidden while "What's off?" is open; Save brings it back and Undo
+   then takes back the check and the symptoms together. A "something was off" check with no symptom logged today
+   shows "What was it?", which reopens the picker. Health's Coming up shows visit times as 2:30 PM, and an overdue
+   (or due) yearly checkup booked more than 30 days out still lists the booking, so Coming up isn't empty
+   (`reminders()` in `src/engine/care.ts`). Back on the vet Summary is `back('health')`; deleting a visit goes back
+   (or, opened from a link, replaces it with Health: `back(fallback, { replace: true })`), so the browser's Back
+   doesn't reopen "This visit was deleted". A passed booking's visit page asks once ("How did X's visit go?"); the
+   Booked chip is teal with dark text in dark mode.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
 
@@ -950,6 +961,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 15, light and dark, `--safe-b` forced to 34px
   for the home indicator) of the toast with three cats, the chips and Health; `git merge-tree` against PR #5. Fixed:
   the What's off? picker now closes when the cat is switched, and Save can't log twice.
+- 2026-11-10, audit fixes (Features worker, `claude/features-audit-fixes`): no skills, plugins or MCP servers
+  invoked (`lottiefiles-creator` connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 13, light and
+  dark) of Home (picker, status line and toast with two cats), Health, and a passed and an upcoming booking, seeded by
+  importing `/src/db/store.ts` from the Vite dev server in `page.evaluate`.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**

@@ -26,6 +26,19 @@ describe('care reminders', () => {
     ], day('2026-11-08'));
     expect(r).toEqual([]);
   });
+  it('shows a booked visit’s time the app’s way (2:30 PM, not 14:30)', () => {
+    const r = reminders([item('vet', '2026-11-20', { reason: 'Checkup', time: '14:30', clinic: 'Maple', status: 'booked' })], day('2026-11-08'));
+    expect(r[0]).toMatchObject({ kind: 'visit', detail: '2:30 PM · Maple' });
+  });
+  it('never empties Coming up when an overdue checkup is booked more than a month out', () => {
+    const r = reminders([
+      item('vet', '2025-10-01', { reason: 'Checkup', status: 'done' }),
+      item('vet', '2026-12-20', { reason: 'Checkup', status: 'booked' }),
+    ], day('2026-11-08'));
+    expect(r.map((x) => [x.kind, x.daysLeft])).toEqual([['visit', 42]]);
+    // not due yet: a far booking stays out, as before
+    expect(reminders([item('vet', '2026-06-01', { reason: 'Checkup', status: 'done' }), item('vet', '2026-12-20', { reason: 'Checkup', status: 'booked' })], day('2026-11-08'))).toEqual([]);
+  });
   it('keeps the newest edit when two phones changed the same item', () => {
     const a = item('food', '2026-11-01', { name: 'Tuna pate', type: 'wet', verdict: 'love', current: true }, { id: 'x', updatedAt: 5 });
     const b = { ...a, updatedAt: 9, data: { ...a.data, verdict: 'no' } } as CareItem;

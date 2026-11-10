@@ -1,6 +1,7 @@
 /* Chester's care: food profiles and a health log, shared like training sets.
    Items can be edited and deleted (unlike sets), so each carries updatedAt and a deleted flag; the newest edit wins. */
 import { daysBetween, localDay } from './day';
+import { fmtTime } from './vets';
 
 export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc' | 'daily';
 /** One-tap everyday logs: a meal, a litter scoop, a play session, or the daily health check. */
@@ -97,17 +98,24 @@ export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
   const booked = (i: CareItem) => { const st = (i.data as { status?: string }).status; return st === 'booked' || (st !== 'done' && localDay(i.at) > today); };
   for (const v of live.filter((i): i is CareItem<'vet'> => i.kind === 'vet' && booked(i))) {
     const day = localDay(v.at); if (day < today) continue;
-    out.push({ id: 'visit:' + v.id, kind: 'visit', title: `Vet: ${v.data.reason}`, detail: [v.data.time, v.data.clinic].filter(Boolean).join(' · ') || 'Booked', dueDay: day, daysLeft: daysBetween(today, day) });
+    out.push({ id: 'visit:' + v.id, kind: 'visit', title: `Vet: ${v.data.reason}`, detail: [fmtTime(v.data.time), v.data.clinic].filter(Boolean).join(' · ') || 'Booked', dueDay: day, daysLeft: daysBetween(today, day) });
   }
   // the yearly checkup counts from the newest visit whose day has come (a past booking counts even if not marked done),
   // and a visit booked from today on satisfies it: it's listed above as itself, never as "a year after the booking"
   const upcoming = live.some((i) => i.kind === 'vet' && booked(i) && localDay(i.at) >= today);
   const lastVet = live.filter((i) => i.kind === 'vet' && localDay(i.at) <= today && !(booked(i) && localDay(i.at) === today)).sort((a, b) => b.at - a.at)[0];
-  if (lastVet && !upcoming) {
-    const due = localDay(lastVet.at + 365 * 864e5);
-    out.push({ id: 'vet:yearly', kind: 'vet', title: 'Yearly checkup', detail: 'A year since the last vet visit', dueDay: due, daysLeft: daysBetween(today, due) });
+  const yearlyDue = lastVet ? localDay(lastVet.at + 365 * 864e5) : null;
+  if (yearlyDue && !upcoming) {
+    out.push({ id: 'vet:yearly', kind: 'vet', title: 'Yearly checkup', detail: 'A year since the last vet visit', dueDay: yearlyDue, daysLeft: daysBetween(today, yearlyDue) });
   }
-  return out.filter((r) => r.daysLeft <= 30).sort((a, b) => a.daysLeft - b.daysLeft);
+  // a checkup that's due (or overdue) but booked more than 30 days out: still list the booking, so the checkup
+  // never silently drops out of Coming up
+  const keep = new Set<string>();
+  if (yearlyDue && upcoming && daysBetween(today, yearlyDue) <= 30) {
+    const next = out.filter((r) => r.kind === 'visit').sort((a, b) => a.daysLeft - b.daysLeft)[0];
+    if (next) keep.add(next.id);
+  }
+  return out.filter((r) => r.daysLeft <= 30 || keep.has(r.id)).sort((a, b) => a.daysLeft - b.daysLeft);
 }
 
 export const dueText = (d: number) => (d < 0 ? `${-d} day${d === -1 ? '' : 's'} overdue` : d === 0 ? 'Due today' : d === 1 ? 'Due tomorrow' : `In ${d} days`);

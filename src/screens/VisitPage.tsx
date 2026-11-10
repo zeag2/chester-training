@@ -6,7 +6,7 @@ import { visitLinks } from '../engine/docs';
 import { fmtTime, isBooked, mapsHref, telHref, yourVets } from '../engine/vets';
 import { downloadIcs } from '../lib/calendar';
 import { Icon } from '../ui/icons';
-import { back as goBack, go } from '../ui/router';
+import { back as goBack } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
 import { visitEvent } from '../ui/VetCards';
 import { CareSheet, DocAdder, type Editing } from './Care';
@@ -26,7 +26,7 @@ export function VisitPage({ id }: { id: string }) {
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
     <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{visit ? visit.data.reason : 'Visit'}</b></div>;
   if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 16 }}>This visit was deleted, or hasn’t reached this phone yet.</p>
-    <button className="btn2" style={{ marginTop: 12 }} onClick={() => go('health')}>Back to Health</button></div>;
+    <button className="btn2" style={{ marginTop: 12 }} onClick={() => goBack('health')}>Back to Health</button></div>;
 
   const { primary } = yourVets(vets);
   // the clinic it was booked with, else your usual vet when it's the same clinic (or none was typed)
@@ -46,7 +46,7 @@ export function VisitPage({ id }: { id: string }) {
     <div className="stag">
       <h1 style={{ marginTop: 4 }}>{visit.data.reason}</h1>
       <p className="m">{[fmtDay(visit.at), fmtTime(visit.data.time), clinic].filter(Boolean).join(' · ')}</p>
-      {booked && <span className="chip" style={{ marginTop: 6, display: 'inline-block', background: 'var(--sky)' }}>Booked</span>}
+      {booked && <span className="chip" style={{ marginTop: 8, background: 'var(--teal)', color: 'var(--on-ink)' }}>Booked</span>}
       {(tel || maps) && <div className="row" style={{ gap: 8, marginTop: 12 }}>
         {tel && <a className="btn2" href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="phone" size={18} />Call</a>}
         {maps && <a className="btn2" href={maps} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
@@ -55,9 +55,10 @@ export function VisitPage({ id }: { id: string }) {
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>Add what the vet said. Saving marks it done.</span></span><span className="chip">Add notes</span></button>}
       {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => downloadIcs(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
 
-      {h(booked && !passed ? 'Notes' : 'What the vet said')}
+      {/* a passed booking with no notes yet already asks "How did it go?" above: one prompt, not two */}
+      {(visit.data.notes || !(booked && passed)) && h(booked && !passed ? 'Notes' : 'What the vet said')}
       {visit.data.notes ? <p style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
-        : <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
+        : !(booked && passed) && <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
 
       {(!booked || passed) && <>
         {h('Given')}
@@ -80,7 +81,7 @@ export function VisitPage({ id }: { id: string }) {
 
       <div className="row" style={{ gap: 8, marginTop: 24 }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>Edit visit</button>
-        <button className="btn2 sp" style={{ background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this visit for everyone? Its documents and doses stay in the log.')) { await store.deleteCare(visit.id); go('health'); } }}>Delete</button>
+        <button className="btn2 sp" style={{ background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this visit for everyone? Its documents and doses stay in the log.')) { await store.deleteCare(visit.id); goBack('health', { replace: true }); } }}>Delete</button>
       </div>
     </div>
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}

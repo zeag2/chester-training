@@ -3,7 +3,7 @@ import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { sharingConfigured } from '../sync/config';
 import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { back, go } from '../ui/router';
 import * as audio from '../lib/audio';
 
 const appLink = () => location.origin + import.meta.env.BASE_URL;
@@ -105,7 +105,7 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
   const [name, setName] = useState('');
   const [copied, setCopied] = useState(false);
   const catName = snap.cat?.name ?? 'Chester';
-  const leave = () => (snap.cat ? go('settings') : history.length > 1 ? history.back() : go('home'));
+  const leave = () => (snap.cat ? go('settings') : back('home'));
 
   if (!sharingConfigured()) return <div className="screen"><Top onBack={leave} title="Train together" /><p className="m">Sharing isn’t switched on in this version of the app yet.</p></div>;
 

@@ -31,6 +31,14 @@ describe('visit page and all documents', () => {
     expect(store.get().care.find((c) => c.kind === 'med' && (c.data as { name: string }).name === 'FVRCP')?.data).toMatchObject({ visitId: v.id });
     expect(screen.getByText('FVRCP')).toBeTruthy();
   });
+  it('a booking whose day has passed asks once how it went, not twice', async () => {
+    cleanup();
+    const v = (await store.saveCare('vet', { reason: 'Checkup', status: 'booked' }, { at: Date.now() - 3 * 864e5 })) as CareItem<'vet'>;
+    render(<VisitPage id={v.id} />);
+    expect(screen.getByText(/How did Chester’s visit go\?/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add what the vet said' })).toBeNull();
+    expect(screen.getByText('Booked')).toBeTruthy();
+  });
   it('searches and filters all documents', async () => {
     cleanup();
     render(<Documents />);
