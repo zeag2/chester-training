@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (vet redesign steps 3–5, branch `claude/features-vet-redesign-3-5`, pull request open). Start here when picking
+_Last updated 2026-11-10 (UX quick wins, branch `claude/features-ux-quick-wins`, pull request open). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -151,7 +151,12 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   = `Cat.mealsPerDay`, default `MEALS_PER_DAY` = 2, set in each cat's Edit sheet). After Scooped, the Undo note also
   offers "Looked off?" (logs a Litter box change symptom and opens Health), "Not yet today", "2× today".
 - **Daily check:** "Is Chester eating, using the litter box and acting like himself?" **All normal** (one tap) or
-  **Something's off** (logs it and opens the symptom form). Once done it shrinks to one line.
+  **Something's off** (logs it, then the card turns into **What's off?**: symptom chips with the likely ones
+  preselected, so Save is one more tap; `likelySymptoms()` in `care.ts` preselects anything logged in the last 3 days
+  and offers Eating less / Litter box change / Low energy next; "Other or details…" opens the full form). Each chosen
+  chip is saved as its own symptom. Once done it shrinks to one line.
+- **The Undo note is a floating toast** (`.toast` in `app.css`, portalled to `body`) just above the tab bar, on one row
+  however many cats (the label ellipsizes; the buttons don't wrap). Since 2026-11-10.
 - One-tap logs earn care treats like any entry (capped at 3 a day) and aren't listed in Health's log
   (`dailyToday()` in `care.ts` sums them up for Home).
 - **Shortcuts:** `#/log/fed|scoop|play|check` logs it and returns to Home (`LogLink`). The manifest's `shortcuts`
@@ -199,7 +204,11 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     available).
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
 - **Coming up:** medicine and vaccine due dates, nails and brushing getting overdue (once started), and the yearly
-  checkup.
+  checkup. The yearly checkup counts from the newest visit whose day has come (a past booking counts even before
+  "How did it go?" is answered), and **a visit booked from today on satisfies it**: the booking is listed instead,
+  never a reminder a year past it (fixed 2026-11-10).
+- **Order (2026-11-10):** Your vet, Visits, Summary for the vet, Coming up, **Log something**, then the kitten
+  timeline (was after it), Weight, Food, Documents, the log.
 - **Log something:** weight (with a chart), symptoms (quick picks plus "we're worried"), grooming, vet visits,
   medicine and vaccines with a next-due date.
 - **Food and treats:** Loves it / It's OK / Won't eat it, and "using now". **Find it** looks a product up by barcode
@@ -921,6 +930,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   servers invoked. Checks: unit tests, a screen test on the real store with fake IndexedDB (`src/screens/visit.test.tsx`),
   and a few Playwright shots (iPhone 15, light) of the visit page, All documents, the summary and Health's documents,
   with the dev store seeded through `import('/chester-training/src/db/store.ts')`.
+- 2026-11-10, UX quick wins (Features worker, `claude/features-ux-quick-wins`): no skills, plugins or MCP servers
+  invoked (`lottiefiles-creator` connected, unused). Checks: unit tests, and Playwright shots (iPhone 15, light and
+  dark) of Home's Undo toast with two cats, the What's off? chips, and Health, the dev store seeded via
+  `__chesterStore` with `VITE_SUPABASE_URL=`.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**

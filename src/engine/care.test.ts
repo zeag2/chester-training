@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dailyToday, entryTime, lastOf, newer, nextDueLike, recentMeds, reminders, type CareItem } from './care';
+import { dailyToday, entryTime, lastOf, likelySymptoms, newer, nextDueLike, recentMeds, reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
 const item = <K extends CareItem['kind']>(kind: K, at: string, data: CareItem<K>['data'], extra: Partial<CareItem> = {}): CareItem =>
@@ -75,5 +75,19 @@ describe('smart defaults', () => {
     expect(r.map((m) => m.data.name)).toEqual(['FVRCP booster', 'revolution ']);
     expect(nextDueLike(r[1], '2026-11-09')).toBe('2026-12-09');
     expect(nextDueLike(r[0], '2026-11-09')).toBe('');
+  });
+});
+
+describe('likely symptoms after "Something’s off"', () => {
+  it('preselects what was logged in the last 3 days, then offers the check’s three areas', () => {
+    const now = day('2026-11-10');
+    expect(likelySymptoms([], now)).toEqual({ chips: ['Eating less', 'Litter box change', 'Low energy', 'Threw up', 'Hiding', 'Diarrhea'], picked: [] });
+    const r = likelySymptoms([
+      item('symptom', '2026-11-09', { what: 'Threw up' }), item('symptom', '2026-11-08', { what: 'Sneezing' }),
+      item('symptom', '2026-11-01', { what: 'Hiding' }), item('symptom', '2026-11-09', { what: 'Diarrhea' }, { deleted: true }),
+    ], now);
+    expect(r.picked.sort()).toEqual(['Sneezing', 'Threw up']);
+    expect(r.chips.slice(0, 2).sort()).toEqual(['Sneezing', 'Threw up']);
+    expect(r.chips.filter((c) => c === 'Threw up')).toHaveLength(1);
   });
 });

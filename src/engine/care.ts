@@ -48,6 +48,17 @@ export interface CareItem<K extends CareKind = CareKind> {
 }
 
 export const SYMPTOMS = ['Threw up', 'Diarrhea', 'Not eating', 'Eating less', 'Hiding', 'Sneezing', 'Eye goop', 'Scratching a lot', 'Litter box change', 'Low energy', 'Limping', 'Other'];
+/** After "Something's off" on the daily check: the symptom chips to offer, likeliest first, and which to preselect.
+    Anything logged in the last 3 days is probably still going on, so it's preselected (Save is then one tap); after
+    that come the three things the check asks about (eating, litter box, acting like himself), then the common rest. */
+export function likelySymptoms(items: CareItem[], now = Date.now()): { chips: string[]; picked: string[] } {
+  const since = now - 3 * 864e5;
+  const recent = items.filter((i): i is CareItem<'symptom'> => i.kind === 'symptom' && !i.deleted && i.at >= since && i.at <= now)
+    .sort((a, b) => b.at - a.at).map((i) => i.data.what.trim()).filter(Boolean);
+  const picked = [...new Set(recent)].slice(0, 3);
+  const chips = [...new Set([...picked, 'Eating less', 'Litter box change', 'Low energy', 'Threw up', 'Hiding', 'Diarrhea'])];
+  return { chips, picked };
+}
 export const GROOM: Record<GroomWhat, { label: string; everyDays?: number }> = {
   brush: { label: 'Brushed', everyDays: 7 }, nails: { label: 'Nails trimmed', everyDays: 14 },
   bath: { label: 'Bath' }, teeth: { label: 'Teeth brushed' }, ears: { label: 'Ears cleaned' },
@@ -88,8 +99,11 @@ export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
     const day = localDay(v.at); if (day < today) continue;
     out.push({ id: 'visit:' + v.id, kind: 'visit', title: `Vet: ${v.data.reason}`, detail: [v.data.time, v.data.clinic].filter(Boolean).join(' · ') || 'Booked', dueDay: day, daysLeft: daysBetween(today, day) });
   }
-  const lastVet = live.filter((i) => i.kind === 'vet' && !booked(i)).sort((a, b) => b.at - a.at)[0];
-  if (lastVet) {
+  // the yearly checkup counts from the newest visit whose day has come (a past booking counts even if not marked done),
+  // and a visit booked from today on satisfies it: it's listed above as itself, never as "a year after the booking"
+  const upcoming = live.some((i) => i.kind === 'vet' && booked(i) && localDay(i.at) >= today);
+  const lastVet = live.filter((i) => i.kind === 'vet' && localDay(i.at) <= today && !(booked(i) && localDay(i.at) === today)).sort((a, b) => b.at - a.at)[0];
+  if (lastVet && !upcoming) {
     const due = localDay(lastVet.at + 365 * 864e5);
     out.push({ id: 'vet:yearly', kind: 'vet', title: 'Yearly checkup', detail: 'A year since the last vet visit', dueDay: due, daysLeft: daysBetween(today, due) });
   }
