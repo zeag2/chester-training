@@ -946,6 +946,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   invoked (`lottiefiles-creator` connected, unused). Checks: unit tests, and Playwright shots (iPhone 15, light and
   dark) of Home's Undo toast with two cats, the What's off? chips, and Health, the dev store seeded via
   `__chesterStore` with `VITE_SUPABASE_URL=`.
+- 2026-11-10, QA of pull request #6 (QA worker): no skills, plugins or MCP servers invoked (`lottiefiles-creator`
+  connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 15, light and dark, `--safe-b` forced to 34px
+  for the home indicator) of the toast with three cats, the chips and Health; `git merge-tree` against PR #5. Fixed:
+  the What's off? picker now closes when the cat is switched, and Save can't log twice.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
