@@ -3,7 +3,7 @@ import { useStore } from '../db/store';
 import { SKILL_BY_ID } from '../engine/skills';
 import { isUnlocked } from '../engine/rules';
 import { Icon, ICON_FOR } from '../ui/icons';
-import { go } from '../ui/router';
+import { back, go } from '../ui/router';
 import { usePetText } from '../lib/pet';
 
 const SOURCES: Record<string, string> = {
@@ -21,7 +21,7 @@ export function SkillPage({ id }: { id: string }) {
   const p = progress[id]; const step = p?.step ?? 0; const open = isUnlocked(d, progress, unlockedHidden);
   const atStep = sets.filter((s) => s.skillId === id && s.step === step && !s.review).slice(-2);
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : go('library')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{d.branch}</b></div>
+    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => back('library')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{d.branch}</b></div>
     <div className="card sky" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 16, padding: 18 }}>
       <div className="ico" style={{ width: 64, height: 64, borderRadius: 20 }}><Icon name={ICON_FOR[d.branch]} size={32} /></div>
       <div><h1 style={{ fontSize: 24 }}>{d.name}</h1><p className="s">{p?.mastered ? 'Mastered' : open ? `Step ${step + 1} of ${d.steps.length}` : 'Locked'}</p></div></div>

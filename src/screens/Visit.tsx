@@ -7,8 +7,9 @@ import { SKILL_BY_ID } from '../engine/skills';
 import { ageText } from '../lib/stats';
 import * as audio from '../lib/audio';
 import { Icon, Paw } from '../ui/icons';
+import { back as goBack } from '../ui/router';
 
-const back = () => { if (history.length > 1) history.back(); else location.hash = '#/home'; };
+const back = () => goBack('home');
 
 /** Visiting a friend's cat: big and pettable, with the same reactions, and a free treat once a day. */
 export function Visit({ catId }: { catId: string }) {

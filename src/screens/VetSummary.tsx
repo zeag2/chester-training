@@ -5,7 +5,7 @@ import { MED_LABEL, type MedWhat } from '../engine/care';
 import { fmtTime, telHref, yourVets } from '../engine/vets';
 import { ageText } from '../lib/stats';
 import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { back, go } from '../ui/router';
 import { openDoc } from '../ui/DocRow';
 
 const fmt = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -34,7 +34,7 @@ export function VetSummary() {
     } catch (e) { if ((e as Error).name !== 'AbortError') setShared('Couldn’t share from this browser.'); }
   };
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('health')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>For the vet</b>
+    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => back('health')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>For the vet</b>
       <button className="btn2" style={{ minHeight: 40, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => void share()}>Share</button></div>
     {shared && <p className="s" role="status" style={{ textAlign: 'right' }}>{shared}</p>}
     <div className="stag">

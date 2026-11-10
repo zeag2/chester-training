@@ -26,7 +26,10 @@ if (typeof window !== 'undefined') {
   });
 }
 /** Back to the previous in-app page, or to `fallback` when this page is where the app was opened (so Back never
-    leaves the app). */
-export function back(fallback: string) {
-  if (depthOf(history.state) ?? depth) history.back(); else go(fallback);
+    leaves the app). `replace`: the fallback replaces this page instead of being added after it, for a page that's
+    gone (a deleted visit), so the browser's own Back doesn't reopen it. */
+export function back(fallback: string, opts: { replace?: boolean } = {}) {
+  if (depthOf(history.state) ?? depth) history.back();
+  else if (opts.replace) location.replace('#/' + fallback);
+  else go(fallback);
 }
