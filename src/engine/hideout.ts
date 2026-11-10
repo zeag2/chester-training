@@ -7,7 +7,7 @@
      box, sticks a paw out at a finger beside it, and springs out at a finger that waits there.
    - Tunnel: he zooms in one end and out the other (tap it for another lap), sometimes stops to hide in the middle (a
      bump in the tunnel shows where), peeks out of an end, pokes a paw out at a finger by an end, and bursts out when
-     you tap the bump. */
+     you tap the bump (you found him: Hide and seek) or tap him as he peeks out (Ambush!). */
 
 import type { PlayEvent, Target } from './play';
 
@@ -143,9 +143,9 @@ export function stepHide(b0: HideBrain, input: HideInput, dt: number, o: HideOpt
     b.stopAt = stop ? x0 + sp.half * 2 * (0.3 + rand() * 0.4) : null;
     to('zoom');
   };
-  const burst = (side: 1 | -1) => {
+  const burst = (side: 1 | -1, m: string) => {
     b.face = side; b.from = b.x; b.to = clampX((side > 0 ? x1 : x0) + side * S * 1.1); b.lift = S * 0.55; b.done = false;
-    to('leap'); ev.push({ kind: 'pounce' }); move('ambush');
+    to('leap'); ev.push({ kind: 'pounce' }); move(m);
   };
   // a tap on the tunnel right where he's hiding (the bump), or by an end where he's peeking out
   const atHim = (p: Target | null) => !!p && Math.abs(p.x - b.x) < S * 0.8 && p.h < sp.height + S * 0.5;
@@ -169,16 +169,15 @@ export function stepHide(b0: HideBrain, input: HideInput, dt: number, o: HideOpt
       }
       break;
     }
-    case 'hide': { // stopped inside: the tunnel bulges and rustles
-      if (b.t >= 0.8 && b.t - dt < 0.8) move('hide');
+    case 'hide': { // stopped inside: the tunnel bulges and rustles. Hide and seek is found only by tapping the bump.
       const end = byEnd(tap) || byEnd(finger);
-      if (atHim(tap)) { burst(nearEnd(b.x)); break; }
+      if (atHim(tap)) { burst(nearEnd(b.x), 'hide'); break; }
       if (end) { b.face = end; b.x = end > 0 ? x1 - S * 0.12 : x0 + S * 0.12; to('paw', 0.9); ev.push({ kind: 'swat' }, { kind: 'catch' }); move('paw'); break; }
       if (b.t >= b.dur) { const side = nearEnd(b.x); b.face = side; b.x = side > 0 ? x1 + S * 0.05 : x0 - S * 0.05; to('peek', 1.6 + rand() * 1.2); move('peek'); }
       break;
     }
     case 'peek': // head out of an end
-      if (tap && (atHim(tap) || byEnd(tap) === b.face)) { burst(b.face); break; }
+      if (tap && (atHim(tap) || byEnd(tap) === b.face)) { burst(b.face, 'ambush'); break; }
       if (b.t >= b.dur) startZoom(b.face > 0 ? outR : outL, false); // out he comes
       break;
     case 'paw': // a paw poking out of an end

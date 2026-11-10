@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../db/store';
 import { summaryText, vetSummary } from '../engine/vetsummary';
 import { MED_LABEL, type MedWhat } from '../engine/care';
-import { telHref, yourVets } from '../engine/vets';
+import { fmtTime, telHref, yourVets } from '../engine/vets';
 import { ageText } from '../lib/stats';
 import { Icon } from '../ui/icons';
 import { go } from '../ui/router';
@@ -52,9 +52,9 @@ export function VetSummary() {
       {sect('Daily checks (last 30 days)', s.checks.days ? line(`${s.checks.days} days checked`, s.checks.off ? `${s.checks.off} with something off` : 'all normal') : none('No daily checks yet.'))}
       {sect('Recent vet visits', s.visits.length ? s.visits.map((v) => <button key={v.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + v.id)}>
         <span className="sp"><span style={{ display: 'block' }}>{v.reason}{v.clinic ? ` · ${v.clinic}` : ''}</span>
-          <span className="s" style={{ display: 'block' }}>{fmt(v.day)}{v.docs ? ` · ${v.docs} document${v.docs === 1 ? '' : 's'}` : ''}</span>
+          <span className="s" style={{ display: 'block' }}>{fmt(v.day)}{v.unconfirmed ? ' · booked, not marked done' : ''}{v.docs ? ` · ${v.docs} document${v.docs === 1 ? '' : 's'}` : ''}</span>
           {v.notes && <span className="s" style={{ display: 'block', color: 'var(--ink)' }}>{v.notes}</span>}</span><span aria-hidden="true" className="s">›</span></button>) : none('None logged.'))}
-      {s.next && sect('Next visit', <button style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + s.next!.id)}><span className="sp">{s.next.reason}<span className="s" style={{ display: 'block' }}>{fmt(s.next.day)}{s.next.time ? ` · ${s.next.time}` : ''}{s.next.clinic ? ` · ${s.next.clinic}` : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
+      {s.next && sect('Next visit', <button style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + s.next!.id)}><span className="sp">{s.next.reason}<span className="s" style={{ display: 'block' }}>{fmt(s.next.day)}{s.next.time ? ` · ${fmtTime(s.next.time)}` : ''}{s.next.clinic ? ` · ${s.next.clinic}` : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
       {s.foods.length > 0 && sect('Eating now', <p className="s" style={{ marginTop: 6 }}>{s.foods.join(', ')}</p>)}
       {s.docs.length > 0 && sect('Documents', <>{s.docs.map((d) => <button key={d.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => void openDoc(d.path)}>
         <Icon name="book" size={18} /><span className="sp">{d.title}<span className="s" style={{ display: 'block' }}>{fmt(d.day)}{d.vaccine ? ' · vaccines' : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
