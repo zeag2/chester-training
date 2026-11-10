@@ -6,7 +6,7 @@ import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
-import { Icon } from '../ui/icons';
+import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
 import type { CalEvent } from '../lib/calendar';
 import { addToCalendar, CalendarSheet } from '../ui/CalendarChoice';
@@ -20,6 +20,7 @@ import { VetCard, VisitsCard, visitEvent } from '../ui/VetCards';
 import { NO_VISIT, docVisitId, findDocs, guessDocType, visitOfDoc } from '../engine/docs';
 import { isBooked } from '../engine/vets';
 import { DocRow, openDoc } from '../ui/DocRow';
+import { DailyLogSheet } from '../ui/DailyLogSheet';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -48,6 +49,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
   const [calFor, setCalFor] = useState<CalEvent | null>(null);
   const due = useMemo(() => reminders(care), [care]);
+  const [quickLogs, setQuickLogs] = useState(false);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
   const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
@@ -114,6 +116,11 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <DocAdder signedIn={!!account} compact={docs.length > 0} />
 
     <h2 style={{ marginTop: 22 }}>Health log</h2>
+    {/* the one-tap logs from Home aren't listed one by one here; this opens them (last 7 days) to delete or retime */}
+    <button className="item" onClick={() => setQuickLogs(true)}>
+      <div className="ico grey"><Paw size={22} /></div>
+      <div className="sp"><b>Quick logs</b><p className="s">Fed, scooped, played and daily checks from the last 7 days. Tap to fix a mistake.</p></div>
+      <span className="s" aria-hidden="true">›</span></button>
     {log.length === 0 && <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
     {log.map((i) => <button key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
       <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
@@ -122,6 +129,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
+    {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
   </div>;
 }
 
