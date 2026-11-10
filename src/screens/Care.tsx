@@ -16,6 +16,9 @@ import { Scanner } from './Scanner';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { CareTreatNote } from '../ui/CareTreatNote';
 import { VetCard, VisitsCard, visitEvent } from '../ui/VetCards';
+import { findDocs, guessDocType, visitOfDoc } from '../engine/docs';
+import { isBooked } from '../engine/vets';
+import { DocRow, openDoc } from '../ui/DocRow';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -34,7 +37,8 @@ function summary(i: CareItem): string {
   }
 }
 
-type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[CareKind]> } | null;
+/** `day`: the date a new entry starts on (e.g. the visit's day, when logging a dose from the visit page). */
+export type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[CareKind]>; day?: string } | null;
 
 export function Care({ open }: { open?: CareKind } = {}) {
   const { cat, care, careSync, account, household, vets } = useStore();
@@ -45,7 +49,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
   const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
-  const docs = care.filter((c): c is CareItem<'doc'> => c.kind === 'doc');
+  const docs = useMemo(() => findDocs(care), [care]);
   const ws = weights(care);
   const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
@@ -60,13 +64,14 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {/* vet first: who to call (and the warning signs), then visits; docs/plans/2026-11-09-vet-redesign.md */}
     <VetCard />
-    <VisitsCard onOpen={(v) => setEditing({ kind: 'vet', item: v })} />
+    <VisitsCard onOpen={(v) => go('health/visit/' + v.id)} />
     <button className="btn2" style={{ marginTop: 4, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
 
     {due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
       {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
         onClick={() => { const booked = r.kind === 'visit' ? care.find((c) => c.id === r.id.slice(6)) : undefined;
-          setEditing(booked ? { kind: 'vet', item: booked } : r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } }); }}>
+          if (booked) { go('health/visit/' + booked.id); return; }
+          setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } }); }}>
         <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' || r.kind === 'visit' ? 'box' : 'check'} /></div>
         <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
         {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
@@ -101,22 +106,19 @@ export function Care({ open }: { open?: CareKind } = {}) {
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
 
-    <h2 style={{ marginTop: 22 }}>Documents</h2>
-    <DocAdder signedIn={!!account} />
-    {docs.map((d) => <button key={d.id} className="item" onClick={() => setEditing({ kind: 'doc', item: d })}>
-      <div className="ico grey"><Icon name="book" /></div>
-      <div className="sp"><b>{d.data.title}</b><p className="s">{d.data.summary ?? (d.data.mime === 'application/pdf' ? 'PDF' : 'Photo')}</p>
-        {(d.data.categories ?? []).filter((c) => c !== 'other').length > 0 && <div className="row" style={{ gap: 4, marginTop: 4, flexWrap: 'wrap' }}>{(d.data.categories ?? []).filter((c) => c !== 'other').map((c) => <span key={c} className="chip" style={{ background: c === 'vet' ? 'var(--mint)' : c === 'esa' ? 'var(--sky)' : 'var(--butter)' }}>{c === 'vet' ? 'Vet' : c === 'esa' ? 'ESA & housing' : 'Adoption'}</span>)}</div>}</div>
-      <span className="s">{fmt(d.data.docDate ? noon(d.data.docDate) : d.at)}</span></button>)}
+    <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 className="sp" style={{ margin: 0 }}>Documents</h2>
+      {docs.length > 0 && <a href="#/health/docs" className="s" style={{ fontWeight: 800, color: 'var(--ink)' }}>All documents ({docs.length}) ›</a>}</div>
+    {docs.slice(0, 3).map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
+    <DocAdder signedIn={!!account} compact={docs.length > 0} />
 
     <h2 style={{ marginTop: 22 }}>Health log</h2>
     {log.length === 0 && <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
-    {log.map((i) => <button key={i.id} className="item" onClick={() => setEditing({ kind: i.kind, item: i })}>
+    {log.map((i) => <button key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
       <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
-      <div className="sp"><b>{TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
+      <div className="sp"><b>{i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
       <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}
 
-    {editing && <Sheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
+    {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
   </div>;
 }
 
@@ -135,12 +137,12 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 };
 
 /** Bottom sheet with the form for one kind of entry; also edits and deletes. */
-function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
+export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
   const pt = usePetText();
   const { care, cat } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
-  const [day, setDay] = useState(localDay(item?.at ?? Date.now()));
+  const [day, setDay] = useState(editing.day ?? localDay(item?.at ?? Date.now()));
   // smart defaults for a new entry: the clinic from the last visit, the grooming you did last
   const [f, setF] = useState<any>(() => {
     const smart: Record<string, unknown> = {};
@@ -149,14 +151,15 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
     return { ...DEFAULTS[kind], ...smart, ...d0 };
   });
   const lastWeight = kind === 'weight' && !item ? lastOf(care, 'weight') : undefined;
-  const repeats = kind === 'med' && !item && !editing.preset ? recentMeds(care) : [];
+  const presetName = !!editing.preset && 'name' in editing.preset;
+  const repeats = kind === 'med' && !item && !presetName ? recentMeds(care) : [];
   const set = (k: string, v: unknown) => setF((x: any) => ({ ...x, [k]: v }));
   const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
-    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100 } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
-    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim() } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
+    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
+    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: f.visitId || undefined } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
@@ -179,7 +182,10 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
         {text('Notes (optional)', 'notes', { placeholder: 'Flavor, where to buy, tummy trouble…' })}
         {f.ingredients && <details style={{ marginTop: 12 }}><summary className="s" style={{ fontWeight: 700 }}>Ingredients</summary><p className="s" style={{ marginTop: 6 }}>{f.ingredients}</p></details>}</>}
       {kind === 'doc' && item && <>{text('Name', 'title')}
-        <button className="btn2" style={{ marginTop: 12, width: '100%' }} onClick={() => void openDoc((item as CareItem<'doc'>).data.path)}>Open document</button>
+        <DocVisitPicker care={care} doc={item as CareItem<'doc'>} value={f.visitId} onChange={(v) => set('visitId', v)} />
+        <div className="row" style={{ gap: 8, marginTop: 12 }}>
+          <button className="btn2" style={{ flex: 1 }} onClick={() => void openDoc((item as CareItem<'doc'>).data.path)}>Open document</button>
+          {visitOfDoc(care, item as CareItem<'doc'>) && <button className="btn2" style={{ flex: 1 }} onClick={() => { onClose(); go('health/visit/' + visitOfDoc(care, item as CareItem<'doc'>)!.id); }}>Go to the visit</button>}</div>
         {(item.data as CareData['doc']).summary && <p className="s" style={{ marginTop: 10 }}>{(item.data as CareData['doc']).summary}</p>}</>}
       {kind === 'weight' && <>{text('Weight in pounds', 'lb', { inputMode: 'decimal', placeholder: lastWeight ? String(lastWeight.data.lb) : 'e.g. 3.4', autoFocus: !item })}
         {lastWeight && <p className="s" style={{ marginTop: 6 }}>Last time: {lastWeight.data.lb} lb on {fmt(lastWeight.at)}</p>}{when}</>}
@@ -195,7 +201,7 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
       {kind === 'med' && <>{repeats.length > 0 && <><span className="field">Same as last time</span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{repeats.map((m) => <button key={m.id} className={`chipbtn ${f.name === m.data.name ? 'on' : ''}`}
           onClick={() => setF((x: any) => ({ ...x, name: m.data.name, what: m.data.what, notes: m.data.notes ?? '', nextDue: nextDueLike(m, day) }))}>{m.data.name}</button>)}</div></>}
-        {text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !editing.preset })}
+        {text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !presetName })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
@@ -282,17 +288,24 @@ function FoodFinder({ onPick, onCode, known }: { onPick: (h: FoodHit) => void; o
   </div>;
 }
 
-async function openDoc(path: string) {
-  // open the tab right away (phones block pop-ups opened after a wait), then point it at a short-lived link
-  const w = window.open('', '_blank');
-  try { const url = await store.docUrl(path); if (w) w.location.href = url; else location.href = url; }
-  catch { w?.close(); alert('Couldn’t open the document. Check your connection.'); }
+/** Which visit a document came from (newest visits first). */
+function DocVisitPicker({ care, doc, value, onChange }: { care: CareItem[]; doc: CareItem<'doc'>; value?: string; onChange: (id: string) => void }) {
+  const vs = care.filter((c): c is CareItem<'vet'> => c.kind === 'vet' && !c.deleted).sort((a, b) => b.at - a.at).slice(0, 30);
+  const current = value ?? visitOfDoc(care, doc)?.id ?? '';
+  if (!vs.length) return null;
+  return <><label className="field" htmlFor="c-visit">From the visit</label>
+    <select id="c-visit" className="in" value={current} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Not from a visit</option>
+      {vs.map((v) => <option key={v.id} value={v.id}>{fmt(v.at)} · {v.data.reason}</option>)}
+    </select></>;
 }
 
-type Pick = { key: string; label: string; detail: string; on: boolean; save: (doc?: string) => Promise<unknown> };
+type Pick = { key: string; label: string; detail: string; on: boolean; save: (doc?: string) => Promise<unknown>; visit?: boolean };
 
-/** Add a vet document: read it on the phone, store it (when sharing is set up), then confirm which entries to add. */
-function DocAdder({ signedIn }: { signedIn: boolean }) {
+/** Add a vet document: read it on the phone, store it (when sharing is set up), then confirm which entries to add.
+    `visit`: added from a visit's page, so the document, doses and weight it finds are linked to that visit (and what
+    the vet said goes into its notes instead of making a new visit). `compact`: once there are documents, just the button. */
+export function DocAdder({ signedIn, visit, compact }: { signedIn: boolean; visit?: CareItem<'vet'>; compact?: boolean }) {
   const [stage, setStage] = useState<'idle' | 'read' | 'review' | 'error'>('idle');
   const [msg, setMsg] = useState('');
   const [note, setNote] = useState('');
@@ -314,7 +327,7 @@ function DocAdder({ signedIn }: { signedIn: boolean }) {
     // keep the file too, when sharing is set up
     let d: CareItem<'doc'> | null = null;
     if (signedIn) {
-      try { d = await store.addDoc(file); await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? undefined, summary: r.summary, categories: r.categories }, { id: d.id, at: d.at }); setDoc(d); }
+      try { d = await store.addDoc(file); d = (await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? (visit ? localDay(visit.at) : undefined), summary: r.summary, categories: r.categories, type: guessDocType(`${r.title} ${r.summary}`), ...(visit ? { visitId: visit.id } : {}) }, { id: d.id, at: d.at })) as CareItem<'doc'> | null ?? d; setDoc(d); }
       catch (e) { setNote(/bucket|not found|404|row-level|policy/i.test(String((e as Error).message)) ? 'The file itself wasn’t saved: document storage isn’t set up in Supabase yet. Your log entries still save.' : 'The file itself wasn’t saved (' + (e as Error).message + '). Your log entries still save.'); }
     } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
     const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
@@ -329,15 +342,25 @@ function DocAdder({ signedIn }: { signedIn: boolean }) {
       if (pr.adopted && cat.homeDate !== pr.adopted) { patch.homeDate = pr.adopted; changes.push('home since ' + fmt(noon(pr.adopted)) + (pr.adoptedFrom ? ` (from ${pr.adoptedFrom})` : '')); }
       if (changes.length) list.push({ key: 'profile', label: `Update ${cat.name}’s profile`, detail: changes.join(' · '), on: true, save: () => store.saveCat({ ...cat, ...patch }) });
     }
-    r.visits.forEach((v, i) => list.push({ key: 'v' + i, label: (/test/i.test(v.reason) ? 'Test: ' : 'Vet visit: ') + v.reason, detail: [v.notes, v.clinic, v.date && fmt(noon(v.date))].filter(Boolean).join(' · '), on: true,
-      save: (doc) => store.saveCare('vet', { reason: v.reason, clinic: v.clinic ?? undefined, notes: v.notes ?? undefined, doc }, { at: at(v.date) }) }));
+    if (visit) {
+      // from a visit's page: what the vet said goes into this visit's notes, not a new visit
+      const said = r.visits.map((v) => [v.reason, v.notes].filter(Boolean).join(': ')).filter(Boolean).join('. ');
+      if (said) list.push({ key: 'notes', label: 'Add to this visit’s notes', detail: said, on: !visit.data.notes,
+        save: () => store.saveCare('vet', { ...visit.data, notes: [visit.data.notes, said].filter(Boolean).join('\n') }, { id: visit.id, at: visit.at }) });
+    } else r.visits.forEach((v, i) => list.push({ key: 'v' + i, label: (/test/i.test(v.reason) ? 'Test: ' : 'Vet visit: ') + v.reason, detail: [v.notes, v.clinic, v.date && fmt(noon(v.date))].filter(Boolean).join(' · '), on: true, visit: true,
+      save: (doc) => store.saveCare('vet', { reason: v.reason, clinic: v.clinic ?? undefined, notes: v.notes ?? undefined, doc, status: 'done' }, { at: at(v.date) }) }));
+    const vid = visit ? { visitId: visit.id } : {};
+    const atV = (day: string | null) => (visit && !day ? visit.at : at(day));
     r.weights.forEach((w, i) => list.push({ key: 'w' + i, label: `Weight: ${w.lb} lb`, detail: w.date ? fmt(noon(w.date)) : '', on: true,
-      save: (doc) => store.saveCare('weight', { lb: w.lb, doc }, { at: at(w.date) }) }));
+      save: (doc) => store.saveCare('weight', { lb: w.lb, doc, ...vid }, { at: atV(w.date) }) }));
     r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
-      save: (doc) => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc }, { at: at(it.date) }) }));
+      save: (doc) => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc, ...vid }, { at: atV(it.date) }) }));
     setPicks(list); setMsg(r.summary); setStage('review');
   };
 
+  // once there are documents, just the button (the explanation is for the first one)
+  if (stage === 'idle' && compact) return <label className="btn2" style={{ cursor: 'pointer', width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--grey)' }}><Icon name="plus" size={18} />Add a document
+    <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>;
   return <div className="card grey" style={{ marginTop: 10 }}>
     {stage === 'idle' && <><p className="s">Vet records, vaccine certificates, adoption papers or ESA/housing forms: snap a photo or pick a PDF (several pages is fine). It’s read right on your phone, free, and you check what it found before anything is saved.</p>
       <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a document
@@ -353,7 +376,12 @@ function DocAdder({ signedIn }: { signedIn: boolean }) {
         <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
         <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
       <p className="s" style={{ marginTop: 10 }}>Read automatically, so check it against the document. Anything it missed, add with “Log something” above.</p>
-      <button className="btn" style={{ marginTop: 12 }} onClick={async () => { for (const p of picks) if (p.on) await p.save(doc?.id); audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
+      <button className="btn" style={{ marginTop: 12 }} onClick={async () => {
+        let linked: CareItem | null = null;
+        for (const p of picks) if (p.on) { const saved = await p.save(doc?.id); if (p.visit && !linked) linked = saved as CareItem | null; }
+        // the document belongs to the (first) visit it was read as
+        if (doc && linked && !visit) await store.saveCare('doc', { ...doc.data, visitId: linked.id }, { id: doc.id, at: doc.at });
+        audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
     </>}
   </div>;
 }

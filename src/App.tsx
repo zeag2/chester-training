@@ -23,6 +23,8 @@ import { LogLink } from './ui/DailyTaps';
 import { Trophies } from './screens/Trophies';
 import { Week } from './screens/Week';
 import { VetSummary } from './screens/VetSummary';
+import { VisitPage } from './screens/VisitPage';
+import { Documents } from './screens/Documents';
 import { keepAlive, setMuted, warm } from './lib/audio';
 import { Install } from './screens/Install';
 import { Play } from './screens/Play';
@@ -66,7 +68,9 @@ export default function App() {
     case 'session': return snap.cat ? <Session key={r1} skillId={r1 ?? 'clicker'} /> : <Onboarding />;
     case 'recap': return <Recap key={r1} skillId={r1 ?? 'clicker'} />;
     // Health: the care page, as its own tab; #/health/log/<kind> opens a log form straight away (from the + sheet)
-    case 'health': case 'care': body = <Care key={r1 === 'log' ? 'log-' + r2 : 'care'} open={r1 === 'log' ? (r2 as CareKind) : undefined} />; tab = 'health'; break;
+    // #/health/visit/<id>: one visit with its documents, doses and weight; #/health/docs: all documents
+    case 'health': case 'care': body = r1 === 'visit' ? <VisitPage key={r2} id={r2 ?? ''} /> : r1 === 'docs' ? <Documents />
+      : <Care key={r1 === 'log' ? 'log-' + r2 : 'care'} open={r1 === 'log' ? (r2 as CareKind) : undefined} />; tab = 'health'; break;
     // Train: everything about training, with the tree, library, skills and Chester's corner under it
     case 'train': body = <Train />; tab = 'train'; break;
     case 'tree': body = <Tree />; tab = 'train'; break;

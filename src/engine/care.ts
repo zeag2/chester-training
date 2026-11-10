@@ -15,13 +15,16 @@ export interface CareData {
   /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
   vet: { reason: string; clinic?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' };
   symptom: { what: string; worried?: boolean; notes?: string };
-  weight: { lb: number; doc?: string };
+  /** `visitId`: the visit it was weighed at (from the visit page). */
+  weight: { lb: number; doc?: string; visitId?: string };
   groom: { what: GroomWhat; notes?: string };
-  med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string };
+  med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string; visitId?: string };
   /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
   /** `ok`: the daily check said all normal (false: something's off, see the symptom logged with it). */
   daily: { what: DailyWhat; ok?: boolean; minutes?: number; notes?: string };
-  doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string; categories?: ('vet' | 'esa' | 'adoption' | 'other')[] };
+  doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string; categories?: ('vet' | 'esa' | 'adoption' | 'other')[];
+    /** The visit it came from, and what kind of paper it is (see `src/engine/docs.ts`). */
+    visitId?: string; type?: 'vaccine' | 'invoice' | 'lab' | 'discharge' | 'other' };
 }
 
 /** What the vet-document reader found, for the user to confirm. */
