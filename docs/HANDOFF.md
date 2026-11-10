@@ -359,6 +359,12 @@ Items marked *(art)* suit the art session.
    (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
    Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
    Calendar as the default.
+8. [ ] **Booking, part 2** (M each; Josh, 2026-11-10, from the booking research): reschedule and cancel from the
+   visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone), and
+   booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
+9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
+   desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
+   comfortable on a laptop or desktop screen.
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
    "Not from a visit" now unlinks a document linked the old way (`vet.doc`): it saves `visitId: 'none'`
    (`NO_VISIT`, `docVisitId` in `src/engine/docs.ts`; doses and weights read from it stay with the visit). Visit
