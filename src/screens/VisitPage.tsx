@@ -4,11 +4,12 @@ import { MED_LABEL, type CareItem } from '../engine/care';
 import { localDay } from '../engine/day';
 import { visitLinks } from '../engine/docs';
 import { fmtTime, isBooked, mapsHref, telHref, yourVets } from '../engine/vets';
-import { downloadIcs } from '../lib/calendar';
+import type { CalEvent } from '../lib/calendar';
 import { Icon } from '../ui/icons';
 import { back as goBack } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
 import { visitEvent } from '../ui/VetCards';
+import { CalendarSheet } from '../ui/CalendarChoice';
 import { CareSheet, DocAdder, type Editing } from './Care';
 
 /* One visit (`#/health/visit/<id>`, step 3 of docs/plans/2026-11-09-vet-redesign.md): when and where, what the vet
@@ -21,6 +22,7 @@ const fmtShort = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString
 export function VisitPage({ id }: { id: string }) {
   const { cat, care, vets, account } = useStore();
   const [editing, setEditing] = useState<Editing>(null);
+  const [calFor, setCalFor] = useState<CalEvent | null>(null);
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
@@ -53,7 +55,7 @@ export function VisitPage({ id }: { id: string }) {
       </div>}
       {booked && passed && <button className="card butter row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }} onClick={() => setEditing({ kind: 'vet', item: visit })}>
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>Add what the vet said. Saving marks it done.</span></span><span className="chip">Add notes</span></button>}
-      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => downloadIcs(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
+      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => setCalFor(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
 
       {/* a passed booking with no notes yet already asks "How did it go?" above: one prompt, not two */}
       {(visit.data.notes || !(booked && passed)) && h(booked && !passed ? 'Notes' : 'What the vet said')}
@@ -85,5 +87,6 @@ export function VisitPage({ id }: { id: string }) {
       </div>
     </div>
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
+    {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
   </div>;
 }

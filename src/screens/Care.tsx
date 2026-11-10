@@ -8,7 +8,8 @@ import {
 } from '../engine/care';
 import { Icon } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
-import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
+import type { CalEvent } from '../lib/calendar';
+import { addToCalendar, CalendarSheet } from '../ui/CalendarChoice';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
@@ -45,6 +46,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const pt = usePetText();
   // opened from the + sheet: go straight to that log form
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
+  const [calFor, setCalFor] = useState<CalEvent | null>(null);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
@@ -76,7 +78,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
         <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
         {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
           onClick={() => { const booked = r.kind === 'visit' ? care.find((c): c is CareItem<'vet'> => c.id === r.id.slice(6) && c.kind === 'vet') : undefined;
-            downloadIcs(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
+            setCalFor(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
     <h2 style={{ marginTop: 22 }}>Log something</h2>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
@@ -119,6 +121,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}
 
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
+    {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
   </div>;
 }
 
@@ -210,8 +213,8 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
         const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
         return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
           <div className="row" style={{ gap: 8, marginTop: 6 }}>
-            <button className="btn2" style={{ flex: 1 }} onClick={() => downloadIcs(ev)}>iPhone / Apple</button>
-            <a className="btn2" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', color: 'inherit' }} href={googleCalendarUrl(ev)} target="_blank" rel="noreferrer">Google</a></div>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'apple')}>Apple Calendar</button>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'google')}>Google Calendar</button></div>
           <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
       })()}
       {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}

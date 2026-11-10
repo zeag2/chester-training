@@ -209,3 +209,11 @@ button.visitrow{background:none;padding:0}
 .boxjolt{animation:kboxjolt .4s var(--ease-out, ease-out)}
 @keyframes kboxjolt{0%{transform:none}25%{transform:rotate(-2.5deg) scaleY(.97)}55%{transform:rotate(2deg)}80%{transform:rotate(-.8deg)}100%{transform:none}}
 @media (prefers-reduced-motion: reduce){.boxjolt{animation:none}}
+
+/* Book a visit: the household vet as a selectable card, "+ Add vet", and the inline vet form (VetCards.tsx) */
+.bkvet{display:block;width:100%;text-align:left;border:2px solid transparent;border-radius:16px;background:var(--grey);color:var(--ink);padding:10px 14px;font:inherit;min-height:52px;transition:transform 160ms var(--ease-out)}
+.bkvet.on{border-color:var(--ink)}
+.bkvet:active{transform:scale(.98)}
+.bkadd{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:2px dashed var(--faint);color:var(--ink)}
+.bkvetform{margin-top:8px;padding:4px 12px 12px;border-radius:18px;border:2px solid var(--line)}
+.bkvetform .field{margin-top:10px}
