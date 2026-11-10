@@ -54,6 +54,34 @@ export function takePendingFromUrl() {
 const isStandalone = () => !!(navigator as any).standalone || (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches);
 const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
+/* An iPhone Home Screen app keeps the name and icon it was added with: changing the cats later doesn't update them.
+   So the installed app remembers what it was added with (its first launch), and when the cats' names or looks that
+   feed the icon change, Home says once: remove it and add it again. Not in Safari tabs, not on Android (Android
+   updates the icon from the manifest). */
+const ADDED_KEY = 'paldex-homescreen-look';
+const NOTE_KEY = 'paldex-homescreen-note';
+/** What the Home Screen title and icon are drawn from: all the names, and the first two cats' looks. */
+export function homeLook(pets: (string | PetLook)[]): string {
+  const looks = pets.map(asLook).filter((x): x is PetLook => !!x);
+  return titleFor(looks) + '|' + looks.slice(0, 2).map((p) => `${p.coat ?? 'black'}/${p.eyes ?? 'gold'}`).join(',');
+}
+const homeApp = () => isIOS() && isStandalone();
+const read = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const write = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+/** In the installed iPhone app: remember the cats it was added with, the first time it runs with any. */
+export function rememberHomeLook(pets: (string | PetLook)[], app = homeApp()) {
+  if (!app || !pets.map(asLook).some(Boolean) || read(ADDED_KEY)) return;
+  write(ADDED_KEY, homeLook(pets));
+}
+/** Whether to show "Your Home Screen icon still shows the old cats": in the installed iPhone app, the cats changed
+    since it was added, and the note hasn't been closed for this change. */
+export function staleHomeIcon(pets: (string | PetLook)[], app = homeApp()): boolean {
+  if (!app) return false;
+  const added = read(ADDED_KEY); const now = homeLook(pets);
+  return !!added && !!pets.map(asLook).some(Boolean) && added !== now && read(NOTE_KEY) !== now;
+}
+export function closeHomeIconNote(pets: (string | PetLook)[]) { write(NOTE_KEY, homeLook(pets)); }
+
 let original: Promise<Record<string, any> | null> | null = null;
 let applied = '';
 /** Put the cats' names and faces on the tab, the Home Screen title and icon, and the install manifest.
@@ -63,6 +91,7 @@ export function applyAppName(pets: (string | PetLook)[], carry = false) {
   const title = titleFor(looks);
   const key = title + '|' + (carry ? encodePets(looks) : '') + '|' + looks.map((p) => p.coat + '/' + p.eyes).join(',');
   if (key === applied) return; applied = key;
+  rememberHomeLook(looks);
   document.title = title;
   meta('apple-mobile-web-app-title', title);
   const base = new URL(import.meta.env.BASE_URL, location.href);

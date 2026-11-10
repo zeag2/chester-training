@@ -16,6 +16,7 @@ import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
 import { InviteSheet } from './Friends';
 import { FriendsStrip } from '../ui/FriendsStrip';
+import { HomeIconNote } from '../ui/HomeIconNote';
 import { DailyTaps } from '../ui/DailyTaps';
 import { usePetText } from '../lib/pet';
 import { CushionArt } from './Corner';
@@ -187,6 +188,7 @@ export function Home() {
       {movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
         <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
         <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>}
+      <HomeIconNote />
       <DailyTaps />
       <TodayCard />
       <FriendsStrip onInvite={() => setInvite(true)} />

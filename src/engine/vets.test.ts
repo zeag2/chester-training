@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmtTime, isBooked, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
+import { bookingDay, fmtTime, isBooked, nextVaccines, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
 import { reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
@@ -59,5 +59,20 @@ describe('visits', () => {
 describe('visit times', () => {
   it('shows 12-hour times', () => {
     expect([fmtTime('14:30'), fmtTime('09:05'), fmtTime('00:15'), fmtTime('12:00'), fmtTime(undefined)]).toEqual(['2:30 PM', '9:05 AM', '12:15 AM', '12:00 PM', '']);
+  });
+});
+
+describe('booking from what is due', () => {
+  it('starts on the due day, or tomorrow when it is past, never on a Sunday', () => {
+    expect(bookingDay('2026-11-24', NOW)).toBe('2026-11-24'); // a Tuesday
+    expect(bookingDay('2026-11-01', NOW)).toBe('2026-11-11'); // overdue: tomorrow
+    expect(bookingDay('2026-11-29', NOW)).toBe('2026-11-30'); // Sunday → Monday
+  });
+  it('after a visit, offers the soonest vaccine due again, unless a visit is already booked', () => {
+    const med = (name: string, nextDue: string, what = 'vaccine') => ({ id: name, catId: 'c', kind: 'med', at: day('2026-11-09'), updatedAt: 1, data: { name, what, nextDue } }) as CareItem;
+    const doses = [med('Rabies', '2027-11-09'), med('FVRCP', '2026-12-07'), med('Felv', '2026-12-07'), med('Revolution', '2026-12-01', 'flea')];
+    expect(nextVaccines(doses, doses, NOW)).toEqual({ due: '2026-12-07', names: ['FVRCP', 'Felv'] });
+    expect(nextVaccines(doses, [...doses, vet('2026-11-20', { status: 'booked' })], NOW)).toBeNull();
+    expect(nextVaccines([med('FVRCP', '2026-11-01')], [], NOW)).toBeNull();
   });
 });

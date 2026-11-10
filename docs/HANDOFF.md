@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (vet booking fixes, branch `claude/features-vet-booking-fixes`, pull request open; audit fixes merged). Start here when picking
+_Last updated 2026-11-10 (booking polish and the Home Screen icon note, branch `claude/features-booking-polish`, pull request open; vet booking fixes merged). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups; 183 in 32 after the audit fixes; 186 in 33 after the vet booking fixes), typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups; 183 in 32 after the audit fixes; 186 in 33 after the vet booking fixes; 195 in 33 after the booking polish), typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -194,6 +194,32 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     which calendar?"** with the last-used one first (`src/ui/CalendarChoice.tsx`: `CalendarSheet`, `addToCalendar`,
     `lastCalendar`). Apple = the .ics; Google = `calendar.google.com/calendar/render?action=TEMPLATE` with title,
     dates, `ctz` (the phone's time zone, so a 2:30 PM visit lands at 2:30 PM local), location and details. The Log something vet sheet's buttons now read Apple Calendar / Google Calendar.
+- **Booking polish (2026-11-10, from the booking research, Features worker, branch `claude/features-booking-polish`;
+  no SQL: the new fields live in the care JSON):**
+  - **Call at the top** of Book a visit when the picked clinic has a phone: "Call the clinic, then record what they
+    gave you."
+  - **Prefilled from what's due:** Coming up's yearly checkup and vaccine boosters have a **Book** button (instead of
+    the calendar one) that opens the sheet with the reason (Checkup / Vaccines), a note ("FVRCP booster due Nov 24")
+    and a date near the due date (`bookingDay`: the due day, or tomorrow if past, never a Sunday). After a visit, its
+    page offers **"Book the next one?"** for the soonest vaccine it gave that's due again (`nextVaccines`; hidden
+    while a visit is already booked). `BookSheet` takes a `preset`; `Reminder` now has `what` for medicines.
+  - **Quick times:** 9:00, 10:30, 2:00, 4:30 and Other… (the phone's time picker) above the notes; no time means
+    all-day, and the sheet says so.
+  - **Toast after saving** (`src/ui/Toast.tsx`: `showToast`, `<ToastHost />` in `App.tsx`): "Booked Tue, Nov 24,
+    10:30 AM · Added to calendar", with **Undo** (deletes the visit; then "Delete it from your calendar too", since
+    the event can't be taken back).
+  - **Offline + Google:** the sheet says the Google link will work once online and saves without opening a dead tab
+    (Apple's .ics works offline); the toast says to add it later (Next visit's calendar button).
+  - **Accessibility:** `aria-pressed` on the reason and time chips; Save says why it's disabled underneath (linked by
+    `aria-describedby`): no clinic name, no reason, no date, no calendar picked.
+  - **A week-before reminder** for visits more than 7 days out (`weekBefore` in `src/lib/calendar.ts`): an extra
+    `VALARM` in the .ics, and a "Reminder: a week before, …" line in the Google details (Google links can't set
+    reminders).
+  - **+ Other clinic:** a one-off visit somewhere else (name, optional phone and address), kept on the visit only
+    (`phone`, `address` on the vet care data); your vet stays the same. The visit page's Call and Directions use them.
+  - **Errors:** if saving the vet or the visit throws, the sheet stays open, the pre-opened Google tab is closed, Save
+    works again, and it says so. A vet added in the sheet is kept, so a retry doesn't add it twice.
+  - **No address:** the calendar place is the clinic's name and the notes no longer repeat it (`visitEvent`).
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -319,6 +345,13 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
   ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
   An icon already on a Home Screen keeps its old name (long-press to rename, or remove and add it again).
+- **"Your Home Screen icon still shows the old cats"** (2026-11-10, `src/ui/HomeIconNote.tsx`, on Home): in the
+  installed iPhone app only (standalone and iOS; never in Safari tabs or on Android, which updates from the manifest),
+  the app remembers the cats it first ran with (`rememberHomeLook`, `paldex-homescreen-look`: all the names and the
+  first two cats' coat and eyes). When those change, Home shows the note once per change (Close or Got it stores
+  `paldex-homescreen-note`). **Show me how** opens the steps: sign in first if not signed in (removing the icon
+  removes what's only on the phone), remove the icon, open the site in Safari, then the usual Add to Home Screen guide.
+  Not checked on a real iPhone (`Remove App` wording, and whether re-adding gives a fresh storage, which resets it).
 - **Barcode scanner** (`src/screens/Scanner.tsx`): the camera starts once (it used to restart whenever the Care screen
   re-rendered), asks for a sharp focused rear camera, reads only UPC/EAN, uses the phone's own reader where available,
   checks the check digit, and has a flashlight button.
@@ -924,6 +957,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
+  Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
+  `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
 - In the Nov 7 sessions: **reanimate**, **earshot**/**real-sound**, **huashu-art-motion** and claudedesignskills (motion
   and sound pass).
 - In the Nov 8 redraw session: no skills invoked. The `lottiefiles-creator` MCP server connected (first time) but

@@ -14,7 +14,8 @@ export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
 export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
   /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
-  vet: { reason: string; clinic?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' };
+  /** `phone`, `address`: a one-off clinic's ("+ Other clinic" in Book a visit), when it isn't a saved vet. */
+  vet: { reason: string; clinic?: string; phone?: string; address?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' };
   symptom: { what: string; worried?: boolean; notes?: string };
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
@@ -73,7 +74,7 @@ export function newer<T extends { updatedAt: number }>(a: T | undefined, b: T | 
   return b.updatedAt > a.updatedAt ? b : a;
 }
 
-export interface Reminder { id: string; title: string; detail: string; dueDay: string; daysLeft: number; kind: 'med' | 'groom' | 'vet' | 'visit' }
+export interface Reminder { id: string; title: string; detail: string; dueDay: string; daysLeft: number; kind: 'med' | 'groom' | 'vet' | 'visit'; what?: MedWhat }
 
 /** What's coming up: medicine and vaccine due dates, grooming that's getting overdue, the yearly checkup. */
 export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
@@ -85,7 +86,7 @@ export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
   for (const m of live.filter((i): i is CareItem<'med'> => i.kind === 'med').sort((a, b) => a.at - b.at)) meds.set(m.data.name.trim().toLowerCase(), m);
   for (const m of meds.values()) {
     if (!m.data.nextDue) continue;
-    out.push({ id: 'med:' + m.id, kind: 'med', title: m.data.name, detail: MED_LABEL[m.data.what], dueDay: m.data.nextDue, daysLeft: daysBetween(today, m.data.nextDue) });
+    out.push({ id: 'med:' + m.id, kind: 'med', what: m.data.what, title: m.data.name, detail: MED_LABEL[m.data.what], dueDay: m.data.nextDue, daysLeft: daysBetween(today, m.data.nextDue) });
   }
   for (const [what, g] of Object.entries(GROOM) as [GroomWhat, (typeof GROOM)[GroomWhat]][]) {
     if (!g.everyDays) continue;
