@@ -29,6 +29,10 @@ export function DailyTaps() {
   useEffect(() => setOff(null), [cat?.id]);
   /** Today's entries sheet (to fix a mistaken tap): one kind from a done tile, or 'all' from "Fix a mistake". */
   const [entries, setEntries] = useState<DailyWhat | 'all' | null>(null);
+  // like the picker: the sheet belongs to one cat, so close it when the shown cat changes
+  useEffect(() => setEntries(null), [cat?.id]);
+  // the sheet takes over from the Undo toast (it would sit hidden behind it, then come back stale after a delete there)
+  const openEntries = (w: DailyWhat | 'all') => { setUndo(null); setEntries(w); };
   useEffect(() => { if (!undo) return; const t = window.setTimeout(() => setUndo(null), 5000); return () => window.clearTimeout(t); }, [undo]);
   // one toast at a time: this Undo replaces a booking's "Booked … · Undo" note still showing from Health
   useEffect(() => { if (undo) hideToast(); }, [undo]);
@@ -75,14 +79,14 @@ export function DailyTaps() {
     <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b>
       <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
-      {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => (t.done ? setEntries(t.what) : void log(t.what))}
+      {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => (t.done ? openEntries(t.what) : void log(t.what))}
         aria-label={`${t.label}. ${t.sub}${t.done ? '. Tap to see or fix today’s entries' : ''}`}
         style={{ height: 'auto', minHeight: 76, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: '8px 4px', background: t.done ? 'var(--mint)' : 'var(--grey)' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{t.done ? <Icon name="check" size={18} /> : <Icon name={t.icon} size={18} />}<b style={{ fontSize: 15 }}>{t.label}</b></span>
         <span className="s" style={{ fontSize: 12, lineHeight: 1.2, textAlign: 'center' }}>{t.sub}</span>
       </button>)}
     </div>
-    {Object.values(today).some((l) => l.length > 0) && <button className="s" onClick={() => setEntries('all')}
+    {Object.values(today).some((l) => l.length > 0) && <button className="s" onClick={() => openEntries('all')}
       style={{ marginTop: 6, minHeight: 44, width: '100%', border: 0, background: 'none', padding: 0, fontFamily: 'inherit', color: 'var(--teal)', fontWeight: 700, textAlign: 'left' }}>Logged by mistake? Fix today’s entries</button>}
     {entries && createPortal(<DailyLogSheet what={entries === 'all' ? undefined : entries} onClose={() => setEntries(null)}
       onAgain={entries === 'all' ? undefined : () => void log(entries)} />, document.body)}

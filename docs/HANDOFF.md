@@ -164,7 +164,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   cats for the other's. Deletes go through `store.deleteCare` (the soft delete Undo uses) and time changes through
   `store.saveCare` with the item's id and `catId`, so both sync like any care edit; no new SQL. Deleting a "something
   was off" check leaves its symptoms (they're in Health's log, deletable there). Health's log has a **Quick logs** row
-  that opens the same sheet for the last 7 days, grouped by day (`dailyLogDays()`).
+  that opens the same sheet for the last 7 days, grouped by day (`dailyLogDays()`). Opening the sheet from Home closes the Undo toast
+  (it would sit hidden behind the sheet and come back stale), and the sheet closes when the shown cat changes.
 - **The Undo note is a floating toast** (`.toast` in `app.css`, portalled to `body`) just above the tab bar, on one row
   however many cats (the label ellipsizes; the buttons don't wrap). Since 2026-11-10.
 - One-tap logs earn care treats like any entry (capped at 3 a day) and aren't listed in Health's log
@@ -1055,6 +1056,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/engine/dailylog.test.ts` and `src/ui/dailylog.test.tsx`), typecheck, build; Playwright (iPhone 15, light and
   dark, dev server with `VITE_SUPABASE_URL=`, two cats seeded through `globalThis.__chesterStore`) of Home's Quick log,
   the Fed sheet, its delete confirm, and Health's 7-day Quick logs sheet.
+- 2026-11-10, QA of PR #10 (QA worker): merged `main` in (trivial import conflict in `DailyTaps.tsx`); no skills,
+  plugins or MCP servers invoked. Checks: tests (204), typecheck, build; Playwright (iPhone 13, light and dark, dev
+  store, two cats). Fixed: the sheet now replaces the Undo toast and closes on a cat switch (test added).
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**

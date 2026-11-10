@@ -77,6 +77,22 @@ describe('Fixing a mistaken quick log', () => {
     cleanup();
   });
 
+  it('the sheet replaces the Undo toast, and closes when the shown cat changes', async () => {
+    const mochi = store.get().cat!;
+    const chester = store.get().pets.find((p) => p.name === 'Chester')!;
+    render(<DailyTaps />);
+    await tap(/^Scooped\./);
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    await tap(/^Scooped\..*fix today/);
+    expect(screen.getByRole('dialog', { name: 'Mochi: Scooped today' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    await act(async () => { await store.switchPet(chester.id); await settle(); });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(await live('scoop', mochi.id)).toHaveLength(1);
+    cleanup();
+    await act(async () => { await store.switchPet(mochi.id); });
+  });
+
   it('on Health, lists earlier days too', async () => {
     const id = store.get().cat!.id;
     const yesterday = Date.now() - 864e5;
