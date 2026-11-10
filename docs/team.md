@@ -56,3 +56,10 @@ Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` sectio
 
 - 2026-11-10: team set up. Agenda next: item 3 (box and tunnel as real games, an Art-style task), item 7 (vet
   redesign steps 3–5: visit page, All documents, Summary for the vet).
+- 2026-11-10 (evening): shipped PRs #2–#10 (vet redesign 3–5, box and tunnel, follow-ups, UX quick wins, audit
+  fixes, vet booking fixes, booking polish + iPhone icon note, fix/delete mistaken quick logs). main a47f9ae, 204
+  tests. No workers running; all sessions archived. Merges were done by the manager on GitHub after Josh's "ship it"
+  (workers can't push main). Next on the agenda: item 8 (booking part 2: reschedule/cancel, several cats), then item 4
+  (photo feed, SQL), item 9 (desktop layout, start with a UX brief). Open: one flaky run on main (2 tests failed once
+  in one file, then passed 4 times in a row; find which). For Josh on a real iPhone: Apple/Google calendar from the
+  Home Screen app, the 7-day alarm, the icon note's wording.
