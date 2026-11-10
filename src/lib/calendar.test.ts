@@ -11,5 +11,7 @@ describe('add to calendar', () => {
     expect(icsFor({ title: 'Vet', day: '2026-12-03', time: '09:30' }, 'x')).toContain('DTSTART:20261203T093000');
     const u = new URL(googleCalendarUrl({ title: 'Vet', day: '2026-12-03', time: '09:30', minutes: 30 }));
     expect(u.searchParams.get('dates')).toBe('20261203T093000/20261203T100000');
+    // local times, so the link names the phone's time zone
+    expect(u.searchParams.get('ctz')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
   });
 });

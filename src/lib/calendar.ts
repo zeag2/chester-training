@@ -24,7 +24,9 @@ export function icsFor(e: CalEvent, uid = e.uid ?? Math.random().toString(36).sl
 
 export function googleCalendarUrl(e: CalEvent): string {
   const [a, b] = span(e);
-  const q = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates: `${a}/${b}`, ...(e.place ? { location: e.place } : {}), ...(e.notes ? { details: e.notes } : {}) });
+  // times are the phone's local time: say which zone, so Google doesn't read them in the calendar's own zone
+  let ctz = ''; try { ctz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; } catch { /* old browser */ }
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates: `${a}/${b}`, ...(ctz ? { ctz } : {}), ...(e.place ? { location: e.place } : {}), ...(e.notes ? { details: e.notes } : {}) });
   return 'https://calendar.google.com/calendar/render?' + q.toString();
 }
 

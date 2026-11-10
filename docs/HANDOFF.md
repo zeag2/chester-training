@@ -193,7 +193,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     waits for a pick). Every other Add to calendar (Health's Next visit, the visit page, Coming up) opens **"Add to
     which calendar?"** with the last-used one first (`src/ui/CalendarChoice.tsx`: `CalendarSheet`, `addToCalendar`,
     `lastCalendar`). Apple = the .ics; Google = `calendar.google.com/calendar/render?action=TEMPLATE` with title,
-    dates, location and details. The Log something vet sheet's buttons now read Apple Calendar / Google Calendar.
+    dates, `ctz` (the phone's time zone, so a 2:30 PM visit lands at 2:30 PM local), location and details. The Log something vet sheet's buttons now read Apple Calendar / Google Calendar.
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -985,6 +985,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   calendar module mocked and `window.open` stubbed), typecheck, build; Playwright (iPhone 13, light and dark, dev
   server with `VITE_SUPABASE_URL=`, store seeded via `import('/chester-training/src/db/store.ts')`) typing the vet's
   name with real keystrokes, the calendar choice, the saved-vet card and "Add to which calendar?".
+- 2026-11-10, QA of pull request #8 (QA worker): no skills, plugins or MCP servers invoked (`lottiefiles-creator`
+  connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 15, light and dark, dev store) for the vet
+  name typed after focusing another field, Google link and .ics contents, booking with no vet, Cancel, double-tap Save.
+  Fix: Google links now carry `ctz`.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
