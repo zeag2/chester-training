@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (UX quick wins, branch `claude/features-ux-quick-wins`, pull request open). Start here when picking
+_Last updated 2026-11-10 (UX quick wins, branch `claude/features-ux-quick-wins`, pull request open; the QA follow-ups are merged). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -17,7 +17,7 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10), typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files (154 in 29 on the vet steps 3–5 branch, 2026-11-10; 175 in 31 after the QA follow-ups), typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
@@ -345,6 +345,15 @@ Items marked *(art)* suit the art session.
    (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
    Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
    Calendar as the default.
+- [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
+   "Not from a visit" now unlinks a document linked the old way (`vet.doc`): it saves `visitId: 'none'`
+   (`NO_VISIT`, `docVisitId` in `src/engine/docs.ts`; doses and weights read from it stay with the visit). Visit
+   times are 12-hour everywhere (`fmtTime` in `src/engine/vets.ts`: visit page, vet cards, the Summary and its shared
+   text). A booked visit whose day passed without being marked done shows in the Summary's recent visits as "booked,
+   not marked done". Back on the visit page and All documents uses `back(fallback)` from `src/ui/router.ts`, which
+   counts in-app pages in `history.state` (opened straight from a link, Back goes to Health instead of leaving the
+   app; SkillPage, Together and the friend Visit page still use `history.length` and could switch). Tunnel: Hide and
+   seek is found only by tapping the bump while he hides; Ambush! is now tapping him as he peeks out of an end.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
 
@@ -434,8 +443,8 @@ Items marked *(art)* suit the art session.
     if you pull away), then hops back in. Moves: If I fits I sits, Peekaboo, Boo!, Paw out, Box ambush.
     **Tunnel:** a tap sends him zooming through (`run` pose behind the tunnel, a small bump travels with him, a
     synthesized crinkle, `audio.crinkle()`); 35% of runs he stops to hide (a big rustling bump), then peeks his head
-    out of the nearer end and comes out; a finger by an end while he hides gets a paw poke, a tap on the bump makes
-    him burst out with a leap; he also goes through on his own every few seconds. Moves: Zoom through, Hide and seek,
+    out of the nearer end and comes out; a finger by an end while he hides gets a paw poke, a tap on the bump finds him
+    (Hide and seek) and a tap on him while he peeks out ambushes (Ambush!), both make him burst out with a leap; he also goes through on his own every few seconds. Moves: Zoom through, Hide and seek,
     Peekaboo, Paw poke, Ambush!, Laps (3 runs through within 10 s). Same rewards as part 1 (+3 treats per move found,
     `move-box-…`/`move-tunnel-…`; the first "catch" of the day pays `PLAY_REWARD`). The shared header, speech bubble,
     rewards and moves card moved to `src/screens/PlayShell.tsx` (`PlayShell`, `usePlayTalk`). No new poses: drawn
@@ -930,6 +939,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   servers invoked. Checks: unit tests, a screen test on the real store with fake IndexedDB (`src/screens/visit.test.tsx`),
   and a few Playwright shots (iPhone 15, light) of the visit page, All documents, the summary and Health's documents,
   with the dev store seeded through `import('/chester-training/src/db/store.ts')`.
+- 2026-11-10, QA follow-ups (Features worker, `claude/features-followups`): no skills, plugins or MCP servers invoked
+  (`lottiefiles-creator` connected, unused). Checks: unit tests only (docs, vetsummary, vets, hideout, a new
+  `src/ui/router.test.ts`); no screenshots.
 - 2026-11-10, UX quick wins (Features worker, `claude/features-ux-quick-wins`): no skills, plugins or MCP servers
   invoked (`lottiefiles-creator` connected, unused). Checks: unit tests, and Playwright shots (iPhone 15, light and
   dark) of Home's Undo toast with two cats, the What's off? chips, and Health, the dev store seeded via

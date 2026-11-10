@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { docTags, findDocs, guessDocType, visitLinks, visitOfDoc } from './docs';
+import { NO_VISIT, docTags, docVisitId, findDocs, guessDocType, visitLinks, visitOfDoc } from './docs';
 import type { CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
@@ -36,6 +36,25 @@ describe('visit links', () => {
     expect(l.weight?.id).toBe('w2');
     expect(visitOfDoc(care, care[3] as CareItem<'doc'>)?.id).toBe('v2');
     expect(visitOfDoc(care, care[4] as CareItem<'doc'>)).toBeUndefined();
+  });
+});
+
+describe('unlinking a document from its visit ("Not from a visit")', () => {
+  const cert = care[3] as CareItem<'doc'>, invoice = care[2] as CareItem<'doc'>, esa = care[4] as CareItem<'doc'>;
+  it('works for a document linked only the old way (the visit’s doc)', () => {
+    expect(docVisitId(care, cert, '')).toBe(NO_VISIT);
+    const unlinked = { ...cert, data: { ...cert.data, visitId: NO_VISIT } };
+    const after = care.map((c) => (c.id === cert.id ? unlinked : c));
+    expect(visitOfDoc(after, unlinked)).toBeUndefined();
+    expect(visitLinks(after, neuter).docs).toEqual([]);
+    expect(visitLinks(after, neuter).doses.map((d) => d.id)).toEqual(['m2']); // doses read from it stay with the visit
+    expect(docVisitId(after, unlinked, NO_VISIT)).toBe(NO_VISIT); // saved again untouched: stays unlinked
+    expect(docVisitId(after, unlinked, 'v1')).toBe('v1'); // and can be linked again
+  });
+  it('works for a document linked by visitId, and leaves an untouched picker alone', () => {
+    expect(docVisitId(care, invoice, '')).toBeUndefined();
+    expect(docVisitId(care, invoice, undefined)).toBe('v1');
+    expect(docVisitId(care, esa, undefined)).toBeUndefined();
   });
 });
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { store, useStore } from '../db/store';
 import { RED_FLAGS, type CareItem } from '../engine/care';
 import { localDay } from '../engine/day';
-import { mapsHref, suggestClinic, telHref, visits, VISIT_REASONS, yourVets, type Vet, type VetData, type VetKind } from '../engine/vets';
+import { fmtTime, mapsHref, suggestClinic, telHref, visits, VISIT_REASONS, yourVets, type Vet, type VetData, type VetKind } from '../engine/vets';
 import { visitLinks } from '../engine/docs';
 import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import { usePetText } from '../lib/pet';
@@ -14,7 +14,6 @@ import { Icon } from './icons';
    "Save and add to calendar". */
 
 const fmtDay = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-const fmtTime = (t?: string) => (t ? new Date(`2000-01-01T${t}:00`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const CAL_KEY = 'paldex-calendar';
 /** Apple (.ics) unless this phone chose Google before. */
 const calPref = (): 'apple' | 'google' => { try { return localStorage.getItem(CAL_KEY) === 'google' ? 'google' : 'apple'; } catch { return 'apple'; } };

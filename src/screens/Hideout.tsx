@@ -18,7 +18,7 @@ const LINES: Partial<Record<HideMode, string[]>> = {
 };
 /** What he says when a move happens (the first time each visit, or by chance after). */
 const MOVE_LINE: Record<string, string> = {
-  fits: 'If I fits, I sits.', boo: 'BOO!', swat: 'Swat swat!', ambush: 'AMBUSH!', paw: 'Got your finger!', laps: 'Again! Again!', hide: 'Shh. I’m hiding.',
+  fits: 'If I fits, I sits.', boo: 'BOO!', swat: 'Swat swat!', ambush: 'AMBUSH!', paw: 'Got your finger!', laps: 'Again! Again!', hide: 'You found me!',
 };
 
 /** How far down (px, as a share of his width) he sits in the box in each mode: popped up, ducked to the ear tips… */

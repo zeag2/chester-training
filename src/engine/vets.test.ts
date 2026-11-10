@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBooked, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
+import { fmtTime, isBooked, mapsHref, suggestClinic, telHref, visits, yourVets, type Vet } from './vets';
 import { reminders, type CareItem } from './care';
 
 const day = (s: string) => Date.parse(s + 'T12:00:00');
@@ -53,5 +53,11 @@ describe('visits', () => {
     // a booking whose day has passed counts as the last visit, even before "How did it go?" is answered
     const r = reminders([past, vet('2026-11-05', { status: 'booked' })], Date.parse('2027-10-20T09:00:00'));
     expect(r.find((x) => x.id === 'vet:yearly')).toMatchObject({ dueDay: '2027-11-05' });
+  });
+});
+
+describe('visit times', () => {
+  it('shows 12-hour times', () => {
+    expect([fmtTime('14:30'), fmtTime('09:05'), fmtTime('00:15'), fmtTime('12:00'), fmtTime(undefined)]).toEqual(['2:30 PM', '9:05 AM', '12:15 AM', '12:00 PM', '']);
   });
 });

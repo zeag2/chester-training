@@ -46,6 +46,14 @@ export function suggestClinic(care: CareItem[]): string | null {
   return [...n.values()].sort((a, b) => b.count - a.count)[0]?.name ?? null;
 }
 
+/** A visit's time ("14:30", from a time input) the way the app shows it everywhere: "2:30 PM". '' when there's none. */
+export function fmtTime(t?: string): string {
+  const m = t ? /^(\d{1,2}):(\d{2})/.exec(t) : null;
+  if (!m) return t ?? '';
+  const h = Number(m[1]);
+  return `${h % 12 || 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
 /** A visit is booked (still to come) when marked so, or when its date is after today (older entries had no status). */
 export function isBooked(i: CareItem, now = Date.now()): boolean {
   if (i.kind !== 'vet') return false;

@@ -65,10 +65,10 @@ export const PLAY_MOVES: Record<AnyToy, { id: string; name: string; hint: string
   ],
   tunnel: [
     { id: 'zoom', name: 'Zoom through', hint: 'Tap the tunnel.' },
-    { id: 'hide', name: 'Hide and seek', hint: 'Keep sending him through. Sometimes he stops inside.' },
+    { id: 'hide', name: 'Hide and seek', hint: 'Keep sending him through. When he stops inside, tap the bump.' },
     { id: 'peek', name: 'Peekaboo', hint: 'Leave him be while he hides in the tunnel.' },
     { id: 'paw', name: 'Paw poke', hint: 'Hold your finger by an end while he hides.' },
-    { id: 'ambush', name: 'Ambush!', hint: 'Tap the bump where he’s hiding.' },
+    { id: 'ambush', name: 'Ambush!', hint: 'Tap him when he peeks out of an end.' },
     { id: 'laps', name: 'Laps', hint: 'Send him through three times in a row.' },
   ],
 };
