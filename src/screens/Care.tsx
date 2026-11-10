@@ -78,6 +78,13 @@ export function Care({ open }: { open?: CareKind } = {}) {
           onClick={() => { const booked = r.kind === 'visit' ? care.find((c): c is CareItem<'vet'> => c.id === r.id.slice(6) && c.kind === 'vet') : undefined;
             downloadIcs(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
+    <h2 style={{ marginTop: 22 }}>Log something</h2>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
+      {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
+        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 12 }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
+      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 12 }}>Food or treat</span></button>
+    </div>
+
     {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
       <div className="card white">
         {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
@@ -85,13 +92,6 @@ export function Care({ open }: { open?: CareKind } = {}) {
           <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
           <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>)}
         <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>}
-
-    <h2 style={{ marginTop: 22 }}>Log something</h2>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
-      {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
-        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 12 }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
-      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 12 }}>Food or treat</span></button>
-    </div>
 
     {ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}

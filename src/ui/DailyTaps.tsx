@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { store, useStore } from '../db/store';
-import { dailyToday, MEALS_PER_DAY, type CareItem, type DailyWhat } from '../engine/care';
+import { dailyToday, likelySymptoms, MEALS_PER_DAY, type CareItem, type DailyWhat } from '../engine/care';
 import { Icon, Paw } from './icons';
 import { go } from './router';
 import * as audio from '../lib/audio';
@@ -17,6 +18,10 @@ export function DailyTaps() {
   /** `ids`: everything the last tap logged (one per cat once "All cats" is tapped), so Undo takes all of it back. */
   const [undo, setUndo] = useState<{ ids: string[]; what: DailyWhat; all?: boolean } | null>(null);
   const [busy, setBusy] = useState<DailyWhat | null>(null);
+  /** After "Something's off": the symptom chips, likely ones preselected, so saving is one more tap (not the full form). */
+  const [off, setOff] = useState<{ chips: string[]; picked: string[] } | null>(null);
+  // the symptom picker belongs to one cat: close it when the shown cat changes, so Save never logs to the wrong one
+  useEffect(() => setOff(null), [cat?.id]);
   useEffect(() => { if (!undo) return; const t = window.setTimeout(() => setUndo(null), 5000); return () => window.clearTimeout(t); }, [undo]);
   const today = useMemo(() => dailyToday(care), [care]);
   if (!cat) return null;
@@ -54,21 +59,33 @@ export function DailyTaps() {
         <span className="s" style={{ fontSize: 12, lineHeight: 1.2, textAlign: 'center' }}>{t.sub}</span>
       </button>)}
     </div>
-    {check ? <p className="s row" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{check.data.ok === false ? `Today’s check: something was off (${time(check.at)}).` : `Today’s check: all normal (${time(check.at)}${who(check) === 'you' ? '' : `, ${who(check)}`}).`}</p>
+    {off ? <div style={{ marginTop: 12, padding: 12, borderRadius: 16, background: 'var(--sky)' }}>
+        <b style={{ fontSize: 15 }}>What’s off?</b>
+        <p className="s" style={{ marginTop: 2 }}>{off.picked.length ? 'Picked from the last few days. Change it if it’s something else.' : 'Tap what you noticed.'}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>{off.chips.map((c) => { const on = off.picked.includes(c);
+          return <button key={c} className={`chipbtn ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => setOff({ ...off, picked: on ? off.picked.filter((x) => x !== c) : [...off.picked, c] })}>{c}</button>; })}</div>
+        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+          <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} onClick={() => { setOff(null); go('health/log/symptom'); }}>Other or details…</button>
+          <button className="btn" style={{ flex: 1, width: 'auto', minHeight: 48, fontSize: 15 }} disabled={!off.picked.length || !!busy} onClick={async () => {
+            if (busy) return; setBusy('check');
+            try { for (const what of off.picked) await store.saveCare('symptom', { what }); audio.chirp(); setOff(null); } finally { setBusy(null); } }}>Save{off.picked.length > 1 ? ` (${off.picked.length})` : ''}</button>
+        </div>
+      </div>
+      : check ? <p className="s row" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{check.data.ok === false ? `Today’s check: something was off (${time(check.at)}).` : `Today’s check: all normal (${time(check.at)}${who(check) === 'you' ? '' : `, ${who(check)}`}).`}</p>
       : <div style={{ marginTop: 12, padding: 12, borderRadius: 16, background: 'var(--sky)' }}>
         <b style={{ fontSize: 15 }}>Daily check</b>
         <p className="s" style={{ marginTop: 2 }}>Is {cat.name} eating, using the litter box and acting like {cat.sex === 'f' ? 'herself' : 'himself'}?</p>
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
           <button className="btn2" style={{ flex: 1, padding: '0 10px', background: 'var(--surface)' }} disabled={!!busy} onClick={() => void log('check', { ok: true })}>All normal</button>
-          <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={async () => { await log('check', { ok: false }); go('health/log/symptom'); }}>Something’s off</button>
+          <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={async () => { const likely = likelySymptoms(care); await log('check', { ok: false }); setOff(likely); }}>Something’s off</button>
         </div>
       </div>}
-    {undo && <div className="row pop" role="status" style={{ flexWrap: 'wrap', gap: 6, marginTop: 10, padding: '6px 6px 6px 12px', borderRadius: 14, background: 'var(--butter)' }}>
-      <Paw color="#d4a23a" size={18} /><span className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{DONE[undo.what]}{undo.all ? ' for all cats' : ''}</span>
-      {others.length > 0 && undo.what !== 'check' && !undo.all && <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => void logOthers()}>{alsoLabel}</button>}
-      {undo.what === 'scoop' && !undo.all && <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
-      <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { for (const id of undo.ids) void store.deleteCare(id); setUndo(null); }}>Undo</button>
-    </div>}
+    {undo && createPortal(<div className="toast pop" role="status">
+      <Paw color="#d4a23a" size={18} /><span className="msg sp">{DONE[undo.what]}{undo.all ? ' for all cats' : ''}</span>
+      {others.length > 0 && undo.what !== 'check' && !undo.all && <button className="btn2" onClick={() => void logOthers()}>{alsoLabel}</button>}
+      {undo.what === 'scoop' && !undo.all && <button className="btn2" onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }); setUndo(null); go('health'); }}>Looked off?</button>}
+      <button className="btn2" onClick={() => { for (const id of undo.ids) void store.deleteCare(id); setUndo(null); if (undo.what === 'check') setOff(null); }}>Undo</button>
+    </div>, document.body)}
   </div>;
 }
 

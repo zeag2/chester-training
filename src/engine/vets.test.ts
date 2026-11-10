@@ -38,7 +38,21 @@ describe('visits', () => {
   it('lists a booked visit in Coming up and doesn’t let it push back the yearly checkup', () => {
     const r = reminders([vet('2025-12-01', { reason: 'Checkup' }), vet('2026-11-24', { reason: 'Booster', status: 'booked', clinic: 'Maple' })], NOW);
     expect(r.find((x) => x.kind === 'visit')).toMatchObject({ title: 'Vet: Booster', dueDay: '2026-11-24', daysLeft: 14 });
-    expect(r.find((x) => x.id === 'vet:yearly')?.dueDay).toBe('2026-12-01'); // a year after the real last checkup
+    expect(r.find((x) => x.id === 'vet:yearly')).toBeUndefined(); // the booking satisfies it
+  });
+  it('counts the yearly checkup from the last real visit, never a year past a booking', () => {
+    const past = vet('2025-11-01', { reason: 'Checkup' });
+    // overdue with nothing booked
+    expect(reminders([past], NOW).find((x) => x.id === 'vet:yearly')).toMatchObject({ dueDay: '2026-11-01', daysLeft: -9 });
+    // booked (with or without a status): the booking stands in for it, nothing dated 2027
+    for (const b of [vet('2026-12-05', { status: 'booked' }), vet('2026-12-05', {})]) {
+      const r = reminders([past, b], NOW);
+      expect(r.find((x) => x.id === 'vet:yearly')).toBeUndefined();
+      expect(r.some((x) => x.dueDay.startsWith('2027'))).toBe(false);
+    }
+    // a booking whose day has passed counts as the last visit, even before "How did it go?" is answered
+    const r = reminders([past, vet('2026-11-05', { status: 'booked' })], Date.parse('2027-10-20T09:00:00'));
+    expect(r.find((x) => x.id === 'vet:yearly')).toMatchObject({ dueDay: '2027-11-05' });
   });
 });
 
