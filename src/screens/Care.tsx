@@ -49,13 +49,13 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
   const [calFor, setCalFor] = useState<CalEvent | null>(null);
   const due = useMemo(() => reminders(care), [care]);
-  const [quickLogs, setQuickLogs] = useState(false);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
   const log = care.filter((c) => c.kind !== 'food' && c.kind !== 'doc' && c.kind !== 'daily').slice(0, 40);
   const docs = useMemo(() => findDocs(care), [care]);
   const ws = weights(care);
   const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
+  const [quickLogs, setQuickLogs] = useState(false);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
   if (!cat) return null;
 
@@ -121,6 +121,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <div className="ico grey"><Paw size={22} /></div>
       <div className="sp"><b>Quick logs</b><p className="s">Fed, scooped, played and daily checks from the last 7 days. Tap to fix a mistake.</p></div>
       <span className="s" aria-hidden="true">›</span></button>
+    {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
     {log.length === 0 && <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
     {log.map((i) => <button key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
       <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
@@ -129,7 +130,6 @@ export function Care({ open }: { open?: CareKind } = {}) {
 
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
-    {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
   </div>;
 }
 
