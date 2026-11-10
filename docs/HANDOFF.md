@@ -871,6 +871,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - Later the same day: the per-browser install guide. No skills, plugins or MCP servers invoked; checked with
   Playwright (iPhone 15 size, user agents for iPhone Safari, Chrome, Instagram and Samsung Internet).
 
+### The team (project manager and workers)
+- Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
+  worker sessions (at most 2 at a time, only when Josh asks). Rules and roles: `docs/team.md`.
+
 ### Scheduled tasks
 - **PalDex UX review** (set up 2026-11-08/09 by the friends session, at Josh's request): **once a night at 1:45 AM
   Eastern** (`CRON_TZ=America/New_York 45 1 * * *`; changed 2026-11-09 from every 4 hours, to save usage; it starts by
