@@ -155,6 +155,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   preselected, so Save is one more tap; `likelySymptoms()` in `care.ts` preselects anything logged in the last 3 days
   and offers Eating less / Litter box change / Low energy next; "Other or details…" opens the full form). Each chosen
   chip is saved as its own symptom. Once done it shrinks to one line.
+- **Fixing a mistaken tap later** (2026-11-10, `src/ui/DailyLogSheet.tsx`, branch `claude/features-edit-logs`): a
+  **done** tile (e.g. "Fed 2 of 2", "Scooped 8:15", "Played 1×") opens that kind's entries for today instead of
+  logging again, with **Log another meal** / Scooped again / Played again at the bottom for a real extra one. Under the
+  tiles, **"Logged by mistake? Fix today's entries"** (shown once anything is logged today) opens all of today's quick
+  logs, the daily check included. Each row has a time to change (same day; `atTimeOfDay()` in
+  `src/engine/dailylog.ts`) and a delete with an inline **Keep / Delete** confirm. It's the shown cat's entries; switch
+  cats for the other's. Deletes go through `store.deleteCare` (the soft delete Undo uses) and time changes through
+  `store.saveCare` with the item's id and `catId`, so both sync like any care edit; no new SQL. Deleting a "something
+  was off" check leaves its symptoms (they're in Health's log, deletable there). Health's log has a **Quick logs** row
+  that opens the same sheet for the last 7 days, grouped by day (`dailyLogDays()`). Opening the sheet from Home closes the Undo toast
+  (it would sit hidden behind the sheet and come back stale), and the sheet closes when the shown cat changes.
 - **The Undo note is a floating toast** (`.toast` in `app.css`, portalled to `body`) just above the tab bar, on one row
   however many cats (the label ellipsizes; the buttons don't wrap). Since 2026-11-10.
 - One-tap logs earn care treats like any entry (capped at 3 a day) and aren't listed in Health's log
@@ -425,6 +436,8 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
+  permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
 - [x] **Treats for logging care** (see section 1, corner).
 - [x] **Cat art redraw** (art session's notes, kept as written): first pass done and live (branch `claude/chester-cat-art-redraw-xlu1vr`, merged 2026-11-08).
@@ -1038,6 +1051,14 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   connected, unused). Checks: tests, typecheck, build; Playwright (iPhone 15, light and dark, dev store) for the vet
   name typed after focusing another field, Google link and .ics contents, booking with no vet, Cancel, double-tap Save.
   Fix: Google links now carry `ctz`.
+- 2026-11-10, fix mistaken quick logs (Features worker, `claude/features-edit-logs`): no skills, plugins or MCP
+  servers invoked (`lottiefiles-creator` connected, unused). Checks: tests (194 in 35 files; new
+  `src/engine/dailylog.test.ts` and `src/ui/dailylog.test.tsx`), typecheck, build; Playwright (iPhone 15, light and
+  dark, dev server with `VITE_SUPABASE_URL=`, two cats seeded through `globalThis.__chesterStore`) of Home's Quick log,
+  the Fed sheet, its delete confirm, and Health's 7-day Quick logs sheet.
+- 2026-11-10, QA of PR #10 (QA worker): merged `main` in (trivial import conflict in `DailyTaps.tsx`); no skills,
+  plugins or MCP servers invoked. Checks: tests (204), typecheck, build; Playwright (iPhone 13, light and dark, dev
+  store, two cats). Fixed: the sheet now replaces the Undo toast and closes on a cat switch (test added).
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**
