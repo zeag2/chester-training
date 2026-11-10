@@ -6,6 +6,8 @@
    gets stared at (and chattered at); a feather dangling low gets swatted, one swishing past overhead gets leapt at. */
 
 export type Toy = 'laser' | 'wand';
+/** Every toy with its own game: the chasing toys here, the hiding toys (box, tunnel) in `hideout.ts`. */
+export type AnyToy = Toy | 'box' | 'tunnel';
 export interface Target { x: number; h: number }
 export type Mode = 'sit' | 'watch' | 'stare' | 'walk' | 'chase' | 'stalk' | 'pounce' | 'land' | 'swat' | 'happy';
 
@@ -38,7 +40,7 @@ export interface Brain {
 export type PlayEvent = { kind: 'move'; move: string } | { kind: 'catch' } | { kind: 'miss' } | { kind: 'pounce' } | { kind: 'swat' };
 
 /** The moves to discover with each toy, in the order you're likely to find them, with a hint for the next one. */
-export const PLAY_MOVES: Record<Toy, { id: string; name: string; hint: string }[]> = {
+export const PLAY_MOVES: Record<AnyToy, { id: string; name: string; hint: string }[]> = {
   laser: [
     { id: 'wiggle', name: 'Butt wiggle', hint: 'Hold the dot still near him.' },
     { id: 'zoomies', name: 'Zoomies', hint: 'Whip the dot back and forth across the floor.' },
@@ -53,6 +55,21 @@ export const PLAY_MOVES: Record<Toy, { id: string; name: string; hint: string }[
     { id: 'leap', name: 'Big leap', hint: 'Swish the feather past, a little above him.' },
     { id: 'aircatch', name: 'Mid-air catch', hint: 'Hold the feather still just above him while he leaps.' },
     { id: 'double', name: 'Double catch', hint: 'Let him catch it twice in a row.' },
+  ],
+  box: [
+    { id: 'fits', name: 'If I fits, I sits', hint: 'Give him a moment by the box.' },
+    { id: 'peek', name: 'Peekaboo', hint: 'Leave him be while he hides.' },
+    { id: 'boo', name: 'Boo!', hint: 'Tap the box while he’s hiding.' },
+    { id: 'swat', name: 'Paw out', hint: 'Hold your finger beside the box while he peeks.' },
+    { id: 'ambush', name: 'Box ambush', hint: 'Hold your finger by the box while he’s ducked down.' },
+  ],
+  tunnel: [
+    { id: 'zoom', name: 'Zoom through', hint: 'Tap the tunnel.' },
+    { id: 'hide', name: 'Hide and seek', hint: 'Keep sending him through. Sometimes he stops inside.' },
+    { id: 'peek', name: 'Peekaboo', hint: 'Leave him be while he hides in the tunnel.' },
+    { id: 'paw', name: 'Paw poke', hint: 'Hold your finger by an end while he hides.' },
+    { id: 'ambush', name: 'Ambush!', hint: 'Tap the bump where he’s hiding.' },
+    { id: 'laps', name: 'Laps', hint: 'Send him through three times in a row.' },
   ],
 };
 /** Each move found the first time: a few treats (once per pet, merged by id like the rest of the corner). */
@@ -182,7 +199,7 @@ export function step(b0: Brain, target: Target | null, dt: number, o: StepOpts):
 }
 
 /** The moves of a toy this pet has found (from its corner log: `move-<toy>-<move>` ids). */
-export function movesFound(log: { id: string }[] | undefined, toy: Toy): string[] {
+export function movesFound(log: { id: string }[] | undefined, toy: AnyToy): string[] {
   const p = `move-${toy}-`;
   return PLAY_MOVES[toy].map((m) => m.id).filter((id) => (log ?? []).some((e) => e.id === p + id));
 }

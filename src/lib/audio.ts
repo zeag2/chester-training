@@ -132,6 +132,23 @@ export function meow(kind: 'mew' | 'meow' | 'mrrp' = 'meow') {
   o.start(t); vib.start(t); o.stop(t + len + 0.02); vib.stop(t + len + 0.02);
 }
 
+/** A crinkle tunnel rustling: quick bright bursts of crackly noise (shorter and higher than the litter digging). */
+export function crinkle(sec = 0.5) {
+  const c = ac(); if (!c) return; const t = c.currentTime;
+  const out = c.createGain(); out.gain.value = 0.22; out.connect(c.destination);
+  let at = 0;
+  while (at < sec) {
+    const dur = 0.02 + Math.random() * 0.04;
+    const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate); const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() < 0.18 ? Math.random() * 2 - 1 : 0; // crackles
+    const s = c.createBufferSource(); s.buffer = buf;
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500 + Math.random() * 2500;
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(1, t + at + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+    s.connect(hp); hp.connect(g); g.connect(out); s.start(t + at); s.stop(t + at + dur);
+    at += dur + 0.01 + Math.random() * 0.05;
+  }
+}
+
 /** Somebody digging in a litter box, off to the right: uneven bursts of gritty noise. */
 export function litter(sec = 1.8) {
   const c = ac(); if (!c) return; const t = c.currentTime;
