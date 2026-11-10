@@ -22,8 +22,8 @@ shared with the people you live with, plus friends who can see each other's cats
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
-  2026-11-09: the table and all six functions exist and refuse signed-out callers). **`20261115000000_vets.sql` is not
-  run yet** (until then vets stay on each phone).
+  2026-11-09: the table and all six functions exist and refuse signed-out callers). `20261115000000_vets.sql` has been
+  run too (checked 2026-11-10: the table exists and refuses signed-out callers).
 
 ## Pick up here
 
