@@ -14,8 +14,12 @@ const ping = () => subs.forEach((f) => f());
 export function showToast(t: ToastNote) { current = { ...t, id: ++n }; ping(); }
 export function hideToast() { current = null; ping(); }
 
+const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
+/** The toast showing now, if any (other floating notes move up so they don't cover its Undo). */
+export const useToast = () => useSyncExternalStore(subscribe, () => current);
+
 export function ToastHost() {
-  const t = useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => current);
+  const t = useToast();
   useEffect(() => {
     if (!t) return;
     const id = t.id; const timer = window.setTimeout(() => { if (current?.id === id) hideToast(); }, t.ms ?? 6000);

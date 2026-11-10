@@ -220,6 +220,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   - **Errors:** if saving the vet or the visit throws, the sheet stays open, the pre-opened Google tab is closed, Save
     works again, and it says so. A vet added in the sheet is kept, so a retry doesn't add it twice.
   - **No address:** the calendar place is the clinic's name and the notes no longer repeat it (`visitEvent`).
+  - **One toast at a time (QA fix):** Health's "+N treats for logging" note moves up above the booking toast
+    while one shows (`useToast`), so it doesn't cover Undo; Home's Quick log Undo hides a booking toast still showing.
+    Undo removes the visit but not the treats it earned (as with any deleted care entry).
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -960,6 +963,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
   Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
   `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
+- 2026-11-10, booking polish QA (QA worker): no skills, plugins or MCP servers invoked beyond the GitHub and
+  session tools. Checks: Vitest, typecheck, build; Playwright (iPhone 15, light and dark, dev store
+  `globalThis.__chesterStore`) for Book from Coming up, Call, quick times, Undo, Other clinic offline with Google, and
+  the icon note (iPhone standalone, Safari tab, Android standalone).
 - In the Nov 7 sessions: **reanimate**, **earshot**/**real-sound**, **huashu-art-motion** and claudedesignskills (motion
   and sound pass).
 - In the Nov 8 redraw session: no skills invoked. The `lottiefiles-creator` MCP server connected (first time) but
