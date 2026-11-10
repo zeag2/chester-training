@@ -1,9 +1,13 @@
 import Dexie, { type Table } from 'dexie';
 import type { Cat, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
 import type { CareItem } from '../engine/care';
+import type { Vet } from '../engine/vets';
 
 /** A care item as kept on the phone; dirty = 1 until the shared copy has it. */
 export type CareRow = CareItem & { dirty?: number };
+
+/** A vet contact as kept on the phone; dirty = 1 until the shared copy has it. */
+export type VetRow = Vet & { dirty?: number };
 
 export type ProgressRow = SkillProgress & { catId: string };
 
@@ -14,6 +18,7 @@ export class ChesterDB extends Dexie {
   wallet!: Table<Wallet, string>;
   drafts!: Table<SessionDraft, string>;
   care!: Table<CareRow, string>;
+  vets!: Table<VetRow, string>;
   constructor(name = 'chester') {
     super(name);
     this.version(1).stores({
@@ -24,5 +29,6 @@ export class ChesterDB extends Dexie {
       drafts: 'catId',
     });
     this.version(2).stores({ care: 'id, catId, dirty' });
+    this.version(3).stores({ vets: 'id, householdId, dirty' });
   }
 }

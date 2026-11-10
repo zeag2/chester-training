@@ -15,6 +15,7 @@ import { byBarcode, sameCode, search, type FoodHit } from '../lib/petfood';
 import { Scanner } from './Scanner';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { CareTreatNote } from '../ui/CareTreatNote';
+import { VetCard, VisitsCard, visitEvent } from '../ui/VetCards';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -36,11 +37,10 @@ function summary(i: CareItem): string {
 type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[CareKind]> } | null;
 
 export function Care({ open }: { open?: CareKind } = {}) {
-  const { cat, care, careSync, account, household } = useStore();
+  const { cat, care, careSync, account, household, vets } = useStore();
   const pt = usePetText();
   // opened from the + sheet: go straight to that log form
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
-  const [flags, setFlags] = useState(false);
   const due = useMemo(() => reminders(care), [care]);
   const foods = care.filter((c): c is CareItem<'food'> => c.kind === 'food');
   // one-tap daily logs (meals, litter, play, checks) are summed up on Home, not listed here; symptoms from a check are
@@ -56,25 +56,22 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <PetSwitcher />
     <CareTreatNote />
     <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
-    <button className="btn2" style={{ marginTop: 12, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
-    <button className="card peach row" style={{ alignItems: 'flex-start' }} onClick={() => setFlags(!flags)} aria-expanded={flags}>
-      <div className="ico"><Icon name="ear" /></div>
-      <div className="sp"><b>When to call the vet now</b>
-        {!flags && <p className="s" style={{ color: 'var(--peach-ink)' }}>Tap to see the warning signs.</p>}
-        {flags && <><ul className="s" style={{ color: 'var(--peach-ink)', margin: '6px 0 0', paddingLeft: 18 }}>{RED_FLAGS.map((f) => <li key={f} style={{ marginTop: 4 }}>{pt(f)}</li>)}</ul>
-          <p className="s" style={{ marginTop: 8, color: 'var(--peach-ink)' }}>This app can’t diagnose anything. If you’re unsure, call your vet or an emergency vet.</p></>}
-      </div>
-    </button>
+    {/* vet first: who to call (and the warning signs), then visits; docs/plans/2026-11-09-vet-redesign.md */}
+    <VetCard />
+    <VisitsCard onOpen={(v) => setEditing({ kind: 'vet', item: v })} />
+    <button className="btn2" style={{ marginTop: 4, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
 
     {due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
       {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
-        onClick={() => setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } })}>
-        <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' ? 'box' : 'check'} /></div>
+        onClick={() => { const booked = r.kind === 'visit' ? care.find((c) => c.id === r.id.slice(6)) : undefined;
+          setEditing(booked ? { kind: 'vet', item: booked } : r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } }); }}>
+        <div className="ico"><Icon name={r.kind === 'groom' ? 'hand' : r.kind === 'vet' || r.kind === 'visit' ? 'box' : 'check'} /></div>
         <div className="sp"><b>{r.title}</b><p className="s">{r.detail}</p></div><span className="chip">{dueText(r.daysLeft)}</span></button>
         {r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
-          onClick={() => downloadIcs({ title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail })}>
+          onClick={() => { const booked = r.kind === 'visit' ? care.find((c): c is CareItem<'vet'> => c.id === r.id.slice(6) && c.kind === 'vet') : undefined;
+            downloadIcs(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
     {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
       <div className="card white">
@@ -157,7 +154,8 @@ function Sheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: (
   const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
-    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100 } : clean({ ...f, name: f.name?.trim?.() ?? f.name });
+    // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
+    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100 } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
     await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim() } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };

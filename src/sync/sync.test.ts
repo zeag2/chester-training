@@ -449,6 +449,29 @@ describe('training Chester together', () => {
     expect([...server.care.values()].filter((c) => c.catId === luna.id).map((c) => (c.data as { what: string }).what)).toEqual(['fed']);
     expect(await josh.saveCare('daily', { what: 'fed' }, { catId: 'not-mine' })).toBeNull();
   });
+  it('keeps your vet on the phone, then shares it with the household', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.saveCat(chester);
+    const v = await josh.saveVet({ kind: 'primary', clinic: 'Maple Street Vet', phone: '555-0100' }); // before signing in
+    expect(josh.get().vets.map((x) => x.data.clinic)).toEqual(['Maple Street Vet']);
+    await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true); await josh.sync();
+    expect([...server.vets.values()].map((x) => [x.data.clinic, !!x.householdId])).toEqual([['Maple Street Vet', true]]);
+    const meg = device(server); await meg.load(); await meg.signIn('meg@example.com', 'catnip1', 'Megan', false, true);
+    await meg.join(josh.get().household!.inviteCode, 'Megan'); await meg.sync();
+    expect(meg.get().vets.map((x) => x.data.phone)).toEqual(['555-0100']);
+    await meg.saveVet({ ...v!.data, vetName: 'Dr. Patel' }, v!.id); await meg.sync(); await josh.sync();
+    expect(josh.get().vets[0].data.vetName).toBe('Dr. Patel');
+    await josh.deleteVet(v!.id); await josh.sync(); await meg.sync();
+    expect(meg.get().vets).toEqual([]);
+  });
+  it('keeps vets on the phone until the vets SQL is run', async () => {
+    const server = new FakeServer(); server.vetsTable = false;
+    const a = device(server); await a.load(); await a.saveCat(chester); await a.signIn('a@example.com', 'catnip1', 'A', true, true);
+    await a.saveVet({ kind: 'emergency', clinic: 'CityPets 24h' }); await a.sync();
+    expect(a.get().vetsSync).toBe('missing');
+    expect(a.get().vets.map((x) => x.data.clinic)).toEqual(['CityPets 24h']);
+    expect(a.get().sync).toBe('ok');
+  });
   it('says friends need setting up until the friends SQL is run', async () => {
     const server = new FakeServer(); server.friendsTable = false;
     const a = device(server); await a.load(); await a.signIn('a@example.com', 'catnip1', 'A', false, true);

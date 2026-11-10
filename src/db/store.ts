@@ -10,7 +10,8 @@ import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
-import type { CareRow } from './db';
+import type { CareRow, VetRow } from './db';
+import type { Vet, VetData } from '../engine/vets';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
 import { MOVE_REWARD } from '../engine/play';
@@ -39,6 +40,10 @@ export interface Snapshot {
   care: CareItem[];
   /** 'missing' = the shared copy has no care table yet (its setup SQL hasn't been run). */
   careSync: 'ok' | 'missing';
+  /** The household's vet contacts (the usual vet, an emergency vet). `vetsSync: 'missing'` = the vets SQL isn't run yet
+      (they're kept on this phone meanwhile). */
+  vets: Vet[];
+  vetsSync: 'ok' | 'missing';
   /** Every pet on this phone, for the switcher. `cat` is the one being shown. */
   pets: (Pick<Cat, 'id' | 'name' | 'coat' | 'eyes' | 'sex'> & { wear?: string })[];
   /** Loaded when the Friends screen opens; null when signed out or not loaded yet. */
@@ -64,7 +69,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 export class Store {
   db: ChesterDB;
   remote: Remote | null = null;
-  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [], requests: [] };
+  snap: Snapshot = { ready: false, cat: null, progress: {}, sets: [], wallet: null, draft: null, unlockedHidden: [], account: null, household: null, sync: 'off', care: [], careSync: 'ok', vets: [], vetsSync: 'ok', pets: [], friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [], requests: [] };
   private subs = new Set<() => void>();
   private chain: Promise<unknown> = Promise.resolve();
   rand: () => number = Math.random;
@@ -101,7 +106,8 @@ export class Store {
     const wallet = mergeWallet(local, withCorner(deriveEarned(sets, cat.carry), cat.corner));
     const draft = (await this.db.drafts.get(cat.id)) ?? null;
     const care = (await this.db.care.where('catId').equals(cat.id).toArray()).filter((c) => !c.deleted).map(({ dirty: _d, ...c }) => c as CareItem).sort((a, b) => b.at - a.at);
-    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, pets, ...patch });
+    const vets = await this.vetsFor(cat);
+    this.set({ cat, sets, progress: deriveProgress(sets, SKILL_BY_ID), wallet, draft, care, vets, pets, ...patch });
   }
 
   async load() {
@@ -216,6 +222,50 @@ export class Store {
   foundMove(toy: string, move: string): Promise<boolean> {
     const id = `move-${toy}-${move}`;
     return this.corner((c) => (c.log.some((e) => e.id === id) ? null : { ...c, log: [...c.log, this.event('move', id, MOVE_REWARD.treats, MOVE_REWARD.bond, toy)] }));
+  }
+
+  // ---- your vet ----
+
+  /** The vets of the shown pet's household (and any saved on this phone before it was shared). */
+  private async vetsFor(cat: Cat): Promise<Vet[]> {
+    const h = cat.householdId ?? '';
+    return (await this.db.vets.toArray()).filter((v) => !v.deleted && (v.householdId === h || v.householdId === '')).map(({ dirty: _d, ...v }) => v as Vet);
+  }
+  /** Add or edit a vet contact. Saved on the phone right away, shared with the household on the next sync. */
+  saveVet(data: VetData, id?: string): Promise<Vet | null> {
+    return this.serial(async () => {
+      const cat = this.snap.cat; if (!cat) return null;
+      const old = id ? await this.db.vets.get(id) : undefined;
+      const row: VetRow = { id: id ?? uid(), householdId: old?.householdId || cat.householdId || '', updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
+      await this.db.vets.put(row); this.set({ vets: await this.vetsFor(cat) });
+      if (this.snap.account) void this.sync();
+      const { dirty: _d, ...out } = row; return out as Vet;
+    });
+  }
+  deleteVet(id: string): Promise<void> {
+    return this.serial(async () => {
+      const cat = this.snap.cat; const old = await this.db.vets.get(id); if (!cat || !old) return;
+      await this.db.vets.put({ ...old, deleted: true, updatedAt: Math.max(Date.now(), old.updatedAt + 1), dirty: 1 }); this.set({ vets: await this.vetsFor(cat) });
+      if (this.snap.account) void this.sync();
+    });
+  }
+  /** Send this phone's vet edits, take the household's (newest edit wins). Vets saved before sharing join the household. */
+  private async syncVets(r: Remote, householdId: string): Promise<'ok' | 'missing'> {
+    try {
+      const orphans = await this.db.vets.filter((v) => v.householdId === '').toArray();
+      if (orphans.length) await this.db.vets.bulkPut(orphans.map((v) => ({ ...v, householdId, dirty: 1 })));
+      const theirs = await r.pullVets(householdId);
+      const mine = new Map((await this.db.vets.where('householdId').equals(householdId).toArray()).map((v) => [v.id, v]));
+      const known = new Map(theirs.map((t) => [t.id, t]));
+      const take = theirs.filter((t) => { const m = mine.get(t.id); return !m || t.updatedAt > m.updatedAt; }).map((t) => ({ ...t, dirty: 0 }));
+      const send = [...mine.values()].filter((m) => m.dirty && (!known.has(m.id) || m.updatedAt > known.get(m.id)!.updatedAt)).map(({ dirty: _d, ...m }) => m as Vet);
+      await r.pushVets(send);
+      await this.db.vets.bulkPut([...take, ...send.map((m) => ({ ...m, dirty: 0 }))]);
+      return 'ok';
+    } catch (e) {
+      if (String((e as Error)?.message).includes('vets-missing')) return 'missing';
+      throw e;
+    }
   }
 
   // ---- Chester's care ----
@@ -466,7 +516,8 @@ export class Store {
       const meRow = household?.members.find((m) => m.userId === account.userId);
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
-      await this.rebuild(cat, { household, sync: 'ok', careSync });
+      const vetsSync = shared?.cat.householdId ? await this.syncVets(r, shared.cat.householdId).catch(() => 'ok' as const) : 'ok';
+      await this.rebuild((await this.db.cats.get(cat.id)) ?? cat, { household, sync: 'ok', careSync, vetsSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);
       void this.collectTreats();

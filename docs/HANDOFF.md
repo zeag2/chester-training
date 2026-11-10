@@ -17,12 +17,13 @@ shared with the people you live with, plus friends who can see each other's cats
   `claude/…` branch (latest: `claude/practical-einstein-7eoqfi`) and goes live once it is merged or pushed to `main`.
 - **Shared data:** Supabase project `vtcufhddooqzckjcpzwn`. URL and publishable key are in `src/sync/config.ts`
   (the publishable key is meant to be public; row-level security protects the data).
-- **State at handoff (2026-11-09):** 136 tests passing in 26 files, typecheck and build clean, everything on `main`
+- **State at handoff (2026-11-09):** 143 tests passing in 27 files, typecheck and build clean, everything on `main`
   and live (friend requests, the per-browser install guide, smart defaults and logging for all cats, playable laser
   and wand, zoomies sprint and backflip, the full-belly pose, the retimed walk). Branch:
   `claude/friend-request-acceptance-zytxm7`. All Supabase SQL
   through `20261114000000_friend_requests.sql` has been run (friend requests checked against the live database on
-  2026-11-09: the table and all six functions exist and refuse signed-out callers).
+  2026-11-09: the table and all six functions exist and refuse signed-out callers). **`20261115000000_vets.sql` is not
+  run yet** (until then vets stay on each phone).
 
 ## Pick up here
 
@@ -161,6 +162,20 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   everything else kept syncing; they upload once it's run (that fallback stays in place for new Supabase projects).
 
 ### Health (the Health tab, `#/health`; was "Chester's care")
+- **Vet first (2026-11-09, steps 1–2 of `docs/plans/2026-11-09-vet-redesign.md`, by the UX auditor, PR #2):** the top
+  of Health is `VetCard` and `VisitsCard` (`src/ui/VetCards.tsx`). **Your vet**: clinic, vet's name, address, one-tap
+  **Call** (`tel:`) and **Directions** (Apple Maps link), the **emergency vet** with its own Call, and **Is this an
+  emergency?** (the red flags with both call buttons; replaces the old "When to call the vet now" card). With no vet
+  saved: "Is <clinic you typed most> your vet?" (`suggestClinic`) or Add your vet. Vets are a household table
+  (`vets`, `src/engine/vets.ts`, synced newest-wins with tombstones like care; kept on the phone and joined to the
+  household on sharing; `vetsSync: 'missing'` until `20261115000000_vets.sql` is run). **Visits**: Next (with Add to
+  calendar), "How did Chester's visit go?" once a booked day has passed (opens the visit to add notes; saving marks it
+  done), Last, and **Book a visit** (clinic chips from your vets or somewhere else, reason chips, date, time, notes;
+  **Save and add to calendar**: Apple .ics by default, Google remembered per phone; the event has the clinic's address
+  as the place, the phone in the notes, reminders the day before and 2 h before, and a stable UID per visit). Visits
+  carry `status: 'booked' | 'done'` and `vetId` in their care data; `reminders()` lists booked visits in Coming up and
+  no longer counts them as the last checkup (the bug the audit found). Next: steps 3–5 (visit page with linked
+  documents, All documents with search, a better Summary for the vet), see section 2.
 - **When to call the vet now:** red-flag signs, with a clear "this app doesn't diagnose".
 - **Coming up:** medicine and vaccine due dates, nails and brushing getting overdue (once started), and the yearly
   checkup.
@@ -294,6 +309,11 @@ Items marked *(art)* suit the art session.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
 6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
+7. [ ] **Vet redesign, steps 3–5** (Josh, 2026-11-09; plan `docs/plans/2026-11-09-vet-redesign.md`, steps 1–2 done):
+   a page per visit (`#/health/visit/<id>`) with its documents, doses and weight linked by `visitId`; All documents
+   (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
+   Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
+   Calendar as the default.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
 
@@ -555,6 +575,7 @@ supabase/
     20261112000000_daily_logs.sql        adds the 'daily' care kind (one-tap Fed/Scooped/Played, daily check)
     20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
     20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
+    20261115000000_vets.sql              your vet: the household's vet contacts (vets), household-only RLS
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -836,6 +857,8 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   a local Postgres 16 for the SQL chain and `friend_requests_test.sql`, and Playwright (iPhone 15, light and dark)
   with the dev store on the in-memory `FakeServer` for Home's request card, Friends and Visit's Remove friend.
 
+- 2026-11-09/10: the vet redesign. The UX auditor session wrote the plan (PR #2) with anthropic-skills:design-ux; this
+  session built steps 1–2. Checks: a local Postgres 16 for `vets_test.sql`, unit and sync tests, one Playwright shot.
 - Later: bed on Home, the flip moved mid-screen, the roll (sploot pose), play poses (crouch/leap/reach) and the laser
   sprint. No skills invoked; references split into timed contact sheets with Pillow; checks as Playwright frame strips
   (stepped CSS animations), a pose log during a scripted drag, and the Home bed via `page.clock` fast-forwarding.

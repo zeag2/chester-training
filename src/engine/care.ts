@@ -13,7 +13,7 @@ export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
 export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
   /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
-  vet: { reason: string; clinic?: string; notes?: string; doc?: string; time?: string };
+  vet: { reason: string; clinic?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' };
   symptom: { what: string; worried?: boolean; notes?: string };
   weight: { lb: number; doc?: string };
   groom: { what: GroomWhat; notes?: string };
@@ -58,7 +58,7 @@ export function newer<T extends { updatedAt: number }>(a: T | undefined, b: T | 
   return b.updatedAt > a.updatedAt ? b : a;
 }
 
-export interface Reminder { id: string; title: string; detail: string; dueDay: string; daysLeft: number; kind: 'med' | 'groom' | 'vet' }
+export interface Reminder { id: string; title: string; detail: string; dueDay: string; daysLeft: number; kind: 'med' | 'groom' | 'vet' | 'visit' }
 
 /** What's coming up: medicine and vaccine due dates, grooming that's getting overdue, the yearly checkup. */
 export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
@@ -79,7 +79,13 @@ export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
     const due = localDay(last.at + g.everyDays * 864e5);
     out.push({ id: 'groom:' + what, kind: 'groom', title: what === 'nails' ? 'Trim nails' : 'Brush', detail: `Every ${g.everyDays} days`, dueDay: due, daysLeft: daysBetween(today, due) });
   }
-  const lastVet = live.filter((i) => i.kind === 'vet').sort((a, b) => b.at - a.at)[0];
+  // a booked visit (still to come) is listed as itself and doesn't count as the last checkup
+  const booked = (i: CareItem) => { const st = (i.data as { status?: string }).status; return st === 'booked' || (st !== 'done' && localDay(i.at) > today); };
+  for (const v of live.filter((i): i is CareItem<'vet'> => i.kind === 'vet' && booked(i))) {
+    const day = localDay(v.at); if (day < today) continue;
+    out.push({ id: 'visit:' + v.id, kind: 'visit', title: `Vet: ${v.data.reason}`, detail: [v.data.time, v.data.clinic].filter(Boolean).join(' · ') || 'Booked', dueDay: day, daysLeft: daysBetween(today, day) });
+  }
+  const lastVet = live.filter((i) => i.kind === 'vet' && !booked(i)).sort((a, b) => b.at - a.at)[0];
   if (lastVet) {
     const due = localDay(lastVet.at + 365 * 864e5);
     out.push({ id: 'vet:yearly', kind: 'vet', title: 'Yearly checkup', detail: 'A year since the last vet visit', dueDay: due, daysLeft: daysBetween(today, due) });

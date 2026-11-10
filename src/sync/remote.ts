@@ -1,5 +1,6 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
+import type { Vet } from '../engine/vets';
 
 export interface Account { userId: string; email: string }
 /** What friends see of a pet: its look and a few training highlights. Never care, documents or sets. */
@@ -42,6 +43,10 @@ export interface Remote {
   /** Care items, deleted ones included (so a delete reaches the other phone). */
   pullCare(catId: string): Promise<CareItem[]>;
   pushCare(items: CareItem[]): Promise<void>;
+
+  /** The household's vet contacts, deleted ones included. Throws 'vets-missing' until the vets SQL is run. */
+  pullVets(householdId: string): Promise<Vet[]>;
+  pushVets(vets: Vet[]): Promise<void>;
 
   /** Vet documents in the shared bucket. */
   uploadDoc(path: string, file: Blob, mime: string): Promise<void>;

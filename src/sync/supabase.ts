@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
+import type { Vet } from '../engine/vets';
 import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from './remote';
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
@@ -138,6 +139,16 @@ export class SupabaseRemote implements Remote {
       for (const r of rows) out.push({ id: r.id, catId, kind: r.kind, at: Number(r.at), updatedAt: Number(r.updated_at), deleted: r.deleted, by: r.by_user ?? undefined, data: r.data } as CareItem);
       if (rows.length < page) return out;
     }
+  }
+  async pullVets(householdId: string): Promise<Vet[]> {
+    const r = await this.sb.from('vets').select('id, household_id, updated_at, deleted, by_user, data').eq('household_id', householdId);
+    if (r.error) throw new Error(/does not exist|schema cache|PGRST205|42P01/i.test(r.error.message + (r.error as { code?: string }).code) ? 'vets-missing' : r.error.message);
+    return (r.data ?? []).map((v) => ({ id: v.id, householdId: v.household_id, updatedAt: Number(v.updated_at), deleted: v.deleted, by: v.by_user ?? undefined, data: v.data }));
+  }
+  async pushVets(vets: Vet[]) {
+    if (!vets.length) return;
+    const r = await this.sb.from('vets').upsert(vets.map((v) => ({ id: v.id, household_id: v.householdId, updated_at: v.updatedAt, deleted: !!v.deleted, data: v.data })), { onConflict: 'id' });
+    if (r.error) throw new Error(/does not exist|schema cache|PGRST205|42P01/i.test(r.error.message + (r.error as { code?: string }).code) ? 'vets-missing' : r.error.message);
   }
   async pushCare(items: CareItem[]) {
     if (!items.length) return;

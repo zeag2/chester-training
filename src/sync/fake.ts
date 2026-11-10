@@ -1,5 +1,6 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
+import type { Vet } from '../engine/vets';
 import type { Account, Member, PetCard, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
@@ -12,6 +13,9 @@ export class FakeServer {
   passwords = new Map<string, string>();
   care = new Map<string, CareItem>();
   careTable = true;
+  /** Whether the vets SQL is run; the household's vet contacts. */
+  vetsTable = true;
+  vets = new Map<string, Vet>();
   /** Care kinds the server accepts (null: all). Tests set it to mimic the daily-logs SQL not being run. */
   careKinds: string[] | null = null;
   files = new Map<string, Blob>();
@@ -93,6 +97,15 @@ export class FakeRemote implements Remote {
     const u = this.user(); if (!this.s.careTable) throw new Error('relation "public.care" does not exist');
     for (const i of items) { if (this.s.careKinds && !this.s.careKinds.includes(i.kind)) throw new Error('new row for relation "care" violates check constraint "care_kind_check"');
       if (!this.s.isMember(i.catId, u.userId)) throw new Error('denied'); this.s.care.set(i.id, { ...structuredClone(i), by: u.userId }); }
+  }
+  async pullVets(householdId: string) {
+    const u = this.user(); if (!this.s.vetsTable) throw new Error('vets-missing');
+    if (!this.s.houses.get(householdId)?.members.some((m) => m.userId === u.userId)) return [];
+    return [...this.s.vets.values()].filter((v) => v.householdId === householdId).map((v) => structuredClone(v));
+  }
+  async pushVets(vets: Vet[]) {
+    const u = this.user(); if (!this.s.vetsTable) throw new Error('vets-missing');
+    for (const v of vets) { if (!this.s.houses.get(v.householdId)?.members.some((m) => m.userId === u.userId)) throw new Error('denied'); this.s.vets.set(v.id, { ...structuredClone(v), by: u.userId }); }
   }
   async uploadDoc(path: string, file: Blob) { const u = this.user(); if (!this.s.isMember(path.split('/')[0], u.userId)) throw new Error('denied'); this.s.files.set(path, file); }
   async docUrl(path: string) { this.user(); return 'blob:' + path; }

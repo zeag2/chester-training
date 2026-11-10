@@ -1,6 +1,7 @@
 /* Add an appointment to the phone's calendar: an .ics file (iPhone and Mac open it in Calendar) or a Google
    Calendar link. Appointments are all-day unless a time is given (local time). */
-export interface CalEvent { title: string; day: string; time?: string; minutes?: number; place?: string; notes?: string }
+/** `uid`: a stable id (e.g. per visit) so adding it again updates the event instead of making a second one. */
+export interface CalEvent { title: string; day: string; time?: string; minutes?: number; place?: string; notes?: string; uid?: string }
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const stamp = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
@@ -10,12 +11,15 @@ function span(e: CalEvent): [string, string, boolean] {
   const s = new Date(`${e.day}T${e.time}:00`); return [stamp(s), stamp(new Date(s.getTime() + (e.minutes ?? 60) * 6e4)), false];
 }
 
-export function icsFor(e: CalEvent, uid = Math.random().toString(36).slice(2)): string {
+export function icsFor(e: CalEvent, uid = e.uid ?? Math.random().toString(36).slice(2)): string {
   const [a, b, allDay] = span(e);
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PalDex//EN', 'BEGIN:VEVENT', `UID:${uid}@paldex`, `DTSTAMP:${stamp(new Date())}`,
     allDay ? `DTSTART;VALUE=DATE:${a}` : `DTSTART:${a}`, allDay ? `DTEND;VALUE=DATE:${b}` : `DTEND:${b}`, `SUMMARY:${esc(e.title)}`,
     ...(e.place ? [`LOCATION:${esc(e.place)}`] : []), ...(e.notes ? [`DESCRIPTION:${esc(e.notes)}`] : []),
-    'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
+    'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)}`, 'END:VALARM',
+    // a timed appointment also reminds 2 hours before
+    ...(allDay ? [] : ['BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title)}`, 'END:VALARM']),
+    'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
 }
 
 export function googleCalendarUrl(e: CalEvent): string {
