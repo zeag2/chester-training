@@ -295,6 +295,24 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   - **One toast at a time (QA fix):** Health's "+N treats for logging" note moves up above the booking toast
     while one shows (`useToast`), so it doesn't cover Undo; Home's Quick log Undo hides a booking toast still showing.
     Undo removes the visit but not the treats it earned (as with any deleted care entry).
+- **Booking part 2a: reschedule and cancel (2026-11-11, Features worker, branch `claude/features-booking-2a`; no SQL:
+  `status: 'cancelled'` and `calSeq` live in the care JSON):**
+  - A booked, upcoming visit's page has **Reschedule** (new day and time; clearing the time makes it all-day) and
+    **Cancel visit** (confirm; the visit stays, with a **Cancelled** chip, **Book again** and **Remove from
+    calendar**). Each change bumps the visit's `calSeq`.
+  - Then **"Move it in your calendar?" / "Remove it from your calendar?"** (`CalendarSheet` with `change`). Apple
+    re-sends the .ics with the **same UID** (`visit-<id>@paldex`) and `SEQUENCE:<calSeq>`; a cancel sends
+    `STATUS:CANCELLED`, no alarms, and "Cancelled: " in the title (so even if iOS adds it as a new event instead of
+    updating, it reads as cancelled). Every .ics now carries `SEQUENCE` and `STATUS:CONFIRMED`. Google links can only
+    add: a reschedule opens the new time and the toast says to delete the old one; a cancel opens nothing and the
+    toast says to delete it in Google Calendar. "It's not in a calendar" skips.
+  - A cancelled visit is left out everywhere a visit counts (`isCancelled` in `src/engine/care.ts`): Coming up, the
+    yearly checkup, `isBooked`/`visits()` (Next visit, last visit), the kitten plan and the weekly recap. Editing a
+    cancelled visit keeps it cancelled. Tests: `src/screens/reschedule.test.tsx`.
+  - **For Josh on a real iPhone (Home Screen app):** book a visit with Apple Calendar, then Reschedule → Apple: does
+    Calendar *move* the event (not add a second one)? Then Cancel → Apple: is the event removed or marked cancelled,
+    and its reminders gone? If iOS duplicates instead, tell the PM (the fallback is to say "delete the old one" as for
+    Google).
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -473,7 +491,8 @@ Items marked *(art)* suit the art session.
    Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
    Calendar as the default.
 8. [ ] **Booking, part 2** (M each; Josh, 2026-11-10, from the booking research): reschedule and cancel from the
-   visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone), and
+   visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone)
+   **(part 2a done 2026-11-11, PR from `claude/features-booking-2a`; Josh still to test on an iPhone)**, and
    booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
@@ -1120,6 +1139,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
   Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
   `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
+- 2026-11-11, booking part 2a, reschedule and cancel (Features worker, `claude/features-booking-2a`): no skills,
+  plugins or MCP servers invoked beyond the GitHub MCP (pull request) and `send_message` to the PM (`lottiefiles-creator`
+  connected, unused). Checks: Vitest (245 tests in 41 files), typecheck, build; Playwright iPhone 13 screenshots
+  (light and dark) of a booked visit, Reschedule, "Move it in your calendar?" and a cancelled visit, seeded the same way.
 - 2026-11-10, booking polish QA (QA worker): no skills, plugins or MCP servers invoked beyond the GitHub and
   session tools. Checks: Vitest, typecheck, build; Playwright (iPhone 15, light and dark, dev store
   `globalThis.__chesterStore`) for Book from Coming up, Call, quick times, Undo, Other clinic offline with Google, and

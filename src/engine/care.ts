@@ -15,7 +15,9 @@ export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
   /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
   /** `phone`, `address`: a one-off clinic's ("+ Other clinic" in Book a visit), when it isn't a saved vet. */
-  vet: { reason: string; clinic?: string; phone?: string; address?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' };
+  vet: { reason: string; clinic?: string; phone?: string; address?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' | 'cancelled';
+    /** how many times the calendar event was changed (rescheduled or cancelled): the .ics SEQUENCE */
+    calSeq?: number };
   symptom: { what: string; worried?: boolean; notes?: string };
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
@@ -79,7 +81,8 @@ export interface Reminder { id: string; title: string; detail: string; dueDay: s
 /** What's coming up: medicine and vaccine due dates, grooming that's getting overdue, the yearly checkup. */
 export function reminders(items: CareItem[], now = Date.now()): Reminder[] {
   const today = localDay(now);
-  const live = items.filter((i) => !i.deleted);
+  // a cancelled visit didn't happen and isn't coming: it neither lists nor counts as a checkup
+  const live = items.filter((i) => !i.deleted && !isCancelled(i));
   const out: Reminder[] = [];
   // the latest entry per medicine name decides its next due date
   const meds = new Map<string, CareItem<'med'>>();
@@ -160,6 +163,9 @@ export function typicalKittenWeight(birthday: string, now = Date.now()): { month
 // ---- smart defaults for the log forms ----
 
 /** When a new entry happened: now if it's for today, otherwise noon that day (an edit that keeps its day keeps its time). */
+/** A visit that was cancelled (kept on its page and in the log, marked so). */
+export const isCancelled = (i: CareItem) => i.kind === 'vet' && (i.data as { status?: string }).status === 'cancelled';
+
 export function entryTime(day: string, now = Date.now(), keep?: number): number {
   if (keep !== undefined && localDay(keep) === day) return keep;
   return day === localDay(now) ? now : Date.parse(day + 'T12:00:00');
