@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import { Sheet } from '../ui/Sheet';
 import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
-  type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
+  type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
@@ -22,6 +22,9 @@ import { NO_VISIT, docVisitId, findDocs, guessDocType, visitOfDoc } from '../eng
 import { bookingDay, isBooked } from '../engine/vets';
 import { DocRow, openDoc } from '../ui/DocRow';
 import { DailyLogSheet } from '../ui/DailyLogSheet';
+import { useLayout } from '../ui/layout';
+import { DropNote, isDocFile, useDocDrop, type Dropped } from '../ui/DocDrop';
+import { dailyLogDays } from '../engine/dailylog';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -59,21 +62,24 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
   const [quickLogs, setQuickLogs] = useState(false);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
+  const big = useLayout() === 'desktop';
+  // a document dropped anywhere on Health goes to the "Add a document" reader, as if picked
+  const [dropped, setDropped] = useState<Dropped>();
+  const drop = useDocDrop(setDropped);
+  // desktop's log table also lists the quick logs (Fed, Scooped, Played, daily checks) from the last 7 days
+  const quick = useMemo(() => (big ? dailyLogDays(care, 7).flatMap((g) => g.items) : []), [big, care]);
+  const shared = !!household && household.members.length > 1;
+  const whoOf = (uid?: string) => nameOf(uid) || (shared && uid && uid === account?.userId ? 'You' : '');
+  const openEntry = (i: CareItem) => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }));
   if (!cat) return null;
 
-  return <div className="screen">
-    <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
-    <PetSwitcher />
-    <CareTreatNote />
-    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
-    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
-
+  const vetTop = <>
     {/* vet first: who to call (and the warning signs), then visits; docs/plans/2026-11-09-vet-redesign.md */}
     <VetCard />
     <VisitsCard onOpen={(v) => go('health/visit/' + v.id)} />
     <button className="btn2" style={{ marginTop: 4, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
-
-    {due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
+  </>;
+  const comingUp = due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
       {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
         onClick={() => { const booked = r.kind === 'visit' ? care.find((c) => c.id === r.id.slice(6)) : undefined;
           if (booked) { go('health/visit/' + booked.id); return; }
@@ -87,27 +93,27 @@ export function Care({ open }: { open?: CareKind } = {}) {
         : r.daysLeft >= 0 && <button className="card grey" style={{ margin: 0, width: 56, padding: 0, display: 'grid', placeItems: 'center' }} aria-label={`Add ${r.title} to your calendar`}
           onClick={() => { const booked = r.kind === 'visit' ? care.find((c): c is CareItem<'vet'> => c.id === r.id.slice(6) && c.kind === 'vet') : undefined;
             setCalFor(booked ? visitEvent(cat.name, booked, vets.find((v) => v.id === booked.data.vetId)) : { title: `${cat.name}: ${r.title}`, day: r.dueDay, notes: r.detail }); }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>;
+  const logSomething = <>
     <h2 style={{ marginTop: 22 }}>Log something</h2>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
       {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
         <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 12 }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
       <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 12 }}>Food or treat</span></button>
     </div>
-
-    {plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
+  </>;
+  const kitten = plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
       <div className="card white">
         {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
           onClick={() => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset })} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}. Tap to log it.`}>
           <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
           <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>)}
-        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>}
-
-    {ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
+        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>;
+  const weightCard = ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
-      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>}
-
+      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
+  const foodSection = <>
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
     {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
     {(['love', 'ok', 'no'] as Verdict[]).map((v) => { const list = foods.filter((f) => f.data.verdict === v); if (!list.length) return null;
@@ -115,12 +121,30 @@ export function Care({ open }: { open?: CareKind } = {}) {
         {list.map((f) => <button key={f.id} className="item" onClick={() => setEditing({ kind: 'food', item: f })}>
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
-
+  </>;
+  const documents = <>
     <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 className="sp" style={{ margin: 0 }}>Documents</h2>
       {docs.length > 0 && <a href="#/health/docs" className="s" style={{ fontWeight: 800, color: 'var(--ink)' }}>All documents ({docs.length}) ›</a>}</div>
     {docs.slice(0, 3).map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
-    <DocAdder signedIn={!!account} compact={docs.length > 0} />
+    <DocAdder signedIn={!!account} compact={docs.length > 0} dropped={dropped} />
+  </>;
 
+  return <div className={big ? 'screen wide' : 'screen'} {...drop.bind}>
+    <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
+    <PetSwitcher />
+    <CareTreatNote />
+    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
+    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
+
+    {/* desktop (1100 px and up): two columns, then the log as a table across both (docs/plans/2026-11-11-desktop-layout.md, step 5) */}
+    {big ? <>
+      <div className="healthcols">
+        <div className="healthcol">{vetTop}{comingUp}{logSomething}{kitten}</div>
+        <div className="healthcol">{documents}{weightCard}{foodSection}</div>
+      </div>
+      <HealthLogTable log={log} quick={quick} who={whoOf} onOpen={openEntry} onQuickLogs={() => setQuickLogs(true)} />
+      {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
+    </> : <>{vetTop}{comingUp}{logSomething}{kitten}{weightCard}{foodSection}{documents}
     <h2 style={{ marginTop: 22 }}>Health log</h2>
     {/* the one-tap logs from Home aren't listed one by one here; this opens them (last 7 days) to delete or retime */}
     <button className="item" onClick={() => setQuickLogs(true)}>
@@ -133,11 +157,47 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
       <div className="sp"><b>{i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
       <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}
+    </>}
 
+    {drop.dragging && <DropNote />}
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
     {book && <BookSheet preset={book} onClose={() => setBook(null)} />}
   </div>;
+}
+
+const QUICK: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Played', check: 'Daily check' };
+const QUICK_ICON: Record<DailyWhat, string> = { fed: 'leaf', scoop: 'box', play: 'yarn', check: 'check' };
+const clock = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+function quickDetail(i: CareItem<'daily'>): string {
+  const d = i.data;
+  const what = d.what === 'check' ? (d.ok === false ? 'Something off' : 'All normal') : d.what === 'play' && d.minutes ? `${d.minutes} min` : '';
+  return [what, d.notes].filter(Boolean).join(' · ');
+}
+
+/** Desktop's Health log: one table across both columns (date · what · details · who, "who" once the household shares it), newest first, with the last 7 days'
+    quick logs mixed in. A row opens what the list opens on phones: the visit page, the entry's form, or (quick logs)
+    the 7-day quick-log sheet to fix a mistaken tap. The row's "what" is a real button, for the keyboard. */
+export function HealthLogTable({ log, quick, who, onOpen, onQuickLogs }: { log: CareItem[]; quick: CareItem<'daily'>[]; who: (uid?: string) => string; onOpen: (i: CareItem) => void; onQuickLogs: () => void }) {
+  const rows = [...log, ...quick].sort((a, b) => b.at - a.at);
+  // "Who" only once someone else shares the cat (a column of blanks otherwise)
+  const showWho = rows.some((i) => who(i.by));
+  return <section className="healthlog" aria-labelledby="healthlog-h">
+    <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 id="healthlog-h" className="sp" style={{ margin: 0 }}>Health log</h2>
+      <button className="linkbtn s" onClick={onQuickLogs}>Quick logs, last 7 days ›</button></div>
+    {rows.length === 0
+      ? <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits, medicine and the quick logs show up here, newest first. A timeline like this is gold at the vet.</p>
+      : <div className="logtable-wrap"><table className="logtable">
+        <thead><tr><th scope="col">Date</th><th scope="col">What</th><th scope="col">Details</th>{showWho && <th scope="col">Who</th>}</tr></thead>
+        <tbody>{rows.map((i) => { const q = i.kind === 'daily' ? (i as CareItem<'daily'>) : null;
+          return <tr key={i.id} className={q ? 'quick' : undefined} onClick={() => (q ? onQuickLogs() : onOpen(i))}>
+            <td className="num">{fmt(i.at)}{q && <span className="s"> · {clock(i.at)}</span>}</td>
+            <td><button className="logopen" aria-label={q ? `${QUICK[q.data.what]} at ${clock(i.at)}: open the quick logs to fix it` : undefined}>
+              <span className="ico grey" aria-hidden="true"><Icon name={q ? QUICK_ICON[q.data.what] : ICON[i.kind]} size={18} /></span>
+              {q ? QUICK[q.data.what] : i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</button></td>
+            <td>{q ? quickDetail(q) : summary(i)}</td>
+            {showWho && <td>{who(i.by)}</td>}</tr>; })}</tbody></table></div>}
+  </section>;
 }
 
 function Spark({ values }: { values: number[] }) {
@@ -321,7 +381,7 @@ type Pick = { key: string; label: string; detail: string; on: boolean; save: (do
 /** Add a vet document: read it on the phone, store it (when sharing is set up), then confirm which entries to add.
     `visit`: added from a visit's page, so the document, doses and weight it finds are linked to that visit (and what
     the vet said goes into its notes instead of making a new visit). `compact`: once there are documents, just the button. */
-export function DocAdder({ signedIn, visit, compact }: { signedIn: boolean; visit?: CareItem<'vet'>; compact?: boolean }) {
+export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: boolean; visit?: CareItem<'vet'>; compact?: boolean; dropped?: Dropped }) {
   const [stage, setStage] = useState<'idle' | 'read' | 'review' | 'error'>('idle');
   const [msg, setMsg] = useState('');
   const [note, setNote] = useState('');
@@ -374,10 +434,21 @@ export function DocAdder({ signedIn, visit, compact }: { signedIn: boolean; visi
     setPicks(list); setMsg(r.summary); setStage('review');
   };
 
+  // a file dropped on the screen (desktop plan step 5): read it as if picked, and bring the reader into view
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!dropped) return;
+    if (isDocFile(dropped.file)) void onFile(dropped.file);
+    else { setStage('error'); setMsg('That file can’t be read. Drop a photo or a PDF.'); }
+    const t = setTimeout(() => box.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropped?.n]);
+
   // once there are documents, just the button (the explanation is for the first one)
   if (stage === 'idle' && compact) return <label className="btn2" style={{ cursor: 'pointer', width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--grey)' }}><Icon name="plus" size={18} />Add a document
     <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>;
-  return <div className="card grey" style={{ marginTop: 10 }}>
+  return <div ref={box} className="card grey" style={{ marginTop: 10 }}>
     {stage === 'idle' && <><p className="s">Vet records, vaccine certificates, adoption papers or ESA/housing forms: snap a photo or pick a PDF (several pages is fine). It’s read right on your phone, free, and you check what it found before anything is saved.</p>
       <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a document
         <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label></>}

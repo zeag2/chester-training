@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-11 (desktop steps 1–4 and 8 merged: side nav, sheets as dialogs / side panel, hover and focus rings, the centred screens, Home in two columns + the 160 px cat). Start here when picking
+_Last updated 2026-11-11 (desktop steps 1–4 and 8 merged: side nav, sheets as dialogs / side panel, hover and focus rings, the centred screens, Home in two columns + the 160 px cat; step 5, Health in two columns + the log as a table + drag-and-drop documents, on branch `claude/features-desktop-health`). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -95,6 +95,23 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   exactly the old markup (pinned by `src/screens/home.test.tsx`; a 390 px pixel diff against main is identical apart
   from the animated cats). The outline scales with the drawing (1.3 px at 104, about 2 px at 160, the same as the
   Corner's 150 px cat), so it stays even. Screenshots: `docs/plans/img/2026-11-11-step4-*.png`.
+- **Health on desktop** (desktop plan step 5): at 1100 px and up Health uses `.screen.wide` and two columns
+  (`.healthcols`): left, your vet, Visits, Summary for the vet, Coming up, Log something and the kitten plan; right,
+  Documents (newest 3, All documents, + Add a document), Weight and Food and treats. The title, intro and setup card
+  stay above both. Under them, **the Health log is a table** across both columns (`HealthLogTable` in
+  `src/screens/Care.tsx`): Date · What · Details · Who, newest first, with the **last 7 days' quick logs** (Fed,
+  Scooped, Played, daily checks, with their time) mixed in. "Who" shows only once someone else in the household has
+  logged something (else it's a column of blanks). A row opens what the phone list opens: the visit page, the entry's
+  form, or for a quick log the 7-day Quick logs sheet to fix it; "Quick logs, last 7 days ›" opens it too. The "What"
+  cell is a real button, for the keyboard. **Drag and drop:** drop a photo or PDF anywhere on Health or All documents
+  (every layout; only event handlers, so no markup change) and it goes to the same reader as "Add a document"
+  (`useDocDrop` and `<DropNote>` in `src/ui/DocDrop.tsx`; `DocAdder` takes `dropped`). On All documents the adder
+  opens. Other file types get "That file can't be read. Drop a photo or a PDF." Dragged text or links are ignored.
+  No SQL. Phones and tablets render exactly the old markup (`src/screens/health.test.tsx`; Pillow diff of Health at
+  390 and 900 px, main vs branch, light and dark: identical). Tablet stays one 640 px column with the list, as the brief says (two
+  columns and the table are desktop only). CSS: the "Desktop Health" block in app.css, right after "Desktop Home"
+  (it can't go at the end: the Desktop polish test reads to the end of the file), every rule keyed on `.healthcols`,
+  `.healthcol`, `.healthlog` or `.dropnote`. Screenshots: `docs/plans/img/2026-11-11-step5-health-*.png`.
 - **Hover, focus rings, centred screens** (desktop plan steps 3 and 8): the "Desktop polish" block at the end of
   app.css. Under `(hover:hover)`: `cursor:pointer` on links, labels, selects, checkboxes; a hover tint on buttons,
   cards, chips, rows, icon buttons, tabs, the vet cards and switches, laid over the element's own colour as a
@@ -460,7 +477,8 @@ Items marked *(art)* suit the art session.
    shortcuts (skip step 7); bigger cat on desktop (step 4, with an art check); no printable vet summary (drop the
    print part of step 6). **Steps 1 (breakpoints + side nav), 2 (sheets as dialogs / side panel), 3 (hover, focus
    rings, cursor), 4 (Home in two columns + the 160 px cat; the art session should still look at the 160 px scene)
-   and 8 (centred screens) merged.** Next: step 5 (Health in two columns). Still open from §4: tooltips on icon-only
+   and 8 (centred screens) merged.** Step 5 (Health in two columns, the log as a table, drag-and-drop documents) is
+   built on `claude/features-desktop-health` (pull request open). Next: step 6 (documents two-pane with preview). Still open from §4: tooltips on icon-only
    buttons. Idea for
    later: on desktop, the page column could slide left while the side panel is open (now the panel covers the right
    part of a centred page at 1280–1440 px).
@@ -1045,6 +1063,13 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, desktop step 5, Health in two columns + the log table + drag-and-drop documents (Features worker): no
+  skills, plugins or MCP servers invoked beyond the GitHub and session tools (`lottiefiles-creator` connected,
+  unused). Checks: Vitest (236, new `src/screens/health.test.tsx`), typecheck, build; a jsdom dump of Health and All
+  documents before and after the change (byte-identical at phone width); Playwright against the Vite dev servers of
+  main (a git worktree) and the branch, a cat and a month of care seeded through `globalThis.__chesterStore`, at 390,
+  900 and 1440 px, light and dark; Pillow pixel diff of Health at 390 and 900 px (identical); a synthetic `dragenter`
+  with a PDF for the drop note.
 - 2026-11-11, desktop step 4, Home in two columns + the 160 px cat (Features worker): no skills, plugins or MCP
   servers invoked beyond the GitHub and session tools. Checks: Vitest (new `src/screens/home.test.tsx`), typecheck,
   build; Playwright against the Vite dev servers of main and the branch (two cats seeded through

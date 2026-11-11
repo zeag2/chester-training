@@ -5,6 +5,7 @@ import { Icon } from '../ui/icons';
 import { back as goBack, go } from '../ui/router';
 import { DocRow } from '../ui/DocRow';
 import { CareSheet, DocAdder, type Editing } from './Care';
+import { DropNote, useDocDrop, type Dropped } from '../ui/DocDrop';
 
 /* All documents (`#/health/docs`, step 4 of docs/plans/2026-11-09-vet-redesign.md): search (title, the reader's
    summary, the visit it came from), filters, newest first. Tap opens the document; "…" renames, links or deletes. */
@@ -16,12 +17,15 @@ export function Documents() {
   const [editing, setEditing] = useState<Editing>(null);
   const all = useMemo(() => findDocs(care), [care]);
   const list = useMemo(() => findDocs(care, q, filter), [care, q, filter]);
+  // drop a file anywhere here to add it (desktop plan step 5): opens the adder and reads it, as if picked
+  const [dropped, setDropped] = useState<Dropped>();
+  const drop = useDocDrop((d) => { setAdding(true); setDropped(d); });
   if (!cat) return null;
-  return <div className="screen">
+  return <div className="screen" {...drop.bind}>
     <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => goBack('health')}><Icon name="back" /></button>
       <b className="sp" style={{ fontSize: 17 }}>{cat.name}’s documents</b>
-      <button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--bg)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => setAdding(!adding)}><Icon name="plus" /></button></div>
-    {(adding || all.length === 0) && <DocAdder signedIn={!!account} />}
+      <button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--bg)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => { setAdding(!adding); setDropped(undefined); }}><Icon name="plus" /></button></div>
+    {(adding || all.length === 0) && <DocAdder signedIn={!!account} dropped={dropped} />}
     {all.length > 0 && <>
       <div className="row" style={{ gap: 8, marginTop: 12, background: 'var(--grey)', borderRadius: 14, padding: '0 12px' }}>
         <Icon name="search" size={18} />
@@ -35,6 +39,7 @@ export function Documents() {
       {list.map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
       {list.length === 0 && <p className="s" style={{ marginTop: 8 }}>No documents match. Try another word, or All.</p>}
     </>}
+    {drop.dragging && <DropNote />}
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
   </div>;
 }
