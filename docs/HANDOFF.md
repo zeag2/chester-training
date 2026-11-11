@@ -956,6 +956,7 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
+| `reddit-automation` | flowkit-labs/skills (by doany.ai) | 2026-11-11 | Josh: "find Reddit opportunities" for PalDex. Read-only: drafts disclosed replies for Josh to post by hand. First run blocked: this environment's proxy and web search can't reach reddit.com, so threads must be pasted in or the host allowed |
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.

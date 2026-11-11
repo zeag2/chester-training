@@ -1,215 +1,221 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "aframe-webxr": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/aframe-webxr/SKILL.md",
-      "computedHash": "805628258210c6504bcab36dd3407c99d1d0e1d44d17f8a8bdbbb706460c2306"
+      "computedHash": "745296c5a74e224260fceebf81755d6f3284cc0297299e33c403f4e53d49500e"
     },
     "animated-component-libraries": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/animated-component-libraries/SKILL.md",
-      "computedHash": "af53d0b6930732ec4cc187351a53a43cdf25f18560fb82be8e1b07dccaf017e1"
+      "computedHash": "2f526187229349d291cc682ec953ec57ba35c3f2fef6553cfde6ffb91e440514"
     },
     "animejs": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/animejs/SKILL.md",
-      "computedHash": "1ccd0229d51e46aaa5e0d7033f1160c9f21440af470fbaab25fb68d9190c3edb"
+      "computedHash": "44f9ade0880f61041c326738b3fc39dc06887f9384fc8cf344c62503c8187f21"
     },
     "babylonjs-engine": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/babylonjs-engine/SKILL.md",
-      "computedHash": "8a3ca92ec7e885e3323473031c7d6f08338d5df7c0e0b9b199635f49094e96a3"
+      "computedHash": "989417e889df1fbc3749f0f996eebc12c392d0314fea3a385ee0b61abfdba6f5"
     },
     "barba-js": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/barba-js/SKILL.md",
-      "computedHash": "8429138b3ce13a7cba2d786ab03ce3309877f4bd43ed6d7cf1d00afa9768e526"
+      "computedHash": "ee871c54752e84dfe5e01b1b4ad6812d7f281b53819d720abc939624964432f8"
     },
     "blender-web-pipeline": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/blender-web-pipeline/SKILL.md",
-      "computedHash": "342295a1d79b24a1e8ff4c048da51b9a1dc22d9c01dea183af389c0e4a1297e6"
+      "computedHash": "a9e57513f74a0883f590a456d4fd4d1ecbb1420331188ee883500bf8dbd3f8b8"
     },
     "earshot": {
       "source": "Leonxlnx/earshot",
       "sourceType": "github",
       "skillPath": "skills/earshot/SKILL.md",
-      "computedHash": "b4bc7033d45acf9816f45f5402d5de19b9eafde6689f6a435d8f1cc7fabf0b0d"
+      "computedHash": "07a6100d2f2110f38e33d1892d03efa614f7b35335580a60fc7d2b17d39de5ec"
     },
     "gsap-core": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-core/SKILL.md",
-      "computedHash": "c4a01101d9e1aafbf4b49f75d74f9349790d8741981ba0237c990093863035a6"
+      "computedHash": ""
     },
     "gsap-frameworks": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-frameworks/SKILL.md",
-      "computedHash": "4852e85a48088d9044b08ebd1db607915b628c0c3ec7e04300713f546728fbdf"
+      "computedHash": ""
     },
     "gsap-performance": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-performance/SKILL.md",
-      "computedHash": "863842ac2d7aee53fd4f0025c960173d7ad3e658a5715b89b2211fa280213c1f"
+      "computedHash": ""
     },
     "gsap-plugins": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-plugins/SKILL.md",
-      "computedHash": "791bda0e6e460511fe82a78e745db519b88ffaeeab4d04a74879a03ca4f41740"
+      "computedHash": ""
     },
     "gsap-react": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-react/SKILL.md",
-      "computedHash": "7d3b52822681a4158e371f895c58fb7030ecaf33f585a534b7162f9e92c5d893"
+      "computedHash": ""
     },
     "gsap-scrolltrigger": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-scrolltrigger/SKILL.md",
-      "computedHash": "1cdc5647693783cb7a662d84a5de434c88a051ed56b4d33597c9b5782b5973e6"
+      "computedHash": ""
     },
     "gsap-timeline": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-timeline/SKILL.md",
-      "computedHash": "54981c2feec5a9c0d57988aeb32315af32bdeadd261550d5e9db7a7b1f08b487"
+      "computedHash": ""
     },
     "gsap-utils": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
       "skillPath": "skills/gsap-utils/SKILL.md",
-      "computedHash": "1ab2387f6e694718a4f1b5acf2a4ab16e1b884c3428adf5f6b26d830f00826cf"
+      "computedHash": ""
     },
     "huashu-art-motion": {
       "source": "alchaincyf/huashu-art-motion",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "20d8a2eb51ce6573b6351e6ddb236a15de249e51d1633e82506ebf9aa09f3f69"
+      "computedHash": ""
     },
     "lightweight-3d-effects": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/lightweight-3d-effects/SKILL.md",
-      "computedHash": "4fb89172f097f03603cb15cb414b8245b6efc927c72e71a26c4ae4b43bb5d1fa"
+      "computedHash": "055ee1819fdea067337076c54bd378c38ab48c7c43f4bc9a78aa6c479b6cebb6"
     },
     "locomotive-scroll": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/locomotive-scroll/SKILL.md",
-      "computedHash": "131f3a40bbb2f73cf7c4c1804fcdf70bca0404a96d09bc92d513e1f875170c31"
+      "computedHash": "c5d1ce3f60f2f090d23bd1db3aba64771770f1c76e8b9cad15af049b49dd76e8"
     },
     "lottie-animations": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/lottie-animations/SKILL.md",
-      "computedHash": "dd662e70b8874e7d78a9b32ef42b32467457f0a7b34aae39f9c052fe8493cc39"
+      "computedHash": "fd15f9bdf4fc749b57dd0179e2a2a8b2b98eb6245375bac10f28da0ecc9ac1e1"
     },
     "modern-web-design": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/modern-web-design/SKILL.md",
-      "computedHash": "8ad9815a4a43dd5c3b40b3c700ef89f624d451a9e0cc1adea33909a7f22193dd"
+      "computedHash": "53699f8407228421027c32879e181a8257c9ce2fd2dc1f536fdbd668f724f0d0"
     },
     "motion-framer": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/motion-framer/SKILL.md",
-      "computedHash": "16d7c6f24f1d1208500635331e0cf6e06555a44df461e6b1069e4ddb203fd737"
+      "computedHash": "2e05ad07a17ba0a77a65653e2e6994ca33e6e59cff0a3a09fcd45d6a4976a6ea"
     },
     "pixijs-2d": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/pixijs-2d/SKILL.md",
-      "computedHash": "f7bb8d68fd3cad99f0fe3b2c26fceed67983f35d970eee66d35b72d487dd63a5"
+      "computedHash": "42de8dbd49fa5a43377230ad2297f49947de390df54ee03dae389cc92ebafb1d"
     },
     "playcanvas-engine": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/playcanvas-engine/SKILL.md",
-      "computedHash": "173000db3829b3196452f888acb5efdb62d009687e52c5b95830ec6cbc9cc6e9"
+      "computedHash": "f7dfb20517fb388cccce8f9da36f8892fa9af7f235013ab572cc1fa59d58851b"
     },
     "react-spring-physics": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/react-spring-physics/SKILL.md",
-      "computedHash": "df2dd730f887868d8586ce94b503ef10cf1a4538651705ecd23be878017ca5de"
+      "computedHash": "62fefe6d8415029918493525a1ae26eefcb581a7e6a50a7d0cfc0049383f6f33"
     },
     "react-three-fiber": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/react-three-fiber/SKILL.md",
-      "computedHash": "d672dfba48620140185d451bc9b6841833eed4306277776efab2e2a82c7b8fbf"
+      "computedHash": "b459a2f891d1d93032e6c69a11f9bced82a27044ee89122f540fdb9de39d900e"
     },
     "real-sound": {
       "source": "Leonxlnx/earshot",
       "sourceType": "github",
       "skillPath": "skills/real-sound/SKILL.md",
-      "computedHash": "0376c695fdcdd5d2ff0a50f6be5f21c9981e68a6bcafc8f337563cc8856e38b2"
+      "computedHash": "0caed483c0c11a7b3dcc7e449d2856a1845a9ea13251f2708ff0e9c4397045fb"
     },
     "reanimate": {
       "source": "NiazMorshed2007/reanimate",
       "sourceType": "github",
       "skillPath": "skills/reanimate/SKILL.md",
-      "computedHash": "f6ce1596a7c3117af0ddf94546ab3948f864986a8f1c97184576413e14bd3135"
+      "computedHash": "5c7f0f2362037d5a45ae799c54ae427631d797c2b8ce0c32cdfde111883b3e1c"
+    },
+    "reddit-automation": {
+      "source": "flowkit-labs/skills",
+      "sourceType": "github",
+      "skillPath": "reddit-automation/SKILL.md",
+      "computedHash": "ac8dfb0de0e86b9d6d34f20ba6c1f0eb58f8e7866829075b611229a847d4b28b"
     },
     "rive-interactive": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/rive-interactive/SKILL.md",
-      "computedHash": "f36fb49d447a5a688a5a57bd63d7897e282d0eed33560755480a45c476aeceb9"
+      "computedHash": "209caf217ba29fc4dce30abdf1b71252ea4781040bdf17d9121923adf759eb2f"
     },
     "scroll-reveal-libraries": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/scroll-reveal-libraries/SKILL.md",
-      "computedHash": "f9d89c4871015d6a90b1942d4176829e7bc8cd8582ecc9e8344c34d50350f663"
+      "computedHash": "8a4c8747b4b0181fff11c365150bdcb2ee68b68673761046b768e2f6877fec87"
     },
     "skill-creator": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/skill-creator/SKILL.md",
-      "computedHash": "0aa401c7d5eb0e8475de2e62519ca01dbaab6f0abce9e34b9e87ff07ffb19312"
+      "computedHash": ""
     },
     "spline-interactive": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/spline-interactive/SKILL.md",
-      "computedHash": "d71ae3bd67c771b81c6757a9b23796a25ff2765bf490912da8ec2fbc16289403"
+      "computedHash": "3b76bd078d732b911e7bccfe96dd3f0a965440fab3cda5a14ce643b0f54d2f47"
     },
     "substance-3d-texturing": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/substance-3d-texturing/SKILL.md",
-      "computedHash": "2e1dfe5482e4c13337d696a9c42e4bcdd40724b403bdd568670ea08b42800662"
+      "computedHash": "7d70efa36425994696221471aef2cfad0540d93bc6aa2bab7fa525715d27befe"
     },
     "text-to-lottie": {
       "source": "diffusionstudio/lottie",
       "sourceType": "github",
       "skillPath": "skills/text-to-lottie/SKILL.md",
-      "computedHash": "143009abf43d2ac6bd9970c42373e6ae029b91cc56124e56287162010a0e9fc1"
+      "computedHash": ""
     },
     "threejs-webgl": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/threejs-webgl/SKILL.md",
-      "computedHash": "9b2cfc1e6512ad6c41e4e9ba56c301d619c2cfd63722793258f4424013ec4b22"
+      "computedHash": "30fd8428b0c7eff6a725a42a9aee9c39e3c319cd95f2557a1bbbe8ade1baefb3"
     },
     "web3d-integration-patterns": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
       "skillPath": ".claude/skills/web3d-integration-patterns/SKILL.md",
-      "computedHash": "e411bbc6e7f7f928b6fd2f209530446cf74dfa1ff9cfd6adb17ba37317d89e9a"
+      "computedHash": "7955433c872ee18a3deebec879aa79d1057a660fc2f9a78fa9ca0f6e002cbef7"
     }
   }
 }
