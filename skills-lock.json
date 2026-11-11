@@ -169,6 +169,12 @@
       "skillPath": "skills/reanimate/SKILL.md",
       "computedHash": "5c7f0f2362037d5a45ae799c54ae427631d797c2b8ce0c32cdfde111883b3e1c"
     },
+    "remotion-render": {
+      "source": "inference-sh/skills",
+      "sourceType": "github",
+      "skillPath": "tools/video/remotion-render/SKILL.md",
+      "computedHash": "5a2181165986b1cb5cf65f40592f69aae4fea3ac9ff9c7454e42ad6bea55bc01"
+    },
     "rive-interactive": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
