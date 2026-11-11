@@ -9,11 +9,12 @@ use) small. Every session on this team reads this file first, then `docs/HANDOFF
 |---|---|---|
 | **Secretary & Executive** ("PalDex secretary & executive (current)", `session_019xqnwfFvQiZZLm3DhgHYmW`) | Above the project manager. Keeps the agenda order, the big picture, the 5-hour time blocks and a strict token budget, in `docs/exec.md`. No workers, PRs or code. | One long-lived session, used only when Josh or the PM messages it |
 | **Project manager** ("PalDex project manager (current)", `session_019xqnwe2xGc6E2Zfb29YqrL`) | Talks to Josh, picks tasks from the agenda (`docs/HANDOFF.md`, section 2, "Agenda"), starts and briefs workers, checks on them, reports back. Writes no app code itself. | One long-lived session, used only when Josh messages it |
+| **Art director** ("PalDex art director (current)", `session_019xqnwggt7rgfeAXJaezQTz`) | Cosmetics ideas and art direction: outfits, accessories, colours, scenes for the cats (`src/chester/*`, `docs/HANDOFF.md` §3a). Keeps an idea list in `docs/art.md` and briefs Art/Features tasks for the PM. Writes no app code, starts no sessions. | One long-lived session, used only when Josh or the PM messages it |
 | **Features** worker | Builds one agenda item: code, tests, the handoff update, and any SQL (written as an idempotent migration plus a policy test, pasted to Josh to run). | A fresh session per task, archived when the task is done |
 | **QA** worker | Checks one pull request: `npm test`, `npm run typecheck`, `npm run build`, the SQL tests if there's SQL, and a few iPhone-size screenshots of the touched screens (light and dark). Reports problems; fixes only small, obvious ones on the same branch. | A fresh session per pull request, archived when done |
 | **UX auditor** ("PalDex UX reviewer") | The nightly review (scheduled task, 1:45 AM Eastern) and design briefs. Not managed by the project manager. | Its own session |
 
-Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` section 3a), Docs.
+Roles to add later if needed: Docs.
 
 ## Rules for the project manager
 
