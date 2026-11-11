@@ -163,12 +163,6 @@
       "skillPath": "skills/reanimate/SKILL.md",
       "computedHash": "5c7f0f2362037d5a45ae799c54ae427631d797c2b8ce0c32cdfde111883b3e1c"
     },
-    "reddit-automation": {
-      "source": "flowkit-labs/skills",
-      "sourceType": "github",
-      "skillPath": "reddit-automation/SKILL.md",
-      "computedHash": "ac8dfb0de0e86b9d6d34f20ba6c1f0eb58f8e7866829075b611229a847d4b28b"
-    },
     "rive-interactive": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
@@ -198,6 +192,12 @@
       "sourceType": "github",
       "skillPath": ".claude/skills/substance-3d-texturing/SKILL.md",
       "computedHash": "7d70efa36425994696221471aef2cfad0540d93bc6aa2bab7fa525715d27befe"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "2fbff32fd63b7d31585cacf0ed43e5bf8d05dd20d6c0c751d256cb967a00eec1"
     },
     "text-to-lottie": {
       "source": "diffusionstudio/lottie",
