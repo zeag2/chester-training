@@ -1,6 +1,6 @@
 # Desktop website layout: design brief (agenda item 9)
 
-Status: **brief for Josh to approve.** No app code here; Features workers build it one step at a time.
+Status: **approved by Josh, 2026-11-11** (answers in §8). No app code here; Features workers build it one step at a time.
 Written by the UX reviewer, 2026-11-11, from the current app (main `6af06e2`) at 1280×800 (light) and 1440×900 (dark).
 
 Goal: the same app, comfortable on a laptop or desktop. Still one codebase, and still exactly today's layout on phones.
@@ -25,7 +25,7 @@ Goal: the same app, comfortable on a laptop or desktop. Still one codebase, and 
 
 Ranked by how likely they are at a desk:
 
-1. **Reading and showing the vet things:** the Summary for the vet (on a big screen or printed), documents
+1. **Reading and showing the vet things:** the Summary for the vet (on a big screen), documents
    (open, rename, sort), the visit history, adding the vet's details. Typing is easier with a keyboard.
 2. **Uploading documents:** PDFs from email or Downloads, dragged in.
 3. **Logging at a desk:** "Fed" and the daily check from a work laptop, catching up on a weigh-in or a med.
@@ -73,7 +73,7 @@ instead of making cards wide. Body text stays at the phone size (16 px); line le
 |---|---|
 | **Home** | Two columns. **Left (wider):** the cat scene (bigger, see §5), Quick log and daily check, Today. **Right:** Friends' cats, Training, the corner, news cards (new friend, treat thanks). The Quick log Undo note becomes a toast at the bottom-right of the content area. |
 | **Health** | Two columns. **Left:** Your vet, Visits (next/last), Coming up, Log something. **Right:** Documents (newest + All documents), Weight chart (wider), Food and treats. The Health log below spans both columns as a **table** (date · what · details · who). |
-| **Vet summary** | A print-friendly single column, 720 px, with **Print** and **Share** buttons; `@media print` hides the nav. |
+| **Vet summary** | A single column, 720 px, with a **Share** button. (No print stylesheet: Josh skipped it.) |
 | **All documents / Visit page** | A two-pane layout: the list on the left, and the selected document's details and preview on the right (PDF/photo in an `<iframe>`/`<img>`). Drag-and-drop a file anywhere to add it. |
 | **Train** | Stats and chart left, Learning now and today's sets right. **Skill tree:** wider, branches side by side. |
 | **Session** (training) | Just centred, at phone width. Show a note: "Best on your phone, next to Chester." |
@@ -93,13 +93,8 @@ reading the last visit while adding the new one). Esc closes it; clicking the di
   back) after about 500 ms.
 - **Focus:** a visible focus ring for keyboard users only (`:focus-visible`, 2 px `--ink` outline, 2 px offset). It must be visible in
   both themes. Sheets/dialogs trap focus and return it to the button that opened them.
-- **Shortcuts** (desktop only, ignored while typing in a field; listed under "?" in the nav):
-  - `g h` / `g e` / `g t` / `g m`: go to Home / Health / Train / Me
-  - `n`: open the + Log menu; `f` / `s` / `p`: log Fed / Scooped / Played (same as the tiles, with the same Undo); `u`: undo the last one
-  - `/`: search documents (on Health)
-  - `Esc`: close a sheet or dialog
+- **Keys:** only `Esc` to close a sheet or dialog, and Enter/Space on focused buttons as usual. No custom shortcuts (Josh: skip).
 - **Drag and drop:** documents anywhere on Health or All documents.
-- **Pet switcher:** `[` and `]` switch cats.
 
 ## 5. The cat and the corner
 
@@ -129,21 +124,19 @@ reading the last visit while adding the new one). Esc closes it; clicking the di
 | 1 | **Breakpoints + side nav**: a `useLayout()` hook (`phone`/`tablet`/`desktop` from `matchMedia`), the tab bar becomes a side rail/nav at ≥ 760 px, and the pet switcher moves into the nav on desktop. `.screen` padding adjusts (no 110 px bottom pad when there's no tab bar). | M | Biggest single win. Phones untouched (snapshot-test the tab bar under 760 px). |
 | 2 | **Sheets as dialogs / side panel** + Esc + focus trap. | M | One change in the shared sheet wrapper (`.overlay`/`.sheet`), used by every form. |
 | 3 | **Focus rings, hover states, `cursor:pointer`** (CSS only, under `(hover:hover)` and `:focus-visible`). | S | Pure CSS in app.css. |
-| 4 | **Home in two columns** + the bigger cat scene. | M | Needs the art session to check the 160 px scene, the chase and the gags. |
+| 4 | **Home in two columns** + the bigger cat scene. | M | Approved (bigger cat: yes). Needs the art session to check the 160 px scene, the chase and the gags. |
 | 5 | **Health in two columns** + the Health log as a table + drag-and-drop documents. | M | Builds on the vet redesign's sections. |
-| 6 | **Documents two-pane with preview**, **Vet summary print stylesheet** + Print button. | M | |
-| 7 | **Keyboard shortcuts** + the "?" help. | S | |
-| 8 | **Corner, Friends, Train, Tree grids** add columns; Play area bigger with hover-to-move laser. | M | |
-| 9 | **Just centre** the rest (Settings, Week, Trophies, Library, Onboarding) at 640 px. | S | Mostly done by step 1's max widths. |
+| 6 | **Documents two-pane with preview.** | M | |
+| 7 | **Corner, Friends, Train, Tree grids** add columns; Play area bigger with hover-to-move laser. | M | Friends use desktop too, so the Friends and Visit layouts matter. |
+| 8 | **Just centre** the rest (Settings, Week, Trophies, Library, Onboarding) at 640 px. | S | Mostly done by step 1's max widths. |
 
 Each step: Playwright screenshots at 390, 820, 1280 and 1440 px, light and dark; the phone screenshots must match
 today's.
 
-## 8. Open questions for Josh
+## 8. Josh's answers (2026-11-11)
 
-1. **Who uses the desktop site?** You at work, Megan, or friends who only visit cats? This decides whether step 4 (Home) or
-   step 5–6 (Health and documents) comes first.
-2. **Side nav or top nav** on desktop? This brief suggests a side nav (it fits the pet switcher and the + Log button).
-3. **Keyboard shortcuts:** worth it, or skip step 7?
-4. **Should the cat get bigger** on desktop (needs an art check), or stay phone-sized and centred?
-5. **Printing:** do you want a printed vet summary (step 6), or is a shared PDF/link enough?
+1. **Who uses the desktop site?** Josh, and **friends too**, so Friends, Visit and Play need care, not just Health.
+2. **Side or top menu?** **Side menu**, as recommended.
+3. **Keyboard shortcuts:** **skip**. Only Esc closes dialogs; the rest is normal tab/Enter.
+4. **Bigger cat on desktop:** **yes** (160 px on Home, with an art check).
+5. **Printable vet summary:** **skip**. Share is enough.
