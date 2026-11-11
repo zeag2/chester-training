@@ -28,28 +28,29 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
 ## Schedule (time blocks, Eastern)
+Blocks follow Josh's 5-hour resets: 12:40 PM, 5:40 PM, 10:40 PM, 3:40 AM, 8:40 AM (Josh, 2026-11-11).
 Gates: Josh's "ship it"; Josh runs any SQL by hand.
 
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
 | Tue Nov 10, now | Desktop step 5: PR #17 green | done / ~4% | ship it | waiting on Josh |
 | Tue Nov 10, late | Art director's first run (`docs/art.md`: style rules + cosmetics ideas); on demand only, ideas come here via the PM | S / ~2% | — | running |
-| **Wed Nov 11, 1:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | done 11:58 AM: PR #19 (on #17), green; waiting on ship it |
-| Wed Nov 11, 11:40 AM | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | |
-| **Thu Nov 12, 1:40 AM (wakeup)** | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | |
-| Thu Nov 12, 11:40 AM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
-| **Fri Nov 13, 1:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
-| Fri Nov 13, 11:40 AM | Feed part 1: QA + fixes | S / 4% | ship it | |
-| **Sat Nov 14, 1:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
-| Sat Nov 14, 11:40 AM | Feed part 2: QA + fixes | S / 4% | ship it | |
-| **Sun Nov 15, 1:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
-| Sun Nov 15, 11:40 AM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left: Visit page two-pane) | M / 4% | ship it | |
-| **Mon Nov 16, 1:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
+| **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | done 11:58 AM: PR #19 (on #17), green; waiting on ship it |
+| Wed Nov 11, 12:40 PM | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | |
+| **Thu Nov 12, 3:40 AM (wakeup)** | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | |
+| Thu Nov 12, 12:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
+| **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
+| Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
+| **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
+| Sat Nov 14, 12:40 PM | Feed part 2: QA + fixes | S / 4% | ship it | |
+| **Sun Nov 15, 3:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
+| Sun Nov 15, 12:40 PM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left: Visit page two-pane) | M / 4% | ship it | |
+| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 
-Wakeups set by the PM (send_later, 1:40 AM Nov 11–16): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
+Wakeups set by the PM (send_later, 3:40 AM Nov 12–16; Nov 11's was 1:40 AM): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
 trig_01NF3pijsrjvMjeHdVVRBSCs, trig_01ATt1YQmjZddfgfBdJTrCZH, trig_0179g7LHPfYABhxtC2XbcY8N, trig_0126gKbv1PYai5CEFJPhqSky.
-Pencilled: Nov 15 may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
+Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
 cap first and skips if it's spent. A PM restart can make a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
