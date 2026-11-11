@@ -43,6 +43,12 @@
       "skillPath": "skills/earshot/SKILL.md",
       "computedHash": "07a6100d2f2110f38e33d1892d03efa614f7b35335580a60fc7d2b17d39de5ec"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "7bc223e2aafbdbf6e50ea243ba6ef67fe432bb069ab439fea0390795dac0bf7f"
+    },
     "gsap-core": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
