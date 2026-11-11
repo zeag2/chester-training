@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-11 (desktop step 4, Home in two columns + the 160 px cat, branch `claude/features-desktop-home`, pull request open; steps 1 and 2 merged). Start here when picking
+_Last updated 2026-11-11 (desktop steps 1–4 and 8 merged: side nav, sheets as dialogs / side panel, hover and focus rings, the centred screens, Home in two columns + the 160 px cat). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -95,6 +95,16 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   exactly the old markup (pinned by `src/screens/home.test.tsx`; a 390 px pixel diff against main is identical apart
   from the animated cats). The outline scales with the drawing (1.3 px at 104, about 2 px at 160, the same as the
   Corner's 150 px cat), so it stays even. Screenshots: `docs/plans/img/2026-11-11-step4-*.png`.
+- **Hover, focus rings, centred screens** (desktop plan steps 3 and 8): the "Desktop polish" block at the end of
+  app.css. Under `(hover:hover)`: `cursor:pointer` on links, labels, selects, checkboxes; a hover tint on buttons,
+  cards, chips, rows, icon buttons, tabs, the vet cards and switches, laid over the element's own colour as a
+  `background-image` (`--hov`: darker in light, lighter in dark; `--hov-ink`, the reverse, on ink buttons such as
+  `.btn`, the selected chip and the + / Log). Under `(hover:hover)` or 760 px and up: a 2 px `--ink` `:focus-visible`
+  ring, 2 px out (just inside for rows in clipped or scrolling groups). Settings, Week, Trophies and Library already
+  got the 640 px column from step 1; Onboarding and Install (no nav) opt in with `.screen.centred` (640 px from 760 px
+  up). `src/ui/layout.test.tsx` checks every rule in the block sits in one of those media queries, so phones are
+  untouched (Pillow diff of five phone screens vs main: identical but for the cat's wave). No tooltips yet (brief §4,
+  icon-only buttons). Screenshots: `docs/plans/img/2026-11-11-polish-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
   change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
   corner, friends.
@@ -448,10 +458,10 @@ Items marked *(art)* suit the art session.
    comfortable on a laptop or desktop screen.
    Brief: `docs/plans/2026-11-11-desktop-layout.md`. Josh (2026-11-11): friends use it too; side nav; no keyboard
    shortcuts (skip step 7); bigger cat on desktop (step 4, with an art check); no printable vet summary (drop the
-   print part of step 6). **Step 1 (breakpoints + side nav) merged.** **Step 2 (sheets as dialogs / side panel)
-   merged.** **Step 4 (Home in two columns + the 160 px cat) built** (pull request from
-   `claude/features-desktop-home`; the art session should still look at the 160 px scene). Steps 3 and 8 are with
-   another worker. Next: step 5 (Health in two columns). Idea for
+   print part of step 6). **Steps 1 (breakpoints + side nav), 2 (sheets as dialogs / side panel), 3 (hover, focus
+   rings, cursor), 4 (Home in two columns + the 160 px cat; the art session should still look at the 160 px scene)
+   and 8 (centred screens) merged.** Next: step 5 (Health in two columns). Still open from §4: tooltips on icon-only
+   buttons. Idea for
    later: on desktop, the page column could slide left while the side panel is open (now the panel covers the right
    part of a centred page at 1280–1440 px).
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
@@ -1042,6 +1052,12 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   the 390 px Home, main vs branch (identical outside the animated cats); 160 px frame strips of the chase, the litter
   gag, the nuzzle and the bed (`page.clock.fastForward` to the timed moments, then real time); the Undo toast at 1440
   and 1920 px; the rainbow dash at 1440 px.
+- 2026-11-11, desktop steps 3 and 8, hover, focus rings, centred screens (Features worker): no skills, plugins or
+  MCP servers invoked beyond the GitHub and session tools (`lottiefiles-creator` connected, unused). Checks: Vitest
+  (222), typecheck, build; Playwright against the Vite dev servers of main and the branch (`VITE_SUPABASE_URL=`, a cat
+  seeded through `globalThis.__chesterStore`): iPhone 13 (hover:none) for Onboarding, Me, Week, Trophies, Library,
+  light and dark, Pillow diff vs main; 900 and 1440 px light and dark for the same screens plus a Tab-key focus ring
+  and a mouse hover on Me.
 - 2026-11-11, QA of PR #13 (desktop step 2, sheets): no skills, plugins or MCP servers invoked beyond the GitHub and
   session tools. Checks: tests, typecheck, build; Playwright against the Vite dev servers of main and the branch (dev
   store seeded) at 390, 900 and 1440 px, light and dark: Tab trap (40 presses), Esc and focus return, backdrop

@@ -294,3 +294,31 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
 .petswitch.innav button{flex-direction:row;gap:10px;padding:4px 10px;border-radius:14px;font-size:14px;min-height:48px}
 .petswitch.innav .face{width:44px;height:44px}
 .petswitch.innav button.on{background:var(--grey)}
+
+/* ── Desktop polish: hover, focus rings, the centred screens (docs/plans/2026-11-11-desktop-layout.md, steps 3 and 8) ──
+   Every rule below sits in a media query that phones (under 760 px, no hover) never match: hover tints only under
+   (hover:hover), keyboard focus rings under (hover:hover) or 760 px and up (an iPad with a keyboard), and the wider
+   setup screens at 760 px and up. Hover lays a faint tint over the element's own colour as a background-image, so
+   it works on every colour, darker in light mode and lighter in dark (--hov), and the reverse on ink buttons
+   (--hov-ink). src/ui/layout.test.tsx checks this block stays inside those queries. */
+@media (hover:hover){
+  :root{--hov:rgba(35,35,32,.06);--hov-ink:rgba(255,255,255,.14)}
+  a[href],summary,label[for],select,input:is([type="checkbox"],[type="radio"],[type="file"]),[role="button"]{cursor:pointer}
+  button:disabled{cursor:default}
+  :is(.btn2,a.card,button.card,.chipbtn:not(.on),a.item,button.item,.iconbtn,a.lrow,button.lrow,.seg button:not(.on),.tab,.yarnbtn,.bkvet,.hit,button.visitrow,.switch,.scanclose,.scantorch):hover,
+  .petswitch button:hover .face{background-image:linear-gradient(var(--hov),var(--hov))!important}
+  :is(.btn:not(:disabled),.chipbtn.on,.plusbtn):hover,.tab:hover .plus{background-image:linear-gradient(var(--hov-ink),var(--hov-ink))!important}
+  .tab:hover{color:var(--ink)}
+}
+@media (hover:hover) and (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hov:rgba(255,255,255,.07);--hov-ink:rgba(20,21,19,.14)}}
+@media (hover:hover){:root[data-theme="dark"]{--hov:rgba(255,255,255,.07);--hov-ink:rgba(20,21,19,.14)}}
+@media (hover:hover),(min-width:760px){
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  /* inside clipped or scrolling groups the ring goes just inside, so it isn't cut off */
+  :is(.lrow,.households :is(button,a),.petswitch:not(.innav) button,.seg button,.item):focus-visible{outline-offset:-2px}
+  .in:focus-visible{outline-offset:0}
+}
+/* step 8: the setup screens (no side nav there) use the same 640 px column as Settings, Week, Trophies and Library */
+@media (min-width:760px){
+  .screen.centred{max-width:640px;padding-left:32px;padding-right:32px}
+}

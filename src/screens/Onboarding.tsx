@@ -52,7 +52,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
   const dots = (n: number) => { const at = sharingConfigured() ? n : n === 1 ? 1 : n - 2; return <div className="dots" aria-label={`Step ${at} of ${total}`}>{Array.from({ length: total }, (_, i) => <i key={i} className={i + 1 === at ? 'on' : ''} />)}</div>; };
   const back = (n: number, label: string) => <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => setStep(n)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{label}</b></div>;
   const foot = (n: number, label: string, onClick: () => void, disabled = false) => <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(n)}<button className="btn" style={{ marginTop: 20 }} onClick={onClick} disabled={disabled}>{label}</button></div>;
-  const wrap = (children: React.ReactNode) => <div className="screen" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>{children}</div>;
+  const wrap = (children: React.ReactNode) => <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>{children}</div>;
 
   if (step === 1) return wrap(<div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36 }}>
     <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '30px 16px 16px', borderRadius: 32 }}><Chester coat={coat} eyes={eyes} mood="happy" raised anim="wave" width={190} interactive /></div>
@@ -150,7 +150,7 @@ export function AnotherCat() {
   const next = pendingPets()[0];
   if (!cat) return null;
   const training = cat.training !== false;
-  return <div className="screen" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
+  return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36 }}>
       <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px 16px 14px', borderRadius: 32 }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" anim="dance" width={170} label={cat.name} /></div>
       <h1 style={{ marginTop: 26 }}>{cat.name} is all set!</h1>

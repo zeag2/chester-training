@@ -42,10 +42,41 @@ describe('Tab bar on phones (under 760 px) stays exactly as before', () => {
     expect(css).toContain('.screen{max-width:480px;margin:0 auto;padding:calc(20px + var(--safe-t)) 20px calc(110px + var(--safe-b));position:relative;min-height:100dvh}');
     expect(css).toContain('.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 max(10px,var(--safe-b));z-index:20}');
     expect(css).toContain('.tabs-in{display:flex;justify-content:space-around;width:100%;max-width:480px}');
-    const added = css.slice(css.indexOf('/* ── Tablet and desktop navigation'));
+    const added = css.slice(css.indexOf('/* ── Tablet and desktop navigation')).split('/* ── Desktop polish')[0];
     for (const rule of added.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r: string) => r.trim()).filter(Boolean)) {
       expect(rule, rule).toMatch(/^(html\[data-nav|\.tabs\.rail|\.sidenav|\.navtabs|\.petswitch\.innav)/);
     }
+  });
+});
+
+describe('Desktop polish (steps 3 and 8): hover, focus rings and the centred setup screens', () => {
+  it('keeps every rule inside a media query that phones (under 760 px, no hover) never match', async () => {
+    const fs = 'node:fs';
+    const css: string = (await import(/* @vite-ignore */ fs)).readFileSync('src/styles/app.css', 'utf8');
+    const start = css.indexOf('/* ── Desktop polish');
+    expect(start).toBeGreaterThan(0);
+    let block = css.slice(start).replace(/\/\*[\s\S]*?\*\//g, '');
+    const next = block.indexOf('/* ──'); if (next > 0) block = block.slice(0, next);
+    // walk the top level: only @media blocks with an allowed query, no bare rules
+    const allowed = ['(hover:hover)', '(hover:hover) and (prefers-color-scheme:dark)', '(hover:hover),(min-width:760px)', '(min-width:760px)'];
+    let i = 0; let blocks = 0;
+    while (i < block.length) {
+      if (/\s/.test(block[i])) { i++; continue; }
+      const open = block.indexOf('{', i);
+      const head = block.slice(i, open).trim();
+      expect(head.startsWith('@media '), head).toBe(true);
+      expect(allowed, head).toContain(head.slice(7).trim());
+      let depth = 0; let j = open;
+      for (; j < block.length; j++) { if (block[j] === '{') depth++; else if (block[j] === '}' && --depth === 0) break; }
+      i = j + 1; blocks++;
+    }
+    expect(blocks).toBeGreaterThanOrEqual(4);
+  });
+  it('the setup screens opt into the 640 px column with .screen.centred', async () => {
+    const fs = 'node:fs';
+    const read = async (f: string): Promise<string> => (await import(/* @vite-ignore */ fs)).readFileSync(f, 'utf8');
+    for (const f of ['src/screens/Onboarding.tsx', 'src/screens/Install.tsx']) expect(await read(f)).toContain('className="screen centred"');
+    expect(await read('src/styles/app.css')).toContain('.screen.centred{max-width:640px');
   });
 });
 
