@@ -46,6 +46,9 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | **Mon Nov 16, 1:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 
+Wakeups set by the PM (send_later, 1:40 AM Nov 11–16): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
+trig_01NF3pijsrjvMjeHdVVRBSCs, trig_01ATt1YQmjZddfgfBdJTrCZH, trig_0179g7LHPfYABhxtC2XbcY8N, trig_0126gKbv1PYai5CEFJPhqSky.
+Pencilled: Nov 15 may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
 cap first and skips if it's spent. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
