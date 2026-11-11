@@ -32,7 +32,19 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
-| (draft by the Executive, from the PM's draft below, paced to the budget) | | | | |
+| Tue Nov 10, now–1:40 AM | Desktop step 5, Health in two columns (running) | M / 4% | ship it | running |
+| Wed Nov 11, 11:40 AM–4:40 PM | Desktop step 6 (no print) + tooltips on icon-only buttons | M / 5% | ship it | next |
+| Wed Nov 11, 4:40–9:40 PM | Booking part 2a: reschedule + cancel (.ics UID/SEQUENCE) | M / 4% | ship it; Josh tests on iPhone | |
+| Thu Nov 12, 11:40 AM–4:40 PM | Booking part 2b: several cats at once | M / 5% | ship it | |
+| Thu Nov 12, 4:40–9:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
+| Fri Nov 13, 11:40 AM–9:40 PM | Photo feed part 1 (upload, shrink, feed) + QA | L / 9% | SQL run; ship it | |
+| Sat Nov 14, 11:40 AM–9:40 PM | Photo feed part 2 (reactions, hide, delete, mastered-skill prompt) + QA | L / 9% | ship it | |
+| Sun Nov 15, 11:40 AM–9:40 PM | Medicine reminders (in-app) + desktop leftovers | M+S / 8% | ship it | |
+| Mon Nov 16, 11:40 AM–4:40 PM | Push notifications: plan + SQL only | S / 3% | Josh runs SQL | |
+| Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
+
+Total ~50% + nightly UX audit (~1% a night, ~6%) = ~56% of the ~70% left, leaving ~14% (10% reserve + slack).
+Nights (9:40 PM–11:40 AM) are off except the audit. If a block runs over, the next block shrinks, not the reserve.
 
 PM's unpaced draft (2026-11-11): now–1:40 AM desktop steps 5–7; 1:40 AM booking part 2 + photo feed plan/SQL;
 6:40 AM feed part 1; 11:40 AM feed part 2 + QA; 4:40 PM medicine reminders + desktop leftovers; 9:40 PM push plan/SQL;
@@ -41,4 +53,8 @@ PM's unpaced draft (2026-11-11): now–1:40 AM desktop steps 5–7; 1:40 AM book
 ## Big picture
 | Project | Size | Value | Open question for Josh |
 |---|---|---|---|
-| (to fill) | | | |
+| Push notifications (agenda 5) | L, SQL | High once the feed exists: brings friends back | After the Nov 17 reset? VAPID keys go in environment secrets |
+| "Pet me?" moments *(art)* | M | High: the daily reason to open the app | Up to 3 a day, 9 AM–9 PM, as planned? |
+| App Store wrapper (Capacitor) | L | Medium: haptics, real push on iPhone, store listing | Worth the $99/yr Apple fee, or stay a web app? |
+| A cleaner address | S | Medium for sharing with friends | Buy a custom domain, or a free `*.pages.dev` name? |
+| Other animals (dogs) | L | Big reach, big cost (art, skills, copy) | Later, or never? |
