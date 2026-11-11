@@ -47,6 +47,7 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | Sun Nov 15, 12:40 PM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left: Visit page two-pane) | M / 4% | ship it | |
 | **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
+| Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
 
 Wakeups set by the PM (send_later, 3:40 AM Nov 12–16; Nov 11's was 1:40 AM): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
 trig_01NF3pijsrjvMjeHdVVRBSCs, trig_01ATt1YQmjZddfgfBdJTrCZH, trig_0179g7LHPfYABhxtC2XbcY8N, trig_0126gKbv1PYai5CEFJPhqSky.
