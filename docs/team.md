@@ -63,3 +63,12 @@ Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` sectio
   (photo feed, SQL), item 9 (desktop layout, start with a UX brief). Open: one flaky run on main (2 tests failed once
   in one file, then passed 4 times in a row; find which). For Josh on a real iPhone: Apple/Google calendar from the
   Home Screen app, the 7-day alarm, the icon note's wording.
+- 2026-11-11 (night): shipped PRs #11–#16: desktop brief, desktop steps 1–4 and 8 (side nav, sheets as dialog or
+  side panel, hover and focus rings, centred screens, Home in two columns + the 160 px cat), and the flaky-test fix
+  (`store.settled()`). main 0d7fea1, 228 tests. Skills added today: supabase, supabase-postgres-best-practices,
+  find-skills, remotion-render (unusable without an inference.sh account; the UX auditor uses Playwright video
+  instead), ask-matt. No workers running. Josh is near his weekly limit (resets Tue Nov 17, 3 PM Eastern): one worker
+  at a time, skip QA on small changes, and start a fresh manager. Next: desktop steps 5 (Health in two columns),
+  6 (documents preview), 7 (wider grids); then agenda 8 (booking part 2) and 4 (photo feed). Open: resizing across
+  1100 px closes an open Undo toast or "What's off?" on Home; the rainbow dash could use an art pass at desktop size;
+  Josh's art OK on the 160 px cat.
