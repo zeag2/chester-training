@@ -95,6 +95,11 @@ export class Store {
   }
   /** One write at a time, so a sync never interleaves with logging a set. */
   private serial<T>(fn: () => Promise<T>): Promise<T> { const p = this.chain.then(fn, fn); this.chain = p.catch(() => {}); return p; }
+  /** Resolves once every queued write is done, including writes queued while waiting (a care entry's treats). Tests
+      wait on this after a tap instead of a fixed sleep, which a busy machine outlasts (see HANDOFF, Gotchas). */
+  async settled(): Promise<void> {
+    for (let c = this.chain; ; c = this.chain) { await c; await new Promise((r) => setTimeout(r, 0)); if (c === this.chain) return; }
+  }
 
   /** Progress and treats always come from the sets, so two trainers' phones agree. */
   private async rebuild(cat: Cat | null, patch: Partial<Snapshot> = {}) {
