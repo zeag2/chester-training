@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-11 (desktop steps 3 and 8, hover, focus rings and the centred screens, branch `claude/features-desktop-polish`, pull request open; steps 1 and 2 merged). Start here when picking
+_Last updated 2026-11-11 (desktop steps 1–4 and 8 merged: side nav, sheets as dialogs / side panel, hover and focus rings, the centred screens, Home in two columns + the 160 px cat). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -84,6 +84,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   rule keyed off `.sheetbg.dialog` / `.sheetbg.panel` (pinned by `src/ui/sheet.test.tsx`). Toasts and the treats
   note keep step 1's places; they sit under the dim while a sheet is open. Screenshots:
   `docs/plans/img/2026-11-11-sheets-*.png`.
+- **Home on desktop** (desktop plan step 4): at 1100 px and up Home uses `.screen.wide` and two columns
+  (`.homecols`): left, the cat scene, Quick log + daily check, Today; right, the "new home" card, the icon note,
+  Friends, Training, the corner card and the friend news. The greeting stays above both. The cat scene is the same SVG
+  at **160 px** instead of 104; `homeScene(layout)` in `src/screens/Home.tsx` holds both sets of sizes (cat 104/160,
+  the cats beside him 84/130, the bed 150/230, the chase's spacing 70/108, the bubble's lift 26/40) and the CSS block
+  "Desktop Home" in app.css scales the px offsets around him by the same ×1.54 (nuzzle, overlap, bed, the chase's
+  leap as `kchaseleapL`). The chase uses the column's width (up to 520 px) and a ball sized to the cat. The Quick log
+  Undo toast (`.toast.undo`) sits at the bottom right of the content area on desktop. Phones and tablets render
+  exactly the old markup (pinned by `src/screens/home.test.tsx`; a 390 px pixel diff against main is identical apart
+  from the animated cats). The outline scales with the drawing (1.3 px at 104, about 2 px at 160, the same as the
+  Corner's 150 px cat), so it stays even. Screenshots: `docs/plans/img/2026-11-11-step4-*.png`.
 - **Hover, focus rings, centred screens** (desktop plan steps 3 and 8): the "Desktop polish" block at the end of
   app.css. Under `(hover:hover)`: `cursor:pointer` on links, labels, selects, checkboxes; a hover tint on buttons,
   cards, chips, rows, icon buttons, tabs, the vet cards and switches, laid over the element's own colour as a
@@ -447,10 +458,10 @@ Items marked *(art)* suit the art session.
    comfortable on a laptop or desktop screen.
    Brief: `docs/plans/2026-11-11-desktop-layout.md`. Josh (2026-11-11): friends use it too; side nav; no keyboard
    shortcuts (skip step 7); bigger cat on desktop (step 4, with an art check); no printable vet summary (drop the
-   print part of step 6). **Steps 1 (breakpoints + side nav) and 2 (sheets as dialogs / side panel) merged.**
-   **Steps 3 (hover, focus rings, cursor) and 8 (centred screens) built** (pull request from
-   `claude/features-desktop-polish`); step 4 (Home in two columns) in progress in parallel. Still open from §4:
-   tooltips on icon-only buttons. Idea for
+   print part of step 6). **Steps 1 (breakpoints + side nav), 2 (sheets as dialogs / side panel), 3 (hover, focus
+   rings, cursor), 4 (Home in two columns + the 160 px cat; the art session should still look at the 160 px scene)
+   and 8 (centred screens) merged.** Next: step 5 (Health in two columns). Still open from §4: tooltips on icon-only
+   buttons. Idea for
    later: on desktop, the page column could slide left while the side panel is open (now the panel covers the right
    part of a centred page at 1280–1440 px).
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
@@ -868,6 +879,8 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   while the `r7` class plays `cRoll`, then goes back to the pose it was given.
 
 ### 5. Scenes that move cats around
+- **Home's two sizes**: 104 px on phones and tablets, 160 px on desktop (`homeScene()`; offsets in the app.css "Desktop
+  Home" block scale ×1.54). A new px offset in the Home scene needs its desktop twin there.
 - **Home life** (`src/screens/Home.tsx`): `useHomeMood` picks the pose over time (sit; every 25–55 s either 7 s of
   `knead` or 14 s of `drape`, taking turns; `doze` after 90 s alone; `sleep` 10:30 PM–5 AM); `useHomeLife` runs the
   random meows and the litter-box gag; the nuzzle with the cat beside uses `anim="nuzzle"`. **Just fed:** a Fed tap
@@ -1032,6 +1045,13 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, desktop step 4, Home in two columns + the 160 px cat (Features worker): no skills, plugins or MCP
+  servers invoked beyond the GitHub and session tools. Checks: Vitest (new `src/screens/home.test.tsx`), typecheck,
+  build; Playwright against the Vite dev servers of main and the branch (two cats seeded through
+  `globalThis.__chesterStore`, `page.clock` fixed at 2 PM) at 390, 900 and 1440 px, light and dark; Pillow pixel diff of
+  the 390 px Home, main vs branch (identical outside the animated cats); 160 px frame strips of the chase, the litter
+  gag, the nuzzle and the bed (`page.clock.fastForward` to the timed moments, then real time); the Undo toast at 1440
+  and 1920 px; the rainbow dash at 1440 px.
 - 2026-11-11, desktop steps 3 and 8, hover, focus rings, centred screens (Features worker): no skills, plugins or
   MCP servers invoked beyond the GitHub and session tools (`lottiefiles-creator` connected, unused). Checks: Vitest
   (222), typecheck, build; Playwright against the Vite dev servers of main and the branch (`VITE_SUPABASE_URL=`, a cat
