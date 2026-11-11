@@ -55,6 +55,7 @@ PM's unpaced draft (2026-11-11): now–1:40 AM desktop steps 5–7; 1:40 AM book
 |---|---|---|---|
 | Push notifications (agenda 5) | L, SQL | High once the feed exists: brings friends back | After the Nov 17 reset? VAPID keys go in environment secrets |
 | "Pet me?" moments *(art)* | M | High: the daily reason to open the app | Up to 3 a day, 9 AM–9 PM, as planned? |
-| App Store wrapper (Capacitor) | L | Medium: haptics, real push on iPhone, store listing | Worth the $99/yr Apple fee, or stay a web app? |
+| App Store wrapper (Capacitor) | L | Medium: haptics, real push on iPhone, store listing | **Later** (Josh, 2026-11-11): more features first; the $99/yr has to be paid for by the app |
+| Paying for itself | ? | Needed before the App Store | How should it earn: a small subscription, a one-time unlock, or cosmetic outfits? Not decided |
 | A cleaner address | S | Medium for sharing with friends | Buy a custom domain, or a free `*.pages.dev` name? |
 | Other animals (dogs) | L | Big reach, big cost (art, skills, copy) | Later, or never? |
