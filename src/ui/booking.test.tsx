@@ -12,7 +12,7 @@ vi.mock('../lib/calendar', async (orig) => ({ ...(await orig<typeof import('../l
 import { BookSheet, VisitsCard } from './VetCards';
 
 const tab = { location: { href: '' }, close: vi.fn() };
-const flush = () => new Promise((r) => setTimeout(r, 50));
+const flush = () => store.settled(); // the save's writes, not a fixed time (see HANDOFF, Gotchas)
 const toast = () => document.querySelector('.toast')?.textContent ?? '';
 const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
 

@@ -951,6 +951,13 @@ npm run build      # what CI runs
 - **The households SQL is detected at runtime** (`SupabaseRemote.households()`); a "no" is rechecked after a minute.
 - **Personal data:** Josh's real document packet contains his SSN digits, DOB, address and phones. It was only ever
   in a temporary folder; the test fixtures use made-up details. Keep it that way.
+- **UI tests: wait for the work, not a fixed time.** After a tap that saves, `await store.settled()` (inside `act`):
+  it resolves once every queued store write is done, including ones queued meanwhile (a care entry's treats), then
+  lets React apply what follows. A fixed sleep (`setTimeout(r, 30)`) made `dailylog`, `dailytaps` and `booking` tests
+  fail in about 1 in 5 full runs (fixed 2026-11-11): under load a save outlasts the sleep, the Quick log tile is still
+  `disabled` while saving, and the next click is silently dropped. Also add `afterEach(cleanup)` in files that render
+  (there are no vitest globals, so Testing Library doesn't clean up by itself); otherwise one failure leaves its screen
+  mounted and fails every later test in the file with "Found multiple elements".
 - **Supabase free tier:** projects pause after a week unused (Restore in the dashboard); the built-in mailer allows only
   ~2 emails an hour (not used now).
 
@@ -1113,6 +1120,8 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - Chromium's fake camera (`--use-file-for-fake-video-capture` with a generated barcode video) to test the scanner.
 - A throwaway local Postgres 16 (`/usr/lib/postgresql/16/bin`, run as the `postgres` user in a folder it can reach,
   e.g. `/var/tmp`) for the SQL policy tests.
+- Flaky-test hunt (2026-11-11): loop the full suite, e.g. `for i in $(seq 1 20); do npx vitest run > run$i.log 2>&1 ||
+  echo FAIL $i; done`, and run two suites at once for extra load. Only the first failure in a file matters (see Gotchas).
 - iPhone emulation in Playwright (`devices['iPhone 15']`, `navigator.standalone` stubbed for "installed") for the
   install and setup flow; build with `VITE_SUPABASE_URL=` to test setup without touching the real database.
 

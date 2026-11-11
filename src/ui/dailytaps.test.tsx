@@ -1,12 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { store } from '../db/store';
 import type { CareItem } from '../engine/care';
 import { DailyTaps } from './DailyTaps';
 
 const cat = (name: string) => ({ name, birthday: '2026-04', homeDate: '2026-05-01', breed: 'American Shorthair', coat: 'black', eyes: 'gold', rewards: ['treats'], outfit: '' });
-const tap = async (name: string | RegExp) => { await act(async () => { fireEvent.click(screen.getByRole('button', { name })); await new Promise((r) => setTimeout(r, 30)); }); };
+const tap = async (name: string | RegExp) => { await act(async () => { fireEvent.click(screen.getByRole('button', { name })); await store.settled(); }); };
 const all = async () => (await store.db.care.toArray()) as CareItem[];
+
+// no auto-cleanup without vitest globals: unmount after every test, so one failure can't cascade into the next
+afterEach(cleanup);
 
 describe('Quick log taps', () => {
   it('the toast stays about the cat it logged for after switching cats', async () => {

@@ -27,7 +27,7 @@ describe('visit page and all documents', () => {
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Dose or vaccine' })); });
     expect((screen.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-10-20');
     await act(async () => { fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'FVRCP' } }); });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save' })); await new Promise((r) => setTimeout(r, 50)); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save' })); await store.settled(); });
     expect(store.get().care.find((c) => c.kind === 'med' && (c.data as { name: string }).name === 'FVRCP')?.data).toMatchObject({ visitId: v.id });
     expect(screen.getByText('FVRCP')).toBeTruthy();
   });

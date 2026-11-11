@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup, within } from '@testing-library/react';
 import { store } from '../db/store';
 import type { CareItem } from '../engine/care';
@@ -7,10 +7,14 @@ import { DailyTaps } from './DailyTaps';
 import { DailyLogSheet } from './DailyLogSheet';
 
 const cat = (name: string) => ({ name, birthday: '2026-04', homeDate: '2026-05-01', breed: 'American Shorthair', coat: 'black', eyes: 'gold', rewards: ['treats'], outfit: '' });
-const settle = () => new Promise((r) => setTimeout(r, 30));
+// wait for the tap's writes (and React's updates after them), not a fixed time: under load a save outlasts any sleep
+const settle = () => store.settled();
 const tap = async (name: string | RegExp, root: HTMLElement = document.body) => { await act(async () => { fireEvent.click(within(root).getByRole('button', { name })); await settle(); }); };
 const rows = async () => (await store.db.care.toArray()) as (CareItem & { dirty?: number })[];
 const live = async (what: string, catId: string) => (await rows()).filter((c) => c.kind === 'daily' && (c.data as { what: string }).what === what && c.catId === catId && !c.deleted);
+
+// no auto-cleanup without vitest globals: unmount after every test, so one failure can't cascade into the next
+afterEach(cleanup);
 
 describe('Fixing a mistaken quick log', () => {
   it('a full Fed tile opens today’s meals; Delete asks, then removes one for everyone (synced like Undo)', async () => {
