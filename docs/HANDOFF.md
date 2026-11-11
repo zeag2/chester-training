@@ -441,6 +441,11 @@ Items marked *(art)* suit the art session.
 1. [x] **Smart defaults + log for several cats at once** (done 2026-11-09). Make logging effortless.
 2. [x] **Playable toys, part 1: laser dot and wand** (done 2026-11-09). See "Play" below.
 3. [x] **Playable toys, part 2: box and tunnel** (done 2026-11-10, branch `claude/features-box-tunnel`). See "Play" below.
+- [ ] **Security review + Forgot password** (M, SQL; Josh, 2026-11-11; before the photo feed): check access rules
+   (RLS) on every table and storage bucket with policy tests, auth settings (email confirmation, rate limits, leaked
+   password protection), security headers, dependency and secret scanning; add "Forgot password?" on sign-in
+   (Supabase reset email + a set-new-password screen; Josh adds the redirect URL in Supabase). Later, before charging
+   or the App Store: privacy policy and delete-my-account. Free tier has no backups: decide on Pro or a manual export.
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).

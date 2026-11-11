@@ -35,14 +35,14 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | Tue Nov 10, now | Desktop step 5: PR #17 green | done / ~4% | ship it | waiting on Josh |
 | **Wed Nov 11, 1:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it in the morning | |
 | Wed Nov 11, 11:40 AM | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | |
-| **Thu Nov 12, 1:40 AM (wakeup)** | Booking part 2b: several cats at once → PR | M / 5% | ship it | |
+| **Thu Nov 12, 1:40 AM (wakeup)** | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | |
 | Thu Nov 12, 11:40 AM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
 | **Fri Nov 13, 1:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
 | Fri Nov 13, 11:40 AM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 1:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
 | Sat Nov 14, 11:40 AM | Feed part 2: QA + fixes | S / 4% | ship it | |
 | **Sun Nov 15, 1:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
-| Sun Nov 15, 11:40 AM | Desktop leftovers + QA | S / 3% | ship it | |
+| Sun Nov 15, 11:40 AM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left) | M / 4% | ship it | |
 | **Mon Nov 16, 1:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 
