@@ -69,7 +69,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   hides). TabBar sets `<html data-nav="rail|side">` while it shows, and the CSS moves the page over, drops the 110 px
   bottom pad and makes the column 640 px; `.screen.wide` opts a screen into up to 1120 px on desktop (for the
   two-column steps). Pages without the tab bar (a session, play) stay at phone width, centred. Sheets are unchanged
-  (step 2). Screenshots: `docs/plans/img/2026-11-11-nav-*.png`.
+  (step 2). The "+N treats" note (`CareTreatNote`) centres on the page column and drops to the bottom when there's
+  no tab bar. Screenshots: `docs/plans/img/2026-11-11-nav-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
   change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
   corner, friends.
@@ -1002,6 +1003,9 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   builds (main and the branch) at 390, 900, 1280 and 1440 px, light and dark, with two cats written straight into
   IndexedDB; Pillow (`ImageChops.difference`) to compare the 390 px shots pixel by pixel (identical apart from the
   animated cat, which also differs between two runs of main).
+- 2026-11-11, QA of PR #12 (desktop step 1): no skills, plugins or MCP servers invoked. Checks: tests, typecheck,
+  build on the branch merged with main; Playwright (390/900/1280/1440 px, light and dark, dev store seeded with two
+  cats) for tabs, active state, pet switching from the nav, Log, deep link + Back, live resizing, toast/note placement.
 - 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
   Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
   `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
