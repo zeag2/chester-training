@@ -31,14 +31,14 @@ export function Install({ onSkip }: { onSkip: () => void }) {
     setGuide(true);
   };
 
-  if (state === 'installed') return <div className="screen" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
+  if (state === 'installed') return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36, textAlign: 'center' }}>
       <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px 16px 14px', borderRadius: 32 }}><Chester coat="black" eyes="gold" mood="happy" anim="dance" width={170} /></div>
       <h1 style={{ marginTop: 26 }}>{named ? `${title} is on your Home Screen` : 'Added to your Home Screen'}</h1>
       <p className="m" style={{ marginTop: 10, fontSize: 16 }}>Open it from there to finish setting up. You can close this page.</p>
     </div></div>;
 
-  return <div className="screen" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
+  return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 12 }}>
       <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '14px 16px 6px', borderRadius: 32 }}><Chester coat={pets[open]?.coat ?? pets[0]?.coat} eyes={pets[open]?.eyes ?? pets[0]?.eyes} mood="happy" raised anim="wave" width={118} interactive /></div>
       <h1 style={{ marginTop: 20, fontSize: 30 }}>Hi! Who’s your cat?</h1>
