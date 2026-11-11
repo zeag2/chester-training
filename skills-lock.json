@@ -19,6 +19,12 @@
       "skillPath": ".claude/skills/animejs/SKILL.md",
       "computedHash": "44f9ade0880f61041c326738b3fc39dc06887f9384fc8cf344c62503c8187f21"
     },
+    "ask-matt": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/ask-matt/SKILL.md",
+      "computedHash": "7ff2383b40fe9d8f3e753d267d964fb2b44d120a948fd2a57c3b26ddfc318370"
+    },
     "babylonjs-engine": {
       "source": "freshtechbro/claudedesignskills",
       "sourceType": "github",
