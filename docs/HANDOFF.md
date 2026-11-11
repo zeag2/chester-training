@@ -61,6 +61,16 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
 - **Tabs: Home · Health · + · Train · Me** (`src/ui/TabBar.tsx`). A red dot on Me means a new friend.
+- **Wider windows** (desktop plan step 1, `docs/plans/2026-11-11-desktop-layout.md`): `useLayout()` in
+  `src/ui/layout.ts` gives `phone` (under 760 px), `tablet` (760–1099) or `desktop` (1100+) from `matchMedia`.
+  Phones keep the bottom tab bar exactly as before (`src/ui/layout.test.tsx` pins its markup to main's and checks
+  every new CSS rule is keyed off the wide layouts). Tablet: an 88 px left rail, + at the top. Desktop: a 220 px side
+  nav (PalDex, a "Log" button, the tabs, then the pet switcher; the switcher at the top of Home, Health and Train
+  hides). TabBar sets `<html data-nav="rail|side">` while it shows, and the CSS moves the page over, drops the 110 px
+  bottom pad and makes the column 640 px; `.screen.wide` opts a screen into up to 1120 px on desktop (for the
+  two-column steps). Pages without the tab bar (a session, play) stay at phone width, centred. Sheets are unchanged
+  (step 2). The "+N treats" note (`CareTreatNote`) centres on the page column and drops to the bottom when there's
+  no tab bar. Screenshots: `docs/plans/img/2026-11-11-nav-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
   change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
   corner, friends.
@@ -412,6 +422,10 @@ Items marked *(art)* suit the art session.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
    comfortable on a laptop or desktop screen.
+   Brief: `docs/plans/2026-11-11-desktop-layout.md`. Josh (2026-11-11): friends use it too; side nav; no keyboard
+   shortcuts (skip step 7); bigger cat on desktop (step 4, with an art check); no printable vet summary (drop the
+   print part of step 6). **Step 1 (breakpoints + side nav) built** (pull request from `claude/features-desktop-nav`);
+   next: step 2 (sheets as dialogs / side panel).
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
    "Not from a visit" now unlinks a document linked the old way (`vet.doc`): it saves `visitId: 'none'`
    (`NO_VISIT`, `docVisitId` in `src/engine/docs.ts`; doses and weights read from it stay with the visit). Visit
@@ -699,7 +713,7 @@ src/
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     images.ts, stats.ts, install.ts
-  ui/                   TabBar, icons, router, PetSwitcher, FriendsStrip (friends' cats on Home)
+  ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home)
   styles/app.css        tokens (light + dark), layout, components
 supabase/
   migrations/           SQL, run by hand in the Supabase SQL editor, in this order:
@@ -984,6 +998,14 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, desktop step 1, breakpoints + side nav (Features worker): no skills, plugins or MCP servers invoked
+  beyond the GitHub and session tools. Checks: Vitest, typecheck, build; Playwright screenshots of two production
+  builds (main and the branch) at 390, 900, 1280 and 1440 px, light and dark, with two cats written straight into
+  IndexedDB; Pillow (`ImageChops.difference`) to compare the 390 px shots pixel by pixel (identical apart from the
+  animated cat, which also differs between two runs of main).
+- 2026-11-11, QA of PR #12 (desktop step 1): no skills, plugins or MCP servers invoked. Checks: tests, typecheck,
+  build on the branch merged with main; Playwright (390/900/1280/1440 px, light and dark, dev store seeded with two
+  cats) for tabs, active state, pet switching from the nav, Log, deep link + Back, live resizing, toast/note placement.
 - 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
   Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
   `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
@@ -1087,6 +1109,7 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - Playwright with the preinstalled Chromium for screenshots and animation frames (light and dark mode). For timed
   animations, fast-forward with `page.clock` to just before the moment, then `clock.resume()` and capture in real time:
   CSS animations don't follow the fake clock.
+- Pillow (preinstalled Python) for pixel diffs between two screenshots, e.g. phone layout before and after a change.
 - Chromium's fake camera (`--use-file-for-fake-video-capture` with a generated barcode video) to test the scanner.
 - A throwaway local Postgres 16 (`/usr/lib/postgresql/16/bin`, run as the `postgres` user in a folder it can reach,
   e.g. `/var/tmp`) for the SQL policy tests.
