@@ -73,3 +73,14 @@ Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` sectio
   6 (documents preview), 7 (wider grids); then agenda 8 (booking part 2) and 4 (photo feed). Open: resizing across
   1100 px closes an open Undo toast or "What's off?" on Home; the rainbow dash could use an art pass at desktop size;
   Josh's art OK on the 160 px cat.
+- 2026-11-11 (late): schedule in 5-hour blocks to match Josh's usage resets (Eastern time). Gates between blocks:
+  Josh's "ship it", and Josh running the SQL by hand.
+  - Now to 1:40 AM: desktop steps 5, 6, 7 (one worker at a time, skip QA on small ones).
+  - Block 1, 1:40 AM: agenda 8, booking part 2 (reschedule/cancel, several cats) + a second worker writing the photo
+    feed plan and SQL.
+  - Block 2, 6:40 AM: photo feed part 1 (Josh runs the SQL first): posting photos, your own cats' feed.
+  - Block 3, 11:40 AM: photo feed part 2: friends' cats, reactions; QA on the whole feed.
+  - Block 4, 4:40 PM: agenda 6, medicine reminders in-app + desktop leftovers (icon tooltips, the 1100 px resize
+    bug, art pass on the 160 px cat and the rainbow dash).
+  - Block 5, 9:40 PM: agenda 5, push notifications plan + SQL.
+  - Block 6, 2:40 AM Nov 12: push notifications build + QA. Then the agenda is done.
