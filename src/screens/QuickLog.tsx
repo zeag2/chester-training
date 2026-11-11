@@ -5,6 +5,7 @@ import { today } from '../lib/stats';
 import { Icon } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { Sheet } from '../ui/Sheet';
 
 /** The + button: log anything in one or two taps. Health items open their form on the Health tab; a training set
     shows only for cats with training on. */
@@ -18,7 +19,7 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
   ];
   const training = cat.training !== false;
   const next = training ? suggestNext(SKILLS, progress, sets, unlockedHidden, today())[0] : null;
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label="Log something" onClick={(e) => e.stopPropagation()}>
+  return <Sheet label="Log something" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Log something for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 12 }}>
       {items.map(([k, label, icon]) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 76, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => pick('health/log/' + k)}>
@@ -27,5 +28,5 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
     {training && <button className="card mint row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 12 }} onClick={() => pick('session/' + (next?.skill.id ?? 'clicker'))}>
       <div className="ico"><Icon name="target" /></div><div className="sp"><b>Training set</b><p className="s">{next ? `Up next: ${next.skill.name}` : 'About 2 minutes'}</p></div></button>}
     <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => pick('health')}>Upload a vet document</button>
-  </div></div>;
+  </Sheet>;
 }

@@ -7,6 +7,7 @@ import { SWATCH, EYESW } from '../ui/swatches';
 import { promptInstall, skipInstallStep, useInstallState } from '../lib/install';
 import { Icon } from '../ui/icons';
 import * as audio from '../lib/audio';
+import { Sheet } from '../ui/Sheet';
 
 import { PlusBox, InstallSteps } from '../ui/InstallSteps';
 
@@ -68,11 +69,10 @@ export function Install({ onSkip }: { onSkip: () => void }) {
         <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => { skipInstallStep(); onSkip(); }}>Not now, continue in the browser</button>
       </div>
     </div>
-    {guide && <div className="overlay sheetbg" onClick={() => setGuide(false)}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Add to Home Screen" onClick={(e) => e.stopPropagation()}>
+    {guide && <Sheet label="Add to Home Screen" onClose={() => setGuide(false)}>
         <div className="row"><b className="sp" style={{ fontSize: 18 }}>Add {named ? title : 'PalDex'} to your Home Screen</b><button className="iconbtn" aria-label="Close" onClick={() => setGuide(false)}><Icon name="close" /></button></div>
         <InstallSteps name={named ? title : 'PalDex'} />
         <p className="s" style={{ marginTop: 10 }}>It opens full screen, works offline, and keeps everything you set up.</p>
-      </div></div>}
+      </Sheet>}
   </div>;
 }

@@ -12,6 +12,7 @@ import { sendInvite } from './Together';
 import { Icon } from '../ui/icons';
 import { go } from '../ui/router';
 import type { Cat } from '../engine/types';
+import { Sheet as SheetFrame } from '../ui/Sheet';
 
 /* Settings, grouped like iPhone Settings: the pet, the people, the app, your data. */
 
@@ -29,9 +30,9 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 }
 
 function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+  return <SheetFrame label={title} onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>{title}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
-    {children}</div></div>;
+    {children}</SheetFrame>;
 }
 
 function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
@@ -53,7 +54,7 @@ function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
         <button className="iconbtn" aria-label="Fewer meals" disabled={f.meals <= 1} onClick={() => set('meals', Math.max(1, f.meals - 1))}>−</button>
         <b className="num" style={{ minWidth: 20, textAlign: 'center' }} aria-live="polite">{f.meals}</b>
         <button className="iconbtn" aria-label="More meals" disabled={f.meals >= 8} onClick={() => set('meals', Math.min(8, f.meals + 1))}>+</button></div></Row></div>
-    <button className="btn" style={{ marginTop: 20 }} onClick={save} disabled={!f.name.trim()}>Save</button>
+    <button className="btn sheetsave" style={{ marginTop: 20 }} onClick={save} disabled={!f.name.trim()}>Save</button>
   </Sheet>;
 }
 
@@ -64,7 +65,7 @@ function EditMyName({ onClose }: { onClose: () => void }) {
   return <Sheet title="Your name" onClose={onClose}>
     <p className="s" style={{ marginTop: 4 }}>Home greets you with it, and it’s what the people you train with see.</p>
     <input className="in" style={{ marginTop: 12 }} value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" autoFocus aria-label="Your name" />
-    <button className="btn" style={{ marginTop: 16 }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
+    <button className="btn sheetsave" style={{ marginTop: 16 }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
     {meRow && !meRow.owner && meRow.email !== undefined && cat && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }}
       onClick={async () => { if (confirm(`Leave this household? Its pets are removed from this phone; you can rejoin with an invite code.`)) { await store.removeMember(meRow.userId).catch(() => {}); onClose(); } }}>Leave household</button>}
   </Sheet>;

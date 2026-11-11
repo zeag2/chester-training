@@ -10,6 +10,7 @@ import { addToCalendar, CalendarSheet, lastCalendar, rememberCalendar, type CalC
 import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
 import { Icon } from './icons';
+import { Sheet } from './Sheet';
 
 /* The vet part of Health (docs/plans/2026-11-09-vet-redesign.md, steps 1 and 2): who your vet is with one-tap Call
    and Directions, the emergency vet and the warning signs together, and visits: next, last, and Book a visit with one
@@ -72,7 +73,7 @@ export function VetCard() {
       <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'var(--peach)', color: 'var(--peach-ink)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => setSos(true)}>
         <Icon name="ear" size={18} />Is this an emergency?</button>
     </div>
-    {sos && <div className="overlay sheetbg" onClick={() => setSos(false)}><div className="sheet" role="dialog" aria-modal="true" aria-label="Is this an emergency?" onClick={(e) => e.stopPropagation()}>
+    {sos && <Sheet label="Is this an emergency?" onClose={() => setSos(false)}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>Call now if {cat.name}…</b><button className="iconbtn" aria-label="Close" onClick={() => setSos(false)}><Icon name="close" /></button></div>
       <ul className="s" style={{ margin: '10px 0 0', paddingLeft: 18 }}>{RED_FLAGS.map((f) => <li key={f} style={{ marginTop: 5 }}>{pt(f)}</li>)}</ul>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
@@ -81,7 +82,7 @@ export function VetCard() {
         {!primary && !emergency && <p className="s">Save your vet and an emergency vet on the Health page so their numbers are right here.</p>}
       </div>
       <p className="s" style={{ marginTop: 10 }}>This app can’t diagnose anything. If you’re unsure, call.</p>
-    </div></div>}
+    </Sheet>}
     {edit && <VetSheet kind={edit.kind} vet={edit.vet} clinic={edit.clinic} onClose={() => setEdit(null)} />}
   </>;
 }
@@ -96,7 +97,7 @@ function VetSheet({ kind, vet, clinic, onClose }: { kind: VetKind; vet?: Vet; cl
     const clean = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]).filter(([, v]) => v !== '')) as unknown as VetData;
     await store.saveVet({ ...clean, kind: f.kind }, vet?.id); audio.sparkle(); onClose();
   };
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label={kind === 'emergency' ? 'Emergency vet' : 'Your vet'} onClick={(e) => e.stopPropagation()}>
+  return <Sheet label={kind === 'emergency' ? 'Emergency vet' : 'Your vet'} onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>{vet ? 'Edit ' : 'Add '}{kind === 'emergency' ? 'emergency vet' : 'your vet'}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     {kind === 'emergency' && !vet && <p className="s" style={{ marginTop: 4 }}>A 24-hour or after-hours clinic, for when your vet is closed.</p>}
     {field('clinic', 'Clinic', { placeholder: kind === 'emergency' ? 'e.g. CityPets 24h Emergency' : 'e.g. Maple Street Vet', autoFocus: !f.clinic })}
@@ -105,9 +106,9 @@ function VetSheet({ kind, vet, clinic, onClose }: { kind: VetKind; vet?: Vet; cl
     {kind === 'primary' && field('vetName', 'Vet’s name (optional)', { placeholder: 'e.g. Dr. Patel' })}
     {field('website', 'Website (optional)', { type: 'url', inputMode: 'url' })}
     {field('notes', 'Notes (optional)', { placeholder: 'Hours, parking, who to ask for…' })}
-    <button className="btn" style={{ marginTop: 18 }} disabled={!f.clinic?.trim()} onClick={save}>Save</button>
+    <button className="btn sheetsave" style={{ marginTop: 18 }} disabled={!f.clinic?.trim()} onClick={save}>Save</button>
     {vet && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Remove this vet for everyone in your household?')) { await store.deleteVet(vet.id); onClose(); } }}>Remove</button>}
-  </div></div>;
+  </Sheet>;
 }
 
 /** Visits: the next one (Add to calendar), "How did the visit go?" after a booked day, the last one, Book a visit. */
@@ -241,7 +242,7 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
     <b>{v.data.clinic}{v.data.kind === 'emergency' ? ' (emergency)' : ''}</b>
     {(v.data.vetName || v.data.address || v.data.phone) && <span className="s" style={{ display: 'block' }}>{[v.data.vetName, v.data.address || v.data.phone].filter(Boolean).join(' · ')}</span>}</button>;
   const calLabel = googleOffline || cal === 'none' ? 'Save visit' : cal === 'apple' ? 'Save and add to Apple Calendar' : cal === 'google' ? 'Save and add to Google Calendar' : 'Save and add to calendar';
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label="Book a visit" onClick={(e) => e.stopPropagation()}>
+  return <Sheet label="Book a visit" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Book a visit for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     {call.tel && <div className="row bkcall">
       <span className="sp s">Call the clinic, then record what they gave you.</span>
@@ -281,9 +282,9 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
         <button key={c} role="radio" aria-checked={cal === c} className={`chipbtn ${cal === c ? 'on' : ''}`} onClick={() => setCal(c)}>{label}</button>)}
     </div>
     {googleOffline && <p className="s bkoffline" role="status">You’re offline. The Google Calendar link will work once you’re online; the visit still saves now. (Apple Calendar works offline.)</p>}
-    <button className="btn" style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} disabled={!ok} aria-describedby={blocker ? 'bk-why' : undefined} onClick={() => void save()}>{cal && cal !== 'none' && !googleOffline && <Icon name="cal" size={18} />}{busy ? 'Saving…' : calLabel}</button>
+    <button className="btn sheetsave" style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} disabled={!ok} aria-describedby={blocker ? 'bk-why' : undefined} onClick={() => void save()}>{cal && cal !== 'none' && !googleOffline && <Icon name="cal" size={18} />}{busy ? 'Saving…' : calLabel}</button>
     {blocker && <p className="s" id="bk-why" style={{ marginTop: 6 }}>{blocker}</p>}
     {err && <p className="s" role="alert" style={{ marginTop: 6, color: 'var(--rose)', fontWeight: 700 }}>{err}</p>}
     {!blocker && cal && cal !== 'none' && !googleOffline && <p className="s" style={{ marginTop: 6 }}>The event has the clinic’s address and phone, with reminders {weekBefore({ title: '', day }) ? 'a week before, ' : ''}the day before{time ? ' and 2 hours before' : ''}.</p>}
-  </div></div>;
+  </Sheet>;
 }

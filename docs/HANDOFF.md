@@ -1,6 +1,6 @@
 # PalDex: handoff
 
-_Last updated 2026-11-10 (booking polish and the Home Screen icon note, branch `claude/features-booking-polish`, pull request open; vet booking fixes merged). Start here when picking
+_Last updated 2026-11-11 (desktop step 2, sheets as dialogs / side panel, branch `claude/features-desktop-sheets`, pull request open; step 1 merged). Start here when picking
 the project back up._
 
 PalDex (repo `chester-training`) is a phone web app for looking after a cat: **health tracking first** (weight,
@@ -68,9 +68,22 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   nav (PalDex, a "Log" button, the tabs, then the pet switcher; the switcher at the top of Home, Health and Train
   hides). TabBar sets `<html data-nav="rail|side">` while it shows, and the CSS moves the page over, drops the 110 px
   bottom pad and makes the column 640 px; `.screen.wide` opts a screen into up to 1120 px on desktop (for the
-  two-column steps). Pages without the tab bar (a session, play) stay at phone width, centred. Sheets are unchanged
-  (step 2). The "+N treats" note (`CareTreatNote`) centres on the page column and drops to the bottom when there's
+  two-column steps). Pages without the tab bar (a session, play) stay at phone width, centred. The "+N treats" note (`CareTreatNote`) centres on the page column and drops to the bottom when there's
   no tab bar. Screenshots: `docs/plans/img/2026-11-11-nav-*.png`.
+- **Sheets** (desktop plan step 2): every form and sheet goes through `<Sheet label onClose>` in `src/ui/Sheet.tsx`
+  (log forms, Log something, Book a visit, your vet / emergency vet, "Is this an emergency?", the quick-log fix list,
+  the calendar choice, documents (the doc entry form), invite, Settings' sheets, Install, the icon note, the session
+  restart). Phones (under 760 px): the same bottom sheet and the same wrapper markup (`overlay sheetbg` > `sheet`).
+  Tablet: adds `dialog`, a centred dialog (520 px, at most 85vh, scrolls inside). Desktop: adds `panel`, a 420 px
+  panel on the right with a lighter dim (dark mode: the panel is `--surface`). On both, a button with `sheetsave`
+  (Save in the log form, Settings' pet and name, the vet form, Book a visit) sticks to the bottom of the dialog, on
+  a band of the sheet's colour. Everywhere: Esc closes the top sheet (a calendar choice over Book a visit closes
+  first), Tab/Shift+Tab stay inside, focus goes back to the opener on close; on tablet/desktop focus moves into the
+  sheet on open unless a field has `autoFocus` (phones don't move focus). Clicking the dim area closes, as before.
+  New sheets: use `<Sheet>`, never the two divs by hand. CSS: the "Tablet and desktop sheets" block in app.css, every
+  rule keyed off `.sheetbg.dialog` / `.sheetbg.panel` (pinned by `src/ui/sheet.test.tsx`). Toasts and the treats
+  note keep step 1's places; they sit under the dim while a sheet is open. Screenshots:
+  `docs/plans/img/2026-11-11-sheets-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
   change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
   corner, friends.
@@ -424,8 +437,10 @@ Items marked *(art)* suit the art session.
    comfortable on a laptop or desktop screen.
    Brief: `docs/plans/2026-11-11-desktop-layout.md`. Josh (2026-11-11): friends use it too; side nav; no keyboard
    shortcuts (skip step 7); bigger cat on desktop (step 4, with an art check); no printable vet summary (drop the
-   print part of step 6). **Step 1 (breakpoints + side nav) built** (pull request from `claude/features-desktop-nav`);
-   next: step 2 (sheets as dialogs / side panel).
+   print part of step 6). **Step 1 (breakpoints + side nav) merged.** **Step 2 (sheets as dialogs / side panel)
+   built** (pull request from `claude/features-desktop-sheets`). Next: step 3 (focus rings, hover, cursor). Idea for
+   later: on desktop, the page column could slide left while the side panel is open (now the panel covers the right
+   part of a centred page at 1280–1440 px).
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
    "Not from a visit" now unlinks a document linked the old way (`vet.doc`): it saves `visitId: 'none'`
    (`NO_VISIT`, `docVisitId` in `src/engine/docs.ts`; doses and weights read from it stay with the visit). Visit
@@ -998,6 +1013,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, desktop step 2, sheets as dialogs / side panel (Features worker): no skills, plugins or MCP servers
+  invoked beyond the GitHub and session tools. Checks: Vitest, typecheck, build; Playwright against the Vite dev
+  server (store seeded through `globalThis.__chesterStore`) at 390, 900 and 1440 px, light and dark: wrapper class
+  per width, sticky Save position, Esc, 40 Tabs never leaving Book a visit, focus back on the opener, toast spots.
 - 2026-11-11, desktop step 1, breakpoints + side nav (Features worker): no skills, plugins or MCP servers invoked
   beyond the GitHub and session tools. Checks: Vitest, typecheck, build; Playwright screenshots of two production
   builds (main and the branch) at 390, 900, 1280 and 1440 px, light and dark, with two cats written straight into

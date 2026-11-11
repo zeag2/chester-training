@@ -9,6 +9,7 @@ import * as audio from '../lib/audio';
 import { YarnBall } from './YarnBall';
 import { wrapSVG } from './yarn';
 import { usePetText } from '../lib/pet';
+import { Sheet } from '../ui/Sheet';
 
 export const SESSION_SECONDS = 120;
 
@@ -95,13 +96,12 @@ export function Session({ skillId }: { skillId: string }) {
         <button className="btn2" style={{ flex: 1, minHeight: 56, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={finish}>End</button>
       </div>
     </div>
-    {asking && <div className="overlay sheetbg" onClick={() => setAsking(false)}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Restart the timer" onClick={(e) => e.stopPropagation()}>
+    {asking && <Sheet label="Restart the timer" onClose={() => setAsking(false)}>
         <b style={{ fontSize: 18 }}>Start the timer over?</b>
         <p className="m" style={{ marginTop: 6 }}>The timer goes back to 2:00. You’ve logged {good} good and {reps - good} missed so far.</p>
         <button className="btn" style={{ marginTop: 16 }} onClick={() => restart(false)}>Keep the {reps} {reps === 1 ? 'rep' : 'reps'}</button>
         <button className="btn2" style={{ width: '100%', marginTop: 10 }} onClick={() => restart(true)}>Clear them too</button>
         <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => setAsking(false)}>Cancel</button>
-      </div></div>}
+      </Sheet>}
   </div>;
 }
