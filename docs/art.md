@@ -31,6 +31,23 @@ Size S = one SVG group; M = new group + a little CSS/rig motion or a new shop ki
 | 11 | Streak badges | 7/30/100-day streak unlocks a sparkle collar, then a gold one, then a halo. | M | y |
 | 12 | Plush toy companion | A tiny plush he carries and naps with; shows in `loaf`/`sleep`. | L | n (needs mouth/paw holding art) |
 
+### Holidays (Josh, 2026-11-11: "holidays are coming up")
+Seasonal shop items that appear for a few weeks. All are drawings only, so they can ship one at a time without new
+systems. Order by date:
+
+| When | Name | One line | Size | Fits? |
+|---|---|---|---|---|
+| Thanksgiving (Nov 26) | Pilgrim collar or leaf crown | Wide white collar, or a ring of orange/red leaves; `full` pose after Fed fits the day. | S | y |
+| From Dec 1 | Santa hat | Red hat with a white pom that swings on hops (same idea as the beanie). | S | y |
+| From Dec 1 | Holiday sweater (idea 7) | Chunky knit jumper with a snowflake. | M | y |
+| Hanukkah (Dec 4–12) | Blue-and-silver scarf | The scarf shape in blue with silver stripes. | S | y |
+| From Dec 1 | Reindeer antlers | Felt antlers on a headband, with a jingle bell. | S | y |
+| From Dec 1 | Home: lights + gift box | String lights on the Home backdrop; a gift box he can sit in (reuse the cardboard box art). | M | y |
+| New Year (Dec 31) | Party hat, gold | Gold party hat + a short confetti burst on a tap. | S | y |
+
+Suggested first batch, before Thanksgiving: leaf crown, Santa hat, antlers (three S drawings, one worker task).
+Shop items need start/end dates (a `season` field on `ShopItem`); bought items stay owned after the season.
+
 Unlock ideas: streaks (11), friends (scarf already), seasons (7), care habits (e.g. 30 days of daily checks → raincoat).
 
 ## Open art items
