@@ -62,6 +62,25 @@ PM's unpaced draft (2026-11-11): now–1:40 AM desktop steps 5–7; 1:40 AM book
 | Push notifications (agenda 5) | L, SQL | High once the feed exists: brings friends back | After the Nov 17 reset? VAPID keys go in environment secrets |
 | "Pet me?" moments *(art)* | M | High: the daily reason to open the app | Up to 3 a day, 9 AM–9 PM, as planned? |
 | App Store wrapper (Capacitor) | L | Medium: haptics, real push on iPhone, store listing | **Later** (Josh, 2026-11-11): more features first; the $99/yr has to be paid for by the app |
-| Paying for itself | ? | Needed before the App Store | How should it earn: a small subscription, a one-time unlock, or cosmetic outfits? Not decided |
+| Paying for itself: PalDex Plus | L, SQL (Stripe) | Needed before the App Store | See "Product model" below: price and what's in Plus |
 | A cleaner address | S | Medium for sharing with friends | Buy a custom domain, or a free `*.pages.dev` name? |
 | Other animals (dogs) | L | Big reach, big cost (art, skills, copy) | Later, or never? |
+
+## Product model (draft by the Executive, 2026-11-11, for Josh to decide)
+Rule: the care that keeps a cat healthy is always free. People pay for extras, never to stop nagging or ads.
+
+- **Free, forever:** logging, health, vet visits and documents, reminders, training, friends, the corner, laser and
+  wand, up to 2 cats, a modest photo allowance (e.g. 50 photos).
+- **PalDex Plus**, one price for the whole household: about **$2.99 a month or $19.99 a year**, with a free month.
+  Unlimited photos, 3+ cats, the vet summary as a PDF, recap share images, extra themes, and a new outfit or toy each
+  month. Includes "Supporter" founding price for early friends (e.g. $14.99/yr locked in).
+- **Small one-time extras:** outfit and toy packs ($0.99–$2.99). Treats stay earned only, never sold.
+- **No:** ads, selling data, paywalling health, guilt or streak-loss messages to push upgrades.
+- **Later, maybe:** a lifetime unlock (~$39); clearly labelled links to food and litter (affiliate), opt-in.
+
+Costs to cover (rough): Supabase Pro $25/mo once photos outgrow the free tier, Apple $99/yr, a domain ~$12/yr:
+about **$450 a year**, so **~25 yearly subscribers** break even (after Apple's 15% small-business cut).
+How: on the web, Stripe Checkout + a `subscriptions` table that the app reads; in the App Store, Apple in-app
+purchase (RevenueCat can handle both). Build it after the photo feed, since photos are what Plus sells.
+Questions for Josh: the price; is "2 cats free" right (many homes have 2); Plus per household or per person.
+
