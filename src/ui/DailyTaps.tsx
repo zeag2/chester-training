@@ -120,7 +120,7 @@ export function DailyTaps() {
           <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={() => void somethingOff()}>Something’s off</button>
         </div>
       </div>}
-    {undo && !off && createPortal(<div className="toast pop" role="status">
+    {undo && !off && createPortal(<div className="toast pop undo" role="status">
       <Paw color="#d4a23a" size={18} /><span className="msg sp">{undo.all ? `${DONE[undo.what]} for all cats` : pets.length > 1 && undoCat ? `${undoCat.name}: ${DONE[undo.what]}` : DONE[undo.what]}</span>
       {others.length > 0 && undo.what !== 'check' && !undo.all && <button className="btn2" onClick={() => void logOthers()}>{alsoLabel}</button>}
       {undo.what === 'scoop' && !undo.all && <button className="btn2" onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }, { catId: undo.catId }); setUndo(null); go('health'); }}>Looked off?</button>}

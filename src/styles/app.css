@@ -186,6 +186,24 @@ button.lrow:active{background:var(--line)}
    right; the flip wrapper turns it round) */
 .chaseleap{transform-origin:50% 70%;animation:kchaseleap .5s cubic-bezier(.3,.6,.4,1) both}
 @keyframes kchaseleap{0%{transform:none}45%{transform:translate(16px,-30px) rotate(-22deg)}80%{transform:translate(28px,0) rotate(14deg)}100%{transform:translate(28px,0) rotate(0)}}
+/* ── Desktop Home: two columns and the bigger cat scene (docs/plans/2026-11-11-desktop-layout.md, step 4) ──
+   Only at 1100 px and up: Home adds .homecols and .homescene.big then (homeScene() in src/screens/Home.tsx), so phones
+   and tablets never match these. The cat is the same SVG at 160 px instead of 104 (×1.54); the px offsets around him
+   (the cats beside him, the nuzzle, the bed, the chase's leap) grow by the same ratio, so the scene keeps its look. */
+.homecols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0 28px;align-items:start;max-width:1040px}
+.homecol{min-width:0}
+.homescene.big{gap:8px;margin-bottom:6px}
+.homescene.big .homecats .other{margin-left:-28px}
+.homescene.big .gagwrap.nuzzling{transform:translateX(18px)}
+.homescene.big .homecats.nuzzling .other:first-child{transform:translateX(-25px)}
+.homescene.big .bedspot.onbed{margin-bottom:25px}
+.homescene.big .bedspot .bed{left:-35px;bottom:-25px}
+.homescene.big .bubble{max-width:240px;font-size:15px}
+.homescene.big .chaseleap{animation-name:kchaseleapL}
+@keyframes kchaseleapL{0%{transform:none}45%{transform:translate(25px,-46px) rotate(-22deg)}80%{transform:translate(43px,0) rotate(14deg)}100%{transform:translate(43px,0) rotate(0)}}
+/* the Quick log Undo note: bottom right of the content area instead of centred under it */
+html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px - 1120px) / 2 + 32px));width:400px;margin:0}
+/* ── end of desktop Home ── */
 /* Home's friends card: one tile per friend, their cats sitting together on a little floor, whose they are and names */
 .households{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x proximity}
 .household{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;min-width:112px;padding:8px 12px 10px;border-radius:22px;background:var(--surface);text-align:center}

@@ -20,6 +20,15 @@ import { HomeIconNote } from '../ui/HomeIconNote';
 import { DailyTaps } from '../ui/DailyTaps';
 import { usePetText } from '../lib/pet';
 import { CushionArt } from './Corner';
+import { useLayout, type Layout } from '../ui/layout';
+
+/** The cat scene's sizes. Two fixed sizes, never scaled with the window (docs/plans/2026-11-11-desktop-layout.md §5):
+    phones and tablets keep today's 104 px cat; desktop (1100 px and up) draws the same SVG at 160 px, and everything
+    measured against him (the cats beside him, the bed, the chase's spacing, the nuzzle) grows by the same ratio. */
+export function homeScene(layout: Layout) {
+  const big = layout === 'desktop';
+  return big ? { big, cat: 160, other: 130, bed: 230, gap: 108, bubbleLift: 40 } : { big, cat: 104, other: 84, bed: 150, gap: 70, bubbleLift: 26 };
+}
 
 /** Part of the day from the time; night runs 10:30 PM to 5 AM. */
 const PH = (h: number, m = 0) => (h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'day' : h < 22 || (h === 22 && m < 30) ? 'evening' : 'night');
@@ -99,6 +108,8 @@ function useHomeLife(night: boolean, dozing: boolean, wake: () => void) {
 
 export function Home() {
   const { cat, progress, sets, wallet, unlockedHidden, account, household, pets, friendNews } = useStore();
+  const S = homeScene(useLayout());
+  const sceneRef = useRef<HTMLDivElement>(null);
   // whoever is signed in on this phone gets greeted by name; the other trainer shows as "training with"
   const me = household?.members.find((m) => m.userId === account?.userId);
   const myName = me?.name || store.myName;
@@ -160,37 +171,23 @@ export function Home() {
   const idleLine = cat.training === false ? `Hi! I'm ${cat.name}. ${lines[new Date().getMinutes() % lines.length]}`
     : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Next up: ${next.skill.name}. Ready?` : 'Pet me!';
 
-  return <div className="screen">
-    <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>
-      <div className="beam" style={{ left: '40%', background: BEAM[ph] }} /><div className="beam" style={{ left: '65%', width: 60, animationDelay: '-8s', background: BEAM[ph] }} />
-      {[[45, 300, 0], [57, 360, 3], [70, 260, 6], [78, 340, 9], [52, 220, 11], [85, 300, 4.5]].map(([x, y, d], i) => <span key={i} className="mote" style={{ left: x + '%', top: y, background: MOTE[ph], animationDelay: `-${d}s` }} />)}
-      {stink && <div className="stink">{[0, 1, 2, 3].map((i) => <svg key={i} viewBox="0 0 90 30" style={{ animationDelay: i * 0.35 + 's', top: [104, 140, 120, 158][i] }}><path d="M88 15 C74 2 60 28 46 15 C32 2 18 28 2 15" stroke="#9cbf5b" strokeWidth="5" fill="none" strokeLinecap="round" opacity=".85" /></svg>)}</div>}
-      {ph === 'night' && [[10, 30], [30, 18], [55, 40], [78, 22], [90, 60]].map(([x, y], i) => <span key={i} className="star" style={{ left: x + '%', top: y, animationDelay: `-${i * 0.7}s` }} />)}
-    </div>
-    <div className="stag" style={{ position: 'relative' }}>
-      <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
-        <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
-        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
-        <PetSwitcher />
-        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('me')}>Add your name so {cat.name} can greet you</button>}</div>
-      <div className="row" style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
-        {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={Math.min(360, window.innerWidth - 40)} size={104} gap={70} onDone={() => setChasing(false)} />
-        : <div className={`bedspot${bed ? ' onbed' : ''}`}>{bed && <div className="bed" aria-hidden="true"><CushionArt id={bed} width={150} /></div>}
-        <div className={`gagwrap ${gag ?? ''}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
-        <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' ? 'walk' : gag === 'back' ? 'run' : gag ? 'sit' : full ? 'full' : night ? 'sleep' : doze ? 'doze' : knead && !done ? (bed && knead === 'drape' ? 'loaf' : knead) : 'sit'} mood={gag === 'proud' || (nuzzle && calm && !knead) ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
-          raised={!gag && !full && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag || full ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
-          width={104} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div></div>}
-        {!chasing && others.length > 0 && <div className={`homecats${nuzzle && calm && !knead ? ' nuzzling' : ''}`}>{others.map((o, i) => <button key={o.id} className="other" style={{ zIndex: 2 - i }} aria-label={`Show ${o.name}`} onClick={() => { audio.chirp(); void store.switchPet(o.id); }}>
-          <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={fed.includes(o.id) ? 'full' : night ? 'sleep' : doze ? 'doze' : 'sit'} mood={night ? 'sleepy' : nuzzle && i === 0 ? 'happy' : 'curious'} anim={doze ? 'nap' : nuzzle && i === 0 && !knead ? 'nuzzleL' : ''} width={84} label={o.name} /></button>)}</div>}
-        {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
-        {!chasing && <div style={{ marginBottom: 26 }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
-      </div>
-      {movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
-        <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
-        <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>}
-      <HomeIconNote />
-      <DailyTaps />
-      <TodayCard />
+  // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
+  const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
+      {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={S.big ? Math.min(520, sceneRef.current?.clientWidth || 480) : Math.min(360, window.innerWidth - 40)} size={S.cat} gap={S.gap} onDone={() => setChasing(false)} />
+      : <div className={`bedspot${bed ? ' onbed' : ''}`}>{bed && <div className="bed" aria-hidden="true"><CushionArt id={bed} width={S.bed} /></div>}
+      <div className={`gagwrap ${gag ?? ''}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
+      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' ? 'walk' : gag === 'back' ? 'run' : gag ? 'sit' : full ? 'full' : night ? 'sleep' : doze ? 'doze' : knead && !done ? (bed && knead === 'drape' ? 'loaf' : knead) : 'sit'} mood={gag === 'proud' || (nuzzle && calm && !knead) ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
+        raised={!gag && !full && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag || full ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
+        width={S.cat} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div></div>}
+      {!chasing && others.length > 0 && <div className={`homecats${nuzzle && calm && !knead ? ' nuzzling' : ''}`}>{others.map((o, i) => <button key={o.id} className="other" style={{ zIndex: 2 - i }} aria-label={`Show ${o.name}`} onClick={() => { audio.chirp(); void store.switchPet(o.id); }}>
+        <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={fed.includes(o.id) ? 'full' : night ? 'sleep' : doze ? 'doze' : 'sit'} mood={night ? 'sleepy' : nuzzle && i === 0 ? 'happy' : 'curious'} anim={doze ? 'nap' : nuzzle && i === 0 && !knead ? 'nuzzleL' : ''} width={S.other} label={o.name} /></button>)}</div>}
+      {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
+      {!chasing && <div style={{ marginBottom: S.bubbleLift }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
+    </div>;
+  const moved = movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
+      <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
+      <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
+  const rest = <>
       <FriendsStrip onInvite={() => setInvite(true)} />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
@@ -208,6 +205,23 @@ export function Home() {
           {friendNews.scarf && <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { void store.wear('scarf'); store.dismissFriendNews(); }}>Put the scarf on</button>}
           <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
       </div>}
+  </>;
+
+  return <div className={S.big ? 'screen wide' : 'screen'}>
+    <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>
+      <div className="beam" style={{ left: '40%', background: BEAM[ph] }} /><div className="beam" style={{ left: '65%', width: 60, animationDelay: '-8s', background: BEAM[ph] }} />
+      {[[45, 300, 0], [57, 360, 3], [70, 260, 6], [78, 340, 9], [52, 220, 11], [85, 300, 4.5]].map(([x, y, d], i) => <span key={i} className="mote" style={{ left: x + '%', top: y, background: MOTE[ph], animationDelay: `-${d}s` }} />)}
+      {stink && <div className="stink">{[0, 1, 2, 3].map((i) => <svg key={i} viewBox="0 0 90 30" style={{ animationDelay: i * 0.35 + 's', top: [104, 140, 120, 158][i] }}><path d="M88 15 C74 2 60 28 46 15 C32 2 18 28 2 15" stroke="#9cbf5b" strokeWidth="5" fill="none" strokeLinecap="round" opacity=".85" /></svg>)}</div>}
+      {ph === 'night' && [[10, 30], [30, 18], [55, 40], [78, 22], [90, 60]].map(([x, y], i) => <span key={i} className="star" style={{ left: x + '%', top: y, animationDelay: `-${i * 0.7}s` }} />)}
+    </div>
+    <div className="stag" style={{ position: 'relative' }}>
+      <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
+        <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
+        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
+        <PetSwitcher />
+        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('me')}>Add your name so {cat.name} can greet you</button>}</div>
+      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><TodayCard /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
+        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><TodayCard />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
