@@ -1,4 +1,4 @@
-last-reviewed: 32c5bbafb2c9fb06eddddfb78aa140e1e7873276
+last-reviewed: 237f96920d13674d44e8a8001c3aa19ca0f2e462
 
 # UX review log
 
@@ -18,6 +18,19 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-11: 32c5bba..237f969
+Checked at iPhone 15 size (light and dark) and 1280 px desktop, with a saved vet and emergency vet, a booked
+and two past visits, a dose, a weight and three documents: Health (Your vet card with no vet and with one, Visits,
+Book a visit sheet), the visit page, All documents, the Summary for the vet, Home's Quick log with the new floating
+Undo toast, the box hideout, and the desktop side menu and side-panel forms.
+
+Fixed:
+- Visit page: the top bar and the big heading both showed the visit's reason ("Checkup + rabies" twice). The top
+  bar now says "Vet visit".
+
+The rest read well. The floating Undo toast, the Your vet card (Call is one tap from Health) and booking with the
+calendar cover earlier suggestions. Earlier friends-card note (2026-11-10): one tile per friend, reviewed, no changes.
 
 ### 2026-11-09 (16:17 UTC): 686bdb6..32c5bba
 Checked with two cats (Chester and Luna): Quick log with "Luna too" / "All cats", the full-belly pose after Fed,
