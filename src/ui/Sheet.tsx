@@ -12,6 +12,8 @@ import { useLayout } from './layout';
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex]:not([tabindex="-1"])';
 /** Open sheets, newest last: only the top one answers Esc and keeps Tab inside it (a calendar choice over Book a visit). */
 const open: HTMLElement[] = [];
+/** How many tablet/desktop sheets hold the page's scroll lock (nested sheets share it). */
+let locks = 0;
 
 export function Sheet({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
   const layout = useLayout();
@@ -47,6 +49,15 @@ export function Sheet({ label, onClose, children }: { label: string; onClose: ()
   useEffect(() => {
     const el = ref.current!;
     if (wide && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
+  }, [wide]);
+
+  // tablet/desktop: the page behind doesn't scroll under the wheel while a sheet is open (padding stands in for a
+  // classic scrollbar, so nothing shifts sideways); phones are left exactly as before
+  useEffect(() => {
+    if (!wide) return;
+    const h = document.documentElement;
+    if (locks++ === 0) { const bar = window.innerWidth - h.clientWidth; h.style.overflow = 'hidden'; if (bar > 0) h.style.paddingRight = bar + 'px'; }
+    return () => { if (--locks === 0) { h.style.overflow = ''; h.style.paddingRight = ''; } };
   }, [wide]);
 
   return <div className={'overlay sheetbg' + (layout === 'tablet' ? ' dialog' : layout === 'desktop' ? ' panel' : '')} onClick={onClose}>

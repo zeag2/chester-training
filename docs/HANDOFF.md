@@ -79,7 +79,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   (Save in the log form, Settings' pet and name, the vet form, Book a visit) sticks to the bottom of the dialog, on
   a band of the sheet's colour. Everywhere: Esc closes the top sheet (a calendar choice over Book a visit closes
   first), Tab/Shift+Tab stay inside, focus goes back to the opener on close; on tablet/desktop focus moves into the
-  sheet on open unless a field has `autoFocus` (phones don't move focus). Clicking the dim area closes, as before.
+  sheet on open unless a field has `autoFocus` (phones don't move focus). On tablet/desktop the page behind is scroll-locked while any sheet is open (`overflow:hidden` on `<html>`, padding for a classic scrollbar); phones scroll behind as before. Clicking the dim area closes, as before.
   New sheets: use `<Sheet>`, never the two divs by hand. CSS: the "Tablet and desktop sheets" block in app.css, every
   rule keyed off `.sheetbg.dialog` / `.sheetbg.panel` (pinned by `src/ui/sheet.test.tsx`). Toasts and the treats
   note keep step 1's places; they sit under the dim while a sheet is open. Screenshots:
@@ -1013,6 +1013,12 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, QA of PR #13 (desktop step 2, sheets): no skills, plugins or MCP servers invoked beyond the GitHub and
+  session tools. Checks: tests, typecheck, build; Playwright against the Vite dev servers of main and the branch (dev
+  store seeded) at 390, 900 and 1440 px, light and dark: Tab trap (40 presses), Esc and focus return, backdrop
+  click, saving (weight, Book a visit with a typed time, Edit pet), sticky Save, toasts on top after saving, no
+  sideways scroll, page scroll behind a sheet (mouse wheel); Pillow pixel diff of four phone sheets, main vs branch
+  (identical). Fix: the page behind no longer scrolls under a tablet/desktop sheet (it did on main too).
 - 2026-11-11, desktop step 2, sheets as dialogs / side panel (Features worker): no skills, plugins or MCP servers
   invoked beyond the GitHub and session tools. Checks: Vitest, typecheck, build; Playwright against the Vite dev
   server (store seeded through `globalThis.__chesterStore`) at 390, 900 and 1440 px, light and dark: wrapper class

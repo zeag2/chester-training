@@ -116,4 +116,16 @@ describe('Sheets on tablet and desktop', () => {
       cleanup();
     }
   });
+  it('locks the page scroll on tablet/desktop while any sheet is open (nested too), never on phones', () => {
+    const h = document.documentElement;
+    fakeMedia(390); render(<Page />); open();
+    expect(h.style.overflow).toBe('');
+    cleanup();
+    fakeMedia(1440); render(<Page inner />); open();
+    expect(h.style.overflow).toBe('hidden');
+    fireEvent.click(screen.getByText('Save')); expect(screen.getAllByRole('dialog')).toHaveLength(2);
+    esc(); expect(h.style.overflow).toBe('hidden');
+    esc(); expect(screen.queryByRole('dialog')).toBeNull();
+    expect(h.style.overflow).toBe('');
+  });
 });
