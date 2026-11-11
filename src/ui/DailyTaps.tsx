@@ -16,7 +16,8 @@ const DONE: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'P
 
 /** Home: one tap each for the everyday things (Fed, Scooped, Played) and a two-tap daily health check, with Undo
     instead of forms. Shared with the household, so "Fed 1 of 2 · 7:40 by Megan" stops anyone double-feeding. */
-export function DailyTaps() {
+/** `top`: shown under the heading (Home puts what's due and the last weight there, so it's one Today card). */
+export function DailyTaps({ top }: { top?: React.ReactNode } = {}) {
   const { cat, care, account, household, pets } = useStore();
   /** `ids`: everything the last tap logged (one per cat once "All cats" is tapped), so Undo takes all of it back. */
   /** `catId`: the cat it was logged for, so "<other cat> too" and the toast still mean that cat after a switch. */
@@ -76,8 +77,9 @@ export function DailyTaps() {
     { what: 'play', label: 'Played', icon: 'yarn', done: play.length > 0, sub: play.length ? `${play.length}× today` : 'Not yet today' },
   ];
   return <div className="card white">
-    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b>
+    <div className="row"><b className="sp" style={{ fontSize: 16 }}>{top ? 'Today' : 'Quick log'}</b>
       <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
+    {top}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
       {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => (t.done ? openEntries(t.what) : void log(t.what))}
         aria-label={`${t.label}. ${t.sub}${t.done ? '. Tap to see or fix today’s entries' : ''}`}

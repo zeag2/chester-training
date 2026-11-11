@@ -236,8 +236,9 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   </div>;
 }
 
-/** Home: today at a glance. What's due (up to three), the last weight, and one-tap logging. */
-export function TodayCard() {
+/** Home, top of the Today card: what's due (up to three, tap for Health) and the last weight with its change.
+    Logging lives in the Today card's taps and the + button, so there are no log buttons here. */
+export function TodayDue() {
   const { cat, care } = useStore();
   const due = useMemo(() => reminders(care).slice(0, 3), [care]);
   const ws = useMemo(() => weights(care), [care]);
@@ -245,18 +246,14 @@ export function TodayCard() {
   const last = ws[ws.length - 1];
   const prev = ws[ws.length - 2];
   const delta = last && prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : null;
-  return <div className="card sky">
-    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today</b>
-      {last && <a href="#/health" className="chip num" style={{ textDecoration: 'none' }}>{last.data.lb} lb{delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}</a>}</div>
-    {due.length ? due.map((r) => <a key={r.id} href="#/health" className="row" style={{ marginTop: 10, color: 'inherit', textDecoration: 'none', gap: 10 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? '#d4a23a' : 'var(--teal)' }} />
-        <span className="sp" style={{ fontSize: 15 }}>{r.title}</span><span className="s">{dueText(r.daysLeft)}</span></a>)
-      : <p className="s" style={{ marginTop: 6 }}>{care.length ? 'All caught up. Nothing due.' : `Start ${cat.name}’s health log: a weigh-in is a great first entry.`}</p>}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 12 }}>
-      {([['weight', 'Weight', 'target'], ['symptom', 'Symptom', 'ear'], ['food', 'Food', 'leaf'], ['vet', 'Vet', 'box']] as const).map(([k, label, icon]) =>
-        <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
-          <Icon name={icon} size={20} /><span style={{ fontSize: 12 }}>{label}</span></button>)}
-    </div>
+  if (!due.length && !last) return null;
+  return <div style={{ marginTop: 8 }}>
+    {last && <a href="#/health" className="row" style={{ color: 'inherit', textDecoration: 'none', gap: 10, minHeight: 32 }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: 'var(--muted-2)' }} />
+      <span className="sp" style={{ fontSize: 15 }}>Weight</span><span className="s num">{last.data.lb} lb{delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}</span></a>}
+    {due.map((r) => <a key={r.id} href="#/health" className="row" style={{ color: 'inherit', textDecoration: 'none', gap: 10, minHeight: 32 }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? '#d4a23a' : 'var(--teal)' }} />
+      <span className="sp" style={{ fontSize: 15 }}>{r.title}</span><span className="s">{dueText(r.daysLeft)}</span></a>)}
   </div>;
 }
 

@@ -61,9 +61,12 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
 - **Tabs: Home · Health · + · Train · Me** (`src/ui/TabBar.tsx`). A red dot on Me means a new friend.
-- **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
-  change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
-  corner, friends.
+- **Home** (simplified 2026-11-11 at Josh's request, same features): the cat(s) (faces to switch:
+  `src/ui/PetSwitcher.tsx`); **one Today card** (`DailyTaps` with `top={<TodayDue />}`: last weight with its change and
+  what's due, then Fed / Scooped / Played and the daily check); friends' cats (`FriendsStrip`); then **Training and the
+  corner as two small tiles side by side** (`.hometiles`; the corner fills the row for cats that don't train). The old
+  Weight / Symptom / Food / Vet buttons were dropped from Home because the + does the same; the age footer went (the
+  age is under Me).
 - **Health** (`#/health`, the old Care page): `#/health/log/<kind>` opens a log form straight away.
 - **+** (`QuickLog.tsx`): weight, symptom, food, vet, medicine, grooming, a document, and a training set (if on).
 - **Train** (`Train.tsx`): today's sets, stats, chart, learning now, then Skill tree, Library and the corner. A cat with

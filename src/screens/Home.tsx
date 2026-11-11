@@ -4,11 +4,11 @@ import { store, useStore } from '../db/store';
 import { suggestNext } from '../engine/plan';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
-import { daysHome, today, ageText } from '../lib/stats';
+import { daysHome, today } from '../lib/stats';
 import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
-import { TodayCard } from './Care';
+import { TodayDue } from './Care';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { Chase } from '../chester/Chase';
 import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
@@ -189,16 +189,19 @@ export function Home() {
         <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
         <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>}
       <HomeIconNote />
-      <DailyTaps />
-      <TodayCard />
+      <DailyTaps top={<TodayDue />} />
       <FriendsStrip onInvite={() => setInvite(true)} />
-      {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
-        <div className="ico"><Icon name="target" /></div>
-        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
-        {next && !done && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>}</a>}
-      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
-        <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
-        {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
+      <div className="hometiles">
+        {cat.training !== false && <a href="#/train" className="card mint" aria-label={`Training: ${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}>
+          <div className="row" style={{ gap: 8 }}><Icon name="target" size={20} /><b className="sp">Training</b></div>
+          <p className="s num">{Math.min(rewardedToday, DAILY_REWARDED_SETS)} of {DAILY_REWARDED_SETS} sets today</p>
+          {next && !done ? <button className="btn2" onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button> : <p className="s">{done ? 'Nap time!' : 'All caught up'}</p>}</a>}
+        {wallet && <a href="#/corner" className="card butter" aria-label={`${cat.name}’s corner: ${Math.max(0, wallet.treats)} treats${giftClaimed(cat.corner, t) ? '' : ', today’s gift is waiting'}`}>
+          <div className="row" style={{ gap: 8 }}><Paw color="#d4a23a" size={20} /><b className="sp" style={{ color: 'var(--butter-ink)' }}>Corner</b>
+            {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>Gift</span>}</div>
+          <p className="s num" style={{ color: 'var(--butter-ink)' }}>{Math.max(0, wallet.treats)} treats</p>
+          <p className="s" style={{ color: 'var(--butter-ink)' }}>Outfits, toys, cushions</p></a>}
+      </div>
       {friendNews && <div className="card butter pop" role="status">
         <div className="row" style={{ alignItems: 'flex-start' }}><Icon name="star" /><div className="sp">
           <b style={{ color: 'var(--butter-ink)' }}>{friendNews.names.length === 1 ? `${friendNews.names[0]} is now your friend!` : `${friendNews.names.length} new friends!`}</b>
@@ -209,7 +212,6 @@ export function Home() {
           <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
       </div>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
-      <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;
 }
