@@ -483,8 +483,14 @@ Items marked *(art)* suit the art session.
    print part of step 6). **Steps 1 (breakpoints + side nav), 2 (sheets as dialogs / side panel), 3 (hover, focus
    rings, cursor), 4 (Home in two columns + the 160 px cat; the art session should still look at the 160 px scene)
    and 8 (centred screens) merged.** Step 5 (Health in two columns, the log as a table, drag-and-drop documents) is
-   built on `claude/features-desktop-health` (pull request open). Next: step 6 (documents two-pane with preview). Still open from §4: tooltips on icon-only
-   buttons. Idea for
+   built on `claude/features-desktop-health` (pull request #17). Step 6 (All documents in two panes with a preview) and
+   §4's tooltips on icon-only buttons are built on `claude/features-desktop-docs` (pull request, stacked on #17):
+   at 1100 px and up All documents lists on the left and shows the selected document on the right (title, date ·
+   visit · type, the reader's summary, the PDF in an `<iframe>` or the photo as an `<img>` from the short-lived
+   `store.docUrl` link, "Open in new tab" and "…"); signed out it says documents need you signed in. Phones and tablets
+   keep the tap-to-open list. Tooltips: `src/ui/Tooltip.tsx` (`<TooltipHost />` in App) shows an `.iconbtn`'s
+   aria-label (up to its colon) or `data-tip` after 500 ms, mouse only, on devices that can hover. Not done: the Visit
+   page's two-pane layout (the brief pairs it with All documents). Next: step 7 (wider grids). Idea for
    later: on desktop, the page column could slide left while the side panel is open (now the panel covers the right
    part of a centred page at 1280–1440 px).
 - [x] **QA follow-ups to 3 and 7** (2026-11-10, pull request from `claude/features-followups`; no SQL):
@@ -1068,6 +1074,11 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-11, desktop step 6, All documents preview + tooltips (Features worker): no skills, plugins or MCP servers
+  invoked beyond the GitHub and session tools (`lottiefiles-creator` connected, unused). Checks: Vitest (243, new
+  `src/screens/documents.test.tsx`), typecheck, build; Playwright against the Vite dev server with a cat and three
+  documents seeded through `globalThis.__chesterStore` (its `docUrl` stubbed with a Pillow-made image), at 390, 900
+  and 1440 px, light and dark, plus a hover over Back for the tooltip.
 - 2026-11-11, desktop step 5, Health in two columns + the log table + drag-and-drop documents (Features worker): no
   skills, plugins or MCP servers invoked beyond the GitHub and session tools (`lottiefiles-creator` connected,
   unused). Checks: Vitest (236, new `src/screens/health.test.tsx`), typecheck, build; a jsdom dump of Health and All
