@@ -33,11 +33,13 @@ export function Chase({ cats, width, size, gap, onDone }: { cats: SceneCat[]; wi
   }, []);
   const n = cats.length;
   const home = (i: number) => i * gap;
+  // where they line up by the ball: gap × 1.15 apart, closer if that would run the last cat past the row's right edge
+  const lineup = width * 0.1 + size * 0.35, step = n > 1 ? Math.min(gap * 1.15, (width - size - lineup) / (n - 1)) : 0;
   // where the ball is, and where each cat is heading, per phase (px from the row's left)
   const ballX = phase === 'enter' ? width * 0.66 : phase === 'run' ? width * 0.7 : phase === 'bat' ? width * 0.1 : phase === 'pounce' ? width * 0.12 : -60;
   const catX = (i: number) => phase === 'enter' ? home(i)
     : phase === 'run' ? Math.max(0, width * 0.7 - size * 0.9 - i * gap * 0.75)
-    : phase === 'bat' || phase === 'pounce' ? width * 0.1 + size * 0.35 + i * gap * 1.15
+    : phase === 'bat' || phase === 'pounce' ? lineup + i * step
     : home(i);
   const moving = phase === 'run' || phase === 'bat' || phase === 'home';
   const faceLeft = phase === 'bat' || phase === 'pounce';

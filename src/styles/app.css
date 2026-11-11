@@ -192,7 +192,9 @@ button.lrow:active{background:var(--line)}
    (the cats beside him, the nuzzle, the bed, the chase's leap) grow by the same ratio, so the scene keeps its look. */
 .homecols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0 28px;align-items:start;max-width:1040px}
 .homecol{min-width:0}
-.homescene.big{gap:8px;margin-bottom:6px}
+.homescene.big{gap:8px;margin-bottom:6px;flex-wrap:wrap}
+/* the speech bubble takes what's left of the row, and drops under the cats when that's too narrow (three cats at 1100 px) */
+.homescene.big>div:last-child:not(.chase){flex:1 1 110px;min-width:0}
 .homescene.big .homecats .other{margin-left:-28px}
 .homescene.big .gagwrap.nuzzling{transform:translateX(18px)}
 .homescene.big .homecats.nuzzling .other:first-child{transform:translateX(-25px)}
@@ -200,6 +202,8 @@ button.lrow:active{background:var(--line)}
 .homescene.big .bedspot .bed{left:-35px;bottom:-25px}
 .homescene.big .bubble{max-width:240px;font-size:15px}
 .homescene.big .chaseleap{animation-name:kchaseleapL}
+/* the ball rolls out left at the end; on phones that's off-screen, here it would sit on the side nav's edge, so it fades */
+.homescene.big .chaseball.home{opacity:0;transition-property:transform,opacity}
 @keyframes kchaseleapL{0%{transform:none}45%{transform:translate(25px,-46px) rotate(-22deg)}80%{transform:translate(43px,0) rotate(14deg)}100%{transform:translate(43px,0) rotate(0)}}
 /* the Quick log Undo note: bottom right of the content area instead of centred under it */
 html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px - 1120px) / 2 + 32px));width:400px;margin:0}
