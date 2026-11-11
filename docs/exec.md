@@ -84,3 +84,18 @@ How: on the web, Stripe Checkout + a `subscriptions` table that the app reads; i
 purchase (RevenueCat can handle both). Build it after the photo feed, since photos are what Plus sells.
 Questions for Josh: the price; is "2 cats free" right (many homes have 2); Plus per household or per person.
 
+
+### Forecast (Executive, 2026-11-11; rough model, 24 months, monthly figures)
+Assumptions: 60% of new homes stay past month 1, then 5% leave a month; Plus is 70% yearly ($19.99) / 30% monthly
+($2.99); 1% of homes buy a $1.99 extra a month; App Store from month 7 (half of buyers, 15% cut), else Stripe (~6%);
+Supabase Pro ($25) once over ~100 homes; Apple $99/yr. Josh's Claude plan is not in the costs.
+
+| Scenario | New homes/mo (growth) | Buy Plus | Month 12 | Month 24 | 24-mo total |
+|---|---|---|---|---|---|
+| Low | 10 (+5%) | 3% | 75 homes, 2 Plus, net −$4/mo | 176 homes, 5 Plus, net −$21/mo | −$250 |
+| Base | 25 (+10%) | 5% | 260 homes, 13 Plus, net −$6/mo | 956 homes, 48 Plus, net +$71/mo | +$280 |
+| High | 50 (+20%) | 8% | 1,005 homes, 80 Plus, net +$132/mo | 9,505 homes, 760 Plus, net +$1,540/mo | +$8,400 |
+
+Key numbers: each Plus home brings about **$1.85/mo** after fees. Running costs (~$35/mo) need **~20 Plus homes**;
+also covering a $100/mo Claude plan needs **~75**. Growth (friends inviting friends) matters far more than price.
+Script: rerun with new numbers on request.
