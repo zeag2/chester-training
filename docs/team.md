@@ -7,6 +7,7 @@ use) small. Every session on this team reads this file first, then `docs/HANDOFF
 
 | Session | Job | Lives |
 |---|---|---|
+| **Secretary & Executive** ("PalDex secretary & executive (current)", `session_019xqnwfFvQiZZLm3DhgHYmW`) | Above the project manager. Keeps the agenda order, the big picture, the 5-hour time blocks and a strict token budget, in `docs/exec.md`. No workers, PRs or code. | One long-lived session, used only when Josh or the PM messages it |
 | **Project manager** ("PalDex project manager (current)", `session_019xqnwe2xGc6E2Zfb29YqrL`) | Talks to Josh, picks tasks from the agenda (`docs/HANDOFF.md`, section 2, "Agenda"), starts and briefs workers, checks on them, reports back. Writes no app code itself. | One long-lived session, used only when Josh messages it |
 | **Features** worker | Builds one agenda item: code, tests, the handoff update, and any SQL (written as an idempotent migration plus a policy test, pasted to Josh to run). | A fresh session per task, archived when the task is done |
 | **QA** worker | Checks one pull request: `npm test`, `npm run typecheck`, `npm run build`, the SQL tests if there's SQL, and a few iPhone-size screenshots of the touched screens (light and dark). Reports problems; fixes only small, obvious ones on the same branch. | A fresh session per pull request, archived when done |
@@ -15,6 +16,11 @@ use) small. Every session on this team reads this file first, then `docs/HANDOFF
 Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` section 3a), Docs.
 
 ## Rules for the project manager
+
+0. **Reports to the Secretary & Executive** (`docs/exec.md`). Tell it in one or two lines (`send_message`) when an
+   agenda item finishes, the agenda or plan changes, or a block starts or ends (with % used). Before starting a
+   worker, check the current block still has budget; ask the Executive before going over. Josh still talks to the
+   PM for day-to-day work and "ship it".
 
 1. **Only act when Josh asks.** No schedule. If the manager thinks something should happen (a worker finished, a
    pull request is ready, a test failed), it tells Josh and **asks before starting any new session or run**.
@@ -75,7 +81,7 @@ Roles to add later if needed: Art (`src/chester/*`, see `docs/HANDOFF.md` sectio
   Josh's art OK on the 160 px cat.
 - 2026-11-11 (late): schedule in 5-hour blocks to match Josh's usage resets (Eastern time). Gates between blocks:
   Josh's "ship it", and Josh running the SQL by hand.
-  - Now to 1:40 AM: desktop steps 5, 6, 7 (one worker at a time, skip QA on small ones).
+  - (Superseded: the schedule now lives in `docs/exec.md`.) Now to 1:40 AM: desktop steps 5, 6, 7 (one worker at a time, skip QA on small ones).
   - Block 1, 1:40 AM: agenda 8, booking part 2 (reschedule/cancel, several cats) + a second worker writing the photo
     feed plan and SQL.
   - Block 2, 6:40 AM: photo feed part 1 (Josh runs the SQL first): posting photos, your own cats' feed.
