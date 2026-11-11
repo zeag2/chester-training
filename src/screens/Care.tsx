@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
+import { Sheet } from '../ui/Sheet';
 import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type FoodType, type GroomWhat, type MedWhat, type Verdict,
@@ -185,8 +186,7 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
     <input id={'c-' + key} className="in" value={f[key] ?? ''} onChange={(e) => set(key, e.target.value)} {...props} /></>;
   const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={kind === 'vet' ? undefined : localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
-  return <div className="overlay sheetbg" onClick={onClose}>
-    <div className="sheet" role="dialog" aria-modal="true" aria-label={item ? 'Edit entry' : 'New entry'} onClick={(e) => e.stopPropagation()}>
+  return <Sheet label={item ? 'Edit entry' : 'New entry'} onClose={onClose}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>{kind === 'food' ? (item ? 'Edit food or treat' : 'Add food or treat') : (item ? 'Edit ' : '') + TITLE[kind]}</b>
         <button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
       {kind === 'food' && !item && <FoodFinder known={care.filter((c): c is CareItem<'food'> => c.kind === 'food')} onCode={(code) => setF((x: any) => ({ ...x, code }))}
@@ -222,7 +222,7 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
         <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
-      <button className="btn" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
+      <button className="btn sheetsave" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
       {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
         const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
         return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
@@ -232,8 +232,7 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
           <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
       })()}
       {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
-    </div>
-  </div>;
+    </Sheet>;
 }
 
 /** Home: today at a glance. What's due (up to three), the last weight, and one-tap logging. */

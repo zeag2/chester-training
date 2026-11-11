@@ -12,6 +12,7 @@ import { inviteText, pendingFriend, setPendingFriend } from '../lib/invite';
 import { titleFor } from '../lib/appname';
 import { FRIEND_BONUS, owned } from '../engine/corner';
 import { FriendRequestRow } from '../ui/FriendsStrip';
+import { Sheet } from '../ui/Sheet';
 
 function PetCardView({ p }: { p: FriendPet }) {
   const c = p.card; const mastered = c.mastered ?? [];
@@ -84,7 +85,7 @@ export function InviteSheet({ onClose }: { onClose: () => void }) {
   const { friends, account } = useStore();
   const [err, setErr] = useState('');
   useEffect(() => { if (account && !friends) store.loadFriends().catch(() => setErr('Can’t reach PalDex right now. Check your connection.')); }, [account, friends]);
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label="Invite a friend" onClick={(e) => e.stopPropagation()}>
+  return <Sheet label="Invite a friend" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Invite a friend</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     <p className="s" style={{ marginTop: 4 }}>Friends see each other’s cats: their look, outfit, skills and streak. Never care records or documents.</p>
     {!account ? <><p className="m" style={{ marginTop: 12 }}>Sign in first so friends can find you.</p><button className="btn" style={{ marginTop: 12 }} onClick={() => { onClose(); go('together'); }}>Sign in or create an account</button></>
@@ -92,7 +93,7 @@ export function InviteSheet({ onClose }: { onClose: () => void }) {
       : !friends ? <p className="s" style={{ marginTop: 12 }} aria-busy="true">Loading…</p>
       : friends.missing ? <p className="s" style={{ marginTop: 12 }}>Friends aren’t switched on yet.</p>
       : <><InvitePanel /><button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => { onClose(); go('friends'); }}>See friends’ cats</button></>}
-  </div></div>;
+  </Sheet>;
 }
 
 export function Friends({ code: linkCode }: { code?: string }) {

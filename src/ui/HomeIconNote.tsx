@@ -3,6 +3,7 @@ import { useStore } from '../db/store';
 import { closeHomeIconNote, staleHomeIcon, titleFor } from '../lib/appname';
 import { InstallSteps } from './InstallSteps';
 import { Icon } from './icons';
+import { Sheet } from './Sheet';
 
 /* In the installed iPhone app only: the cats changed since PalDex was added to the Home Screen, and iPhone keeps the
    old icon and name. Say so once, with the way to fix it (the Add to Home Screen guide). */
@@ -23,7 +24,7 @@ export function HomeIconNote() {
         <button className="iconbtn" aria-label="Close" onClick={close}><Icon name="close" /></button></div>
       <button className="btn2" style={{ marginTop: 10, background: 'var(--surface)' }} onClick={() => setHow(true)}>Show me how</button>
     </div>
-    {how && <div className="overlay sheetbg" onClick={() => setHow(false)}><div className="sheet" role="dialog" aria-modal="true" aria-label="Update the Home Screen icon" onClick={(e) => e.stopPropagation()}>
+    {how && <Sheet label="Update the Home Screen icon" onClose={() => setHow(false)}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>Update the Home Screen icon</b><button className="iconbtn" aria-label="Close" onClick={() => setHow(false)}><Icon name="close" /></button></div>
       {!account && <p className="s" style={{ marginTop: 8, padding: '8px 12px', borderRadius: 14, background: 'var(--butter)', color: 'var(--butter-ink)' }}>
         <b>Sign in first</b> (Me, then Account). Removing the icon removes what’s saved only on this phone; signed in, it all comes back.</p>}
@@ -34,6 +35,6 @@ export function HomeIconNote() {
       <p className="s" style={{ marginTop: 4 }}>Then add <b>{name}</b> again:</p>
       <InstallSteps name={name} />
       <button className="btn" style={{ marginTop: 14 }} onClick={close}>Got it</button>
-    </div></div>}
+    </Sheet>}
   </>;
 }

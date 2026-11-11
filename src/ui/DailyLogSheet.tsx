@@ -5,6 +5,7 @@ import type { CareItem, DailyWhat } from '../engine/care';
 import { atTimeOfDay, dailyLogDays, hhmm } from '../engine/dailylog';
 import { Icon } from './icons';
 import * as audio from '../lib/audio';
+import { Sheet } from './Sheet';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 const LABEL: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Played', check: 'Daily check' };
@@ -39,8 +40,7 @@ export function DailyLogSheet({ what, days = 1, onAgain, onClose }: { what?: Dai
   };
   const remove = async (i: CareItem<'daily'>) => { setAsking(null); audio.chirp(); await store.deleteCare(i.id); };
 
-  return <div className="overlay sheetbg" onClick={onClose}>
-    <div className="sheet" role="dialog" aria-modal="true" aria-label={`${cat.name}: ${title}`} onClick={(e) => e.stopPropagation()}>
+  return <Sheet label={`${cat.name}: ${title}`} onClose={onClose}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>{cat.name}: {title}</b>
         <button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
       <p className="s" style={{ marginTop: 2 }}>Logged by mistake? Delete it, or change its time. Shared with your household.</p>
@@ -60,8 +60,7 @@ export function DailyLogSheet({ what, days = 1, onAgain, onClose }: { what?: Dai
         </div>)}
       </div>)}
       {what && onAgain && <button className="btn" style={{ marginTop: 16 }} onClick={() => { onAgain(); onClose(); }}>{AGAIN[what]}</button>}
-    </div>
-  </div>;
+    </Sheet>;
 }
 
 function TrashIcon() {

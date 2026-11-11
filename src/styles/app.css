@@ -225,6 +225,26 @@ button.visitrow{background:none;padding:0}
 .bktimes{display:flex;flex-wrap:wrap;gap:6px}.bktimes .chipbtn{padding:0 13px}
 .bkoffline{margin-top:8px;padding:8px 12px;border-radius:14px;background:var(--butter);color:var(--butter-ink)}
 
+/* ── Tablet and desktop sheets (docs/plans/2026-11-11-desktop-layout.md, step 2) ──
+   Keyed on .sheetbg.dialog / .sheetbg.panel, which <Sheet> (src/ui/Sheet.tsx) adds only at 760 px and up, so the
+   phone bottom sheet above is untouched. dialog (760–1099 px): centred, 520 px, at most 85vh, scrolling inside, with
+   the .sheetsave button stuck to the bottom. panel (1100 px and up): 420 px on the right, page readable behind it. */
+.sheetbg.dialog{justify-content:center;align-items:center;padding:24px}
+.sheetbg.dialog .sheet{max-width:520px;max-height:85vh;border-radius:26px;padding:20px 24px 24px;margin:0;box-shadow:0 18px 60px rgba(0,0,0,.22);animation:kdialog 240ms var(--ease-out)}
+.sheetbg.panel{background:rgba(10,10,8,.2);flex-direction:row;justify-content:flex-end}
+.sheetbg.panel .sheet{width:420px;max-width:420px;height:100%;max-height:none;margin:0;border-radius:0;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.12);padding:calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));animation:kpanel 280ms var(--ease-out)}
+.sheetbg:is(.dialog,.panel) .sheet:focus{outline:none}
+/* the band behind a stuck Save: the shadow fills round its corners, the border image squares off the outside */
+.sheetbg:is(.dialog,.panel) .sheetsave{position:sticky;bottom:0;z-index:1;box-shadow:0 0 0 24px var(--bg);border-image:linear-gradient(var(--bg),var(--bg)) 1/24px/24px}
+.sheetbg:is(.dialog,.panel) .sheet{scroll-padding-bottom:96px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheetbg.panel .sheet{background:var(--surface);box-shadow:-10px 0 40px rgba(0,0,0,.4)}
+  :root:not([data-theme="light"]) .sheetbg.panel .sheetsave{box-shadow:0 0 0 24px var(--surface);border-image:linear-gradient(var(--surface),var(--surface)) 1/24px/24px}}
+:root[data-theme="dark"] .sheetbg.panel .sheet{background:var(--surface);box-shadow:-10px 0 40px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .sheetbg.panel .sheetsave{box-shadow:0 0 0 24px var(--surface);border-image:linear-gradient(var(--surface),var(--surface)) 1/24px/24px}
+@keyframes kdialog{from{transform:translateY(12px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+@keyframes kpanel{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sheetbg:is(.dialog,.panel) .sheet{animation:none}}
+
 /* ── Tablet and desktop navigation (docs/plans/2026-11-11-desktop-layout.md, step 1) ──
    Everything below is keyed on <html data-nav>, which TabBar sets only at 760 px and up, so phones are untouched.
    rail: 88 px icons + labels (760–1099 px). side: 220 px nav with Log and the pet switcher (1100 px and up).

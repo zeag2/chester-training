@@ -1,6 +1,7 @@
 import { downloadIcs, googleCalendarUrl, type CalEvent } from '../lib/calendar';
 import * as audio from '../lib/audio';
 import { Icon } from './icons';
+import { Sheet } from './Sheet';
 
 /* Which calendar to add a visit to: always asked (Apple Calendar or Google Calendar), with the phone's last choice
    preselected. Apple = the .ics file (iPhone and Mac open it in Calendar); Google = a calendar.google.com link. */
@@ -30,7 +31,7 @@ export function CalendarSheet({ event, onClose }: { event: CalEvent; onClose: ()
   const last = lastCalendar();
   const order: Cal[] = last === 'google' ? ['google', 'apple'] : ['apple', 'google'];
   const pick = (c: Cal) => { audio.chirp(); addToCalendar(event, c); onClose(); };
-  return <div className="overlay sheetbg" onClick={onClose}><div className="sheet" role="dialog" aria-modal="true" aria-label="Add to which calendar?" onClick={(e) => e.stopPropagation()}>
+  return <Sheet label="Add to which calendar?" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Add to which calendar?</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
       {order.map((c) => { const preferred = c === last;
@@ -38,5 +39,5 @@ export function CalendarSheet({ event, onClose }: { event: CalEvent; onClose: ()
           <Icon name="cal" size={18} />{CAL_NAME[c]}{preferred && <span style={{ fontWeight: 600, opacity: 0.75 }}> · last used</span>}</button>; })}
     </div>
     <p className="s" style={{ marginTop: 10 }}>PalDex remembers your choice on this phone.</p>
-  </div></div>;
+  </Sheet>;
 }
