@@ -49,8 +49,10 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 | Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
 
-Wakeups set by the PM (send_later, 3:40 AM Nov 12–16; Nov 11's was 1:40 AM): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
-trig_01NF3pijsrjvMjeHdVVRBSCs, trig_01ATt1YQmjZddfgfBdJTrCZH, trig_0179g7LHPfYABhxtC2XbcY8N, trig_0126gKbv1PYai5CEFJPhqSky.
+Night blocks (since 2026-11-12): scheduled tasks that start their own worker session at 3:40 AM (no approval
+prompt), check the cap here and report to the PM and the Executive: Fri feed 1 trig_01DKrfVN3p9pSs8ceyv7vkn1 (skips if
+the feed SQL isn't run), Sat feed 2 trig_0139JerHVtYv6H6cxYme1pJF, Sun trig_01VdyEwkhKAWGFNYrhmAMaYL (reads the Sun row
+here: medicine or onboarding/menu), Mon push plan trig_01XD227p7F9Gw8VnoAESUJUB. Old PM wakeups deleted.
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
 Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
