@@ -37,8 +37,8 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | Tue Nov 10, late | Art director's first run (`docs/art.md`: style rules + cosmetics ideas); on demand only, ideas come here via the PM | S / ~2% | — | running |
 | **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | merged (main 54a9c28) |
 | Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | merged (PR #20); iPhone test still to do |
-| **Thu Nov 12, 3:40 AM (wakeup)** | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | wakeup fired; no PR by 8:45 AM, asked PM |
-| Thu Nov 12, 12:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
+| Thu Nov 12, 12:40 PM (missed at 3:40 AM) | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | next |
+| Thu Nov 12, 5:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
@@ -56,7 +56,7 @@ Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:
 Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
-cap first and skips if it's spent. A PM restart can make a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
+cap first and skips if it's spent. A PM restart, or a worker start that needs an approval (PM not in auto mode), makes a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
 Total ~50% + nightly UX audit (~6%) = ~56% of the ~70% left, leaving ~14% (10% reserve + slack).
 If a block runs over, the next block shrinks, not the reserve.
 
