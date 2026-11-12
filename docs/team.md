@@ -91,3 +91,8 @@ Roles to add later if needed: Docs.
     bug, art pass on the 160 px cat and the rainbow dash).
   - Block 5, 9:40 PM: agenda 5, push notifications plan + SQL.
   - Block 6, 2:40 AM Nov 12: push notifications build + QA. Then the agenda is done.
+- 2026-11-12: night blocks are now scheduled tasks that **start their own fresh worker session** at 3:40 AM Eastern
+  (no approval prompt needed while Josh sleeps): trig_01DKrfVN3p9pSs8ceyv7vkn1 (Fri, feed 1),
+  trig_0139JerHVtYv6H6cxYme1pJF (Sat, feed 2), trig_01VdyEwkhKAWGFNYrhmAMaYL (Sun), trig_01XD227p7F9Gw8VnoAESUJUB (Mon,
+  push plan). Each checks the budget/gates itself and reports to the PM and the Executive. Mornings: the PM verifies the
+  PR, archives the worker session, and ships what needs no SQL or setting (Josh: "ship whatever you're confident in").
