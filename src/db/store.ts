@@ -549,6 +549,21 @@ export class Store {
     if (this.snap.cat && name.trim()) { await this.remote!.setName(this.snap.cat.id, name.trim()).catch(() => {}); await this.sync(); }
   }
 
+  /** Email a link for setting a new password. */
+  async forgotPassword(email: string, redirectTo: string) {
+    await this.remote!.sendPasswordReset(email.trim().toLowerCase(), redirectTo);
+  }
+  /** Opened from a reset email: sign in with its tokens (then `setPassword`). */
+  async startRecovery(accessToken: string, refreshToken: string) {
+    const account = await this.remote!.startRecovery(accessToken, refreshToken);
+    this.set({ account });
+  }
+  /** Save a new password for the signed-in account, then bring this phone up to date. */
+  async setPassword(password: string) {
+    await this.remote!.setPassword(password);
+    void this.sync();
+  }
+
   /** Join someone else's Chester. This phone's own cat (if any) is replaced by the shared one. */
   join(code: string, name: string): Promise<boolean> {
     return this.serial(async () => {

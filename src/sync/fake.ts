@@ -11,6 +11,8 @@ export class FakeServer {
   houses = new Map<string, House>();
   sets = new Map<string, SetRecord>();
   passwords = new Map<string, string>();
+  /** Emails a reset link was sent to. */
+  resets: string[] = [];
   care = new Map<string, CareItem>();
   careTable = true;
   /** Whether the vets SQL is run; the household's vet contacts. */
@@ -57,6 +59,16 @@ export class FakeRemote implements Remote {
     this.s.passwords.set(email, password); this.me = { userId: 'u:' + email, email }; return this.me;
   }
   async signOut() { this.me = null; }
+  async sendPasswordReset(email: string) { this.up(); this.s.resets.push(email); }
+  async startRecovery(accessToken: string) {
+    this.up(); const email = accessToken.startsWith('reset:') ? accessToken.slice(6) : '';
+    if (!this.s.passwords.has(email)) throw new Error('link-expired');
+    this.me = { userId: 'u:' + email, email }; return this.me;
+  }
+  async setPassword(password: string) {
+    const u = this.user(); if (this.s.passwords.get(u.email) === password) throw new Error('same-password');
+    this.s.passwords.set(u.email, password);
+  }
   private myHouses() { const u = this.user(); return [...this.s.houses.values()].filter((h) => h.members.some((m) => m.userId === u.userId)); }
   async myCatIds() { const hs = new Set(this.myHouses().map((h) => h.id)); return [...this.s.cats].filter(([, c]) => hs.has(c.householdId)).map(([id]) => id); }
   async getCat(id: string) {

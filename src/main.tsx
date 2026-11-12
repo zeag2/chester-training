@@ -8,6 +8,8 @@ import { startUpdates } from './lib/updates';
 import { listenForInstall } from './lib/install';
 import { takePendingFromUrl } from './lib/appname';
 import { captureInvite } from './lib/invite';
+import { takeRecoveryFromUrl } from './lib/recovery';
+takeRecoveryFromUrl();
 listenForInstall(); takePendingFromUrl(); captureInvite();
 startUpdates();
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
