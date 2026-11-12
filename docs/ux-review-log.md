@@ -1,4 +1,4 @@
-last-reviewed: 237f96920d13674d44e8a8001c3aa19ca0f2e462
+last-reviewed: 4236c33571362f58030e292a40020d304bfc8d7c
 
 # UX review log
 
@@ -18,6 +18,11 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-12: 237f969..4236c33
+Checked desktop Health in two columns (the Health log as a table, drag-and-drop documents) and All documents in two
+panes with a preview, at 1280 px light and 1440 px dark, plus phone Health and Documents in light and dark mode.
+No changes needed: the columns, table and preview pane read well; the tooltips are on the icon-only buttons.
 
 ### 2026-11-11: 32c5bba..237f969
 Checked at iPhone 15 size (light and dark) and 1280 px desktop, with a saved vet and emergency vet, a booked
