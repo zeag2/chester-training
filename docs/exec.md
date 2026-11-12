@@ -29,7 +29,7 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 
 ## Schedule (time blocks, Eastern)
 Blocks follow Josh's 5-hour resets: 12:40 PM, 5:40 PM, 10:40 PM, 3:40 AM, 8:40 AM (Josh, 2026-11-11).
-Gates: Josh's "ship it"; Josh runs any SQL by hand.
+Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week (Josh, 2026-11-12).
 
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
@@ -38,14 +38,14 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand.
 | **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | merged (main 54a9c28) |
 | Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | merged (PR #20); iPhone test still to do |
 | Thu Nov 12, 12:40 PM (missed at 3:40 AM) | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | next |
-| Thu Nov 12, 5:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
+| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`supabase/migrations/…bundle.sql`, repo's timestamp naming) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | |
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
 | Sat Nov 14, 12:40 PM | Feed part 2: QA + fixes | S / 4% | ship it | |
 | **Sun Nov 15, 3:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
 | Sun Nov 15, 12:40 PM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left: Visit page two-pane) | M / 4% | ship it | |
-| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
+| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 | Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
 
