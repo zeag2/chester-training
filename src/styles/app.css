@@ -208,6 +208,38 @@ button.lrow:active{background:var(--line)}
 /* the Quick log Undo note: bottom right of the content area instead of centred under it */
 html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px - 1120px) / 2 + 32px));width:400px;margin:0}
 /* ── end of desktop Home ── */
+/* ── Desktop Health: two columns, the log as a table, drag-and-drop documents (docs/plans/2026-11-11-desktop-layout.md, step 5) ──
+   Health adds .healthcols and .healthlog only at 1100 px and up (src/screens/Care.tsx), so phones and tablets never
+   match these. Left: your vet, visits, Coming up, Log something (and the kitten plan). Right: documents, weight, food.
+   The log runs across both as a table. .dropnote shows only while a file is dragged over Health or All documents. */
+.healthcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px;align-items:start;max-width:1056px}
+.healthcol{min-width:0}
+.healthcol>.row:first-child,.healthcol>h2:first-child{margin-top:12px!important}
+.healthlog{max-width:1056px;margin-top:10px}
+.healthlog .linkbtn{border:0;background:none;padding:6px 2px;font:inherit;font-size:13px;font-weight:800;color:var(--ink);cursor:pointer}
+.healthlog .logtable-wrap{margin-top:10px;border-radius:18px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
+.healthlog .logtable{width:100%;border-collapse:collapse;font-size:14px}
+.healthlog .logtable th{text-align:left;font-size:12px;font-weight:800;color:var(--muted);padding:10px 14px;background:var(--grey)}
+.healthlog .logtable td{padding:8px 14px;border-top:1px solid var(--line);vertical-align:middle;color:var(--ink)}
+.healthlog .logtable td:first-child{white-space:nowrap;width:1%}
+.healthlog .logtable td:nth-child(4){white-space:nowrap;width:1%;color:var(--muted)}
+.healthlog .logtable td:nth-child(2){white-space:nowrap;width:1%}
+.healthlog .logtable tr{cursor:pointer}
+.healthlog .logtable tr.quick td{color:var(--muted)}
+.healthlog .logtable tr.quick td:nth-child(2) .logopen{color:var(--ink-2);font-weight:700}
+.healthlog .logopen{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--ink);cursor:pointer;min-height:36px}
+.healthlog .logopen .ico{width:32px;height:32px;border-radius:10px}
+.healthlog .logopen .ico svg{width:18px;height:18px}
+.healthlog .logopen:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+@media (hover:hover){.healthlog .logtable tbody tr:hover td{background-image:linear-gradient(var(--hov),var(--hov))}}
+.dropnote{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:24px;background:rgba(10,10,8,.28);pointer-events:none}
+html[data-nav="rail"] .dropnote{left:88px}
+html[data-nav="side"] .dropnote{left:220px}
+.dropnote-in{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;max-width:420px;padding:36px 32px;border-radius:26px;background:var(--bg);color:var(--ink);border:2px dashed var(--ink);box-shadow:0 18px 60px rgba(0,0,0,.22)}
+.dropnote-in b{font-size:18px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dropnote-in{background:var(--surface)}}
+:root[data-theme="dark"] .dropnote-in{background:var(--surface)}
+/* ── end of desktop Health ── */
 /* Home's friends card: one tile per friend, their cats sitting together on a little floor, whose they are and names */
 .households{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x proximity}
 .household{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;min-width:112px;padding:8px 12px 10px;border-radius:22px;background:var(--surface);text-align:center}
@@ -247,6 +279,24 @@ button.visitrow{background:none;padding:0}
 .bktimes{display:flex;flex-wrap:wrap;gap:6px}.bktimes .chipbtn{padding:0 13px}
 .bkoffline{margin-top:8px;padding:8px 12px;border-radius:14px;background:var(--butter);color:var(--butter-ink)}
 
+/* ── Desktop All documents: two panes with a preview (docs/plans/2026-11-11-desktop-layout.md, step 6) ──
+   Documents adds .docpanes only at 1100 px and up (src/screens/Documents.tsx). Left: the list; right: the selected
+   document, sticky while the list scrolls. The selected row gets --grey, like the side nav's active item. */
+.docpanes{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:0 28px;align-items:start;max-width:1056px}
+.doclist{min-width:0}
+.docrow.on{background:var(--grey);border-radius:14px;border-bottom-color:transparent}
+.docrow.on .item{background:transparent}
+.docpreview{position:sticky;top:20px;min-width:0;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:22px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 24px rgba(0,0,0,.05)}
+.docsum{margin:0;font-size:15px;line-height:1.45;color:var(--ink-2);max-width:70ch}
+.docview{display:grid;place-items:center;height:calc(100vh - 380px);min-height:320px;border-radius:14px;background:var(--grey);overflow:hidden}
+.docview iframe{width:100%;height:100%;border:0;background:#fff}
+.docview img{max-width:100%;max-height:100%;object-fit:contain}
+/* tooltips on icon-only buttons (src/ui/Tooltip.tsx): only ever shown with a mouse */
+.tooltip{position:fixed;z-index:60;transform:translateX(-50%);max-width:220px;padding:5px 9px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700;line-height:1.3;text-align:center;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18);animation:tipin 120ms ease-out}
+.tooltip.above{transform:translate(-50%,-100%)}
+@keyframes tipin{from{opacity:0}}
+@media (prefers-reduced-motion: reduce){.tooltip{animation:none}}
+/* ── end of desktop All documents ── */
 /* ── Tablet and desktop sheets (docs/plans/2026-11-11-desktop-layout.md, step 2) ──
    Keyed on .sheetbg.dialog / .sheetbg.panel, which <Sheet> (src/ui/Sheet.tsx) adds only at 760 px and up, so the
    phone bottom sheet above is untouched. dialog (760–1099 px): centred, 520 px, at most 85vh, scrolling inside, with

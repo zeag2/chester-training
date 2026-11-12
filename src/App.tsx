@@ -32,6 +32,7 @@ import { wantsInstallStep } from './lib/install';
 import { applyAppName, pendingPets } from './lib/appname';
 import { movedTo } from './lib/moved';
 import { ToastHost } from './ui/Toast';
+import { TooltipHost } from './ui/Tooltip';
 
 export default function App() {
   const snap = useStore();
@@ -89,6 +90,6 @@ export default function App() {
     case 'visit': body = <Visit key={r1} catId={r1 ?? ''} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
-  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews || snap.requests.some((q) => q.incoming) ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}<ToastHost /></>;
+  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews || snap.requests.some((q) => q.incoming) ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}<ToastHost /><TooltipHost /></>;
 }
 
