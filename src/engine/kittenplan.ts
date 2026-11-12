@@ -1,6 +1,6 @@
 /* The usual kitten vaccine and checkup schedule (general guidance; the vet sets the real one), ticked off from what's
    been logged. Shown for pets under 18 months. Matching is by name, so "FVRCP", "Distemper combo", "Rabies" all count. */
-import type { CareItem } from './care';
+import { isCancelled, type CareItem } from './care';
 import type { Cat } from './types';
 
 export interface PlanStep { key: string; title: string; when: string; done: boolean; progress?: string; preset: { name: string; what: 'vaccine' | 'medicine' } | { reason: string } }
@@ -11,7 +11,7 @@ function bornAt(birthday: string): number | null { const [y, m, d] = birthday.sp
 export function kittenPlan(cat: Pick<Cat, 'birthday' | 'altered' | 'sex'>, care: CareItem[], now = Date.now()): PlanStep[] | null {
   const born = bornAt(cat.birthday); if (born == null || now - born > 18 * MONTH) return null;
   const meds = care.filter((i) => i.kind === 'med' && !i.deleted) as CareItem<'med'>[];
-  const vets = care.filter((i) => i.kind === 'vet' && !i.deleted) as CareItem<'vet'>[];
+  const vets = care.filter((i) => i.kind === 'vet' && !i.deleted && !isCancelled(i)) as CareItem<'vet'>[];
   const doses = (re: RegExp) => meds.filter((m) => re.test(m.data.name));
   const core = doses(/fvrcp|fvrc|distemper|feline viral|panleuk|\bfvr\b/i), rabies = doses(/rabies/i), felv = doses(/felv|leuk/i);
   const after = (xs: CareItem[], months: number) => xs.some((x) => x.at - born >= months * MONTH);

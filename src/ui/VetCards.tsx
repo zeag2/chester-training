@@ -25,7 +25,7 @@ export function visitEvent(catName: string, v: CareItem<'vet'>, vet?: Vet): CalE
   const clinic = v.data.clinic || d?.clinic;
   const address = d?.address || v.data.address;
   const phone = d?.phone || v.data.phone;
-  return { title: `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined, uid: 'visit-' + v.id,
+  return { title: `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined, uid: 'visit-' + v.id, seq: v.data.calSeq ?? 0, cancelled: v.data.status === 'cancelled',
     place: address || clinic || undefined,
     notes: [address && clinic, phone && `Phone: ${phone}`, v.data.notes].filter(Boolean).join('\n') || undefined };
 }

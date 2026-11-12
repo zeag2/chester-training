@@ -236,7 +236,7 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
-    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
+    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: f.status === 'cancelled' ? 'cancelled' : day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
     await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: docVisitId(care, item as CareItem<'doc'>, f.visitId) } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };
