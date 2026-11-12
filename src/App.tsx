@@ -10,7 +10,7 @@ import { Tree } from './screens/Tree';
 import { Library } from './screens/Library';
 import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
-import { Together } from './screens/Together';
+import { ResetPassword, Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
@@ -58,6 +58,7 @@ export default function App() {
   // PalDex moved: someone new on the old address goes straight to the new one (people with pets here get a card on Home)
   if (!snap.cat && movedTo()) { location.replace(movedTo()!); return <div className="screen" aria-busy="true" />; }
   if (import.meta.env.DEV && r0 === 'gallery') return <Gallery />;
+  if (r0 === 'reset-password') return <ResetPassword />;
   if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
   if (r0 === 'add-pet') return <Onboarding adding key={pendingPets().map((p) => p.name).join()} />;
   if (r0 === 'another' && snap.cat) return <AnotherCat />;

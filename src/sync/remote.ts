@@ -25,6 +25,12 @@ export interface Remote {
   /** Throws 'email-taken' when that email already has an account. */
   signUp(email: string, password: string): Promise<Account>;
   signOut(): Promise<void>;
+  /** Email a password-reset link that opens `redirectTo`. */
+  sendPasswordReset(email: string, redirectTo: string): Promise<void>;
+  /** Sign in with the tokens from a reset link. Throws 'link-expired' when they're no good. */
+  startRecovery(accessToken: string, refreshToken: string): Promise<Account>;
+  /** Change the signed-in account's password. */
+  setPassword(password: string): Promise<void>;
 
   myCatIds(): Promise<string[]>;
   getCat(id: string): Promise<{ cat: Cat; inviteCode: string } | null>;
