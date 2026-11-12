@@ -1293,3 +1293,7 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   the reset flow. No plugins or MCP servers. Checks: the full policy-test chain on a local Postgres 16, a new
   `security_test.sql`, unit tests (`src/lib/recovery.test.ts`), `npm audit`, a regex secret scan of git history, and
   Playwright shots (iPhone 13, light and dark) with Supabase's auth endpoints mocked.
+- 2026-11-12, recovering that branch (Features worker): the first session couldn't push (403), so its commit was
+  rebuilt from the gzipped `git format-patch` it printed, read back with the **claude-code-remote** MCP server's
+  `list_events` and applied with `git am`. The three screenshots were retaken with Playwright (iPhone 13, Supabase
+  auth mocked): `sign-in-forgot-light`, `reset-request-dark`, `set-new-password-light`.
