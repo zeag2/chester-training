@@ -38,7 +38,7 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | merged (main 54a9c28) |
 | Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | merged (PR #20); iPhone test still to do |
 | Thu Nov 12, 12:40 PM (missed at 3:40 AM) | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | next |
-| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`supabase/migrations/…bundle.sql`, repo's timestamp naming) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | |
+| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`20261116000000_bundle.sql`) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | |
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
@@ -52,7 +52,8 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 Night blocks (since 2026-11-12): scheduled tasks that start their own worker session at 3:40 AM (no approval
 prompt), check the cap here and report to the PM and the Executive: Fri feed 1 trig_01DKrfVN3p9pSs8ceyv7vkn1 (skips if
 the feed SQL isn't run), Sat feed 2 trig_0139JerHVtYv6H6cxYme1pJF, Sun trig_01VdyEwkhKAWGFNYrhmAMaYL (reads the Sun row
-here: medicine or onboarding/menu), Mon push plan trig_01XD227p7F9Gw8VnoAESUJUB. Old PM wakeups deleted.
+here: medicine or onboarding/menu), Mon push plan trig_01XD227p7F9Gw8VnoAESUJUB. Old PM wakeups deleted. Thu Nov 12 day blocks too: 12:40 PM trig_01PJP32Pt5DTGYNb1tuSdXPk, 5:40 PM
+trig_01WNBDU4cKx7fEikxV2EWkEs (bundle file: `supabase/migrations/20261116000000_bundle.sql`).
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
 Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
