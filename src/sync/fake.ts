@@ -1,7 +1,7 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, Member, PetCard, Remote } from './remote';
+import type { Account, Member, NewPhoto, PetCard, Photo, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
 
@@ -34,6 +34,9 @@ export class FakeServer {
   treatsTable = true;
   /** friend treats, keyed `from|cat|day` */
   treats = new Map<string, { from: string; catId: string; day: string; thanked?: boolean }>();
+  /** Whether the photo feed SQL is run; the photos, newest last. */
+  photosTable = true;
+  photos: (NewPhoto & { id: string; by: string; at: string })[] = [];
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -178,5 +181,22 @@ export class FakeRemote implements Remote {
     return [...this.s.treats.values()].filter((t) => t.catId === catId).map((t) => ({ from: t.from, fromName: this.s.profiles.get(t.from)?.name ?? '', day: t.day }));
   }
   async thankTreat(from: string, catId: string, day: string) { const u = this.tr(); if (!this.s.isMember(catId, u.userId)) throw new Error('not your pet'); const t = this.s.treats.get(from + '|' + catId + '|' + day); if (t) t.thanked = true; }
+  private ph() { const u = this.fr(); if (!this.s.photosTable) throw new Error('photos-missing'); return u; }
+  private canSee(catId: string, userId: string) {
+    const h = this.s.houseOf(catId); if (!h) return false;
+    return h.members.some((m) => m.userId === userId || this.s.friendships.has(userId + '|' + m.userId));
+  }
+  async postPhoto(p: NewPhoto, file: Blob) {
+    const u = this.ph(); if (!this.s.isMember(p.catId, u.userId) || !p.path.startsWith(p.catId + '/')) throw new Error('denied');
+    if (p.caption.length > 140) throw new Error('caption too long');
+    this.s.files.set('pet-photos/' + p.path, file);
+    this.s.photos.push({ ...p, id: this.s.next('ph'), by: u.userId, at: new Date(Date.now() + this.s.photos.length).toISOString() });
+  }
+  async photoFeed(before?: string): Promise<Photo[]> {
+    const u = this.ph();
+    return this.s.photos.filter((p) => this.canSee(p.catId, u.userId) && (!before || p.at < before)).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 20)
+      .map((p) => ({ id: p.id, catId: p.catId, path: p.path, caption: p.caption, width: p.width, height: p.height, skill: p.skill, by: p.by, at: p.at, paws: 0, pawed: false }));
+  }
+  async photoUrls(paths: string[]) { this.ph(); return Object.fromEntries(paths.map((p) => [p, 'blob:' + p])); }
   async myThanks() { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.thanked).map((t) => ({ catId: t.catId, catName: this.s.cats.get(t.catId)?.cat.name ?? '', day: t.day })); }
 }

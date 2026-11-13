@@ -6,10 +6,11 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from '../sync/remote';
+import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, Photo, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
+import { photoPath, shrinkPhoto } from '../lib/photos';
 import type { CareRow, VetRow } from './db';
 import type { Vet, VetData } from '../engine/vets';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
@@ -471,6 +472,18 @@ export class Store {
     await this.remote!.cancelFriendRequest(userId); await this.loadFriends();
   }
   async removeFriend(userId: string) { await this.remote!.removeFriend(userId); await this.loadFriends(); }
+
+  // ---- photo feed ----
+  /** Shrink a photo on the phone, upload it to the pet's folder and add it to the feed. */
+  async postPhoto(catId: string, file: Blob, caption: string, skill?: string) {
+    const { blob, width, height } = await shrinkPhoto(file);
+    await this.remote!.postPhoto({ catId, path: photoPath(catId), caption: caption.trim().slice(0, 140), width, height, skill }, blob);
+  }
+  /** A page of the feed (newest first) with a signed link for each photo. */
+  async photoFeed(before?: string): Promise<{ photos: Photo[]; urls: Record<string, string> }> {
+    const photos = await this.remote!.photoFeed(before);
+    return { photos, urls: await this.remote!.photoUrls(photos.map((p) => p.path)) };
+  }
 
   // ---- shared training ----
 
