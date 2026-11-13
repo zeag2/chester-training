@@ -38,8 +38,8 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | merged (main 54a9c28) |
 | Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | merged (PR #20); iPhone test still to do |
 | Thu Nov 12, 12:40 PM (missed at 3:40 AM) | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | merged (PR #21, PM shipped on Josh's standing OK); ~3% over |
-| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`20261116000000_bundle.sql`) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | done: PR #22 (bundle + feed plan); Josh to run the SQL + set redirect URL before Fri 3:40 AM |
-| **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
+| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`20261116000000_bundle.sql`) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | done: PR #22 merged; **SQL bundle run + redirect URL set by Josh (Fri Nov 13 ~10 AM)** |
+| **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | skipped at 3:40 AM (SQL not yet run); started ~10 AM Fri instead |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
 | Sat Nov 14, 12:40 PM | Feed part 2: QA + fixes | S / 4% | ship it | |
