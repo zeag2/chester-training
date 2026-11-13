@@ -1,7 +1,7 @@
 /* Your vet: the household's vet contacts (the usual vet and an emergency vet), and the helpers the Health page uses
    to call them, get directions and book visits. Shared by the household like pets, newest edit wins. */
 import { localDay } from './day';
-import type { CareItem } from './care';
+import { isCancelled, type CareItem } from './care';
 
 export type VetKind = 'primary' | 'emergency';
 export interface VetData { kind: VetKind; clinic: string; vetName?: string; phone?: string; address?: string; website?: string; notes?: string }
@@ -56,14 +56,14 @@ export function fmtTime(t?: string): string {
 
 /** A visit is booked (still to come) when marked so, or when its date is after today (older entries had no status). */
 export function isBooked(i: CareItem, now = Date.now()): boolean {
-  if (i.kind !== 'vet') return false;
+  if (i.kind !== 'vet' || isCancelled(i)) return false;
   const s = (i.data as { status?: string }).status;
   return s === 'booked' || (s !== 'done' && localDay(i.at) > localDay(now));
 }
 
 /** The next booked visit (soonest first, including one booked for today) and the last one that happened. */
 export function visits(care: CareItem[], now = Date.now()): { next?: CareItem<'vet'>; last?: CareItem<'vet'>; due?: CareItem<'vet'> } {
-  const vs = care.filter((i): i is CareItem<'vet'> => i.kind === 'vet' && !i.deleted);
+  const vs = care.filter((i): i is CareItem<'vet'> => i.kind === 'vet' && !i.deleted && !isCancelled(i));
   const today = localDay(now);
   const booked = vs.filter((v) => isBooked(v, now) || ((v.data as { status?: string }).status === 'booked')).sort((a, b) => a.at - b.at);
   const upcoming = booked.filter((v) => localDay(v.at) >= today);

@@ -295,6 +295,24 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   - **One toast at a time (QA fix):** Health's "+N treats for logging" note moves up above the booking toast
     while one shows (`useToast`), so it doesn't cover Undo; Home's Quick log Undo hides a booking toast still showing.
     Undo removes the visit but not the treats it earned (as with any deleted care entry).
+- **Booking part 2a: reschedule and cancel (2026-11-11, Features worker, branch `claude/features-booking-2a`; no SQL:
+  `status: 'cancelled'` and `calSeq` live in the care JSON):**
+  - A booked, upcoming visit's page has **Reschedule** (new day and time; clearing the time makes it all-day) and
+    **Cancel visit** (confirm; the visit stays, with a **Cancelled** chip, **Book again** and **Remove from
+    calendar**). Each change bumps the visit's `calSeq`.
+  - Then **"Move it in your calendar?" / "Remove it from your calendar?"** (`CalendarSheet` with `change`). Apple
+    re-sends the .ics with the **same UID** (`visit-<id>@paldex`) and `SEQUENCE:<calSeq>`; a cancel sends
+    `STATUS:CANCELLED`, no alarms, and "Cancelled: " in the title (so even if iOS adds it as a new event instead of
+    updating, it reads as cancelled). Every .ics now carries `SEQUENCE` and `STATUS:CONFIRMED`. Google links can only
+    add: a reschedule opens the new time and the toast says to delete the old one; a cancel opens nothing and the
+    toast says to delete it in Google Calendar. "It's not in a calendar" skips.
+  - A cancelled visit is left out everywhere a visit counts (`isCancelled` in `src/engine/care.ts`): Coming up, the
+    yearly checkup, `isBooked`/`visits()` (Next visit, last visit), the kitten plan and the weekly recap. Editing a
+    cancelled visit keeps it cancelled. Tests: `src/screens/reschedule.test.tsx`.
+  - **For Josh on a real iPhone (Home Screen app):** book a visit with Apple Calendar, then Reschedule → Apple: does
+    Calendar *move* the event (not add a second one)? Then Cancel → Apple: is the event removed or marked cancelled,
+    and its reminders gone? If iOS duplicates instead, tell the PM (the fallback is to say "delete the old one" as for
+    Google).
 - **Visits, documents and the summary (2026-11-10, steps 3–5, Features worker, branch
   `claude/features-vet-redesign-3-5`):** links live in the care JSON, so **no SQL**: `visitId` on `doc`, `med` and
   `weight`, and `type` on `doc` (`vaccine | invoice | lab | discharge | other`, guessed by `guessDocType` when a
@@ -458,11 +476,39 @@ Items marked *(art)* suit the art session.
 1. [x] **Smart defaults + log for several cats at once** (done 2026-11-09). Make logging effortless.
 2. [x] **Playable toys, part 1: laser dot and wand** (done 2026-11-09). See "Play" below.
 3. [x] **Playable toys, part 2: box and tunnel** (done 2026-11-10, branch `claude/features-box-tunnel`). See "Play" below.
-- [ ] **Security review + Forgot password** (M, SQL; Josh, 2026-11-11; before the photo feed): check access rules
-   (RLS) on every table and storage bucket with policy tests, auth settings (email confirmation, rate limits, leaked
-   password protection), security headers, dependency and secret scanning; add "Forgot password?" on sign-in
-   (Supabase reset email + a set-new-password screen; Josh adds the redirect URL in Supabase). Later, before charging
-   or the App Store: privacy policy and delete-my-account. Free tier has no backups: decide on Pro or a manual export.
+- [x] **Security review + Forgot password** (done 2026-11-12, PR from `claude/features-security`; SQL: part 1 of
+   `supabase/migrations/20261116000000_bundle.sql`; Josh adds the redirect URL). Later, before charging or the App
+   Store: privacy policy and delete-my-account. Free tier has no backups: decide on Pro or a manual export.
+   - **Forgot password?** under Sign in → email → "Check your email". The email's link opens the app with the session
+     in the hash; `src/lib/recovery.ts` takes it out of the address bar at startup and opens `#/reset-password`
+     (`ResetPassword` in `src/screens/Together.tsx`): set a new password, or "Link didn't work" for a stale link. The
+     client uses the implicit flow on purpose: with PKCE the link would only work in the browser that asked, and on an
+     iPhone the email opens Safari, not the Home Screen app. **Josh:** Supabase → Authentication → URL Configuration →
+     Redirect URLs: add `https://paldex-4qh.pages.dev/` (and `https://zeag2.github.io/chester-training/` if the old
+     address should work too). Until then Supabase sends the link to the Site URL, which still works if that's the app.
+   - **Access rules (RLS):** every table in public has RLS on with per-user/per-member policies; `friends`,
+     `friend_profiles` are read-own only; `friend_requests`/`friend_treats` have no policies at all (only reachable
+     through the security-definer functions, which check `auth.uid()`). Every security-definer function pins
+     `search_path = ''`. The `pet-docs` bucket is private with member-only policies on all four actions. The Edge
+     Function `read-vet-doc` downloads with the caller's own token, so RLS applies. Found and fixed in part 1: the
+     trigger helpers `private.touch/care_by/vets_by` were callable by anyone (harmless, they error outside a trigger);
+     plus a sweep that revokes PUBLIC/anon from every function in public, and default privileges so future tables and
+     functions aren't granted to anon. New whole-database test `supabase/tests/security_test.sql` (run last).
+   - **Auth settings for Josh to check** (dashboard, not reachable from cloud sessions): "Confirm email" must stay
+     **off** (the app needs a session from sign-up; trade-off: anyone can sign up with an address they don't own, but
+     a reset email only ever goes to the real owner). Minimum password length 6 matches the app; raising it means
+     changing the app's checks too. Leaked password protection is a Pro-plan feature. Keep the default rate limits
+     (the email limit on the free built-in mailer is low, about 2 an hour: set up custom SMTP before many people use
+     reset). Turn off sign-in providers that aren't used, and anonymous sign-ins (off).
+   - **Headers:** the live site is Cloudflare Pages, which reads `public/_headers` (now: X-Frame-Options DENY,
+     frame-ancestors 'none', nosniff, Referrer-Policy, Permissions-Policy with camera only for the scanner). GitHub
+     Pages can't set headers; `index.html` carries what a meta tag can (CSP `object-src 'none'; base-uri 'self';
+     form-action 'self'`, referrer). A meta tag can't do frame-ancestors, HSTS or nosniff. Not done: a full
+     script/connect CSP (needs testing with OCR, PDF.js workers and the scanner first).
+   - **npm audit:** 0 in runtime dependencies; 6 low/moderate in build-only tools (vite-plugin-pwa → workbox-build →
+     glob/minimatch/deepmerge), fix needs a breaking vite-plugin-pwa upgrade; not shipped to users. **Secret scan** of
+     all git history: only the publishable key (meant to be public); no service role, secret or API keys.
+   Screenshots: `docs/screenshots/security/`.
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
@@ -473,7 +519,8 @@ Items marked *(art)* suit the art session.
    Josh's answers: one vet per household (per-pet override later), no household notifications beyond sync, Apple
    Calendar as the default.
 8. [ ] **Booking, part 2** (M each; Josh, 2026-11-10, from the booking research): reschedule and cancel from the
-   visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone), and
+   visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone)
+   **(part 2a done 2026-11-11, PR from `claude/features-booking-2a`; Josh still to test on an iPhone)**, and
    booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
@@ -971,6 +1018,8 @@ npm run build      # what CI runs
   idempotent), friend_treats_test. On 2026-11-09 the whole chain passed again with daily_logs, treat_thanks,
   treat_thanks_test, friend_requests (twice) and `friend_requests_test.sql` (last: the earlier tests use instant
   `add_friend`).
+  2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Roles are cluster-wide, so drop
+  `anon`/`authenticated` before reloading the stubs into a fresh database.
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1120,6 +1169,10 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - 2026-11-10, booking polish (Features worker): no skills, plugins or MCP servers invoked. Checks: Vitest, and
   Playwright iPhone 13 screenshots (light and dark) from the Vite dev server, seeding data with
   `import('/chester-training/src/db/store.ts')` in the page and `navigator.standalone` stubbed for the icon note.
+- 2026-11-11, booking part 2a, reschedule and cancel (Features worker, `claude/features-booking-2a`): no skills,
+  plugins or MCP servers invoked beyond the GitHub MCP (pull request) and `send_message` to the PM (`lottiefiles-creator`
+  connected, unused). Checks: Vitest (245 tests in 41 files), typecheck, build; Playwright iPhone 13 screenshots
+  (light and dark) of a booked visit, Reschedule, "Move it in your calendar?" and a cancelled visit, seeded the same way.
 - 2026-11-10, booking polish QA (QA worker): no skills, plugins or MCP servers invoked beyond the GitHub and
   session tools. Checks: Vitest, typecheck, build; Playwright (iPhone 15, light and dark, dev store
   `globalThis.__chesterStore`) for Book from Coming up, Call, quick times, Undo, Other clinic offline with Google, and
@@ -1235,3 +1288,12 @@ npx -y skills add diffusionstudio/lottie --agent claude-code
 npx -y skills add https://github.com/greensock/gsap-skills --agent claude-code
 claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp@latest
 ```
+- 2026-11-12, security review + forgot password (Features worker, `claude/features-security`): used the
+  **supabase** and **supabase-postgres-best-practices** skills (installed 2026-11-11) for the RLS/grants checklist and
+  the reset flow. No plugins or MCP servers. Checks: the full policy-test chain on a local Postgres 16, a new
+  `security_test.sql`, unit tests (`src/lib/recovery.test.ts`), `npm audit`, a regex secret scan of git history, and
+  Playwright shots (iPhone 13, light and dark) with Supabase's auth endpoints mocked.
+- 2026-11-12, recovering that branch (Features worker): the first session couldn't push (403), so its commit was
+  rebuilt from the gzipped `git format-patch` it printed, read back with the **claude-code-remote** MCP server's
+  `list_events` and applied with `git am`. The three screenshots were retaken with Playwright (iPhone 13, Supabase
+  auth mocked): `sign-in-forgot-light`, `reset-request-dark`, `set-new-password-light`.

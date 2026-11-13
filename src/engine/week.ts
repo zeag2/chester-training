@@ -1,6 +1,6 @@
 /* "{cat}'s week": the last 7 days from what's already logged (care, one-tap logs, sets, the corner). Pure, so it's
    the same on every phone in the household. */
-import type { CareItem } from './care';
+import { isCancelled, type CareItem } from './care';
 import type { Corner } from './corner';
 import type { SetRecord } from './types';
 import { daysBetween, localDay } from './day';
@@ -35,7 +35,7 @@ export function weekSummary(care: CareItem[], sets: SetRecord[], corner: Corner 
     checks: checks.length, checksOff: checks.filter((i) => (i.data as { ok?: boolean }).ok === false).length,
     weight: latest ? { now: (latest.data as { lb: number }).lb, before: before ? (before.data as { lb: number }).lb : null } : null,
     symptoms: c.filter((i) => i.kind === 'symptom').map((i) => (i.data as { what: string }).what),
-    vetVisits: c.filter((i) => i.kind === 'vet').length,
+    vetVisits: c.filter((i) => i.kind === 'vet' && !isCancelled(i)).length,
     meds: c.filter((i) => i.kind === 'med').map((i) => (i.data as { name: string }).name),
     sets: s.length, goodRate: reps ? Math.round((100 * good) / reps) : null, daysTrained: new Set(s.map((x) => x.day)).size,
     byPerson,

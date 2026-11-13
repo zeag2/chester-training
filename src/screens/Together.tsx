@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { sharingConfigured } from '../sync/config';
 import { Icon } from '../ui/icons';
 import { back, go } from '../ui/router';
 import * as audio from '../lib/audio';
+import { resetRedirect, takePendingRecovery } from '../lib/recovery';
 
 const appLink = () => location.origin + import.meta.env.BASE_URL;
 const errText = (e: unknown) => {
@@ -12,6 +13,8 @@ const errText = (e: unknown) => {
   if (m === 'bad-login') return 'That email and password don’t match. New here? Tap “Create account” above.';
   if (m === 'email-taken') return 'That email already has an account. Tap “I already have one” above to sign in.';
   if (m === 'confirm-email-on') return 'Almost: in Supabase, turn off “Confirm email” (Authentication → Sign In / Providers → Email), then try again.';
+  if (m === 'link-expired') return 'That reset link has expired or was already used. Ask for a new one.';
+  if (m === 'same-password') return 'That’s your current password. Pick a new one.';
   if (/rate|security purposes/i.test(m)) return 'Too many tries just now. Wait a minute and try again.';
   if (/password/i.test(m)) return m;
   if (/fetch|network|offline/i.test(m)) return 'No connection. Try again when you’re online.';
@@ -47,7 +50,21 @@ export function AccountForm({ intro, share, onDone }: { intro: string; share: bo
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
+  const [forgot, setForgot] = useState<'' | 'ask' | 'sent'>('');
   const { busy, err, setErr, run } = useRun();
+  const emailOk = /\S+@\S+\.\S+/.test(email);
+  if (forgot) return <>
+    <h1 style={{ marginTop: 6 }}>{forgot === 'sent' ? 'Check your email' : 'Reset your password'}</h1>
+    {forgot === 'sent'
+      ? <p className="m" style={{ marginTop: 6 }} role="status">If {email.trim()} has an account, a link is on its way. Tap it to set a new password, then sign in here with it. No email? Check spam, or wait a minute and send again.</p>
+      : <><p className="m" style={{ marginTop: 6 }}>We’ll email you a link to set a new one.</p>
+        <label className="field" htmlFor="tre">Email</label>
+        <input id="tre" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="send" /></>}
+    {forgot === 'ask' && <button className="btn" style={{ marginTop: 20 }} disabled={busy || !emailOk}
+      onClick={() => run(async () => { await store.forgotPassword(email, resetRedirect()); setForgot('sent'); })}>{busy ? 'Sending…' : 'Send reset link'}</button>}
+    <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setForgot(''); setErr(''); }}>Back to sign in</button>
+    <ErrLine err={err} />
+  </>;
   const valid = /\S+@\S+\.\S+/.test(email) && password.length >= 6 && (!create || !!name.trim());
   const pick = (c: boolean) => { setCreate(c); setErr(''); };
   return <>
@@ -70,6 +87,7 @@ export function AccountForm({ intro, share, onDone }: { intro: string; share: bo
     <button className="btn" style={{ marginTop: 20 }} disabled={busy || !valid}
       onClick={() => run(async () => { await store.signIn(email, password, name, share, create); audio.sparkle(); onDone(name.trim()); })}>
       {busy ? (create ? 'Creating…' : 'Signing in…') : create ? 'Create account' : 'Sign in'}</button>
+    {!create && <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setForgot('ask'); setErr(''); }}>Forgot password?</button>}
     <ErrLine err={err} />
   </>;
 }
@@ -135,6 +153,51 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
     {!h && snap.sync === 'offline' && <button className="btn2" style={{ marginTop: 12 }} onClick={() => void store.sync()}>Try again</button>}
     <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => go('settings')}>Done</button>
   </>);
+}
+
+let recovering: Promise<void> | null = null;
+/** #/reset-password: opened from the reset email. Signs in with the link, then asks for a new password. */
+export function ResetPassword() {
+  const [state, setState] = useState<'checking' | 'ready' | 'done' | 'bad'>('checking');
+  const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
+  const { busy, err, setErr, run } = useRun();
+  useEffect(() => {
+    recovering ??= (async () => {
+      const p = takePendingRecovery();
+      if (p?.accessToken && p.refreshToken) await store.startRecovery(p.accessToken, p.refreshToken);
+      else if (p?.error || !store.get().account) throw new Error('link-expired'); // a stale link, or reopened signed out
+    })();
+    recovering.then(() => setState('ready'), (e) => { setErr(errText(e)); setState('bad'); });
+  }, []);
+  const leave = () => location.replace('#/' + (store.get().cat ? 'settings' : 'home'));
+  return <div className="screen">
+    <Top onBack={leave} title="New password" />
+    {state === 'checking' && <p className="m" aria-busy="true">Opening your reset link…</p>}
+    {state === 'bad' && <>
+      <h1 style={{ marginTop: 6 }}>Link didn’t work</h1>
+      <ErrLine err={err} />
+      <p className="m" style={{ marginTop: 6 }}>On the sign-in screen, tap “Forgot password?” to get a fresh link.</p>
+      <button className="btn" style={{ marginTop: 20 }} onClick={leave}>Back to the app</button>
+    </>}
+    {state === 'ready' && <>
+      <h1 style={{ marginTop: 6 }}>Set a new password</h1>
+      <p className="m" style={{ marginTop: 6 }}>{store.get().account?.email ? `For ${store.get().account!.email}.` : ''} At least 6 characters.</p>
+      <label className="field" htmlFor="np">New password</label>
+      <div className="row" style={{ gap: 8 }}>
+        <input id="np" className="in" type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="done" />
+        <button className="btn2" onClick={() => setShow(!show)} aria-pressed={show}>{show ? 'Hide' : 'Show'}</button>
+      </div>
+      <button className="btn" style={{ marginTop: 20 }} disabled={busy || password.length < 6}
+        onClick={() => run(async () => { await store.setPassword(password); audio.sparkle(); setState('done'); })}>{busy ? 'Saving…' : 'Save password'}</button>
+      <ErrLine err={err} />
+    </>}
+    {state === 'done' && <>
+      <h1 style={{ marginTop: 6 }}>Password changed</h1>
+      <p className="m" style={{ marginTop: 6 }} role="status">You’re signed in. If you use PalDex from your Home Screen, open it there and sign in with the new password.</p>
+      <button className="btn" style={{ marginTop: 20 }} onClick={leave}>Done</button>
+    </>}
+  </div>;
 }
 
 function Top({ onBack, title }: { onBack: () => void; title: string }) {

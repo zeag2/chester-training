@@ -10,7 +10,7 @@ const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if
 export class SupabaseRemote implements Remote {
   sb: SupabaseClient;
   constructor(url: string, key: string) {
-    this.sb = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'chester-auth' } });
+    this.sb = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'implicit', storageKey: 'chester-auth' } });
   }
 
   async account() { const { data } = await this.sb.auth.getSession(); return toAccount(data.session?.user); }
@@ -31,6 +31,19 @@ export class SupabaseRemote implements Remote {
     return toAccount(r.data.user)!;
   }
   async signOut() { await this.sb.auth.signOut(); }
+  async sendPasswordReset(email: string, redirectTo: string) {
+    const r = await this.sb.auth.resetPasswordForEmail(email, { redirectTo });
+    if (r.error) throw new Error(r.error.message);
+  }
+  async startRecovery(accessToken: string, refreshToken: string) {
+    const r = await this.sb.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    if (r.error || !r.data.user) throw new Error(r.error && /fetch|network/i.test(r.error.message) ? r.error.message : 'link-expired');
+    return toAccount(r.data.user)!;
+  }
+  async setPassword(password: string) {
+    const r = await this.sb.auth.updateUser({ password });
+    if (r.error) throw new Error(/different from the old/i.test(r.error.message) ? 'same-password' : r.error.message);
+  }
 
   // ---- households: people and pets together. Until the households SQL is run, each pet is shared on its own. ----
   private hasHouseholds: Promise<boolean> | null = null;

@@ -17,7 +17,7 @@ The PM reports to the Executive (one or two lines) when an agenda item finishes,
 block starts or ends (with % used). The PM asks the Executive before a block runs over its budget.
 
 ## Budget (strict)
-Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh, or from `get_session` (rate_limit_info).
+Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage page (`get_session` only says "allowed_warning", no %).
 
 | Updated | Used | Left | Reserve | Days to reset | Daily cap | Block cap |
 |---|---|---|---|---|---|---|
@@ -29,34 +29,37 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 
 ## Schedule (time blocks, Eastern)
 Blocks follow Josh's 5-hour resets: 12:40 PM, 5:40 PM, 10:40 PM, 3:40 AM, 8:40 AM (Josh, 2026-11-11).
-Gates: Josh's "ship it"; Josh runs any SQL by hand.
+Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week (Josh, 2026-11-12).
 
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
 | Tue Nov 10, now | Desktop step 5: PR #17 green | done / ~4% | ship it | merged (main 54a9c28) |
 | Tue Nov 10, late | Art director's first run (`docs/art.md`: style rules + cosmetics ideas); on demand only, ideas come here via the PM | S / ~2% | — | running |
 | **Wed Nov 11, 3:40 AM (wakeup)** | Desktop step 6 (no print) + tooltips on icon-only buttons → PR | M / 5% | ship it | merged (main 54a9c28) |
-| Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | done: PR #20 green; waiting on ship it + iPhone test |
-| **Thu Nov 12, 3:40 AM (wakeup)** | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | |
-| Thu Nov 12, 12:40 PM | Photo feed: plan + SQL (table, new bucket, policies, test) | S / 3% | Josh runs SQL | |
+| Wed Nov 11, 5:40 PM (moved from 12:40) | Booking part 2a: reschedule + cancel → PR | M / 4% | ship it; Josh tests on iPhone | merged (PR #20); iPhone test still to do |
+| Thu Nov 12, 12:40 PM (missed at 3:40 AM) | **Security review + Forgot password** (RLS on every table/bucket, auth settings, headers, deps; reset-password flow) → PR + SQL | M / 5% | Josh runs SQL; adds the reset redirect URL in Supabase | merged (PR #21, PM shipped on Josh's standing OK); ~3% over |
+| Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`20261116000000_bundle.sql`) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | done: PR #22 (bundle + feed plan); Josh to run the SQL + set redirect URL before Fri 3:40 AM |
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
 | Sat Nov 14, 12:40 PM | Feed part 2: QA + fixes | S / 4% | ship it | |
 | **Sun Nov 15, 3:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
-| Sun Nov 15, 12:40 PM | Booking part 2b: several cats at once → PR (desktop leftovers if budget left: Visit page two-pane) | M / 4% | ship it | |
-| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan + SQL draft only | S / 3% | Josh runs SQL in the day | |
+| Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | |
+| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 | Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
 
-Wakeups set by the PM (send_later, 3:40 AM Nov 12–16; Nov 11's was 1:40 AM): trig_01NdtWrFySkofJpH5H9X6cBS, trig_015yzWydiD1c12T7ZtBsDf3W,
-trig_01NF3pijsrjvMjeHdVVRBSCs, trig_01ATt1YQmjZddfgfBdJTrCZH, trig_0179g7LHPfYABhxtC2XbcY8N, trig_0126gKbv1PYai5CEFJPhqSky.
+Scheduled jobs (since 2026-11-12 evening) fire into ONE long-lived worker session with the repo,
+`session_019xqnwhgiiiKMoK1DDak7e2` (fresh-session tasks start without the repo and couldn't push). Night 3:40 AM
+triggers: Fri trig_01UeTPUZsmT6rFUZjqUftbQR, Sat trig_01Ppcsoqta8bk6YyaN2CJcWP, Sun trig_016nweNbzW9hyALDiqfrQsJ6,
+Mon trig_015xjsPE9nYE5gmrLhsqvgFD. Each checks the cap here. A long-lived worker's context grows and each turn costs
+more: the PM restarts it fresh when it gets long. SQL bundle: `supabase/migrations/20261116000000_bundle.sql`.
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
 Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
-cap first and skips if it's spent. A PM restart can make a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
+cap first and skips if it's spent. A PM restart, or a worker start that needs an approval (PM not in auto mode), makes a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
 Total ~50% + nightly UX audit (~6%) = ~56% of the ~70% left, leaving ~14% (10% reserve + slack).
 If a block runs over, the next block shrinks, not the reserve.
 
