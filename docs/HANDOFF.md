@@ -510,6 +510,17 @@ Items marked *(art)* suit the art session.
      all git history: only the publishable key (meant to be public); no service role, secret or API keys.
    Screenshots: `docs/screenshots/security/`.
 4. [ ] **Photo feed: your cats and friends' cats** (L, SQL). See "Photo feed" below. Replaces the Photo album item.
+   SQL run by Josh 2026-11-13 (bundle part 2; plan `docs/plans/2026-11-12-photo-feed.md`).
+   **Part 1 done 2026-11-13** (PR from `claude/features-feed-1`): Me → **Photos** opens `#/feed`
+   (`src/screens/Feed.tsx`): "Add a photo" (camera or library, pick the cat when there are several, caption ≤ 140),
+   shrunk on the phone by `shrinkPhoto()` in `src/lib/photos.ts` (1600 px long side, JPEG 0.8, 0.6 if over 1.5 MB,
+   refused over 2 MB; the canvas redraw drops EXIF/GPS), uploaded to `pet-photos/<cat>/<uuid>.jpg`, then the row
+   (the file is removed again if the row fails). The feed is `photo_feed()` 20 at a time ("Show older photos") with
+   signed links (1 h, one call per page); images keep their shape but no taller than 4:5. Store: `postPhoto`,
+   `photoFeed`; Remote: `postPhoto`, `photoFeed`, `photoUrls` (fake server too). Tests: `src/lib/photos.test.ts`,
+   `src/sync/photos.test.ts`. Screenshots: `docs/screenshots/feed/` (stand-in drawn images, Supabase mocked).
+   Not yet (next): paws, hide, delete, edit caption, posting from the "mastered!" moment, a Home card with the newest
+   friend photo, an offline cache of the last page (offline now shows "No connection" with Try again).
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
 6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
@@ -710,7 +721,7 @@ Items marked *(art)* suit the art session.
   - Safety: removing a friend hides your photos from them at once (policies check `friends`, not a copy); delete
     your own photos; "hide" for a friend's photo; think about report or block before it grows past close friends.
 - [ ] **Push notifications** (L, SQL): new friend, a friend's treat, medicine due, "Pet me?". Web Push via a Supabase
-  Edge Function with VAPID keys (environment secrets, never in the repo), a `push_subscriptions` table, triggers.
+  Edge Function with VAPID keys (environment secrets, never in the repo), a `push_subscriptions` table (SQL ready: bundle part 3, 2026-11-12), triggers.
   iPhone only when installed. Today everything is in-app (red dot on Me, cards on Home).
 
 ### Phase 3: grow and open up
@@ -1018,7 +1029,8 @@ npm run build      # what CI runs
   idempotent), friend_treats_test. On 2026-11-09 the whole chain passed again with daily_logs, treat_thanks,
   treat_thanks_test, friend_requests (twice) and `friend_requests_test.sql` (last: the earlier tests use instant
   `add_friend`).
-  2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Roles are cluster-wide, so drop
+  2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Since parts 2–3 of the bundle: `photos_test.sql`
+  right after the bundle, before `security_test.sql`. `household_test` leaves `public._h`: drop it before `vets_test`. Roles are cluster-wide, so drop
   `anon`/`authenticated` before reloading the stubs into a fresh database.
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
@@ -1297,3 +1309,12 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   rebuilt from the gzipped `git format-patch` it printed, read back with the **claude-code-remote** MCP server's
   `list_events` and applied with `git am`. The three screenshots were retaken with Playwright (iPhone 13, Supabase
   auth mocked): `sign-in-forgot-light`, `reset-request-dark`, `set-new-password-light`.
+- 2026-11-12, SQL bundle parts 2–3 (Features worker, `claude/features-sql-bundle`): photo feed (tables, `pet-photos`
+  bucket, RLS, `photo_feed`) and push subscriptions (table, RLS, `save_push_subscription`). Patterns followed the
+  existing migrations (the **supabase** skills were not reloaded). Checks: the full policy-test chain on a local
+  Postgres 16 with the bundle run twice, plus the new `supabase/tests/photos_test.sql`. No plugins or new MCP servers.
+- 2026-11-13, photo feed part 1 (Features worker, `claude/features-feed-1`): no skills, plugins or new MCP servers.
+  Checks: Vitest (257), typecheck, build; Playwright iPhone 13 shots (light and dark) from the Vite dev server with
+  Supabase mocked (session in `chester-auth`, `photo_feed`, signed links) and a cat seeded via `__chesterStore`;
+  stand-in photos drawn with Pillow. PR #22 had been merged into `claude/features-security`, not main, so this branch
+  merges that in to bring bundle parts 2–3, the plan and `photos_test.sql` to main.

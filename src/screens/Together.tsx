@@ -8,13 +8,16 @@ import * as audio from '../lib/audio';
 import { resetRedirect, takePendingRecovery } from '../lib/recovery';
 
 const appLink = () => location.origin + import.meta.env.BASE_URL;
-const errText = (e: unknown) => {
+export const errText = (e: unknown) => {
   const m = e instanceof Error ? e.message : String(e);
   if (m === 'bad-login') return 'That email and password don’t match. New here? Tap “Create account” above.';
   if (m === 'email-taken') return 'That email already has an account. Tap “I already have one” above to sign in.';
   if (m === 'confirm-email-on') return 'Almost: in Supabase, turn off “Confirm email” (Authentication → Sign In / Providers → Email), then try again.';
   if (m === 'link-expired') return 'That reset link has expired or was already used. Ask for a new one.';
   if (m === 'same-password') return 'That’s your current password. Pick a new one.';
+  if (m === 'photo-unreadable') return 'That photo couldn’t be opened. Try another, or take a screenshot of it.';
+  if (m === 'photo-too-big') return 'That photo is too big even after shrinking. Try another.';
+  if (m === 'photos-missing') return 'Photos aren’t switched on yet. Try again later.';
   if (/rate|security purposes/i.test(m)) return 'Too many tries just now. Wait a minute and try again.';
   if (/password/i.test(m)) return m;
   if (/fetch|network|offline/i.test(m)) return 'No connection. Try again when you’re online.';
@@ -30,13 +33,13 @@ export async function sendInvite(catName: string, code: string): Promise<boolean
   } catch { return false; /* closed the share sheet */ }
 }
 
-function useRun() {
+export function useRun() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const run = async (fn: () => Promise<void>) => { setBusy(true); setErr(''); try { await fn(); } catch (e) { setErr(errText(e)); } finally { setBusy(false); } };
   return { busy, err, setErr, run };
 }
-const ErrLine = ({ err }: { err: string }) => (err ? <p role="alert" className="s" style={{ marginTop: 12, color: '#b4412b', fontWeight: 700 }}>{err}</p> : null);
+export const ErrLine = ({ err }: { err: string }) => (err ? <p role="alert" className="s" style={{ marginTop: 12, color: '#b4412b', fontWeight: 700 }}>{err}</p> : null);
 export const StepLabel = ({ n, of, label }: { n: number; of: number; label: string }) =>
   <p className="s" style={{ marginTop: 18, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Step {n} of {of} · {label}</p>;
 
@@ -200,6 +203,6 @@ export function ResetPassword() {
   </div>;
 }
 
-function Top({ onBack, title }: { onBack: () => void; title: string }) {
+export function Top({ onBack, title }: { onBack: () => void; title: string }) {
   return <div className="top"><button className="iconbtn" aria-label="Back" onClick={onBack}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{title}</b></div>;
 }

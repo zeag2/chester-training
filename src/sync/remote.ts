@@ -14,6 +14,10 @@ export interface FriendPet { owner: string; ownerName: string; catId: string; ca
 /** A free treat a friend gave one of my pets on their local day. */
 export interface ReceivedTreat { from: string; fromName: string; day: string }
 
+/** A photo in the feed (the pet's household and its friends see it). `at` is an ISO time. */
+export interface Photo { id: string; catId: string; path: string; caption: string; width?: number; height?: number; skill?: string; by: string; at: string; paws: number; pawed: boolean }
+export interface NewPhoto { catId: string; path: string; caption: string; width: number; height: number; skill?: string }
+
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
 /** The shared copy of a cat. The app talks to Supabase through this; tests use an in-memory one. */
@@ -89,4 +93,12 @@ export interface Remote {
   thankTreat(from: string, catId: string, day: string): Promise<void>;
   /** Thank-yous for treats I gave (last 7 days). */
   myThanks(): Promise<{ catId: string; catName: string; day: string }[]>;
+
+  /** Photo feed. These throw 'photos-missing' until its SQL is run. */
+  /** Upload the (already shrunk) file, then add the row; removes the file again when the row can't be added. */
+  postPhoto(p: NewPhoto, file: Blob): Promise<void>;
+  /** Newest first, a page at a time: pass the last photo's `at` for the next page. */
+  photoFeed(before?: string): Promise<Photo[]>;
+  /** Signed links for showing photos (one call per page). */
+  photoUrls(paths: string[]): Promise<Record<string, string>>;
 }
