@@ -1,4 +1,4 @@
-last-reviewed: 4236c33571362f58030e292a40020d304bfc8d7c
+last-reviewed: ce884e92718dccd59f0744130afb8e002f459b29
 
 # UX review log
 
@@ -18,6 +18,15 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-13: 4236c33..ce884e9
+Checked the booked-visit page (Booked chip, Add to calendar, Reschedule, Cancel visit) and the Reschedule sheet, in
+light and dark mode. Forgot password and Reset password need Supabase sign-in, which the dev build here has switched
+off, so they were read in code only (copy is plain and friendly; Save is disabled until 6 characters).
+
+Fixed:
+- Reschedule sheet: the date and time boxes were unstyled browser inputs (small, monospace, square border). They now
+  use the app's input style (`.in`) like every other form.
 
 ### 2026-11-12: 237f969..4236c33
 Checked desktop Health in two columns (the Health log as a table, drag-and-drop documents) and All documents in two
