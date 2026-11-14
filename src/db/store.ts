@@ -479,6 +479,10 @@ export class Store {
     const { blob, width, height } = await shrinkPhoto(file);
     await this.remote!.postPhoto({ catId, path: photoPath(catId), caption: caption.trim().slice(0, 140), width, height, skill }, blob);
   }
+  setPaw(photoId: string, on: boolean) { return this.remote!.setPaw(photoId, on); }
+  setPhotoHidden(photoId: string, hidden: boolean) { return this.remote!.setHidden(photoId, hidden); }
+  editCaption(photoId: string, caption: string) { return this.remote!.editCaption(photoId, caption.trim().slice(0, 140)); }
+  deletePhoto(photo: Pick<Photo, 'id' | 'path'>) { return this.remote!.deletePhoto(photo); }
   /** A page of the feed (newest first) with a signed link for each photo. */
   async photoFeed(before?: string): Promise<{ photos: Photo[]; urls: Record<string, string> }> {
     const photos = await this.remote!.photoFeed(before);

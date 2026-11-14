@@ -235,6 +235,24 @@ export class SupabaseRemote implements Remote {
       id: r.id, catId: r.cat_id, path: r.path, caption: r.caption, width: r.width ?? undefined, height: r.height ?? undefined, skill: r.skill ?? undefined,
       by: r.by_user, at: r.created_at, paws: Number(r.paws), pawed: r.pawed }));
   }
+  private async photoCall(r: PromiseLike<{ error: { message: string; code?: string } | null }>, dupOk = false) {
+    const { error } = await r;
+    if (!error || (dupOk && error.code === '23505')) return;
+    throw new Error(MISSING.test(error.message + error.code) ? 'photos-missing' : error.message);
+  }
+  async setPaw(photoId: string, on: boolean) {
+    await this.photoCall(on ? this.sb.from('photo_reactions').insert({ photo_id: photoId }) : this.sb.from('photo_reactions').delete().eq('photo_id', photoId), true);
+  }
+  async setHidden(photoId: string, hidden: boolean) {
+    await this.photoCall(hidden ? this.sb.from('photo_hides').insert({ photo_id: photoId }) : this.sb.from('photo_hides').delete().eq('photo_id', photoId), true);
+  }
+  async editCaption(photoId: string, caption: string) { await this.photoCall(this.sb.from('pet_photos').update({ caption }).eq('id', photoId)); }
+  async deletePhoto(photo: Pick<Photo, 'id' | 'path'>) {
+    const r = await this.sb.from('pet_photos').delete().eq('id', photo.id).select('id');
+    if (r.error) throw new Error(MISSING.test(r.error.message + r.error.code) ? 'photos-missing' : r.error.message);
+    if (!r.data?.length) throw new Error('not-allowed');
+    await this.sb.storage.from('pet-photos').remove([photo.path]).catch(() => {});
+  }
   async photoUrls(paths: string[]) {
     if (!paths.length) return {};
     const d = check(await this.sb.storage.from('pet-photos').createSignedUrls(paths, 3600)) ?? [];
