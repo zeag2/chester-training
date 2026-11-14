@@ -43,12 +43,13 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | merged (PR #23; main has the full bundle) |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | merged (PR #24, shipped by the PM) |
-| Sat Nov 14, 12:40 PM | UX nav brief instead of QA (feed out of Me onto the main page, Chester's own tab, new home for Me/Settings): `docs/plans/2026-11-14-navigation.md` | S / 3% | ship it | running |
-| **Sun Nov 15, 3:40 AM (wakeup)** | Josh picks after the nav brief: navigation + onboarding (from the brief), or medicine reminders (default) → PR | M / 5% | | |
+| Sat Nov 14, 12:40 PM | UX briefs: navigation (done, PR #25) + "after the vet visit" and log editing (in progress) | S / ~6% | ship it | running |
+| **Sun Nov 15, 3:40 AM (wakeup)** | **Josh's pick: Option A; tab shows the cat's name (Cats with several); sign-up after first Fed tap.** Build navigation + onboarding from `docs/plans/2026-11-14-navigation.md` → PR | M / 5% | | picked (Sat) |
 | Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | |
 | **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 | Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
+| After the reset (Nov 18–20) | Medicine reminders (in-app); "after the vet visit" + log editing (from its brief, M–L); booking 2b | M each | ship it | queued |
 
 Scheduled jobs (since 2026-11-12 evening) fire into ONE long-lived worker session with the repo,
 `session_019xqnwhgiiiKMoK1DDak7e2` (fresh-session tasks start without the repo and couldn't push). Night 3:40 AM
