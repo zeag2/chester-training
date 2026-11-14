@@ -519,8 +519,13 @@ Items marked *(art)* suit the art session.
    signed links (1 h, one call per page); images keep their shape but no taller than 4:5. Store: `postPhoto`,
    `photoFeed`; Remote: `postPhoto`, `photoFeed`, `photoUrls` (fake server too). Tests: `src/lib/photos.test.ts`,
    `src/sync/photos.test.ts`. Screenshots: `docs/screenshots/feed/` (stand-in drawn images, Supabase mocked).
-   Not yet (next): paws, hide, delete, edit caption, posting from the "mastered!" moment, a Home card with the newest
-   friend photo, an offline cache of the last page (offline now shows "No connection" with Try again).
+   **Part 2 done 2026-11-14** (PR from `claude/features-feed-2`): a **paw** button on each photo (optimistic, count,
+   undone with a toast on error); **⋯** opens a sheet: Edit caption (poster), Delete (poster or household; confirm,
+   row then file), and on friends' photos Hide (Undo toast; only for me) and "Remove Fen as a friend…" (opens
+   Friends). The "mastered!" recap has **Share a photo of Mochi's new trick** → `#/feed/<skill>` (caption prefilled,
+   `skill` saved; the card shows "Mastered …"). Remote/Store: `setPaw`, `setHidden`/`setPhotoHidden`, `editCaption`,
+   `deletePhoto`. Who pawed (long-press), report/block: later.
+   Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
 6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
@@ -1318,3 +1323,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   Supabase mocked (session in `chester-auth`, `photo_feed`, signed links) and a cat seeded via `__chesterStore`;
   stand-in photos drawn with Pillow. PR #22 had been merged into `claude/features-security`, not main, so this branch
   merges that in to bring bundle parts 2–3, the plan and `photos_test.sql` to main.
+- 2026-11-14, photo feed part 2 (Features worker, `claude/features-feed-2`): no skills, plugins or new MCP servers.
+  Checks: Vitest, typecheck, build; Playwright iPhone 13 shots (`paws-light`, `menu-dark`, `skill-prompt-light`)
+  with the same Supabase mocks as part 1.

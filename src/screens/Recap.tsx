@@ -7,6 +7,7 @@ import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { usePetText } from '../lib/pet';
+import { sharingConfigured } from '../sync/config';
 
 function Stepper({ label, value, set, min = 0, max = 99 }: { label: string; value: number; set: (n: number) => void; min?: number; max?: number }) {
   return <div className="card grey" style={{ padding: '12px 14px' }}>
@@ -53,6 +54,8 @@ export function RewardMoment({ result, catName, coat, eyes, wear }: { result: Lo
   const def = SKILL_BY_ID[result.set.skillId];
   const { event, reward, set, progress } = result;
   const pt = usePetText();
+  // friends can see a photo of the new trick (only with an account)
+  const share = !!useStore().account && sharingConfigured();
   const big = event === 'mastered' || event === 'stepUp';
   const title = event === 'mastered' ? `${catName} mastered ${def.name}!` : event === 'stepUp' ? 'Step up!' : event === 'pass' ? 'That’s a pass!' : event === 'review' ? 'Review done' : set.mood === 'Stressed' ? 'Kind call to stop' : 'Nice practice';
   const sub = pt(event === 'mastered' ? 'A new trick for his collection, and a new badge in his trophy case.'
@@ -72,8 +75,9 @@ export function RewardMoment({ result, catName, coat, eyes, wear }: { result: Lo
           {reward.gift && <div className="card white row" style={{ textAlign: 'left' }}><Icon name="star" /><div className="sp"><b>{pt(reward.gift.title)}</b><p className="s">{pt(reward.gift.detail)}</p></div></div>}
         </> : <div className="card white" style={{ textAlign: 'left' }}><b>{catName} is done for today</b><p className="s">{pt('The set is saved. Rewards reset tomorrow, so he never gets overtrained.')}</p></div>}
       </div>
-      {reward.rewarded && <button className="btn2" style={{ marginTop: 'auto', marginBottom: 10, background: 'var(--surface)' }} onClick={() => go('corner')}>Spend treats in {catName}’s corner</button>}
-      <button className="btn" style={{ marginTop: reward.rewarded ? 0 : 'auto' }} onClick={() => go('home')}>Back home</button>
+      {event === 'mastered' && share && <button className="btn2" style={{ marginTop: 'auto', marginBottom: 10, background: 'var(--surface)' }} onClick={() => go('feed/' + set.skillId)}>Share a photo of {catName}’s new trick</button>}
+      {reward.rewarded && <button className="btn2" style={{ marginTop: event === 'mastered' && share ? 0 : 'auto', marginBottom: 10, background: 'var(--surface)' }} onClick={() => go('corner')}>Spend treats in {catName}’s corner</button>}
+      <button className="btn" style={{ marginTop: reward.rewarded || (event === 'mastered' && share) ? 0 : 'auto' }} onClick={() => go('home')}>Back home</button>
     </div>
   </div>;
 }

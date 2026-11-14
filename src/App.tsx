@@ -88,7 +88,7 @@ export default function App() {
     // Me: your cats, people (household and friends), app settings, your data
     case 'me': case 'settings': body = <Settings />; tab = 'me'; break;
     case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'me'; break;
-    case 'feed': body = <Feed />; tab = 'me'; break;
+    case 'feed': body = <Feed key={r1 ?? ''} skill={r1} />; tab = 'me'; break;
     case 'log': return <LogLink what={r1} />;
     case 'visit': body = <Visit key={r1} catId={r1 ?? ''} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
