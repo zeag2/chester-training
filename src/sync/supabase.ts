@@ -2,7 +2,9 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, NewPhoto, PetCard, Photo, ReceivedTreat, Remote } from './remote';
+
+const MISSING = /does not exist|schema cache|could not find|PGRST20[25]|42P01|bucket not found/i;
 
 const toAccount = (u: User | null | undefined): Account | null => (u ? { userId: u.id, email: u.email ?? '' } : null);
 const check = <T,>(r: { data: T; error: { message: string } | null }): T => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -216,4 +218,26 @@ export class SupabaseRemote implements Remote {
   }
   async thankTreat(from: string, catId: string, day: string) { await this.rpc('thank_treat', { giver: from, c: catId, d: day }, 'thanks-missing'); }
   async myThanks() { return ((await this.rpc<{ cat_id: string; cat_name: string; day: string }[]>('my_thanks', undefined, 'thanks-missing')) ?? []).map((r) => ({ catId: r.cat_id, catName: r.cat_name, day: r.day })); }
+
+  async postPhoto(p: NewPhoto, file: Blob) {
+    const bucket = this.sb.storage.from('pet-photos');
+    const up = await bucket.upload(p.path, file, { contentType: 'image/jpeg', upsert: false });
+    if (up.error) throw new Error(MISSING.test(up.error.message) ? 'photos-missing' : up.error.message);
+    const r = await this.sb.from('pet_photos').insert({ cat_id: p.catId, path: p.path, caption: p.caption, width: p.width, height: p.height, skill: p.skill ?? null });
+    if (r.error) {
+      await bucket.remove([p.path]).catch(() => {});
+      throw new Error(MISSING.test(r.error.message + (r.error as { code?: string }).code) ? 'photos-missing' : r.error.message);
+    }
+  }
+  async photoFeed(before?: string): Promise<Photo[]> {
+    type Row = { id: string; cat_id: string; path: string; caption: string; width: number | null; height: number | null; skill: string | null; by_user: string; created_at: string; paws: number; pawed: boolean };
+    return ((await this.rpc<Row[]>('photo_feed', { before: before ?? null, n: 20 }, 'photos-missing')) ?? []).map((r) => ({
+      id: r.id, catId: r.cat_id, path: r.path, caption: r.caption, width: r.width ?? undefined, height: r.height ?? undefined, skill: r.skill ?? undefined,
+      by: r.by_user, at: r.created_at, paws: Number(r.paws), pawed: r.pawed }));
+  }
+  async photoUrls(paths: string[]) {
+    if (!paths.length) return {};
+    const d = check(await this.sb.storage.from('pet-photos').createSignedUrls(paths, 3600)) ?? [];
+    return Object.fromEntries(d.flatMap((x) => (x.signedUrl && x.path ? [[x.path, x.signedUrl] as const] : [])));
+  }
 }
