@@ -1,4 +1,4 @@
-last-reviewed: 32c5bbafb2c9fb06eddddfb78aa140e1e7873276
+last-reviewed: d24d9145772042701159f986c1711b413ac8c44c
 
 # UX review log
 
@@ -18,6 +18,38 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-14: ce884e9..d24d914
+Checked the new photo feed (Me → Photos, `#/feed`) signed in with a fake friend, two posted photos and captions,
+in light and dark mode. No changes needed: the Share card, photo cards (cat name, who, when, caption) and empty and
+loading text read well. Suggested a way into it from Home (see the PR).
+
+### 2026-11-13: 4236c33..ce884e9
+Checked the booked-visit page (Booked chip, Add to calendar, Reschedule, Cancel visit) and the Reschedule sheet, in
+light and dark mode. Forgot password and Reset password need Supabase sign-in, which the dev build here has switched
+off, so they were read in code only (copy is plain and friendly; Save is disabled until 6 characters).
+
+Fixed:
+- Reschedule sheet: the date and time boxes were unstyled browser inputs (small, monospace, square border). They now
+  use the app's input style (`.in`) like every other form.
+
+### 2026-11-12: 237f969..4236c33
+Checked desktop Health in two columns (the Health log as a table, drag-and-drop documents) and All documents in two
+panes with a preview, at 1280 px light and 1440 px dark, plus phone Health and Documents in light and dark mode.
+No changes needed: the columns, table and preview pane read well; the tooltips are on the icon-only buttons.
+
+### 2026-11-11: 32c5bba..237f969
+Checked at iPhone 15 size (light and dark) and 1280 px desktop, with a saved vet and emergency vet, a booked
+and two past visits, a dose, a weight and three documents: Health (Your vet card with no vet and with one, Visits,
+Book a visit sheet), the visit page, All documents, the Summary for the vet, Home's Quick log with the new floating
+Undo toast, the box hideout, and the desktop side menu and side-panel forms.
+
+Fixed:
+- Visit page: the top bar and the big heading both showed the visit's reason ("Checkup + rabies" twice). The top
+  bar now says "Vet visit".
+
+The rest read well. The floating Undo toast, the Your vet card (Call is one tap from Health) and booking with the
+calendar cover earlier suggestions. Earlier friends-card note (2026-11-10): one tile per friend, reviewed, no changes.
 
 ### 2026-11-09 (16:17 UTC): 686bdb6..32c5bba
 Checked with two cats (Chester and Luna): Quick log with "Luna too" / "All cats", the full-belly pose after Fed,
