@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { datesIn, parseVetPages, parseVetText } from './docparse';
+import { readFileSync } from 'node:fs';
+import { datesIn, mergeFindings, parseVetPages, parseVetText, type DocFindings } from './docparse';
+
+// A new clinic's chart and invoice (OCR text of real papers; the owner's details are replaced with fakes).
+const fixture = (n: string) => readFileSync(new URL('./fixtures/' + n, import.meta.url), 'utf8');
+const CHART = fixture('hazeldell-chart.txt'), HZ_INVOICE = fixture('hazeldell-invoice.txt');
 
 const INVOICE = `Northside Animal Hospital
 1200 Main St, Indianapolis IN
@@ -135,5 +140,68 @@ describe('reading pet paperwork with rules', () => {
     const r = parseVetText('Rabies Vaccination Certificate\nCat Clinic of Carmel\nPatient: Luna\nBody weight 1.8 kg\nVaccinated 03/01/2026 Expires 03/01/2027');
     expect(r.weights[0].lb).toBeCloseTo(3.97, 1);
     expect(r.items[0]).toMatchObject({ name: 'Rabies', date: '2026-03-01', nextDue: '2027-03-01' });
+  });
+
+  describe('Hazel Dell chart and invoice', () => {
+    const OWNER = /Sam|Alex|Owner|123 Example|46280|555|owner@example/;
+    const visit = (r: DocFindings) => {
+      expect(r).toMatchObject({ docDate: '2026-11-14', clinic: 'Hazel Dell Animal Hospital', clinicPhone: '(317) 846-8710' });
+      expect(r.categories).toEqual(['vet']);
+    };
+    it('reads the chart: reminders only from dated rows, last done, history, exam and the pet', () => {
+      const r = parseVetText(CHART);
+      visit(r);
+      expect(r.weights).toEqual([{ lb: 6.98, date: '2026-11-14' }]); // not the blank "Weight: 0lbs." header field
+      expect(r.exam).toEqual({ bodyCondition: '4/9', pain: '0/4' });
+      expect(r.reminders).toEqual([{ name: 'Rabies', due: '2027-08-19' }, { name: 'FVRCP', due: '2027-09-26' }, { name: 'Physical exam', due: '2027-11-14' }]);
+      expect(r.lastDone).toEqual([{ name: 'Physical exam', date: '2026-11-14' }]);
+      expect(r.items.map((i) => [i.name, i.date, i.nextDue])).toEqual([['FVRCP', '2026-08-19', null], ['FVRCP', '2026-09-26', null]]);
+      expect(r.visits.map((v) => [v.reason, v.date, v.notes])).toEqual([['FeLV/FIV test', '2026-08-19', null], ['Establish care', '2026-11-14', 'Sneezing/coughing, Soft stools']]);
+      expect(r.history).toEqual({ problems: ['Vaccinations', 'Occasional sneezing'], notes: ['Sneezing/coughing', 'Soft stools'], diet: 'Fancy Feast Wet and Kitten Dry', meds: 'none' });
+      expect(r.pet).toEqual({ name: 'Chester', species: 'Feline', breed: 'American Shorthair', color: 'Black' });
+      expect(r.profile).toEqual({ birthday: '2026-04-11', sex: 'm', altered: true });
+    });
+    it('reads the invoice: what was given, the FeLV follow-up, cost, reminders beside the pet details', () => {
+      const r = parseVetText(HZ_INVOICE);
+      visit(r);
+      expect(r.vet).toBe('Dr. Greg McDaniel');
+      expect(r.given).toEqual([
+        { name: 'Comprehensive exam', kind: 'exam', notes: null },
+        { name: 'Revolution Plus', kind: 'flea', notes: 'Parasite prevention, single dose' },
+        { name: 'Pediatric fecal test', kind: 'test', notes: 'Result pending' },
+        { name: 'FeLV vaccine', kind: 'vaccine', notes: 'Dose 1 of 2' },
+      ]);
+      expect(r.followUps).toEqual([{ name: 'FeLV dose 2', from: '2026-12-05', to: '2026-12-12', estimated: true }]);
+      expect(r.items.map((i) => [i.name, i.date, i.nextDue])).toEqual([['Revolution', '2026-11-14', null], ['FeLV', '2026-11-14', '2026-12-05']]);
+      expect(r.items[1].notes).toBe('Dose 1 of 2; dose 2 due about Dec 5–12 (estimated)');
+      expect(r.visits.map((v) => [v.reason, v.notes])).toEqual([['Fecal test', 'Result pending']]);
+      expect(r.cost.total).toBe(273.41);
+      expect(r.cost.lines.map((l) => [l.code, l.description, l.price, l.care])).toEqual([
+        ['E301', 'Examination - Comprehensive', 92.57, true], ['OSHA1', 'OSHA Medical Waste Disposal', 9, false],
+        ['M4542', 'Revolution Plus Feline 5.6-11# single', 35.9, true], ['PUPPYF', 'Pediatric Fecal Profile, <1 yr', 75.99, true],
+        ['V517', 'Feline Leukemia Vaccine 1st of 2', 59.95, true],
+      ]);
+      expect(r.reminders).toEqual([{ name: 'Rabies', due: '2027-08-19' }, { name: 'FVRCP', due: '2027-09-26' }, { name: 'Physical exam', due: '2027-11-14' }]);
+      expect(r.profile).toEqual({ microchip: '900000000000000', sex: 'm', altered: true });
+      expect(r.weights).toEqual([]);
+      expect(r.confidence).toMatchObject({ docDate: 'medium', cost: 'high', followUps: 'medium', reminders: 'high' });
+    });
+    it('merges the two for one visit, dedupes the reminders, and keeps the owner out of everything', () => {
+      for (const r of [parseVetPages([CHART, HZ_INVOICE]), mergeFindings(parseVetText(CHART), parseVetText(HZ_INVOICE))]) {
+        visit(r);
+        expect(r.reminders).toEqual([{ name: 'Rabies', due: '2027-08-19' }, { name: 'FVRCP', due: '2027-09-26' }, { name: 'Physical exam', due: '2027-11-14' }]);
+        expect(r.weights).toEqual([{ lb: 6.98, date: '2026-11-14' }]);
+        expect(r.given.map((g) => g.name)).toEqual(['Comprehensive exam', 'Revolution Plus', 'Pediatric fecal test', 'FeLV vaccine']);
+        expect(r.followUps).toHaveLength(1);
+        expect(r.cost.total).toBe(273.41);
+        expect(r.profile).toEqual({ birthday: '2026-04-11', microchip: '900000000000000', sex: 'm', altered: true });
+        expect(r.items.map((i) => [i.name, i.date])).toEqual([['FVRCP', '2026-08-19'], ['FVRCP', '2026-09-26'], ['Revolution', '2026-11-14'], ['FeLV', '2026-11-14']]);
+        expect(r.confidence).toMatchObject({ docDate: 'high', clinic: 'high', vet: 'high', weight: 'high', bodyCondition: 'high', pain: 'high', cost: 'high' });
+        // the microchip lives on the pet only; nothing of the owner's anywhere
+        const { profile: _p, ...shared } = r;
+        expect(JSON.stringify(shared)).not.toMatch(/900000000000000/);
+        expect(JSON.stringify(r)).not.toMatch(OWNER);
+      }
+    });
   });
 });

@@ -330,6 +330,17 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     ESA, newest first. **Tapping a document opens it**; "…" opens the sheet to rename, link it to a visit ("From the
     visit"), go to the visit, or delete. Shared row and opener: `src/ui/DocRow.tsx`. A document read as a visit is
     linked to the visit it created.
+  - **Document reader** (`src/lib/docparse.ts`, rules only): since 2026-11-14 it also reads a clinic **patient chart**
+    and **visit invoice** (Hazel Dell layout; fixtures `src/lib/fixtures/hazeldell-*.txt`, fake owner details). New
+    fields on `DocFindings`, for the coming "After the visit" review: `clinicPhone` (letterhead only), `vet`, `pet`
+    (name, species, breed, color), `exam` (BCS, pain), `given` (invoice care lines: exam, flea, test "Result pending",
+    vaccine "Dose 1 of 2"), `followUps` (a series' next dose, 21–28 days, `estimated`), `reminders` (dated rows only;
+    a row's date belongs to its item; invoice "Rabies Vaccine: 08/19/2027" beside other fields), `lastDone`, `history`
+    (problems, notes, diet, meds), `cost` (lines with codes; OSHA/waste lines `care: false` but kept in the total) and
+    `confidence` per field (high / medium = inferred or estimated / low = conflicting). `mergeFindings(a, b)` joins a
+    chart and an invoice of the same visit (deduped); `parseVetPages([chart, invoice])` gives the same. A "Weight: 0lbs."
+    header field is ignored, "Rabies Tag/Brand" fields are not doses. Never read: the owner's name, address, phone or
+    email; the microchip stays in `profile` only. The Care screen doesn't show the new fields yet.
   - **Summary for the vet** (`#/vet-summary`): your vet's clinic, name and phone (with Call) under the pet's line,
     medicine rows on two lines, recent visits (done only) that open the visit page with their notes and document
     count, the next booked visit, the newest vaccine paperwork then the newest documents (tap opens), and **Share**
@@ -1326,3 +1337,5 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-14, photo feed part 2 (Features worker, `claude/features-feed-2`): no skills, plugins or new MCP servers.
   Checks: Vitest, typecheck, build; Playwright iPhone 13 shots (`paws-light`, `menu-dark`, `skill-prompt-light`)
   with the same Supabase mocks as part 1.
+- 2026-11-14, document reader v2 (Features worker, `claude/features-docparse-v2`): no skills, plugins or new MCP
+  servers. Checks: Vitest (261, 3 new fixture tests), typecheck, build. No screenshots (no UI change).
