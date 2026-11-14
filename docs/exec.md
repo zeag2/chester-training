@@ -59,7 +59,9 @@ Mon trig_015xjsPE9nYE5gmrLhsqvgFD. Each checks the cap here. A long-lived worker
 more: the PM restarts it fresh when it gets long. SQL bundle: `supabase/migrations/20261116000000_bundle.sql`.
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
-Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
+Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): one line, what needs him first.
+Plan page with graphs (Josh, 2026-11-14): https://claude.ai/artifact/BL6hyK8yhWHr698r4AbRg4, refreshed at 8:45 AM and 10:45 PM.
+Replies to Josh stay to one line + the link unless he asks or a decision is needed.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
 cap first and skips if it's spent. A PM restart, or a worker start that needs an approval (PM not in auto mode), makes a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).
