@@ -1,4 +1,4 @@
-last-reviewed: ce884e92718dccd59f0744130afb8e002f459b29
+last-reviewed: d24d9145772042701159f986c1711b413ac8c44c
 
 # UX review log
 
@@ -18,6 +18,11 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-14: ce884e9..d24d914
+Checked the new photo feed (Me → Photos, `#/feed`) signed in with a fake friend, two posted photos and captions,
+in light and dark mode. No changes needed: the Share card, photo cards (cat name, who, when, caption) and empty and
+loading text read well. Suggested a way into it from Home (see the PR).
 
 ### 2026-11-13: 4236c33..ce884e9
 Checked the booked-visit page (Booked chip, Add to calendar, Reschedule, Cancel visit) and the Reschedule sheet, in
