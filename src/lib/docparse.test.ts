@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { datesIn, mergeFindings, parseVetPages, parseVetText, type DocFindings } from './docparse';
-
 // A new clinic's chart and invoice (OCR text of real papers; the owner's details are replaced with fakes).
-const fixture = (n: string) => readFileSync(new URL('./fixtures/' + n, import.meta.url), 'utf8');
-const CHART = fixture('hazeldell-chart.txt'), HZ_INVOICE = fixture('hazeldell-invoice.txt');
+import CHART from './fixtures/hazeldell-chart.txt?raw';
+import HZ_INVOICE from './fixtures/hazeldell-invoice.txt?raw';
 
 const INVOICE = `Northside Animal Hospital
 1200 Main St, Indianapolis IN
