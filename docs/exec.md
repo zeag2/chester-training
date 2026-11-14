@@ -23,6 +23,7 @@ Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage
 |---|---|---|---|---|---|---|
 | 2026-11-11 late | ~30% (all today) | ~70% | 10% | ~6 | ~10% | ~4–6% |
 | 2026-11-13 AM | unknown (asked Josh) | ? | 10% | ~4.5 | ~9% | ~4–5% |
+| 2026-11-14 2 PM | **82%** (Josh's usage page) | 18% | 10% | ~3 | **freeze** | — |
 
 Rules: each block in the schedule names its size (S/M/L) and budget. When the day's cap is reached, no new work
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
@@ -45,11 +46,11 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | merged (PR #24, shipped by the PM) |
 | Sat Nov 14, 12:40 PM | UX briefs: navigation (done, PR #25) + "after the vet visit" and log editing (in progress) | S / ~6% | ship it | running |
 | Sat Nov 14, daytime | Better vet-document reader (chart + invoice; anonymized fixtures) → PR | M / ~5% | ship it | running; Sat ~11% (over by ~2%, taken from Mon's spare day) |
-| **Sun Nov 15, 3:40 AM (wakeup)** | **Josh's pick: Option A; tab shows the cat's name (Cats with several); sign-up after first Fed tap.** Build navigation + onboarding from `docs/plans/2026-11-14-navigation.md` → PR | M / 5% | | picked (Sat) |
-| Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | |
-| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | |
+| **Wed Nov 18, 3:40 AM** (moved from Sun) | **Josh's pick: Option A; tab shows the cat's name (Cats with several); sign-up after first Fed tap.** Build navigation + onboarding from `docs/plans/2026-11-14-navigation.md` → PR | M / 5% | | moved: freeze (82% on Sat) |
+| Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | dropped (freeze) |
+| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | moved after the reset (freeze); trigger paused |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
-| Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
+| Thu Nov 19, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
 | After the reset (Nov 18–20) | Medicine reminders (in-app); "after the vet visit" + log editing (from its brief, M–L); booking 2b | M each | ship it | queued |
 
 Scheduled jobs (since 2026-11-12 evening) fire into ONE long-lived worker session with the repo,
@@ -58,6 +59,9 @@ triggers: Fri trig_01UeTPUZsmT6rFUZjqUftbQR, Sat trig_01Ppcsoqta8bk6YyaN2CJcWP, 
 Mon trig_015xjsPE9nYE5gmrLhsqvgFD. Each checks the cap here. A long-lived worker's context grows and each turn costs
 more: the PM restarts it fresh when it gets long. SQL bundle: `supabase/migrations/20261116000000_bundle.sql`.
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
+**Freeze (Josh, 2026-11-14 2 PM, at 82% used):** finish the running briefs + vet-document reader, then no new work until
+the Tue Nov 17 3 PM reset. UX review paused, Sun/Mon night jobs paused, pings 8:45 AM only. A reminder at 3:05 PM Tue
+(trig_01QG9zQxtzNzAAu4893uBnSX) restores them. Sun's nav + onboarding job needs a new trigger for Wed 3:40 AM (the PM).
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
 Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): one line, what needs him first.
 Plan page with graphs (Josh, 2026-11-14): https://claude.ai/artifact/BL6hyK8yhWHr698r4AbRg4, refreshed at 8:45 AM and 10:45 PM.
