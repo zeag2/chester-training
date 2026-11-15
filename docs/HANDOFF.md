@@ -324,6 +324,13 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     on its day), **Documents** (+ Add a document reads it as usual, but links the document, doses and weight to this
     visit and offers what the vet said for this visit's notes instead of a new visit), Edit / Delete. Every visit opens
     it: Health's Next/Last, Coming up, the Health log and the summary.
+  - **Weigh-ins** (fixed 2026-11-14, `claude/fix-weight-dupes`): `saveCare('weight')` without an id updates the
+    weigh-in for the same visit (`visitId`), or the same cat + day + value, instead of adding one (re-scanned
+    documents, the visit's "+ Weight" and the Health form had each added a copy). Old copies are cleaned up with no
+    SQL: `weightDupes()` keeps one per cat + day + value (the visit's, else the document's, else the oldest) and
+    soft-deletes the rest, on load and in each care sync (in memory, so syncing takes no longer), and the deletes sync.
+    The Health weight card lists the last 3 weigh-ins (Show all n); tapping one opens the edit sheet (value, date,
+    Delete), and deleting a weigh-in has Undo instead of a confirm. Tests: `src/db/weights.test.tsx`.
   - **Documents:** Health shows the newest 3 and **All documents (n)**; once there's one, the adder is a single
     "+ Add a document" button. **All documents** (`#/health/docs`, `src/screens/Documents.tsx`): search (title, the
     reader's summary, the visit's reason, clinic and notes; all on the phone), filters All / Vet / Vaccines / Adoption /
@@ -1339,3 +1346,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   with the same Supabase mocks as part 1.
 - 2026-11-14, document reader v2 (Features worker, `claude/features-docparse-v2`): no skills, plugins or new MCP
   servers. Checks: Vitest (261, 3 new fixture tests), typecheck, build. No screenshots (no UI change).
+- 2026-11-14, weigh-in duplicates fix (Features worker, `claude/fix-weight-dupes`): no skills, plugins or new MCP
+  servers. Checks: clean `npm ci`, Vitest (264, 3 new in `src/db/weights.test.tsx`), typecheck, build. No screenshots
+  (small change to the Health weight card; covered by the UI test). Found on the way: a sync that started for one pet
+  rebuilds that pet when it ends, even if another was opened meanwhile (`syncNow` keeps the cat it started with);
+  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats").

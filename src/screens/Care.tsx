@@ -23,6 +23,7 @@ import { bookingDay, isBooked } from '../engine/vets';
 import { DocRow, openDoc } from '../ui/DocRow';
 import { DailyLogSheet } from '../ui/DailyLogSheet';
 import { useLayout } from '../ui/layout';
+import { showToast } from '../ui/Toast';
 import { DropNote, isDocFile, useDocDrop, type Dropped } from '../ui/DocDrop';
 import { dailyLogDays } from '../engine/dailylog';
 
@@ -51,6 +52,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const pt = usePetText();
   // opened from the + sheet: go straight to that log form
   const [editing, setEditing] = useState<Editing>(() => (open && open !== 'doc' ? { kind: open } : null));
+  const [allWeights, setAllWeights] = useState(false);
   const [calFor, setCalFor] = useState<CalEvent | null>(null);
   const [book, setBook] = useState<BookPreset | null>(null);
   const due = useMemo(() => reminders(care), [care]);
@@ -112,6 +114,13 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const weightCard = ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
+      {/* tap a weigh-in to change its value or date, or delete it */}
+      <div style={{ marginTop: 8 }} role="group" aria-label="Weigh-ins">
+        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)' }} onClick={() => setEditing({ kind: 'weight', item: w })}
+          aria-label={`Edit weight ${w.data.lb} lb on ${fmt(w.at)}`}>
+          <div className="sp"><b className="num">{w.data.lb} lb</b><p className="s">{fmt(w.at)}</p></div><span className="s">Edit</span></button>)}
+        {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: '8px 0', fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
+      </div>
       {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
   const foodSection = <>
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
@@ -291,7 +300,14 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
             <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'google')}>Google Calendar</button></div>
           <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
       })()}
-      {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
+      {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => {
+        // a weigh-in goes at once with Undo (like the daily log); everything else asks first
+        if (item.kind === 'weight') {
+          await store.deleteCare(item.id); onClose();
+          showToast({ msg: `Deleted ${(item.data as { lb: number }).lb} lb`, action: { label: 'Undo', run: () => void store.saveCare('weight', item.data as never, { id: item.id, at: item.at, catId: item.catId }) } });
+          return;
+        }
+        if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
     </Sheet>;
 }
 

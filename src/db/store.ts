@@ -126,6 +126,7 @@ export class Store {
       await this.db.cats.put(cat);
     }
     const account = this.remote ? await this.remote.account().catch(() => null) : null;
+    for (const c of await this.db.cats.toArray()) await this.dedupeWeights(c.id);
     await this.rebuild(cat, { ready: true, account, sync: account ? 'syncing' : 'off' });
     if (account) void this.sync();
   }
@@ -282,8 +283,17 @@ export class Store {
     return this.serial(async () => {
       const cat = this.snap.cat; if (!cat) return null;
       if (opts.catId && opts.catId !== cat.id && !(await this.db.cats.get(opts.catId))) return null;
-      const old = opts.id ? await this.db.care.get(opts.id) : undefined;
-      const item: CareRow = { id: opts.id ?? uid(), catId: opts.catId ?? cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
+      let id = opts.id;
+      if (kind === 'weight' && !id) {
+        // one weigh-in per visit, and per cat + day + value: saving it again (a re-scanned document, the visit's
+        // "+ Weight", the Health form) updates that entry instead of adding another
+        const w = data as CareData['weight'], day = localDay(opts.at ?? Date.now());
+        const same = (await this.db.care.where('catId').equals(opts.catId ?? cat.id).toArray()).filter((c) => c.kind === 'weight' && !c.deleted)
+          .find((c) => { const d = c.data as CareData['weight']; return (!!w.visitId && d.visitId === w.visitId) || (localDay(c.at) === day && d.lb === w.lb); });
+        if (same) { id = same.id; data = { ...(same.data as CareData['weight']), ...w } as CareData[K]; }
+      }
+      const old = id ? await this.db.care.get(id) : undefined;
+      const item: CareRow = { id: id ?? uid(), catId: opts.catId ?? cat.id, kind, at: opts.at ?? old?.at ?? Date.now(), updatedAt: Math.max(Date.now(), (old?.updatedAt ?? 0) + 1), data, by: this.snap.account?.userId, dirty: 1 };
       await this.db.care.put(item); await this.rebuild(cat);
       if (this.snap.account) void this.sync();
       const { dirty: _d, ...out } = item; return { item: out as CareItem, isNew: !old };
@@ -304,6 +314,13 @@ export class Store {
     if (ok && got) this.set({ careNews: { ...(got as CareReward), at: Date.now() } });
   }
   dismissCareNews() { this.set({ careNews: null }); }
+  /** Exact duplicate weigh-ins (same cat, day and value) saved by earlier versions: keep one (the visit's, else the
+      document's, else the oldest) and soft-delete the rest, so the delete syncs to every phone. No SQL needed. */
+  private async dedupeWeights(catId: string): Promise<number> {
+    const drop = weightDupes(await this.db.care.where('catId').equals(catId).toArray());
+    if (drop.length) await this.db.care.bulkPut(drop.map((w) => ({ ...w, deleted: true, updatedAt: Math.max(Date.now(), w.updatedAt + 1), dirty: 1 })));
+    return drop.length;
+  }
   deleteCare(id: string): Promise<void> {
     return this.serial(async () => {
       const cat = this.snap.cat; const old = await this.db.care.get(id); if (!cat || !old) return;
@@ -336,8 +353,14 @@ export class Store {
     try {
       const theirs = await r.pullCare(catId);
       const mine = new Map((await this.db.care.where('catId').equals(catId).toArray()).map((c) => [c.id, c]));
-      const take: CareRow[] = []; const known = new Map<string, CareItem>();
+      let take: CareRow[] = []; const known = new Map<string, CareItem>();
       for (const t of theirs) { known.set(t.id, t); const m = mine.get(t.id); if (newer(m, t) === t && (!m || t.updatedAt > m.updatedAt)) take.push({ ...t, dirty: 0 }); }
+      // duplicate weigh-ins (theirs included) are deleted and the deletes sent with the rest (worked out in memory,
+      // so syncing takes no longer)
+      const merged = new Map(mine); for (const t of take) merged.set(t.id, t);
+      const dupes = weightDupes([...merged.values()]).map((w) => ({ ...w, deleted: true, updatedAt: Math.max(Date.now(), w.updatedAt + 1), dirty: 1 }));
+      for (const d of dupes) mine.set(d.id, d);
+      take = take.filter((t) => !dupes.some((d) => d.id === t.id));
       const all = [...mine.values()].filter((m) => m.dirty && (!known.has(m.id) || m.updatedAt > known.get(m.id)!.updatedAt)).map(({ dirty: _d, ...m }) => m as CareItem);
       const send = all.filter((m) => m.kind !== 'daily'); const daily = all.filter((m) => m.kind === 'daily');
       await r.pushCare(send);
@@ -619,6 +642,15 @@ export class Store {
       await this.db.wallet.delete(catId); await this.db.drafts.delete(catId); await this.db.progress.where('catId').equals(catId).delete();
     });
   }
+}
+
+/** Weigh-ins that repeat another (same cat, day and value): all but the one to keep (the visit's, else the
+    document's, else the oldest). */
+export function weightDupes<T extends Pick<CareRow, 'id' | 'catId' | 'kind' | 'at' | 'data' | 'deleted'>>(rows: T[]): T[] {
+  const groups = new Map<string, T[]>();
+  for (const w of rows) if (w.kind === 'weight' && !w.deleted) { const k = w.catId + '|' + localDay(w.at) + '|' + (w.data as CareData['weight']).lb; groups.set(k, [...(groups.get(k) ?? []), w]); }
+  const rank = (w: T) => { const d = w.data as CareData['weight']; return d.visitId ? 0 : d.doc ? 1 : 2; };
+  return [...groups.values()].filter((g) => g.length > 1).flatMap((g) => g.sort((a, b) => rank(a) - rank(b) || a.at - b.at || a.id.localeCompare(b.id)).slice(1));
 }
 
 export const store = new Store('chester', sharingConfigured() ? new SupabaseRemote(SUPABASE_URL, SUPABASE_KEY) : null);
