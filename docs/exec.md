@@ -51,7 +51,7 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | moved after the reset (freeze); trigger paused |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
 | Thu Nov 19, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
-| After the reset (Nov 18–20) | Medicine reminders (in-app); "after the vet visit" + log editing (from its brief, M–L); booking 2b | M each | ship it | queued |
+| After the reset (Nov 18–20) | Medicine reminders (in-app); "after the vet visit" + log editing (from its brief, M–L); booking 2b; small fix: late sync re-shows the pet it started with (HANDOFF §7) | M each | ship it | queued |
 
 Scheduled jobs (since 2026-11-12 evening) fire into ONE long-lived worker session with the repo,
 `session_019xqnwhgiiiKMoK1DDak7e2` (fresh-session tasks start without the repo and couldn't push). Night 3:40 AM
