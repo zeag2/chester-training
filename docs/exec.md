@@ -25,12 +25,31 @@ Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage
 | 2026-11-13 AM | unknown (asked Josh) | ? | 10% | ~4.5 | ~9% | ~4–5% |
 | 2026-11-14 2 PM | **82%** (Josh's usage page) | 18% | 10% | ~3 | **freeze** | — |
 | 2026-11-16 | **91%** (Josh; other use) | 9% | into reserve | ~1 | **full stop**, fixes only if urgent | — |
+| 2026-11-17 3 PM | 0% (new week; resets Tue Nov 24, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
 
 Rules: each block in the schedule names its size (S/M/L) and budget. When the day's cap is reached, no new work
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
-## Schedule (time blocks, Eastern)
+## Schedule, week 2 (Nov 17–24, Eastern)
+Paced at ~55% total (work ~42%, nightly UX review ~7%, pings and the Executive ~5%), leaving room for Josh's own
+use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
+
+| When | Work | Size / budget | Gate | Status |
+|---|---|---|---|---|
+| Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | next |
+| Wed Nov 18, 12:40 PM | QA + fixes for nav/onboarding | S / 2% | ship it | |
+| Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | needs trigger |
+| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | |
+| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (from its UX brief) → PR | M / 6% | ship it | |
+| Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
+| Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | |
+| Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | |
+| Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | |
+| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | |
+| Tue Nov 24, until 3 PM | Reserve only | — | reset | |
+
+## Schedule, week 1 (Nov 10–17, done)
 Blocks follow Josh's 5-hour resets: 12:40 PM, 5:40 PM, 10:40 PM, 3:40 AM, 8:40 AM (Josh, 2026-11-11).
 Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week (Josh, 2026-11-12).
 
