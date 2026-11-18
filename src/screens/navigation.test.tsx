@@ -1,9 +1,11 @@
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, cleanup, fireEvent, screen, act, waitFor } from '@testing-library/react';
 import { store } from '../db/store';
 import { Onboarding } from './Onboarding';
 import { CatPage } from './CatPage';
 import { AccountNudge } from '../ui/AccountNudge';
+import { NewestPhoto } from '../ui/NewestPhoto';
+import { Settings } from './Settings';
 
 afterEach(() => { cleanup(); location.hash = ''; });
 beforeEach(() => { try { localStorage.clear(); } catch { /* */ } });
@@ -51,5 +53,30 @@ describe('navigation Option A and the short onboarding', () => {
     expect(screen.queryByRole('button', { name: new RegExp(`${cat.name}’s corner`) })).toBeNull(); // not twice
     await act(async () => { await store.saveCat({ ...store.get().cat!, training: false }); });
     expect(screen.getByRole('button', { name: `Turn on training for ${cat.name}` })).toBeTruthy();
+  });
+
+  it('Settings has three groups: your cats, household & account, app', async () => {
+    window.matchMedia ??= ((q: string) => ({ matches: false, media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} })) as unknown as typeof window.matchMedia;
+    await store.load();
+    render(<Settings />);
+    expect([...document.querySelectorAll('h2')].map((h) => h.textContent)).toEqual(['Your cats', 'Household & account', 'App']);
+    expect(screen.getByRole('button', { name: /Download a backup/ })).toBeTruthy();
+  });
+
+  it('Home shows the newest friend’s photo, linking to the Friends tab', async () => {
+    await store.load();
+    (store as unknown as { set: (p: object) => void }).set({ account: { userId: 'me', email: 'me@example.com' } });
+    const feed = vi.spyOn(store, 'photoFeed').mockResolvedValue({
+      photos: [
+        { id: '1', catId: 'mine', path: 'mine/1.jpg', caption: 'mine', by: 'me', at: new Date().toISOString(), paws: 0, pawed: false },
+        { id: '2', catId: 'tofu', path: 'tofu/2.jpg', caption: 'Sunny spot', by: 'fen', at: new Date().toISOString(), paws: 0, pawed: false },
+      ], urls: { 'tofu/2.jpg': 'blob:tofu' } });
+    render(<NewestPhoto />);
+    const card = await screen.findByRole('button', { name: /New photo of .*See all photos/ });
+    expect(card.querySelector('img')!.getAttribute('src')).toBe('blob:tofu');
+    fireEvent.click(card);
+    expect(location.hash).toBe('#/friends');
+    feed.mockRestore();
+    (store as unknown as { set: (p: object) => void }).set({ account: null });
   });
 });

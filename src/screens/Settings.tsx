@@ -132,29 +132,24 @@ export function Settings() {
       <Row label="Add another cat" onClick={() => go('add-pet')} />
     </Group>
 
-    {sharingConfigured() && (account ? <Group title="People" foot={household && others.length ? `Your household sees and looks after every cat here. ${syncText}.` : syncText}>
+    {/* three groups (navigation plan): your cats · household & account · app */}
+    {sharingConfigured() && (account ? <Group title="Household & account" foot={household && others.length ? `Your household sees and looks after every cat here. ${syncText}.` : syncText}>
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
         value={m.owner ? 'Set it up' : 'Household'} onClick={() => setPerson(m.userId)} />)}
       {household && <Row label={others.length ? 'Invite someone else to your household' : 'Invite someone you live with'} onClick={() => setSheet('invite')} />}
-    </Group> : <Group title="People" foot="Sign in to share your cats with the people you live with, and to add friends.">
+      <Row label="Your name" value={me?.name || store.myName || 'Add'} onClick={() => setSheet('name')} />
+      {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
+      <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? Your cats stay on this phone; sign back in to sync again.`)) void store.signOut(); }} />
+    </Group> : <Group title="Household & account" foot="Sign in to share your cats with the people you live with, and to add friends.">
       <Row label="Create an account or sign in" onClick={() => go('together')} />
       <Row label="Join a household with a code" onClick={() => go('join')} />
     </Group>)}
 
-    {account && <Group title="Account">
-      <Row label="Your name" value={me?.name || store.myName || 'Add'} onClick={() => setSheet('name')} />
-      {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
-      <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? Your cats stay on this phone; sign back in to sync again.`)) void store.signOut(); }} />
-    </Group>}
-
-    <Group title="App">
+    <Group title="App" foot={account ? 'Your data is saved on this phone and online.' : 'Your data is saved on this phone only. Download a backup now and then.'}>
       <Row label="Sound"><Switch on={!muted} label="Sound" onChange={(on) => { setMuted(!on); localStorage.setItem('chester-muted', on ? '0' : '1'); setM(!on); if (on) chirp(); }} /></Row>
       <div className="lrow" style={{ display: 'block' }}><span style={{ fontWeight: 600 }}>Appearance</span>
         <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 8 }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
       {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
-    </Group>
-
-    <Group title="Your data" foot={account ? 'Saved on this phone and online.' : 'Saved on this phone only. Download a copy now and then.'}>
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
     </Group>
 

@@ -19,6 +19,7 @@ import { FriendsStrip } from '../ui/FriendsStrip';
 import { HomeIconNote } from '../ui/HomeIconNote';
 import { DailyTaps } from '../ui/DailyTaps';
 import { AccountNudge } from '../ui/AccountNudge';
+import { NewestPhoto } from '../ui/NewestPhoto';
 import { usePetText } from '../lib/pet';
 import { CushionArt } from './Corner';
 import { useLayout, type Layout } from '../ui/layout';
@@ -223,8 +224,8 @@ export function Home() {
         {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
-      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><AccountNudge /><TodayCard /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
-        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><TodayCard />{rest}</>}
+      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
+        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
