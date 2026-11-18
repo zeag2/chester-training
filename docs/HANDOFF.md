@@ -59,6 +59,20 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ## 1. What's built
 
+- **Navigation (Option A) + short onboarding** (2026-11-18, PR from `claude/features-navigation`; plan
+  `docs/plans/2026-11-14-navigation.md`, Josh's pick): tabs are **Home · Health · + · <cat's name, or "Cats" with
+  several> · Friends** (`src/ui/TabBar.tsx`, `catLabel`). The cat's tab `#/chester` (`src/screens/CatPage.tsx`): the
+  big cat, his corner card, and Training as a section (`<Train embedded />`, or "Turn on training"); `#/train` lands
+  there, and tree/library/trophies/skill/corner highlight it. **Friends** is a tab: the photo feed on top
+  (`<Feed embedded />`), then friends' cats; the tab dot moved there. **Settings** (`#/settings`, `#/me` still works) is
+  the gear on Home (and at the bottom of the desktop side nav), titled Settings with a back button; its Friends and
+  Photos rows moved to the Friends tab. **Onboarding** is 3 screens: welcome (Set up my cat / Someone invited me), name +
+  boy/girl + look, and "Train?" (saves straight away, rewards default treats + petting; the rewards and house-rules
+  screens are gone, birthday/breed/weight go in Settings later). Sign-up moved to **`AccountNudge`** on Home, shown once a
+  Fed is logged and there's no account ("Not now" hides it on that phone). Not done yet: Settings in 3 groups, the
+  Home newest-photo card, tapping the cat on Home → his tab. Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
+  Screenshots: `docs/screenshots/navigation/`.
+
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
 - **Tabs: Home · Health · + · Train · Me** (`src/ui/TabBar.tsx`). A red dot on Me means a new friend.
 - **Wider windows** (desktop plan step 1, `docs/plans/2026-11-11-desktop-layout.md`): `useLayout()` in
@@ -1351,3 +1365,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   (small change to the Health weight card; covered by the UI test). Found on the way: a sync that started for one pet
   rebuilds that pet when it ends, even if another was opened meanwhile (`syncNow` keeps the cat it started with);
   harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats").
+- 2026-11-18, navigation Option A + onboarding (Features worker, `claude/features-navigation`): no skills, plugins or
+  new MCP servers. Checks: Vitest (267), typecheck, build; Playwright iPhone 13 shots (Home dark, cat tab light,
+  onboarding light) from the Vite dev server with Supabase stubbed.

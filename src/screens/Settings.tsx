@@ -10,7 +10,7 @@ import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { sharingConfigured } from '../sync/config';
 import { sendInvite } from './Together';
 import { Icon } from '../ui/icons';
-import { go } from '../ui/router';
+import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
 import { Sheet as SheetFrame } from '../ui/Sheet';
 
@@ -104,7 +104,7 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
 }
 
 export function Settings() {
-  const { cat, account, household, sync, care, pets, friendNews, requests } = useStore();
+  const { cat, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
@@ -122,7 +122,7 @@ export function Settings() {
 
   const edit = async (id: string) => { if (id !== cat.id) await store.switchPet(id); setSheet('pet'); };
   return <div className="screen">
-    <h1 style={{ marginTop: 18 }}>Me</h1>
+    <div className="row" style={{ marginTop: 10 }}><button className="iconbtn" aria-label="Back" onClick={() => back('home')}><Icon name="back" /></button><h1 className="sp">Settings</h1></div>
     {account && <p className="m" style={{ marginTop: 4 }}>{me?.name || store.myName || 'You'} · {account.email}</p>}
 
     <Group title="Your cats">
@@ -133,8 +133,6 @@ export function Settings() {
     </Group>
 
     {sharingConfigured() && (account ? <Group title="People" foot={household && others.length ? `Your household sees and looks after every cat here. ${syncText}.` : syncText}>
-      <Row label="Photos" sub="Your cats and your friends’ cats" onClick={() => go('feed')} />
-      <Row label="Friends" sub="Your friend code, and your friends’ cats" value={requests.some((q) => q.incoming) ? 'Request' : friendNews ? 'New' : undefined} onClick={() => go('friends')} />
       {others.map((m) => <Row key={m.userId} label={m.name || 'Someone'} sub={[m.email, m.sets !== undefined && `${m.sets} set${m.sets === 1 ? '' : 's'} logged`].filter(Boolean).join(' · ') || undefined}
         value={m.owner ? 'Set it up' : 'Household'} onClick={() => setPerson(m.userId)} />)}
       {household && <Row label={others.length ? 'Invite someone else to your household' : 'Invite someone you live with'} onClick={() => setSheet('invite')} />}

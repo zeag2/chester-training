@@ -4,13 +4,14 @@ import { useLayout } from './layout';
 import { PetSwitcher } from './PetSwitcher';
 
 /**
- * The main navigation. Phone (under 760 px): Home · Health · + · Train · Me along the bottom (unchanged).
+ * The main navigation (docs/plans/2026-11-14-navigation.md, Option A). Phone (under 760 px): Home · Health · + ·
+ * <the cat's name, or "Cats" with several> · Friends along the bottom; Settings is the gear on Home.
  * Tablet (760–1099 px): the same, as an 88 px rail on the left with the + at the top.
  * Desktop (1100 px and up): a 220 px side nav with a "Log" button at the top and the pet switcher under the tabs.
  * The + / Log opens the quick-log sheet. `dot` marks a tab with something new (e.g. a new friend).
  * While a rail or side nav is showing, <html data-nav="rail|side"> lets the CSS move the page over.
  */
-export function TabBar({ active, onPlus, dot }: { active: string; onPlus: () => void; dot?: string }) {
+export function TabBar({ active, onPlus, dot, catLabel = 'Cats' }: { active: string; onPlus: () => void; dot?: string; catLabel?: string }) {
   const layout = useLayout();
   useLayoutEffect(() => {
     if (layout === 'phone') return;
@@ -21,18 +22,19 @@ export function TabBar({ active, onPlus, dot }: { active: string; onPlus: () => 
     <span style={{ position: 'relative', display: 'inline-flex' }}><Icon name={icon} size={24} />{dot === id && <i className="tabdot" aria-label="new" />}</span>{label}</a>;
   if (layout === 'tablet') return <nav className="tabs rail" aria-label="Main"><div className="tabs-in">
     <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
-    {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('train', 'Train', 'target')}{t('me', 'Me', 'user')}
+    {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}
   </div></nav>;
   if (layout === 'desktop') return <nav className="sidenav" aria-label="Main">
     <a className="brand" href="#/home"><Icon name="paw" size={22} />PalDex</a>
     <button className="btn navlog" onClick={onPlus}><Icon name="plus" size={20} />Log</button>
-    <div className="navtabs">{t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('train', 'Train', 'target')}{t('me', 'Me', 'user')}</div>
+    <div className="navtabs">{t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}</div>
     <PetSwitcher inNav />
+    <a href="#/settings" className={`tab navsettings ${active === 'settings' ? 'on' : ''}`} aria-current={active === 'settings' ? 'page' : undefined}><Icon name="gear" size={22} />Settings</a>
   </nav>;
   return <nav className="tabs" aria-label="Main"><div className="tabs-in">
     {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}
     <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
-    {t('train', 'Train', 'target')}
-    {t('me', 'Me', 'user')}
+    {t('chester', catLabel, 'paw')}
+    {t('friends', 'Friends', 'user')}
   </div></nav>;
 }
