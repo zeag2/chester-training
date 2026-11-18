@@ -64,3 +64,22 @@ describe('Home on desktop (1100 px and up)', () => {
     for (const rule of block.split('}').map((r) => r.trim()).filter(Boolean)) expect(rule, rule).toMatch(/^(\.homecols|\.homecol|\.homescene\.big|html\[data-nav="side"\])/);
   });
 });
+
+describe('the button to the cat’s tab', () => {
+  for (const w of [390, 1440]) it(`${w} px: a button near the cat opens his tab ("Cats" with several); the cat itself still pets`, async () => {
+    fakeMedia(w);
+    const { container, unmount } = render(<Home />);
+    const btn = [...container.querySelectorAll('button.chipbtn')].find((b) => b.getAttribute('aria-label') === 'Open Chester’s tab') as HTMLButtonElement;
+    expect(btn.textContent).toContain('Chester');
+    btn.click();
+    expect(location.hash).toBe('#/chester');
+    unmount(); location.hash = '';
+    // with a second cat the button says Cats, like the tab
+    if (w === 1440) {
+      const first = store.get().cat!;
+      await store.saveCat({ ...first, id: undefined, createdAt: undefined, name: 'Luna' } as never);
+      const r = render(<Home />);
+      expect(r.container.querySelector('button[aria-label="Open the Cats tab"]')!.textContent).toContain('Cats');
+    }
+  });
+});
