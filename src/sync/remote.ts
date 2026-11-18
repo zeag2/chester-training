@@ -101,4 +101,12 @@ export interface Remote {
   photoFeed(before?: string): Promise<Photo[]>;
   /** Signed links for showing photos (one call per page). */
   photoUrls(paths: string[]): Promise<Record<string, string>>;
+  /** Give or take back my paw on a photo I can see. */
+  setPaw(photoId: string, on: boolean): Promise<void>;
+  /** Hide a friend's photo from my feed (or show it again). */
+  setHidden(photoId: string, hidden: boolean): Promise<void>;
+  /** The poster changes the caption. */
+  editCaption(photoId: string, caption: string): Promise<void>;
+  /** The poster or the pet's household deletes the photo, then its file. Throws 'not-allowed' when nothing was deleted. */
+  deletePhoto(photo: Pick<Photo, 'id' | 'path'>): Promise<void>;
 }

@@ -5,6 +5,15 @@
 import type { MedWhat } from '../engine/care';
 
 export type DocCategory = 'vet' | 'esa' | 'adoption' | 'other';
+export type Confidence = 'high' | 'medium' | 'low';
+/** A priced line on an invoice. `care: false` for things like waste disposal (kept in the total, not logged). */
+export interface ChargeLine { code: string | null; description: string; qty: number | null; price: number; care: boolean }
+/** What was given or done at this visit (from the invoice lines). */
+export interface GivenItem { name: string; kind: MedWhat | 'test' | 'exam'; notes: string | null }
+/** A follow-up the papers imply but don't date (e.g. a vaccine's 2nd dose 3–4 weeks later). */
+export interface FollowUp { name: string; from: string; to: string; estimated: boolean }
+/** Fields the "After the visit" review can flag for a second look. */
+export type ConfidenceKey = 'docDate' | 'clinic' | 'clinicPhone' | 'vet' | 'weight' | 'bodyCondition' | 'pain' | 'given' | 'followUps' | 'reminders' | 'lastDone' | 'cost' | 'pet' | 'history';
 export interface DocFindings {
   title: string;
   categories: DocCategory[];
@@ -15,6 +24,20 @@ export interface DocFindings {
   items: { name: string; kind: MedWhat; date: string | null; nextDue: string | null; notes: string | null }[];
   visits: { reason: string; date: string | null; clinic: string | null; notes: string | null }[];
   summary: string;
+  /** The clinic's own phone (never the owner's) and the vet's name. */
+  clinicPhone: string | null;
+  vet: string | null;
+  /** The pet as written on the papers. The microchip stays in `profile` (the pet's record), never in shared summaries. */
+  pet: { name?: string; species?: string; breed?: string; color?: string };
+  exam: { bodyCondition?: string; pain?: string };
+  given: GivenItem[];
+  followUps: FollowUp[];
+  /** Next due, from the papers' reminder lists (only rows with a date). */
+  reminders: { name: string; due: string }[];
+  lastDone: { name: string; date: string }[];
+  history: { problems: string[]; notes: string[]; diet: string | null; meds: string | null };
+  cost: { total: number | null; lines: ChargeLine[] };
+  confidence: Partial<Record<ConfidenceKey, Confidence>>;
 }
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -55,8 +78,8 @@ const PRODUCTS: [MedWhat, string, RegExp][] = [
 ];
 const TEST = /\b(test|snap|combo|result|negative|positive|panel|fecal|bloodwork|cbc)\b/i;
 const productOf = (l: string) => (TEST.test(l) ? undefined : PRODUCTS.find(([, , re]) => re.test(l)));
-/** Vial lots and their expiry dates are not due dates. */
-const LOT = /\b(lot|exp\.?\s*date|vial|serial)\b/i;
+/** Vial lots and their expiry dates are not due dates; tag and brand fields are not doses. */
+const LOT = /\b(lot|exp\.?\s*date|vial|serial|tag|brand\s+name)\b/i; // also the empty "Rabies Tag:" fields on charts
 const DUE = /\b(next|due|booster|recheck|repeat|revaccinat|valid\s+until|expir\w*)/i;
 const NOT_A_VISIT_DATE = /\b(dob|birth\w*|born|age|issued|exp|lot)\b/i;
 const CLINIC = /(veterinary|animal\s+hospital|animal\s+clinic|vet\s+clinic|pet\s+hospital|cat\s+(?:clinic|hospital)|feline\s+(?:clinic|hospital)|animal\s+care|\bvca\b|banfield|vet\s+center)/i;
@@ -69,33 +92,90 @@ function classify(page: string): DocCategory {
   return 'other';
 }
 
-function pageDate(lines: string[]): string | null {
+function pageDate(lines: string[]): { day: string | null; labelled: boolean } {
   const labelled = lines.find((l) => /\b(date|visit|invoice|service|exam|given)\b/i.test(l) && !DUE.test(l) && !NOT_A_VISIT_DATE.test(l) && datesIn(l).length);
-  if (labelled) return datesIn(labelled)[0].day;
-  return lines.filter((l) => !NOT_A_VISIT_DATE.test(l) && !LOT.test(l)).flatMap((l) => datesIn(l))[0]?.day ?? null;
+  if (labelled) return { day: datesIn(labelled)[0].day, labelled: true };
+  return { day: lines.filter((l) => !NOT_A_VISIT_DATE.test(l) && !LOT.test(l)).flatMap((l) => datesIn(l))[0]?.day ?? null, labelled: false };
 }
+
+/** Names used in reminder lists, as shown. */
+const REMINDER_NAMES: [string, RegExp][] = [['Rabies', /rabies/i], ['FVRCP', /fvrcp|distemper/i], ['FeLV', /felv|leuk/i], ['Physical exam', /physical\s+exam|wellness/i],
+  ['Fecal test', /fecal/i], ['Medical release', /medical\s+release/i], ['Solensia', /solensia/i], ['Dental', /dental/i], ['Heartworm test', /heartworm/i]];
+const reminderName = (s: string) => REMINDER_NAMES.find(([, re]) => re.test(s))?.[0] ?? s.replace(/\s+/g, ' ').trim();
+const addDays = (day: string, n: number) => { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const PHONE = /\(\d{3}\)\s*\d{3}-\d{4}|\b\d{3}[-.]\d{3}[-.]\d{4}\b/;
+const PERSONAL = /\b[hwc]\s*:|phone|cell|mobile|fax|e-?mail|client|owner|address/i;
+const NOT_CARE = /\b(osha|waste|disposal|tax|discount|fee|surcharge|biohazard)\b/i;
+/** Which reminder-list rows on an invoice are "Name: date" next to other fields (Species: Feline Physical Exam : 11/14/2027). */
+const INLINE_REMINDER = /([A-Za-z][A-Za-z ]*?(?:vaccine|exam|fvrcp|felv|rabies|fecal|dental|heartworm)[A-Za-z ]*?)\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/gi;
 
 function parsePage(text: string, out: DocFindings) {
   const lines = text.split(/\r?\n/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
   if (!lines.length) return;
   const cat = classify(text);
   if (!out.categories.includes(cat)) out.categories.push(cat);
-  const date = pageDate(lines);
-  if (cat === 'vet') out.docDate ??= date;
+  // lines that belong to a reminder list are never doses or the visit's date
+  const skip = new Set<number>();
+  const reminders: { name: string; due: string }[] = [];
+  const remStart = lines.findIndex((l) => /^reminders?\s+(for\b|list\b|due\b)/i.test(l));
+  if (remStart >= 0) {
+    skip.add(remStart);
+    for (let i = remStart + 1; i < lines.length && !/^(medical\s+history|history|problems?|exam|assessment|plan|vaccines?\s+given)\b/i.test(lines[i]); i++) {
+      skip.add(i);
+      const l = lines[i], ds = datesIn(l);
+      const lead = /^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b/.test(l) ? ds[0] : undefined;
+      const tail = ds.find((d) => d !== lead && d.end === l.length);
+      const name = reminderName(l.slice(lead ? lead.end : 0, tail ? tail.at : l.length));
+      if (lead) reminders.push({ name, due: lead.day }); // the date column belongs to the item on its row
+      if (tail && !out.lastDone.some((x) => x.name === name && x.date === tail.day)) out.lastDone.push({ name, date: tail.day });
+    }
+  }
+  const inline: { i: number; name: string; due: string }[] = [];
+  for (const [i, l] of lines.entries()) for (const m of l.matchAll(INLINE_REMINDER)) {
+    if (m.index! > 0) inline.push({ i, name: reminderName(m[1]), due: datesIn(m[2])[0]?.day ?? '' }); // only beside other fields, never a line of its own
+  }
+  const pd = pageDate(lines.filter((_, i) => !skip.has(i) && !inline.some((x) => x.i === i)));
+  const date = pd.day;
+  for (const r of inline) if (r.due && (!date || r.due > date)) { skip.add(r.i); reminders.push({ name: r.name, due: r.due }); }
+  if (cat === 'vet') {
+    for (const r of reminders) if (!out.reminders.some((x) => x.name === r.name && x.due === r.due)) out.reminders.push(r);
+    if (date) (out as Internal)._dates.push({ day: date, labelled: pd.labelled });
+    out.docDate ??= date;
+  }
   const clinicLine = lines.find((l) => CLINIC.test(l) && l.length <= 60);
-  const clinic = clinicLine ? clinicLine.replace(/^(test\s+by|clinic|hospital)\s*:?\s*/i, '').replace(/[|•·].*$/, '').trim() : null;
+  let clinic = clinicLine ? clinicLine.replace(/^(test\s+by|clinic|hospital)\s*:?\s*/i, '').replace(/[|•·].*$/, '').trim() : null;
+  // a name split over two lines ("Hazel Dell" / "Animal Hospital")
+  if (clinic && clinicLine && new RegExp('^' + CLINIC.source + '$', 'i').test(clinic)) {
+    const prev = lines[lines.indexOf(clinicLine) - 1];
+    if (prev && prev.length <= 30 && !/\d|:/.test(prev)) clinic = prev + ' ' + clinic;
+  }
   if (clinic && cat === 'vet') out.clinic ??= clinic;
   const joined = lines.join(' ');
+  if (cat === 'vet') {
+    // the clinic's phone: in the letterhead, never a labelled (owner's) phone line
+    const stop = lines.findIndex((l) => /client|owner|bill\s+to|\bname\s*:/i.test(l));
+    const ph = lines.slice(0, Math.min(stop < 0 ? 10 : stop, 10)).find((l) => PHONE.test(l) && !PERSONAL.test(l));
+    if (ph) out.clinicPhone ??= ph.match(PHONE)![0].replace(/\)\s*/, ') ');
+    const dr = joined.match(/\b(?:Dr\.?|Doctor)\s+([A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+){0,2})/);
+    if (dr) out.vet ??= 'Dr. ' + dr[1].replace(/\s+(Total|Invoice|Date|Signature|DVM)\b.*$/, '');
+  }
 
   // the pet's own details: only on pages about the pet, never from the people on ESA/housing forms
   if (cat !== 'esa' && /\b(species|breed|patient|feline|canine|microchip)\b/i.test(text)) {
-    const dobLine = lines.find((l) => /\b(dob|birth\s*date|date\s+of\s+birth|birthdate|born)\b/i.test(l) && datesIn(l).length);
+    const dobLine = lines.find((l) => /\b(dob|birth\s*date|date\s+of\s+birth|birthdate|birthday|born)\b/i.test(l) && datesIn(l).length);
     if (dobLine) out.profile.birthday ??= datesIn(dobLine)[0].day;
     const chip = joined.match(/\b(?:micro\s*chip(?:\s*(?:#|no\.?|number))?|chip)\s*:?\s*(\d{9,15})\b/i) ?? joined.match(/\b(9\d{14})\b/);
     if (chip) out.profile.microchip ??= chip[1];
-    const sex = joined.match(/\bsex\s*:?\s*(male|female|m|f)\b/i);
+    const sex = joined.match(/\bsex\s*:?\s*(male|female|mn|mc|fs|m|f)\b/i);
     if (sex) out.profile.sex ??= /^f/i.test(sex[1]) ? 'f' : 'm';
-    if (/\baltered\s*:?\s*yes\b|\((neutered|spayed)\)|\bwas\s+(spayed|neutered)/i.test(joined)) out.profile.altered = true;
+    if (/\baltered\s*:?\s*yes\b|\((neutered|spayed)\)|\bwas\s+(spayed|neutered)|\bsex\s*:?\s*(mn|mc|fs|male\s+neutered|female\s+spayed)\b/i.test(joined)) out.profile.altered = true;
+    if (cat === 'vet') {
+      const name = joined.match(/\bname\s*:\s*([A-Z][\w'’-]*)\s+species\b/i)?.[1] ?? text.match(/^([A-Z][\w'’-]+)\s+\(#\s*\w+\)/m)?.[1];
+      if (name) out.pet.name ??= name;
+      const species = joined.match(/\bspecies\s*:\s*([A-Za-z]+)/i)?.[1]; if (species) out.pet.species ??= species;
+      const breed = text.match(/\bbreed\s*:\s*([A-Za-z][A-Za-z -]*?)\s*(?=$|\b[A-Za-z]+\s*:)/im)?.[1]; if (breed) out.pet.breed ??= breed.trim();
+      const color = text.match(/\b(?:coat\s+)?colou?r\s*:?\s*([A-Za-z]+(?:\s*\/\s*[A-Za-z]+)?)/i)?.[1]; if (color && !/weight/i.test(color)) out.pet.color ??= color;
+    }
   }
   if (cat === 'adoption') {
     const adopted = lines.find((l) => /adoption\s+(contract|agreement)|transaction\s+receipt/i.test(l) && datesIn(l).length);
@@ -106,7 +186,20 @@ function parsePage(text: string, out: DocFindings) {
   if (cat !== 'vet') return; // nothing medical is taken from ESA or adoption wording
 
   // weigh-ins: lines labelled weight, or rows under a "Weight" table header; never a product's size range
+  // the exam: body condition and pain scores
+  const bcs = joined.match(/\b(?:BCS|body\s+condition(?:\s+score)?)\s*[-:]?\s*(\d)\s*\/\s*(9|5)\b/i); if (bcs) out.exam.bodyCondition ??= `${bcs[1]}/${bcs[2]}`;
+  const pain = joined.match(/\bpain(?:\s+(?:assessment|score))?\s*[-:]?\s*(\d)\s*\/\s*(\d{1,2})\b/i); if (pain) out.exam.pain ??= `${pain[1]}/${pain[2]}`;
+
+  // "Previous Vaccines:" FVRCP: 8/19/26, 9/26/26 → one dose per date
+  const prevAt = lines.findIndex((l) => /^previous\s+vaccin\w*\s*:?$/i.test(l));
+  if (prevAt >= 0) for (let i = prevAt + 1; i < lines.length && /^[^:]{2,40}:\s*\S/.test(lines[i]) && datesIn(lines[i]).length; i++) {
+    const hit = productOf(lines[i]); if (!hit) continue;
+    skip.add(i);
+    for (const d of datesIn(lines[i])) if (!out.items.some((x) => x.name === hit[1] && x.date === d.day)) out.items.push({ name: hit[1], kind: hit[0], date: d.day, nextDue: null, notes: 'From history' });
+  }
+
   for (const [i, l] of lines.entries()) {
+    if (skip.has(i)) continue;
     const m = l.match(/(\d{1,2}(?:\.\d{1,2})?)\s*(lbs?|pounds?|kg|kilograms?)\b/i); if (!m) continue;
     if (productOf(l) || /\d\s*-\s*\d/.test(l) || /\bper\b/i.test(l)) continue;
     const header = /\bweight\b/i.test(lines[i - 1] ?? '') && !/\d/.test(lines[i - 1] ?? '');
@@ -118,10 +211,11 @@ function parsePage(text: string, out: DocFindings) {
   // doses: each product line, then the next few lines (until another product) for its given and due dates
   const undated = new Set<string>();
   for (const [i, l] of lines.entries()) {
+    if (skip.has(i)) continue;
     const hit = productOf(l); if (!hit || LOT.test(l)) continue;
     const [kind, name] = hit;
     const win = [l];
-    for (let j = i + 1; j < Math.min(lines.length, i + 7); j++) {
+    for (let j = i + 1; j < Math.min(lines.length, i + 7) && !skip.has(j); j++) {
       const p = productOf(lines[j]);
       if (p && (p[1] !== name || datesIn(lines[j]).length || datesIn(win.join(' ')).length)) break;
       win.push(lines[j]);
@@ -153,12 +247,13 @@ function parsePage(text: string, out: DocFindings) {
 
   // tests with their results
   for (const [i, l] of lines.entries()) {
-    if (!/\b(felv|fiv)\b.*\btest\b|\btest\b.*\b(felv|fiv)\b|heartworm\s+test|fecal\s+(exam|test)/i.test(l)) continue;
+    if (skip.has(i) || !/\b(felv|fiv)\b.*\btest\b|\btest\b.*\b(felv|fiv)\b|heartworm\s+test|fecal\s+(exam|test|profile|panel)/i.test(l)) continue;
     const win = lines.slice(i, i + 6);
     const d = win.flatMap((w) => (LOT.test(w) ? [] : datesIn(w)))[0]?.day ?? date;
     const reason = /felv|fiv/i.test(l) ? 'FeLV/FIV test' : /heartworm/i.test(l) ? 'Heartworm test' : 'Fecal test';
     if (out.visits.some((v) => v.reason === reason && v.date === d)) continue;
-    const res = win.find((w) => /\bresults?\b/i.test(w))?.replace(/^.*?results?\s*:?\s*/i, '') ?? null;
+    // charged today with no result written: the result comes later
+    const res = win.find((w) => /\bresults?\b/i.test(w))?.replace(/^.*?results?\s*:?\s*/i, '') ?? (/\$\s*\d/.test(l) ? 'Result pending' : null);
     const by = win.find((w) => CLINIC.test(w))?.replace(/^(test\s+by)\s*:?\s*/i, '') ?? clinic;
     out.visits.push({ reason, date: d, clinic: by, notes: res });
   }
@@ -170,6 +265,69 @@ function parsePage(text: string, out: DocFindings) {
     const reason = out.profile.sex === 'f' || /^spayed$/i.test(surg[1]) ? 'Spay surgery' : 'Neuter surgery';
     if (d && !out.visits.some((v) => v.reason === reason)) out.visits.push({ reason, date: d, clinic: where, notes: null });
   }
+  // invoice lines with prices, and the total
+  for (const l of lines) {
+    const tot = l.match(/\btotal\b[^$]*\$\s*([\d,]+\.\d{2})/i);
+    if (tot) { const t = Number(tot[1].replace(/,/g, '')); if (/invoice|due|amount/i.test(l) || out.cost.total === null) out.cost.total = t; continue; }
+    if (/\b(balance|paid|payment|change|deposit)\b/i.test(l)) continue;
+    const m = l.match(/^(?:\d{1,2}\/\d{1,2}\/\d{2,4}\s+)?(?:([A-Z][A-Z0-9]{1,8})\s+)?(.+?)\s+(\d+(?:\.\d+)?)\s*(?:[A-Za-z()]+\s*)?\$\s*([\d,]+\.\d{2})$/);
+    if (!m) continue;
+    const description = m[2].trim(), price = Number(m[4].replace(/,/g, ''));
+    if (out.cost.lines.some((x) => x.description === description && x.price === price)) continue;
+    const care = !NOT_CARE.test(description);
+    out.cost.lines.push({ code: m[1] ?? null, description, qty: Number(m[3]), price, care });
+    if (!care) continue;
+    const hit = productOf(description);
+    const nth = description.match(/\b(\d)(?:st|nd|rd|th)?\s+of\s+(\d)\b/i);
+    if (hit) {
+      const [kind, name] = hit;
+      const notes = nth ? `Dose ${nth[1]} of ${nth[2]}` : kind === 'flea' ? `Parasite prevention${/single/i.test(description) ? ', single dose' : ''}` : null;
+      out.given.push({ name: kind === 'vaccine' ? `${name} vaccine` : /revolution\s*plus/i.test(description) ? 'Revolution Plus' : name, kind, notes });
+      const item = out.items.find((x) => x.name === name && x.date === date) ?? (date ? out.items[out.items.push({ name, kind, date, nextDue: null, notes: null }) - 1] : undefined);
+      if (item) {
+        item.notes ??= notes;
+        if (nth && +nth[1] < +nth[2] && date) {
+          // the next dose of a series: about 3–4 weeks later (an estimate; the clinic sets the day)
+          const f: FollowUp = { name: `${name} dose ${+nth[1] + 1}`, from: addDays(date, 21), to: addDays(date, 28), estimated: true };
+          if (!out.followUps.some((x) => x.name === f.name)) out.followUps.push(f);
+          item.nextDue ??= f.from;
+          item.notes = `${notes}; dose ${+nth[1] + 1} due about ${niceDay(f.from).replace(/, \d{4}$/, '')}–${+f.to.slice(8)} (estimated)`;
+        }
+      }
+    } else if (TEST.test(description)) {
+      const name = /fecal/i.test(description) ? (/pediatric|puppy|kitten/i.test(description) ? 'Pediatric fecal test' : 'Fecal test') : description;
+      out.given.push({ name, kind: 'test', notes: 'Result pending' });
+    } else if (/\b(exam|examination|consult|wellness)\b/i.test(description)) {
+      out.given.push({ name: /comprehensive/i.test(description) ? 'Comprehensive exam' : 'Exam', kind: 'exam', notes: null });
+    } else out.given.push({ name: description, kind: 'medicine', notes: null });
+  }
+
+  // the history: why they came, what the vet noted, diet, medicines, problem list
+  const histAt = lines.findIndex((l) => /^(problem\s*\/\s*history|history|subjective)\s*:/i.test(l));
+  if (histAt >= 0) {
+    let para = lines[histAt].replace(/^[^:]*:\s*/, '');
+    for (let i = histAt + 1; i < lines.length && !/^[A-Z][A-Za-z /]{2,30}:/.test(lines[i]); i++) para += ' ' + lines[i];
+    const notes: string[] = [];
+    const sneeze = /sneez/i.test(para), cough = /cough/i.test(para);
+    if (sneeze || cough) notes.push(sneeze && cough ? 'Sneezing/coughing' : sneeze ? 'Sneezing' : 'Coughing');
+    if (/soft\s+stool/i.test(para)) notes.push('Soft stools');
+    if (/diarrh/i.test(para)) notes.push('Diarrhea');
+    if (/(?<!no\s)vomit/i.test(para)) notes.push('Vomiting');
+    for (const n of notes) if (!out.history.notes.includes(n)) out.history.notes.push(n);
+    const reason = lines[histAt - 1];
+    if (reason && reason.length <= 40 && !/[:\d]/.test(reason) && !/^date\b/i.test(reason)) {
+      const r = reason[0].toUpperCase() + reason.slice(1).toLowerCase();
+      if (!out.visits.some((v) => v.reason === r)) out.visits.push({ reason: r, date, clinic, notes: notes.join(', ') || null });
+    }
+  }
+  const diet = joined.match(/\b(?:current\s+)?diet\s*:\s*(.+?)(?=\s+(?:previous|current|physical|vaccin)\w*\b|$)/i)?.[1]; if (diet) out.history.diet ??= diet.trim();
+  const meds = joined.match(/\bcurrent\s+medications?\s*:\s*(.+?)(?=\s+(?:current|previous|physical|diet)\b|$)/i)?.[1]; if (meds) out.history.meds ??= meds.trim();
+  const probAt = lines.findIndex((l) => /^problems?\s*(list)?\s*:?$/i.test(l));
+  if (probAt >= 0) for (let i = probAt + 1; i < lines.length && /^\d+[.)]\s*\S/.test(lines[i]); i++) {
+    const p = lines[i].replace(/^\d+[.)]\s*/, '').replace(/^occ\.?\s+/i, 'Occasional ').replace(/\s+(\w)/g, (_m, c: string) => ' ' + c.toLowerCase());
+    if (!out.history.problems.includes(p)) out.history.problems.push(p);
+  }
+
   // a visit reason written on an invoice
   const reasonLine = lines.find((l) => /^(reason(?:\s+for\s+visit)?|chief\s+complaint|presenting\s+(?:complaint|problem)|visit\s+type)\s*[:\-]/i.test(l));
   if (reasonLine) {
@@ -180,18 +338,51 @@ function parsePage(text: string, out: DocFindings) {
   }
 }
 
+interface Internal extends DocFindings { _dates: { day: string; labelled: boolean }[] }
+const empty = (): Internal => ({ title: '', categories: [], docDate: null, clinic: null, profile: {}, weights: [], items: [], visits: [], summary: '',
+  clinicPhone: null, vet: null, pet: {}, exam: {}, given: [], followUps: [], reminders: [], lastDone: [], history: { problems: [], notes: [], diet: null, meds: null },
+  cost: { total: null, lines: [] }, confidence: {}, _dates: [] });
+
 const TITLES: Record<DocCategory, string> = { vet: 'Medical records', esa: 'ESA & housing forms', adoption: 'Adoption papers', other: 'Document' };
 
 /** Read every page of a document. */
 export function parseVetPages(pages: string[]): DocFindings {
-  const out: DocFindings = { title: '', categories: [], docDate: null, clinic: null, profile: {}, weights: [], items: [], visits: [], summary: '' };
+  const out = empty();
   for (const p of pages) parsePage(p, out);
-  const all = pages.join('\n');
-  const used = pages.filter((p) => p.trim()).length;
+  return finish(out, pages.join('\n'), pages.filter((p) => p.trim()).length);
+}
+
+/** Two documents scanned for the same visit (a chart and its invoice) as one result; lists are deduped. */
+export function mergeFindings(a: DocFindings, b: DocFindings): DocFindings {
+  const out = empty();
+  const both = [a, b];
+  out.categories = [...new Set(both.flatMap((x) => x.categories))].filter((c) => c !== 'other');
+  out.docDate = a.docDate ?? b.docDate; out.clinic = a.clinic ?? b.clinic; out.clinicPhone = a.clinicPhone ?? b.clinicPhone; out.vet = a.vet ?? b.vet;
+  out._dates = both.flatMap((x) => (x.docDate ? [{ day: x.docDate, labelled: x.confidence.docDate === 'high' }] : []));
+  out.profile = { ...b.profile, ...a.profile }; out.pet = { ...b.pet, ...a.pet }; out.exam = { ...b.exam, ...a.exam };
+  const uniq = <T,>(xs: T[], key: (x: T) => string) => xs.filter((x, i) => xs.findIndex((y) => key(y) === key(x)) === i);
+  out.weights = uniq(both.flatMap((x) => x.weights), (w) => String(w.date) + w.lb);
+  out.items = both.flatMap((x) => x.items).reduce<DocFindings['items']>((acc, it) => {
+    const same = acc.find((x) => x.name === it.name && x.date === it.date && (it.date !== null || x.nextDue === it.nextDue));
+    if (same) { same.nextDue ??= it.nextDue; same.notes ??= it.notes; } else acc.push({ ...it });
+    return acc;
+  }, []);
+  out.visits = uniq(both.flatMap((x) => x.visits), (v) => v.reason + '|' + v.date);
+  out.given = uniq(both.flatMap((x) => x.given), (g) => g.name);
+  out.followUps = uniq(both.flatMap((x) => x.followUps), (f) => f.name);
+  out.reminders = uniq(both.flatMap((x) => x.reminders), (r) => r.name + '|' + r.due);
+  out.lastDone = uniq(both.flatMap((x) => x.lastDone), (r) => r.name + '|' + r.date);
+  out.history = { problems: uniq(both.flatMap((x) => x.history.problems), (p) => p), notes: uniq(both.flatMap((x) => x.history.notes), (p) => p),
+    diet: a.history.diet ?? b.history.diet, meds: a.history.meds ?? b.history.meds };
+  out.cost = a.cost.lines.length || a.cost.total !== null ? a.cost : b.cost;
+  return finish(out, '', 0, [a.title, b.title]);
+}
+
+function finish(out: Internal, all: string, used: number, titles?: string[]): DocFindings {
   const ORDER: DocCategory[] = ['vet', 'adoption', 'esa'];
   const cats = ORDER.filter((c) => out.categories.includes(c));
   out.categories = cats.length ? cats : ['other'];
-  out.title = cats.length === 1 && cats[0] === 'vet'
+  out.title = titles ? [...new Set(titles)].map((t, i) => (i ? t.toLowerCase() : t)).join(' and ') : cats.length === 1 && cats[0] === 'vet'
     ? (/rabies\s+certificate/i.test(all) && used === 1 ? 'Rabies certificate' : /certificate/i.test(all) && used === 1 ? 'Vaccine certificate'
       : /\b(invoice|receipt|statement)\b/i.test(all) ? 'Vet invoice' : /medical\s+history/i.test(all) ? 'Medical history' : 'Vet record')
     : cats.length ? cats.map((c, i) => (i ? TITLES[c].replace(/^[A-Z][a-z]/, (m) => m.toLowerCase()) : TITLES[c])).join(', ').replace(/, ([^,]*)$/, ' and $1') : 'Document';
@@ -202,7 +393,33 @@ export function parseVetPages(pages: string[]): DocFindings {
   const bits = [n(out.items.length, 'dose'), n(out.visits.length, 'visit or test'), n(out.weights.length, 'weigh-in')].filter(Boolean)
     .map((b) => b.replace('visit or tests', 'visits or tests'));
   out.summary = `${out.title}${out.docDate ? ` · ${niceDay(out.docDate)}` : ''} · ${bits.length ? bits.join(', ') + ' found' : 'nothing medical to log'}.`;
-  return out;
+  out.reminders.sort((a, b) => a.due.localeCompare(b.due));
+  out.confidence = confidenceOf(out);
+  const { _dates: _, ...result } = out;
+  return result;
+}
+
+/** How sure the reader is of each field: high = labelled and consistent, medium = inferred, low = conflicting. */
+function confidenceOf(out: Internal): DocFindings['confidence'] {
+  const c: DocFindings['confidence'] = {};
+  if (out.docDate) c.docDate = new Set(out._dates.map((d) => d.day)).size > 1 ? 'low' : out._dates.some((d) => d.labelled) ? 'high' : 'medium';
+  if (out.clinic) c.clinic = 'high';
+  if (out.clinicPhone) c.clinicPhone = 'medium';
+  if (out.vet) c.vet = 'high';
+  if (out.weights.length) c.weight = new Set(out.weights.filter((w) => w.date === out.docDate).map((w) => w.lb)).size > 1 ? 'low' : 'high';
+  if (out.exam.bodyCondition) c.bodyCondition = 'high';
+  if (out.exam.pain) c.pain = 'high';
+  if (out.given.length) c.given = 'high';
+  if (out.followUps.length) c.followUps = 'medium'; // estimated
+  if (out.reminders.length) c.reminders = new Set(out.reminders.map((r) => r.name)).size < out.reminders.length ? 'low' : 'high';
+  if (out.lastDone.length) c.lastDone = 'high';
+  if (out.cost.total !== null || out.cost.lines.length) {
+    const sum = Math.round(out.cost.lines.reduce((s, l) => s + l.price, 0) * 100) / 100;
+    c.cost = out.cost.total !== null && out.cost.lines.length && Math.abs(sum - out.cost.total) < 0.01 ? 'high' : out.cost.total !== null ? 'medium' : 'low';
+  }
+  if (Object.keys(out.pet).length) c.pet = 'high';
+  if (out.history.notes.length || out.history.problems.length || out.history.diet || out.history.meds) c.history = 'medium'; // summarised from free text
+  return c;
 }
 
 /** One page of text (a photo, or older callers). */

@@ -37,6 +37,9 @@ export class FakeServer {
   /** Whether the photo feed SQL is run; the photos, newest last. */
   photosTable = true;
   photos: (NewPhoto & { id: string; by: string; at: string })[] = [];
+  /** paws and hides, keyed `photo|user` */
+  paws = new Set<string>();
+  hides = new Set<string>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -194,8 +197,19 @@ export class FakeRemote implements Remote {
   }
   async photoFeed(before?: string): Promise<Photo[]> {
     const u = this.ph();
-    return this.s.photos.filter((p) => this.canSee(p.catId, u.userId) && (!before || p.at < before)).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 20)
-      .map((p) => ({ id: p.id, catId: p.catId, path: p.path, caption: p.caption, width: p.width, height: p.height, skill: p.skill, by: p.by, at: p.at, paws: 0, pawed: false }));
+    return this.s.photos.filter((p) => this.canSee(p.catId, u.userId) && !this.s.hides.has(p.id + '|' + u.userId) && (!before || p.at < before)).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 20)
+      .map((p) => ({ id: p.id, catId: p.catId, path: p.path, caption: p.caption, width: p.width, height: p.height, skill: p.skill, by: p.by, at: p.at,
+        paws: [...this.s.paws].filter((k) => k.startsWith(p.id + '|')).length, pawed: this.s.paws.has(p.id + '|' + u.userId) }));
+  }
+  private seen(photoId: string) { const u = this.ph(); const p = this.s.photos.find((x) => x.id === photoId); if (!p || !this.canSee(p.catId, u.userId)) throw new Error('denied'); return { u, p }; }
+  async setPaw(photoId: string, on: boolean) { const { u } = this.seen(photoId); if (on) this.s.paws.add(photoId + '|' + u.userId); else this.s.paws.delete(photoId + '|' + u.userId); }
+  async setHidden(photoId: string, hidden: boolean) { const { u } = this.seen(photoId); if (hidden) this.s.hides.add(photoId + '|' + u.userId); else this.s.hides.delete(photoId + '|' + u.userId); }
+  async editCaption(photoId: string, caption: string) { const { u, p } = this.seen(photoId); if (p.by !== u.userId) return; if (caption.length > 140) throw new Error('caption too long'); p.caption = caption; }
+  async deletePhoto(photo: Pick<Photo, 'id' | 'path'>) {
+    const u = this.ph(); const p = this.s.photos.find((x) => x.id === photo.id);
+    if (!p || (p.by !== u.userId && !this.s.isMember(p.catId, u.userId))) throw new Error('not-allowed');
+    this.s.photos = this.s.photos.filter((x) => x !== p); this.s.files.delete('pet-photos/' + p.path);
+    for (const k of [...this.s.paws, ...this.s.hides]) if (k.startsWith(p.id + '|')) { this.s.paws.delete(k); this.s.hides.delete(k); }
   }
   async photoUrls(paths: string[]) { this.ph(); return Object.fromEntries(paths.map((p) => [p, 'blob:' + p])); }
   async myThanks() { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.thanked).map((t) => ({ catId: t.catId, catName: this.s.cats.get(t.catId)?.cat.name ?? '', day: t.day })); }

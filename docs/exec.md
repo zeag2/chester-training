@@ -23,12 +23,35 @@ Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage
 |---|---|---|---|---|---|---|
 | 2026-11-11 late | ~30% (all today) | ~70% | 10% | ~6 | ~10% | ~4–6% |
 | 2026-11-13 AM | unknown (asked Josh) | ? | 10% | ~4.5 | ~9% | ~4–5% |
+| 2026-11-14 2 PM | **82%** (Josh's usage page) | 18% | 10% | ~3 | **freeze** | — |
+| 2026-11-16 | **91%** (Josh; other use) | 9% | into reserve | ~1 | **full stop**, fixes only if urgent | — |
+| 2026-11-17 3 PM | 0% (new week; resets Tue Nov 24, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
 
 Rules: each block in the schedule names its size (S/M/L) and budget. When the day's cap is reached, no new work
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
-## Schedule (time blocks, Eastern)
+## Schedule, week 2 (Nov 17–24, Eastern)
+Paced at ~55% total (work ~42%, nightly UX review ~7%, pings and the Executive ~5%), leaving room for Josh's own
+use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
+
+| When | Work | Size / budget | Gate | Status |
+|---|---|---|---|---|
+| Tue Nov 17, evening | Design system phase 1 (UX reviewer: direction, fonts, colors, settle animation → `docs/design-system.md` PR) | S / 3% | Josh's go for phase 2 | merged (PR #29) |
+| Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | next |
+| Wed Nov 18, 12:40 PM | QA + fixes for nav/onboarding | S / 2% | ship it | |
+| Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | needs trigger |
+| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | |
+| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | |
+| Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
+| Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | |
+| Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | |
+| Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | |
+| Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | set |
+| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | |
+| Tue Nov 24, until 3 PM | Reserve only | — | reset | |
+
+## Schedule, week 1 (Nov 10–17, done)
 Blocks follow Josh's 5-hour resets: 12:40 PM, 5:40 PM, 10:40 PM, 3:40 AM, 8:40 AM (Josh, 2026-11-11).
 Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week (Josh, 2026-11-12).
 
@@ -42,13 +65,15 @@ Gates: Josh's "ship it"; Josh runs any SQL by hand, batched into ONE run a week 
 | Thu Nov 12, 5:40 PM | Photo feed plan + SQL, push schema draft, merged with the security fixes into ONE idempotent bundle (`20261116000000_bundle.sql`) + policy test | M / 5% | Josh runs the ONE SQL tonight + sets the reset redirect URL | done: PR #22 merged; **full SQL bundle (parts 1–3) run by Josh Fri Nov 13 ~12 PM; redirect URL set** |
 | **Fri Nov 13, 3:40 AM (wakeup)** | Photo feed part 1 (upload, shrink, feed) → PR | M / 5% | needs Thu's SQL run | merged (PR #23; main has the full bundle) |
 | Fri Nov 13, 12:40 PM | Feed part 1: QA + fixes | S / 4% | ship it | |
-| **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | |
-| Sat Nov 14, 12:40 PM | Feed part 2: QA + fixes | S / 4% | ship it | |
-| **Sun Nov 15, 3:40 AM (wakeup)** | Medicine reminders (in-app) → PR | M / 5% | | |
-| Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | |
-| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | |
+| **Sat Nov 14, 3:40 AM (wakeup)** | Photo feed part 2 (reactions, hide, delete, skill prompt) → PR | M / 5% | | merged (PR #24, shipped by the PM) |
+| Sat Nov 14, 12:40 PM | UX briefs: navigation (done, PR #25) + "after the vet visit" and log editing (in progress) | S / ~6% | ship it | running |
+| Sat Nov 14, daytime | Better vet-document reader (chart + invoice; anonymized fixtures) → PR | M / ~5% | ship it | running; Sat ~11% (over by ~2%, taken from Mon's spare day) |
+| **Wed Nov 18, 3:40 AM** (moved from Sun) | **Josh's pick: Option A; tab shows the cat's name (Cats with several); sign-up after first Fed tap.** Build navigation + onboarding from `docs/plans/2026-11-14-navigation.md` → PR | M / 5% | | moved: freeze (82% on Sat) |
+| Sun Nov 15, 12:40 PM | QA + fixes only (booking 2b moves to next week: pays back Thu's ~3% overrun) | S / 2% | ship it | dropped (freeze) |
+| **Mon Nov 16, 3:40 AM (wakeup)** | Push notifications: plan only (schema already in Thu's bundle) | S / 2% | — | moved after the reset (freeze); trigger paused |
 | Tue Nov 17, until 3 PM | Nothing new: 10% reserve. Push build + QA after the reset | — | reset | |
-| Wed Nov 18, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
+| Thu Nov 19, 3:40 AM (after reset) | Holiday cosmetics (art director's top picks) → PR, live by ~Nov 20 for Nov 26 | M / ~5% of the new week | ship it | pencilled |
+| After the reset (Nov 18–20) | Medicine reminders (in-app); "after the vet visit" + log editing (from its brief, M–L); booking 2b; small fix: late sync re-shows the pet it started with (HANDOFF §7) | M each | ship it | queued |
 
 Scheduled jobs (since 2026-11-12 evening) fire into ONE long-lived worker session with the repo,
 `session_019xqnwhgiiiKMoK1DDak7e2` (fresh-session tasks start without the repo and couldn't push). Night 3:40 AM
@@ -56,8 +81,13 @@ triggers: Fri trig_01UeTPUZsmT6rFUZjqUftbQR, Sat trig_01Ppcsoqta8bk6YyaN2CJcWP, 
 Mon trig_015xjsPE9nYE5gmrLhsqvgFD. Each checks the cap here. A long-lived worker's context grows and each turn costs
 more: the PM restarts it fresh when it gets long. SQL bundle: `supabase/migrations/20261116000000_bundle.sql`.
 Pencilled: Nov 15 3:40 AM may become onboarding + menu clean-up (UX brief first), medicine reminders after the reset; Josh and the PM to decide.
+**Freeze (Josh, 2026-11-14 2 PM, at 82% used):** finish the running briefs + vet-document reader, then no new work until
+the Tue Nov 17 3 PM reset. UX review paused, Sun/Mon night jobs paused, pings 8:45 AM only. A reminder at 3:05 PM Tue
+(trig_01QG9zQxtzNzAAu4893uBnSX) restores them. Sun's nav + onboarding job needs a new trigger for Wed 3:40 AM (the PM).
 Pings to Josh (Josh, 2026-11-11): the Executive sends a phone notification at 8:45 AM, 12:45 PM, 5:45 PM and 10:45 PM
-Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): what needs him first, else status.
+Eastern (scheduled task trig_01Tt2CpUKTowjav8ozDWVkwn, fires into this session): one line, what needs him first.
+Plan page with graphs (Josh, 2026-11-14): https://claude.ai/artifact/BL6hyK8yhWHr698r4AbRg4, refreshed at 8:45 AM and 10:45 PM.
+Replies to Josh stay to one line + the link unless he asks or a decision is needed.
 Overnight (Josh, 2026-11-11): wakeups may run 1–7 AM Eastern while Josh sleeps; they build and open PRs only (no
 "ship it", no SQL). One worker per night; the UX audit runs at 1:45 AM too. At each wakeup the PM checks the day's
 cap first and skips if it's spent. A PM restart, or a worker start that needs an approval (PM not in auto mode), makes a wakeup miss; the PM checks at the next one. Desktop step 7 is dropped (Josh: no keyboard shortcuts).

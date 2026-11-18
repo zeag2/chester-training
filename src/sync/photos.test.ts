@@ -38,6 +38,37 @@ describe('photo feed', () => {
     await pia.removeFriend(fen.get().account!.userId);
     expect((await fen.photoFeed()).photos.map((p) => p.catId)).toEqual([fen.get().cat!.id]);
   });
+  it('paws once each, hides a friend’s photo only for me, lets the poster edit and the household delete', async () => {
+    const server = new FakeServer();
+    const pia = await device(server, 'pia@example.com', 'Pia', 'Mochi');
+    const fen = await device(server, 'fen@example.com', 'Fen', 'Tofu');
+    const sol = await device(server, 'sol@example.com', 'Sol', 'Bean');
+    await befriend(pia, fen);
+    await pia.postPhoto(pia.get().cat!.id, new Blob(['x']), 'Sit!', 'sit');
+    const [ph] = (await fen.photoFeed()).photos;
+    expect(ph.skill).toBe('sit');
+
+    await fen.setPaw(ph.id, true); await fen.setPaw(ph.id, true); await pia.setPaw(ph.id, true);
+    expect((await fen.photoFeed()).photos[0]).toMatchObject({ paws: 2, pawed: true });
+    await fen.setPaw(ph.id, false);
+    expect((await pia.photoFeed()).photos[0]).toMatchObject({ paws: 1, pawed: true });
+    await expect(sol.setPaw(ph.id, true)).rejects.toThrow(); // can't see it
+
+    await fen.setPhotoHidden(ph.id, true);
+    expect((await fen.photoFeed()).photos).toHaveLength(0);
+    expect((await pia.photoFeed()).photos).toHaveLength(1); // only for Fen
+    await fen.setPhotoHidden(ph.id, false);
+    expect((await fen.photoFeed()).photos).toHaveLength(1);
+
+    await fen.editCaption(ph.id, 'mine now'); // not the poster: nothing changes
+    await pia.editCaption(ph.id, '  Sit, finally!  ');
+    expect((await fen.photoFeed()).photos[0].caption).toBe('Sit, finally!');
+
+    await expect(fen.deletePhoto(ph)).rejects.toThrow('not-allowed');
+    await pia.deletePhoto(ph);
+    expect((await fen.photoFeed()).photos).toHaveLength(0);
+    expect(server.files.has('pet-photos/' + ph.path)).toBe(false);
+  });
   it('says photos-missing before the SQL is run', async () => {
     const server = new FakeServer(); server.photosTable = false;
     const pia = await device(server, 'pia@example.com', 'Pia', 'Mochi');
