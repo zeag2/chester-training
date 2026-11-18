@@ -13,6 +13,7 @@ import { titleFor } from '../lib/appname';
 import { FRIEND_BONUS, owned } from '../engine/corner';
 import { FriendRequestRow } from '../ui/FriendsStrip';
 import { Sheet } from '../ui/Sheet';
+import { Feed } from './Feed';
 
 function PetCardView({ p }: { p: FriendPet }) {
   const c = p.card; const mastered = c.mastered ?? [];
@@ -105,13 +106,16 @@ export function Friends({ code: linkCode }: { code?: string }) {
   useEffect(() => { if (linkCode) setPendingFriend(linkCode); }, [linkCode]);
   useEffect(() => { if (!account) { setLoading(false); return; } store.loadFriends().catch(() => setErr('Can’t reach PalDex right now. Check your connection.')).finally(() => setLoading(false)); }, [account]);
 
-  const top = <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('me')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Friends</b>
+  // a tab now (navigation Option A): a page title, no back button
+  const top = <div className="row" style={{ marginTop: 18 }}><h1 className="sp">Friends</h1>
     {account && friends && !friends.missing && <button className="iconbtn" aria-label="Invite a friend" onClick={() => setSheet(true)}><Icon name="plus" /></button>}</div>;
   if (!account) return <div className="screen">{top}
     <div className="card mint"><b>Sign in to add friends</b><p className="s" style={{ marginTop: 4 }}>Friends see each other’s cats: their look, outfit, skills and streak. Never care records or documents.{pendingFriend() ? ' Your invite is saved; it’ll be ready once you’re signed in.' : ''}</p>
       <button className="btn" style={{ marginTop: 12 }} onClick={() => go('together')}>Sign in or create an account</button></div></div>;
 
   return <div className="screen">{top}
+    {friends && !friends.missing && <Feed embedded />}
+    <h2 style={{ marginTop: 22 }}>Friends’ cats</h2>
     <div className="stag">
       <p className="m">Friends see each other’s cats: their look, outfit, skills, streak and bond. Never care records, documents or the training log.</p>
       {loading ? <p className="s" style={{ marginTop: 16 }} aria-busy="true">Loading…</p>

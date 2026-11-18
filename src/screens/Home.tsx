@@ -18,6 +18,8 @@ import { InviteSheet } from './Friends';
 import { FriendsStrip } from '../ui/FriendsStrip';
 import { HomeIconNote } from '../ui/HomeIconNote';
 import { DailyTaps } from '../ui/DailyTaps';
+import { AccountNudge } from '../ui/AccountNudge';
+import { NewestPhoto } from '../ui/NewestPhoto';
 import { usePetText } from '../lib/pet';
 import { CushionArt } from './Corner';
 import { useLayout, type Layout } from '../ui/layout';
@@ -216,12 +218,14 @@ export function Home() {
     </div>
     <div className="stag" style={{ position: 'relative' }}>
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
-        <h1 style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
+        <div className="row"><h1 className="sp" style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
+          {/* Settings lives here now (navigation Option A); the desktop side nav has it at the bottom */}
+          <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><Icon name="gear" /></button></div>
         {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
-        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('me')}>Add your name so {cat.name} can greet you</button>}</div>
-      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><TodayCard /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
-        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><TodayCard />{rest}</>}
+        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
+      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
+        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>

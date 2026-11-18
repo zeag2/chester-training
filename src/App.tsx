@@ -10,6 +10,7 @@ import { Tree } from './screens/Tree';
 import { Library } from './screens/Library';
 import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
+import { CatPage } from './screens/CatPage';
 import { Feed } from './screens/Feed';
 import { ResetPassword, Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
@@ -76,23 +77,25 @@ export default function App() {
     case 'health': case 'care': body = r1 === 'visit' ? <VisitPage key={r2} id={r2 ?? ''} /> : r1 === 'docs' ? <Documents />
       : <Care key={r1 === 'log' ? 'log-' + r2 : 'care'} open={r1 === 'log' ? (r2 as CareKind) : undefined} />; tab = 'health'; break;
     // Train: everything about training, with the tree, library, skills and Chester's corner under it
-    case 'train': body = <Train />; tab = 'train'; break;
-    case 'tree': body = <Tree />; tab = 'train'; break;
-    case 'library': body = <Library />; tab = 'train'; break;
+    // the cat's own tab: his scene, corner and (when on) training; #/train lands here too
+    case 'chester': case 'train': body = <CatPage />; tab = 'chester'; break;
+    case 'tree': body = <Tree />; tab = 'chester'; break;
+    case 'library': body = <Library />; tab = 'chester'; break;
     case 'vet-summary': body = <VetSummary />; tab = 'health'; break;
     case 'week': body = <Week />; tab = 'home'; break;
-    case 'trophies': body = <Trophies />; tab = 'train'; break;
-    case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'train'; break;
-    case 'corner': body = <Corner />; tab = 'train'; break;
+    case 'trophies': body = <Trophies />; tab = 'chester'; break;
+    case 'skill': body = <SkillPage key={r1} id={r1} />; tab = 'chester'; break;
+    case 'corner': body = <Corner />; tab = 'chester'; break;
     case 'play': return <Play key={r1} toy={r1} />;
-    // Me: your cats, people (household and friends), app settings, your data
-    case 'me': case 'settings': body = <Settings />; tab = 'me'; break;
-    case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'me'; break;
-    case 'feed': body = <Feed key={r1 ?? ''} skill={r1} />; tab = 'me'; break;
+    // Settings (the gear on Home): your cats, household and account, the app. #/me lands here too
+    case 'me': case 'settings': body = <Settings />; tab = 'settings'; break;
+    // Friends: the photo feed on top, then friends' cats, requests and your code
+    case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'friends'; break;
+    case 'feed': body = <Feed key={r1 ?? ''} skill={r1} />; tab = 'friends'; break;
     case 'log': return <LogLink what={r1} />;
     case 'visit': body = <Visit key={r1} catId={r1 ?? ''} />; tab = 'home'; break;
     default: body = <Home />; tab = 'home';
   }
-  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews || snap.requests.some((q) => q.incoming) ? 'me' : undefined} />{quick && <QuickLog onClose={() => setQuick(false)} />}<ToastHost /><TooltipHost /></>;
+  return <>{body}<TabBar active={tab} onPlus={() => setQuick(true)} dot={snap.friendNews || snap.requests.some((q) => q.incoming) ? 'friends' : undefined} catLabel={snap.pets.length > 1 ? 'Cats' : snap.cat?.name ?? 'Cats'} />{quick && <QuickLog onClose={() => setQuick(false)} />}<ToastHost /><TooltipHost /></>;
 }
 

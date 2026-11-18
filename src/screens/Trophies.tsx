@@ -28,7 +28,7 @@ export function Trophies() {
   if (!cat) return null;
   const all = shelves.flatMap((s) => s.badges); const earned = all.filter((b) => b.earned).length;
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('train')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Trophy case</b></div>
+    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('chester')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Trophy case</b></div>
     <div className="stag">
       <p className="m">{earned ? `${cat.name} has ${earned} of ${all.length} badges. One for every skill mastered.` : `Master a skill and ${cat.name}’s first badge goes here.`}</p>
       {next && <a href={'#/skill/' + next.skill.id} className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}>
