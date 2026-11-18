@@ -38,7 +38,7 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
 | Tue Nov 17, evening | Design system phase 1 (UX reviewer: direction, fonts, colors, settle animation → `docs/design-system.md` PR) | S / 3% | Josh's go for phase 2 | merged (PR #29) |
-| Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | next |
+| Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | done: PR #30 green; QA 12:40 PM |
 | Wed Nov 18, 12:40 PM | QA + fixes for nav/onboarding | S / 2% | ship it | |
 | Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | needs trigger |
 | Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | |
@@ -46,7 +46,7 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
 | Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | |
 | Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | |
-| Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | |
+| Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane); nav follow-ups (Settings in 3 sections, Home photo card) → PR | S / 5% | ship it | |
 | Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | set |
 | Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | |
 | Tue Nov 24, until 3 PM | Reserve only | — | reset | |
