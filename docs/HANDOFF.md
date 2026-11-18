@@ -74,7 +74,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Screenshots: `docs/screenshots/navigation/`.
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
-- **Tabs: Home · Health · + · Train · Me** (`src/ui/TabBar.tsx`). A red dot on Me means a new friend.
+- **Tabs: Home · Health · + · <cat> · Friends** since 2026-11-18 (was Train · Me; see Navigation above). A red dot on Friends means a new friend or request.
 - **Wider windows** (desktop plan step 1, `docs/plans/2026-11-11-desktop-layout.md`): `useLayout()` in
   `src/ui/layout.ts` gives `phone` (under 760 px), `tablet` (760–1099) or `desktop` (1100+) from `matchMedia`.
   Phones keep the bottom tab bar exactly as before (`src/ui/layout.test.tsx` pins its markup to main's and checks
