@@ -1,4 +1,4 @@
-last-reviewed: d24d9145772042701159f986c1711b413ac8c44c
+last-reviewed: 5ef497e1efe3d0d3920d541996d01282d114dc70
 
 # UX review log
 
@@ -18,6 +18,16 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-18: d24d914..5ef497e
+Checked the photo feed's paws and ⋯ menu (Hide this photo, Remove friend), the editable weigh-in list on Health,
+and the "Share a photo of the new trick" button on the recap (read in code; it needs a mastered skill and sign-in),
+in light and dark mode.
+
+Fixed:
+- Health weigh-in rows sat edge to edge on the mint card with "Edit" touching the right edge and square corners. They
+  now have 14 px side padding and rounded corners, like the other rows on cards.
+- "Show all 5" weigh-ins was about 30 px tall; it's now a 44 px tap target.
 
 ### 2026-11-14: ce884e9..d24d914
 Checked the new photo feed (Me → Photos, `#/feed`) signed in with a fake friend, two posted photos and captions,
