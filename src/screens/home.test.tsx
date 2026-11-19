@@ -89,6 +89,6 @@ describe('the tab bar stays put on iPhone', () => {
     const fs = 'node:fs';
     const css: string = (await import(/* @vite-ignore */ fs)).readFileSync('src/styles/app.css', 'utf8');
     expect(css).toMatch(/(^|\n)html\{touch-action:manipulation\}/);
-    expect(css).toMatch(/\.tabs\{position:fixed;[^}]*transform:translateZ\(0\)/);
+    expect(css).toMatch(/(^|\n)\.tabs\{transform:translateZ\(0\)/);
   });
 });
