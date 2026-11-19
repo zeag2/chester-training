@@ -41,7 +41,7 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | merged (PR #30, incl. Settings in 3 groups + Home photo card) |
 | Wed Nov 18, 12:40 PM | QA + fixes for nav/onboarding | S / 2% | ship it | |
 | Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | done: PR #32; waiting on ship it |
-| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | running |
+| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | done: PR #33 green (no SQL); waiting on ship it |
 | Thu Nov 19 | Home "Chester >" button (PR #31) reverted: broke things; redo once Josh says what he saw | S / 1–2% | Josh's report | waiting |
 | Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | |
 | Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
