@@ -17,7 +17,7 @@ const ratio = (p: Photo) => (p.width && p.height ? `${Math.max(p.width / p.heigh
 
 /** #/feed: photos of your cats and your friends' cats, newest first. Post one with a caption, paw, hide or delete.
     #/feed/<skill> opens the composer for a skill just mastered. */
-export function Feed({ skill }: { skill?: string }) {
+export function Feed({ skill, embedded = false }: { skill?: string; embedded?: boolean }) {
   const snap = useStore();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -52,8 +52,9 @@ export function Feed({ skill }: { skill?: string }) {
   const person = (id: string) => (id === snap.account?.userId ? 'You'
     : snap.household?.members.find((m) => m.userId === id)?.name || snap.friends?.list.find((f) => f.userId === id)?.name || 'A friend');
 
-  return <div className="screen">
-    <Top onBack={() => go('me')} title="Photos" />
+  // on the Friends tab (embedded) it's a section with a heading, not a page with a back button
+  return <div className={embedded ? undefined : 'screen'}>
+    {embedded ? <h2 style={{ marginTop: 18 }}>Photos</h2> : <Top onBack={() => go('friends')} title="Photos" />}
     {!signedIn ? <>
       <h1 style={{ marginTop: 6 }}>Photos with friends</h1>
       <p className="m" style={{ marginTop: 6 }}>Sign in to post photos of your cats and see your friends’ cats.</p>

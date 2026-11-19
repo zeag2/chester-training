@@ -18,7 +18,7 @@ function useCountUp(target: number, ms = 1000) {
 }
 
 /** Training's own area: today's sets, what's next, progress, and the tree, library and corner. Optional per cat. */
-export function Train() {
+export function Train({ embedded = false }: { embedded?: boolean }) {
   const { cat, progress, sets, unlockedHidden, wallet } = useStore();
   const pt = usePetText();
   const t = today();
@@ -33,20 +33,21 @@ export function Train() {
   if (!cat) return null;
   const done = rewardedToday >= DAILY_REWARDED_SETS;
 
-  if (cat.training === false) return <div className="screen">
-    <h1 style={{ marginTop: 18 }}>Training</h1>
-    <PetSwitcher />
+  // on the cat's page (embedded) it's a section: no page title or pet switcher of its own
+  const shell = (children: React.ReactNode) => (embedded ? <section aria-label="Training">{children}</section> : <div className="screen">{children}</div>);
+  const head = embedded ? <h2 style={{ marginTop: 22 }}>Training</h2> : <><h1 style={{ marginTop: 18 }}>Training</h1><PetSwitcher /></>;
+  if (cat.training === false) return shell(<>
+    {head}
     <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '22px 18px' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" raised anim="wave" width={130} label={cat.name} />
       <b style={{ fontSize: 18, marginTop: 8 }}>Training is off for {cat.name}</b>
       <p className="s" style={{ marginTop: 6 }}>{pt('Short clicker sessions, a couple of minutes at a time: sit, high five, come when called, and calm carrier trips. Cats of any age can learn.')}</p>
       <button className="btn" style={{ marginTop: 14 }} onClick={() => void store.saveCat({ ...cat, training: true })}>Turn on training for {cat.name}</button>
     </div>
-  </div>;
+  </>);
 
-  return <div className="screen">
-    <h1 style={{ marginTop: 18 }}>Training</h1>
-    <PetSwitcher />
+  return shell(<>
+    {head}
     <div className="stag">
       <div className="card mint" style={{ padding: 18 }}>
         <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today's sets</b><span className="chip num">{Math.min(rewardedToday, DAILY_REWARDED_SETS)} of {DAILY_REWARDED_SETS}</span></div>
@@ -77,10 +78,10 @@ export function Train() {
           <div className="bar" style={{ marginTop: 12 }}><i style={{ width: `${Math.max(6, (p.step / d.steps.length) * 100)}%` }} /></div></a>; })}</>}
       <h2 style={{ marginTop: 22 }}>More</h2>
       {([['tree', 'Skill tree', 'tree', 'Every skill by branch, and what unlocks next'], ['library', 'Library', 'book', 'How each skill works, with tips and sources'], ['trophies', 'Trophy case', 'star', 'A badge for every skill mastered'],
-        ['corner', `${cat.name}’s corner`, 'star', wallet ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions` : 'Outfits, toys and cushions']] as const).map(([to, title, icon, sub]) =>
+        ['corner', `${cat.name}’s corner`, 'star', wallet ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions` : 'Outfits, toys and cushions']] as const).filter(([to]) => !embedded || to !== 'corner').map(([to, title, icon, sub]) =>
         <button key={to} className="card grey row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 8 }} onClick={() => go(to)}>
           <div className="ico"><Icon name={icon} /></div><div className="sp"><b>{title}</b><p className="s">{sub}</p></div></button>)}
       <button className="btn2" style={{ width: '100%', marginTop: 14, background: 'transparent' }} onClick={() => { if (confirm(`Turn off training for ${cat.name}? Progress and treats are kept; you can turn it back on any time.`)) void store.saveCat({ ...cat, training: false }); }}>Turn off training for {cat.name}</button>
     </div>
-  </div>;
+  </>);
 }
