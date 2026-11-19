@@ -32,7 +32,7 @@ export function VisitPage({ id }: { id: string }) {
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
-    <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{visit ? visit.data.reason : 'Visit'}</b></div>;
+    <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Vet visit</b></div>;
   if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 16 }}>This visit was deleted, or hasn’t reached this phone yet.</p>
     <button className="btn2" style={{ marginTop: 12 }} onClick={() => goBack('health')}>Back to Health</button></div>;
 
@@ -137,9 +137,9 @@ function MoveSheet({ day: day0, time: time0, onSave, onClose }: { day: string; t
   return <Sheet label="Reschedule" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Reschedule</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     <label className="field" htmlFor="mv-day">New day</label>
-    <input id="mv-day" type="date" value={day} min={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} />
+    <input id="mv-day" className="in" type="date" value={day} min={localDay(Date.now())} onChange={(e) => setDay(e.target.value)} />
     <label className="field" htmlFor="mv-time">Time</label>
-    <input id="mv-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+    <input id="mv-time" className="in" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
     <p className="s" style={{ marginTop: 6 }}>{time ? 'Clear the time for an all-day visit.' : 'No time: an all-day visit.'}</p>
     <button className="btn" style={{ width: '100%', marginTop: 14 }} disabled={!ok || busy} onClick={async () => { setBusy(true); await onSave(day, time); }}>Save new time</button>
   </Sheet>;
