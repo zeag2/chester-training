@@ -12,6 +12,9 @@
   --butter-ink:#e9d79a;--peach-ink:#f1bba6;--teal-ink:#a3ddd1;--tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Avenir Next",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+/* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
+   then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */
+html{touch-action:manipulation}
 #root{min-height:100dvh}
 a{color:var(--teal)}
 a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}
@@ -48,7 +51,7 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .top{display:flex;align-items:center;gap:6px;min-height:52px}
 .iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .iconbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 max(10px,var(--safe-b));z-index:20}
+.tabs{position:fixed;left:0;right:0;bottom:0;transform:translateZ(0);-webkit-backface-visibility:hidden;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 max(10px,var(--safe-b));z-index:20}
 .tabs-in{display:flex;justify-content:space-around;width:100%;max-width:480px}
 /* a floating note just above the tab bar (Quick log's Undo): one row, never under the bar */
 .toast{position:fixed;left:12px;right:12px;bottom:calc(max(10px,var(--safe-b)) + 68px);max-width:456px;margin:0 auto;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-radius:18px;background:var(--butter);box-shadow:0 6px 20px rgba(0,0,0,.18)}

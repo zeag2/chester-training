@@ -1377,3 +1377,12 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   no page or console errors. No skills, plugins or new MCP servers.
 - 2026-11-18, Home cat-tab button (Features worker, `claude/features-home-cat-button`): no skills, plugins or new MCP
   servers. Checks: Vitest (271), typecheck, build; Playwright shots `docs/screenshots/home-cat-button/`.
+- 2026-11-19, tab bar scrolling with the page on iPhone (Features worker, `claude/fix-tabbar-scroll`): Josh saw the
+  bottom bar move while scrolling the cat tab (installed app, after tapping "Chester ›"). Not reproducible here: only
+  Chromium is installed (no WebKit), and in Chromium the bar stays fixed and nothing is wider than the screen or
+  transforms the bar's ancestors. Most likely cause: iPhone **double-tap zoom** (the second tap of "Chester ›" lands on
+  the new page's cat card; only links, buttons and the cat had `touch-action`), and in a zoomed page a fixed bar looks
+  like it scrolls with the page. Fix: `html{touch-action:manipulation}` (no double-tap zoom anywhere; pinch zoom still
+  works) and `.tabs` on its own layer (`transform:translateZ(0)`, the usual iOS fixed-bar fix). Regression test in
+  `home.test.tsx` (CSS). The Home "Chester ›" button (PR #31, reverted in 56a6aea) is back on this branch. Needs a check
+  on Josh's iPhone before shipping. Screenshots: `docs/screenshots/tabbar-scroll/`.
