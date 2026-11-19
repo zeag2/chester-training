@@ -1,4 +1,4 @@
-last-reviewed: 5ef497e1efe3d0d3920d541996d01282d114dc70
+last-reviewed: 4d125a7de4b24e2ded7bbd862d4f34494306b38e
 
 # UX review log
 
@@ -18,6 +18,17 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-19: 5ef497e..4d125a7
+Checked the new navigation (Home · Health · + · Chester · Friends), the Settings gear on Home and the "Chester ›"
+button, the Chester tab, the Friends tab with Photos on top, Settings in 3 groups, and onboarding (Welcome, then
+About your cat), in light and dark mode.
+
+Fixed:
+- Home's Settings button was a circle with rays, which reads as a sun (brightness or theme), not settings. It's now a
+  standard gear outline.
+- Friends showed the heading "Friends' cats" twice: above the friend code and above the cat cards. The first one,
+  over the code and Add a friend, now says "Add friends".
 
 ### 2026-11-18: d24d914..5ef497e
 Checked the photo feed's paws and ⋯ menu (Hide this photo, Remove friend), the editable weigh-in list on Health,
