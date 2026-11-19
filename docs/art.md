@@ -46,6 +46,8 @@ systems. Order by date:
 | New Year (Dec 31) | Party hat, gold | Gold party hat + a short confetti burst on a tap. | S | y |
 
 Suggested first batch, before Thanksgiving: leaf crown, Santa hat, antlers (three S drawings, one worker task).
+**Built 2026-11-19** (`claude/features-holiday-cosmetics`): `leafcrown` (Nov 1–30), `santa` (Dec 1–31), `antlers`
+(Dec 1–Jan 6) in `outfit()` (`src/chester/art.ts`), with `season` on `ShopItem` and `inSeason()` in `src/engine/corner.ts`.
 Shop items need start/end dates (a `season` field on `ShopItem`); bought items stay owned after the season.
 
 Unlock ideas: streaks (11), friends (scarf already), seasons (7), care habits (e.g. 30 days of daily checks → raincoat).

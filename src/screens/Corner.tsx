@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
-import { BOND_LEVELS, bondGiftLevel, bondLevel, dailyGiftTreats, giftClaimed, ITEM_BY_ID, owned, playedToday, SHOP, type ShelfKind, type ShopItem } from '../engine/corner';
+import { BOND_LEVELS, bondGiftLevel, bondLevel, dailyGiftTreats, giftClaimed, inSeason, ITEM_BY_ID, owned, playedToday, SHOP, type ShelfKind, type ShopItem } from '../engine/corner';
 import { localDay } from '../engine/day';
 import type { ReactionId } from '../chester/reactions';
 import { Icon, Paw } from '../ui/icons';
@@ -121,7 +121,8 @@ export function Corner() {
       {SHELF.map((sh) => <section key={sh.kind}>
         <h2 style={{ marginTop: 22 }}>{sh.title}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
-          {SHOP.filter((i) => i.kind === sh.kind).map((item) => {
+          {/* seasonal items show only in season, unless already bought */}
+          {SHOP.filter((i) => i.kind === sh.kind && (have.has(i.id) || inSeason(i, day))).map((item) => {
             const mine = have.has(item.id);
             const on = (item.kind === 'outfit' && c?.wearing === item.id) || (item.kind === 'cushion' && c?.cushion === item.id);
             const short = !mine && (!!item.special || balance < item.price);
@@ -132,7 +133,7 @@ export function Corner() {
                 {item.kind === 'outfit' ? <Chester coat={cat.coat} eyes={cat.eyes} wear={item.id} mood="happy" width={74} />
                   : item.kind === 'cushion' ? <CushionArt id={item.id} width={120} /> : <ToyArt name={item.id} i={0} />}</div>
               <b style={{ fontSize: 15 }}>{item.name}</b>
-              <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}{!mine && bondGiftLevel(item.id) ? ` · Free at ${bondGiftLevel(item.id)!.name}` : ''}</p>
+              <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}{!mine && bondGiftLevel(item.id) ? ` · Free at ${bondGiftLevel(item.id)!.name}` : ''}{!mine && item.season ? ` · ${item.season.label} only` : ''}</p>
               <span className="chip num" style={{ alignSelf: 'flex-start', background: mine ? 'var(--surface)' : 'var(--butter)', color: mine ? 'var(--ink)' : 'var(--butter-ink)' }}>
                 {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : item.special ? <><Icon name="lock" size={14} />Make a friend</> : <><Paw size={14} color="#d4a23a" />{label}</>}</span>
             </button>;
