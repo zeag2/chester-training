@@ -8,7 +8,7 @@ import { daysHome, today, ageText } from '../lib/stats';
 import { Icon, Paw } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
-import { TodayCard } from './Care';
+import { MedsDueCard, TodayCard } from './Care';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { Chase } from '../chester/Chase';
 import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
@@ -230,8 +230,8 @@ export function Home() {
         {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
-      {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
-        : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><TodayCard /><NewestPhoto />{rest}</>}
+      {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
+        : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
