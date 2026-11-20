@@ -65,9 +65,11 @@ describe('weigh-ins', () => {
     await store.settled();
     render(<><Care /><ToastHost /></>);
     fireEvent.click(await screen.findByRole('button', { name: /Edit weight 6\.98 lb/ }));
-    expect(await screen.findByText('Edit Weight')).toBeTruthy();
+    expect(await screen.findByText('· Edit Weight')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(await screen.findByText('Deleted 6.98 lb')).toBeTruthy();
+    expect(screen.getByText('Delete this weight for everyone?')).toBeTruthy(); // asked once, in the sheet
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('Deleted · 6.98 lb')).toBeTruthy();
     await store.settled();
     expect(store.get().care.filter((c) => c.kind === 'weight')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
