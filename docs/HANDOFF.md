@@ -72,8 +72,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Fed is logged and there's no account ("Not now" hides it on that phone). QA pass (2026-11-18 PM): **Settings in 3
   groups** (Your cats · Household & account · App, backup moved into App) and a **Home newest-photo card**
   (`src/ui/NewestPhoto.tsx`: a friend's newest photo → Friends tab; one fetch per 5 min; hidden without an account or
-  photos). Home has a **button to the cat's tab** under the cat scene (2026-11-18, `claude/features-home-cat-button`):
-  a `.chipbtn` with his face and name, or "Cats" with several, phone and desktop; tapping the cat still pets him. Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
+  photos). Not done: tapping the cat on Home → his tab (tapping him is already petting; needs its own gesture). Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
   Screenshots: `docs/screenshots/navigation/`.
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
@@ -1375,5 +1374,3 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   every tab, the gear, each + form, deep links (`#/train`, `#/feed`, `#/health/visit/<id>`, `#/me`, `#/tree`,
   `#/corner`), the cat tab → a training session, onboarding (setup and invited paths) and the sign-up card: no breaks,
   no page or console errors. No skills, plugins or new MCP servers.
-- 2026-11-18, Home cat-tab button (Features worker, `claude/features-home-cat-button`): no skills, plugins or new MCP
-  servers. Checks: Vitest (271), typecheck, build; Playwright shots `docs/screenshots/home-cat-button/`.
