@@ -12,6 +12,11 @@
   --butter-ink:#e9d79a;--peach-ink:#f1bba6;--teal-ink:#a3ddd1;--tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Avenir Next",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+/* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
+   then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */
+html{touch-action:manipulation}
+/* the bar on its own layer: the usual iOS fix for a fixed bar that drifts while the page scrolls */
+.tabs{transform:translateZ(0);-webkit-backface-visibility:hidden}
 #root{min-height:100dvh}
 a{color:var(--teal)}
 a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}

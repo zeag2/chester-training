@@ -72,7 +72,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Fed is logged and there's no account ("Not now" hides it on that phone). QA pass (2026-11-18 PM): **Settings in 3
   groups** (Your cats · Household & account · App, backup moved into App) and a **Home newest-photo card**
   (`src/ui/NewestPhoto.tsx`: a friend's newest photo → Friends tab; one fetch per 5 min; hidden without an account or
-  photos). Not done: tapping the cat on Home → his tab (tapping him is already petting; needs its own gesture). Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
+  photos). Home has a **button to the cat's tab** under the cat scene (2026-11-18, `claude/features-home-cat-button`):
+  a `.chipbtn` with his face and name, or "Cats" with several, phone and desktop; tapping the cat still pets him. Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
   Screenshots: `docs/screenshots/navigation/`.
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
@@ -1383,6 +1384,15 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   no page or console errors. No skills, plugins or new MCP servers.
 - 2026-11-18, Home cat-tab button (Features worker, `claude/features-home-cat-button`): no skills, plugins or new MCP
   servers. Checks: Vitest (271), typecheck, build; Playwright shots `docs/screenshots/home-cat-button/`.
+- 2026-11-19, tab bar scrolling with the page on iPhone (Features worker, `claude/fix-tabbar-scroll`): Josh saw the
+  bottom bar move while scrolling the cat tab (installed app, after tapping "Chester ›"). Not reproducible here: only
+  Chromium is installed (no WebKit), and in Chromium the bar stays fixed and nothing is wider than the screen or
+  transforms the bar's ancestors. Most likely cause: iPhone **double-tap zoom** (the second tap of "Chester ›" lands on
+  the new page's cat card; only links, buttons and the cat had `touch-action`), and in a zoomed page a fixed bar looks
+  like it scrolls with the page. Fix: `html{touch-action:manipulation}` (no double-tap zoom anywhere; pinch zoom still
+  works) and `.tabs` on its own layer (`transform:translateZ(0)`, the usual iOS fixed-bar fix). Regression test in
+  `home.test.tsx` (CSS). The Home "Chester ›" button (PR #31, reverted in 56a6aea) is back on this branch. Needs a check
+  on Josh's iPhone before shipping. Screenshots: `docs/screenshots/tabbar-scroll/`.
 - 2026-11-19, holiday cosmetics (Features worker, `claude/features-holiday-cosmetics`): leaf crown, Santa hat and
   reindeer antlers drawn in `outfit()`; `ShopItem.season` (MM-DD, wraps past New Year) hides them out of season unless
   owned, and `canBuy`/`store.buy` refuse them out of season. No skills, plugins or new MCP servers. Checks: Vitest (272),

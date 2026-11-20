@@ -186,6 +186,12 @@ export function Home() {
       {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
       {!chasing && <div style={{ marginBottom: S.bubbleLift }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
     </div>;
+  // the "hot button" to the cat's tab (tapping him still pets him); "Cats" when there are several, like the tab
+  const catLink = <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 10, alignSelf: 'flex-start' }}
+    onClick={() => go('chester')} aria-label={pets.length > 1 ? 'Open the Cats tab' : `Open ${cat.name}’s tab`}>
+    <span aria-hidden="true" style={{ width: 28, height: 28, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" width={38} /></span>
+    {pets.length > 1 ? 'Cats' : cat.name} <span aria-hidden="true">›</span></button>;
   const moved = movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
       <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
       <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
@@ -224,8 +230,8 @@ export function Home() {
         {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
         {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
-      {S.big ? <div className="homecols"><div className="homecol">{scene}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
-        : <>{scene}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
+      {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
+        : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
       <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
