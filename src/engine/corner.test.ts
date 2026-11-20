@@ -91,3 +91,24 @@ describe('Chester’s corner', () => {
     expect(careStreakDue({ log: [ev('streak-2026-11-02', 10, now - 7 * day, { kind: 'streak', day: '2026-11-02' })] }, week, now)).toBe('streak-2026-11-09');
   });
 });
+
+describe('holiday items', () => {
+  it('are in the shop only in season (wrapping past New Year), and stay owned after', async () => {
+    const { inSeason, SHOP } = await import('./corner');
+    const leaf = ITEM_BY_ID.leafcrown, santa = ITEM_BY_ID.santa, antlers = ITEM_BY_ID.antlers;
+    expect([leaf, santa, antlers].every(Boolean)).toBe(true);
+    expect(inSeason(leaf, '2026-11-19')).toBe(true);
+    expect(inSeason(leaf, '2026-12-01')).toBe(false);
+    expect(inSeason(santa, '2026-11-30')).toBe(false);
+    expect(inSeason(santa, '2026-12-25')).toBe(true);
+    expect(inSeason(antlers, '2027-01-06')).toBe(true);
+    expect(inSeason(antlers, '2027-01-07')).toBe(false);
+    expect(inSeason(ITEM_BY_ID.bell, '2026-07-04')).toBe(true); // no season: always
+    expect(canBuy(santa, 99, { log: [] }, 0, '2026-11-19')).toBe(false);
+    expect(canBuy(santa, 99, { log: [] }, 0, '2026-12-02')).toBe(true);
+    // bought in season → still owned out of season
+    const c = { log: [ev('b1', -30, 1, { item: 'santa', day: '2026-12-02' })] };
+    expect(owned(c).has('santa')).toBe(true);
+    expect(SHOP.filter((i) => i.season).map((i) => i.id)).toEqual(['leafcrown', 'santa', 'antlers']);
+  });
+});

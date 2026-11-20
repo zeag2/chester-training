@@ -845,7 +845,7 @@ src/
     types.ts            Cat, SetRecord, SkillDef, Wallet, Gift, SessionDraft…
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
-    corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels
+    corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels; seasonal items (`season` MM-DD from/to, `inSeason`)
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -1381,6 +1381,12 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   every tab, the gear, each + form, deep links (`#/train`, `#/feed`, `#/health/visit/<id>`, `#/me`, `#/tree`,
   `#/corner`), the cat tab → a training session, onboarding (setup and invited paths) and the sign-up card: no breaks,
   no page or console errors. No skills, plugins or new MCP servers.
+- 2026-11-18, Home cat-tab button (Features worker, `claude/features-home-cat-button`): no skills, plugins or new MCP
+  servers. Checks: Vitest (271), typecheck, build; Playwright shots `docs/screenshots/home-cat-button/`.
+- 2026-11-19, holiday cosmetics (Features worker, `claude/features-holiday-cosmetics`): leaf crown, Santa hat and
+  reindeer antlers drawn in `outfit()`; `ShopItem.season` (MM-DD, wraps past New Year) hides them out of season unless
+  owned, and `canBuy`/`store.buy` refuse them out of season. No skills, plugins or new MCP servers. Checks: Vitest (272),
+  typecheck, build; Playwright renders with a fixed clock (Nov 19, Dec 5): `docs/screenshots/holiday/`.
 - 2026-11-19, medicine reminders in-app (Features worker, `claude/features-medicine-reminders`): no skills, plugins or
   new MCP servers. Followed `docs/design-system.md` (existing card/chipbtn/seg, tokens) and the after-the-visit brief's
   entry pattern (cat in the header, Saved · Undo). Checks: Vitest (272), typecheck, build; Playwright iPhone 13 shots.

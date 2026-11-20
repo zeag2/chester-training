@@ -6,8 +6,9 @@ import type { CareItem } from './care';
 import { daysBetween, localDay } from './day';
 
 export type ShelfKind = 'outfit' | 'toy' | 'cushion';
-/** `special`: not for sale; earned another way (shown in the corner once earned, with how to earn it until then). */
-export interface ShopItem { id: string; kind: ShelfKind; name: string; price: number; blurb: string; special?: string }
+/** `special`: not for sale; earned another way (shown in the corner once earned, with how to earn it until then).
+    `season`: only in the shop from `from` to `to` (MM-DD, inclusive; may wrap past New Year). Bought items stay owned. */
+export interface ShopItem { id: string; kind: ShelfKind; name: string; price: number; blurb: string; special?: string; season?: { from: string; to: string; label: string } }
 
 export const SHOP: ShopItem[] = [
   { id: 'bell', kind: 'outfit', name: 'Bell collar', price: 12, blurb: 'Jingles when he hops' },
@@ -17,6 +18,10 @@ export const SHOP: ShopItem[] = [
   { id: 'party', kind: 'outfit', name: 'Party hat', price: 28, blurb: 'Every day is a party' },
   { id: 'crown', kind: 'outfit', name: 'Little crown', price: 45, blurb: 'He always knew' },
   { id: 'scarf', kind: 'outfit', name: 'Friendship scarf', price: 0, blurb: 'For making a friend', special: 'Make a friend on PalDex to earn it' },
+  // holidays (docs/art.md): in the shop for a few weeks each
+  { id: 'leafcrown', kind: 'outfit', name: 'Leaf crown', price: 20, blurb: 'Autumn leaves for Thanksgiving', season: { from: '11-01', to: '11-30', label: 'Thanksgiving' } },
+  { id: 'santa', kind: 'outfit', name: 'Santa hat', price: 30, blurb: 'Ho ho ho', season: { from: '12-01', to: '12-31', label: 'December' } },
+  { id: 'antlers', kind: 'outfit', name: 'Reindeer antlers', price: 26, blurb: 'Felt antlers with a jingle bell', season: { from: '12-01', to: '01-06', label: 'Holidays' } },
   { id: 'box', kind: 'toy', name: 'Cardboard box', price: 8, blurb: 'The best toy ever made' },
   { id: 'laser', kind: 'toy', name: 'Laser dot', price: 14, blurb: 'Where did it go?' },
   { id: 'tunnel', kind: 'toy', name: 'Crinkle tunnel', price: 24, blurb: 'Zoom in, zoom out' },
@@ -132,7 +137,13 @@ export function careStreakDue(c: Corner | undefined, care: CareItem[], now = Dat
 /** The first play of the day: a bond point and a couple of treats. */
 export const PLAY_REWARD = { treats: 2, bond: 1 };
 
-export function canBuy(item: ShopItem, balance: number, c: Corner | undefined, bond = 0): boolean { return !item.special && !owned(c, bond).has(item.id) && balance >= item.price; }
+export function canBuy(item: ShopItem, balance: number, c: Corner | undefined, bond = 0, day = localDay(Date.now())): boolean { return !item.special && inSeason(item, day) && !owned(c, bond).has(item.id) && balance >= item.price; }
+/** Is a seasonal item in the shop on this day (YYYY-MM-DD)? Items without a season always are. */
+export function inSeason(item: ShopItem, day: string): boolean {
+  if (!item.season) return true;
+  const md = day.slice(5), { from, to } = item.season;
+  return from <= to ? md >= from && md <= to : md >= from || md <= to;
+}
 
 /** The daily gift's size, the same on every phone for a given pet and day: 2 to 6 treats. */
 export function dailyGiftTreats(catId: string, day: string): number {
