@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { store, useStore } from '../db/store';
+import { Chester } from '../chester/Chester';
 import { localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import { Sheet } from '../ui/Sheet';
 import {
-  dueText, entryTime, GROOM, lastOf, MED_LABEL, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
-  type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedWhat, type Verdict,
+  dueText, entryTime, GROOM, lastOf, MED_LABEL, medsDue, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
+  type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedDue, type MedWhat, type Verdict,
 } from '../engine/care';
 import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
@@ -217,10 +218,17 @@ function Spark({ values }: { values: number[] }) {
     {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.5" fill="var(--ink)" />)}</svg>;
 }
 
+/** The medicine form's Repeat + until as the entry's `course` (a repeating medicine has no single next-due date). */
+function withCourse(f: any) {
+  const { times, until, ...rest } = f;
+  const n = Number(times) || 0;
+  return n > 0 && until ? { ...rest, nextDue: undefined, course: { times: n, until } } : rest;
+}
+
 const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
   food: { name: '', brand: '', type: 'wet', verdict: 'love', current: true, notes: '' },
   weight: { lb: '' }, symptom: { what: '', worried: false, notes: '' }, groom: { what: 'brush', notes: '' },
-  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '' }, doc: { title: '' }, daily: { what: 'fed' },
+  vet: { reason: '', clinic: '', notes: '' }, med: { name: '', what: 'flea', nextDue: '', notes: '', times: '', until: '' }, doc: { title: '' }, daily: { what: 'fed' },
 };
 
 /** Bottom sheet with the form for one kind of entry; also edits and deletes. */
@@ -229,6 +237,8 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const pt = usePetText();
   const { care, cat } = useStore();
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
+  // a medicine's daily course shows as Repeat + until in the form
+  if (d0.course) { d0.times = String(d0.course.times); d0.until = d0.course.until; delete d0.course; }
   const [day, setDay] = useState(editing.day ?? localDay(item?.at ?? Date.now()));
   // smart defaults for a new entry: the clinic from the last visit, the grooming you did last
   const [f, setF] = useState<any>(() => {
@@ -241,11 +251,11 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const presetName = !!editing.preset && 'name' in editing.preset;
   const repeats = kind === 'med' && !item && !presetName ? recentMeds(care) : [];
   const set = (k: string, v: unknown) => setF((x: any) => ({ ...x, [k]: v }));
-  const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() : true;
+  const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() && (!f.times || !!f.until) : true;
   const save = async () => {
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
-    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...f, name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: f.status === 'cancelled' ? 'cancelled' : day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
+    const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...(kind === 'med' ? withCourse(f) : f), name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: f.status === 'cancelled' ? 'cancelled' : day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
     await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: docVisitId(care, item as CareItem<'doc'>, f.visitId) } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
     audio.sparkle(); onClose();
   };
@@ -289,7 +299,10 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
           onClick={() => setF((x: any) => ({ ...x, name: m.data.name, what: m.data.what, notes: m.data.notes ?? '', nextDue: nextDueLike(m, day) }))}>{m.data.name}</button>)}</div></>}
         {text('Name', 'name', { placeholder: 'e.g. FVRCP booster, Revolution', autoFocus: !item && !presetName })}
         {seg<MedWhat>('Kind', 'what', [['vaccine', 'Vaccine'], ['flea', 'Flea'], ['worm', 'Worms'], ['medicine', 'Other']])}{when}
-        <label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} />
+        {seg<string>('Repeat', 'times', [['', 'Once'], ['1', 'Daily'], ['2', 'Twice a day'], ['3', '3× a day']])}
+        {f.times ? <><label className="field" htmlFor="c-until">Every day until</label><input id="c-until" className="in" type="date" value={f.until ?? ''} min={day} onChange={(e) => set('until', e.target.value)} />
+          <p className="s" style={{ marginTop: 6 }}>Home shows what’s left to give each day, with a one-tap Given.</p></>
+          : <><label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} /></>}
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
       <button className="btn sheetsave" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
       {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
@@ -332,6 +345,34 @@ export function TodayCard() {
         <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
           <Icon name={icon} size={20} /><span style={{ fontSize: 12 }}>{label}</span></button>)}
     </div>
+  </div>;
+}
+
+/** Home: medicine to give today (in-app reminders), with the cat's name on top and a one-tap Given that logs the dose
+    ("Saved · Undo"). A course keeps its schedule on each dose; a next-due dose rolls on by the same gap as last time. */
+export function MedsDueCard() {
+  const { cat, care } = useStore();
+  const due = useMemo(() => medsDue(care), [care]);
+  const [busy, setBusy] = useState('');
+  if (!cat || !due.length) return null;
+  const give = async (d: MedDue) => {
+    setBusy(d.key);
+    try {
+      const today = localDay(Date.now());
+      const data: CareData['med'] = { name: d.last.data.name, what: d.last.data.what, ...(d.kind === 'course' ? { course: d.last.data.course } : (() => { const n = nextDueLike(d.last, today); return n ? { nextDue: n } : {}; })()) };
+      const it = await store.saveCare('med', data, { at: Date.now() });
+      if (it) showToast({ msg: `Saved · ${d.name} for ${cat.name}`, action: { label: 'Undo', run: () => void store.deleteCare(it.id) } });
+      audio.sparkle();
+    } finally { setBusy(''); }
+  };
+  return <div className="card peach" role="region" aria-label={`${cat.name}’s medicine today`}>
+    <div className="row" style={{ gap: 8 }}><span aria-hidden="true" style={{ width: 28, height: 28, flex: 'none', overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" width={38} /></span>
+      <b className="sp" style={{ fontSize: 16, color: 'var(--peach-ink)' }}>{cat.name} · Medicine</b></div>
+    {due.map((d) => <div key={d.key} className="row" style={{ marginTop: 10, gap: 10 }}>
+      <div className="sp"><b style={{ fontSize: 15 }}>{d.name}</b>
+        <p className="s" style={{ color: 'var(--peach-ink)' }}>{d.kind === 'course' ? `${d.given} of ${d.times} today · until ${fmt(noon(d.until!))}` : d.daysLeft < 0 ? `Overdue by ${-d.daysLeft} day${d.daysLeft === -1 ? '' : 's'}` : 'Due today'}</p></div>
+      <button className="chipbtn" disabled={busy === d.key} onClick={() => void give(d)} aria-label={`Given: ${d.name}`}><Icon name="check" size={16} /> Given</button>
+    </div>)}
   </div>;
 }
 
