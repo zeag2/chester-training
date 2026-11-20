@@ -16,7 +16,7 @@ import type { Vet, VetData } from '../engine/vets';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
 import { MOVE_REWARD } from '../engine/play';
-import { FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
+import { inSeason, FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
 export interface Household { inviteCode: string; members: Member[] }
@@ -200,7 +200,7 @@ export class Store {
   buy(itemId: string): Promise<boolean> {
     return this.corner((c) => {
       const item = ITEM_BY_ID[itemId]; const balance = this.snap.wallet?.treats ?? 0;
-      if (!item || balance < item.price || c.log.some((e) => e.kind === 'buy' && e.item === itemId)) return null;
+      if (!item || balance < item.price || !inSeason(item, localDay(Date.now())) || c.log.some((e) => e.kind === 'buy' && e.item === itemId)) return null;
       const log = [...c.log, this.event('buy', 'buy-' + uid(), -item.price, 0, itemId)];
       return { ...c, log, ...(item.kind === 'outfit' ? { wearing: itemId, styledAt: Date.now() } : item.kind === 'cushion' ? { cushion: itemId, styledAt: Date.now() } : {}) };
     });
