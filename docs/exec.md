@@ -43,7 +43,7 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | merged (PR #32) |
 | Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | merged (PR #33) |
 | Thu Nov 19 | Home "Chester >" button (PR #31) reverted: broke things; redo once Josh says what he saw | S / 1–2% | Josh's report | redone + merged (PR #34, with the iPhone tab-bar fix) |
-| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | running by day (started ~10 AM Fri) |
+| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | done: PR #35 green; QA 12:40 PM, then ship it |
 | Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
 | Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | |
 | Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | |
