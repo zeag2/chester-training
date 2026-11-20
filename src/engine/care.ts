@@ -22,7 +22,8 @@ export interface CareData {
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
   groom: { what: GroomWhat; notes?: string };
-  med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string; visitId?: string };
+  /** `course`: a daily medicine (e.g. twice a day until Dec 1); each dose given is its own entry carrying the course. */
+  med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string; visitId?: string; course?: { times: number; until: string } };
   /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
   /** `ok`: the daily check said all normal (false: something's off, see the symptom logged with it). */
   daily: { what: DailyWhat; ok?: boolean; minutes?: number; notes?: string };
@@ -186,6 +187,27 @@ export function recentMeds(items: CareItem[], n = 3): CareItem<'med'>[] {
     seen.add(k); out.push(m); if (out.length >= n) break;
   }
   return out;
+}
+
+export interface MedDue { key: string; name: string; what: MedWhat; kind: 'course' | 'due'; given: number; times: number; until?: string; daysLeft: number; last: CareItem<'med'> }
+/** Medicine to give today (in-app reminders): a daily course still running with doses left today, or a dose whose
+    next-due day has come (or passed). The latest entry per medicine name decides, as in `reminders`. */
+export function medsDue(items: CareItem[], now = Date.now()): MedDue[] {
+  const today = localDay(now);
+  const meds = items.filter((i): i is CareItem<'med'> => i.kind === 'med' && !i.deleted).sort((a, b) => a.at - b.at);
+  const latest = new Map<string, CareItem<'med'>>();
+  for (const m of meds) latest.set(m.data.name.trim().toLowerCase(), m);
+  const out: MedDue[] = [];
+  for (const [k, m] of latest) {
+    const c = m.data.course;
+    if (c && c.times > 0 && localDay(m.at) <= today && today <= c.until) {
+      const given = meds.filter((x) => x.data.name.trim().toLowerCase() === k && localDay(x.at) === today).length;
+      if (given < c.times) out.push({ key: k, name: m.data.name, what: m.data.what, kind: 'course', given, times: c.times, until: c.until, daysLeft: 0, last: m });
+    } else if (!c && m.data.nextDue && m.data.nextDue <= today) {
+      out.push({ key: k, name: m.data.name, what: m.data.what, kind: 'due', given: 0, times: 1, daysLeft: daysBetween(today, m.data.nextDue), last: m });
+    }
+  }
+  return out.sort((a, b) => a.daysLeft - b.daysLeft || a.name.localeCompare(b.name));
 }
 
 /** Repeating a medicine: the same gap to the next dose as last time ("" when last time had no next due date). */

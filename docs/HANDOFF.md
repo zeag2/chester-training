@@ -562,7 +562,14 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
-6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
+6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
+   medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
+   until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
+   card (`MedsDueCard` in `Care.tsx`, from `medsDue()` in `src/engine/care.ts`) lists a course's doses left today ("1 of
+   2 today · until Nov 25") and any dose whose next-due day has come or passed ("Overdue by 1 day"), each with a one-tap
+   **Given** that logs the dose and shows "Saved · Revolution for Chester · Undo". A next-due dose rolls on by the same
+   gap as last time (`nextDueLike`). Push notifications come later (agenda 5). Tests: `src/engine/meds.test.ts`,
+   `src/screens/meds.test.tsx`. Screenshots: `docs/screenshots/meds/`.
 7. [x] **Vet redesign, steps 3–5** (done 2026-11-10, pull request from `claude/features-vet-redesign-3-5`; no SQL) (Josh, 2026-11-09; plan `docs/plans/2026-11-09-vet-redesign.md`, steps 1–2 done):
    a page per visit (`#/health/visit/<id>`) with its documents, doses and weight linked by `visitId`; All documents
    (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
@@ -1374,3 +1381,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   every tab, the gear, each + form, deep links (`#/train`, `#/feed`, `#/health/visit/<id>`, `#/me`, `#/tree`,
   `#/corner`), the cat tab → a training session, onboarding (setup and invited paths) and the sign-up card: no breaks,
   no page or console errors. No skills, plugins or new MCP servers.
+- 2026-11-19, medicine reminders in-app (Features worker, `claude/features-medicine-reminders`): no skills, plugins or
+  new MCP servers. Followed `docs/design-system.md` (existing card/chipbtn/seg, tokens) and the after-the-visit brief's
+  entry pattern (cat in the header, Saved · Undo). Checks: Vitest (272), typecheck, build; Playwright iPhone 13 shots.
