@@ -341,6 +341,16 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     on its day), **Documents** (+ Add a document reads it as usual, but links the document, doses and weight to this
     visit and offers what the vet said for this visit's notes instead of a new visit), Edit / Delete. Every visit opens
     it: Health's Next/Last, Coming up, the Health log and the summary.
+  - **One pattern for every entry** (after-the-visit part 1, 2026-11-20, `claude/features-after-visit-1`; plan
+    `docs/plans/2026-11-14-after-the-visit.md` steps 1–3): every save in `CareSheet` ends with **"Saved · FeLV for
+    Chester · Undo"** (a new entry: Undo removes it; an edit: Undo restores the old version), and Delete asks once in
+    the sheet ("Delete this weight for everyone? You can undo…"), then **"Deleted · … · Undo"** (documents: no Undo, the
+    file is gone; no more `confirm()`). The header shows the **cat chip** ("[face] Chester · Weight"); with several cats
+    it switches the cat on a new entry (`saveCare` `catId`). Dose, weight and symptom forms have **"Part of a visit?"**
+    chips (visits within 7 days; a visit that day picked by default; `visitId`, now on symptoms too). **Duplicate
+    guard:** a dose with the same name, or a weigh-in, already logged that day asks "Already logged at 10:30. Add
+    another?". Tests: `src/screens/entries.test.tsx`. Part 2 (reader additions, the review screen with batch Undo,
+    timeline rows) is next.
   - **Weigh-ins** (fixed 2026-11-14, `claude/fix-weight-dupes`): `saveCare('weight')` without an id updates the
     weigh-in for the same visit (`visitId`), or the same cat + day + value, instead of adding one (re-scanned
     documents, the visit's "+ Weight" and the Health form had each added a copy). Old copies are cleaned up with no
@@ -1400,3 +1410,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-19, medicine reminders in-app (Features worker, `claude/features-medicine-reminders`): no skills, plugins or
   new MCP servers. Followed `docs/design-system.md` (existing card/chipbtn/seg, tokens) and the after-the-visit brief's
   entry pattern (cat in the header, Saved · Undo). Checks: Vitest (272), typecheck, build; Playwright iPhone 13 shots.
+- 2026-11-20, after-the-visit part 1 (Features worker, `claude/features-after-visit-1`): no skills, plugins or new MCP
+  servers. Followed `docs/design-system.md` (existing chipbtn/card/btn, tokens). Checks: Vitest (279), typecheck,
+  build; Playwright iPhone 13 shots in `docs/screenshots/after-visit-1/`.

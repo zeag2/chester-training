@@ -18,7 +18,7 @@ export interface CareData {
   vet: { reason: string; clinic?: string; phone?: string; address?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' | 'cancelled';
     /** how many times the calendar event was changed (rescheduled or cancelled): the .ics SEQUENCE */
     calSeq?: number };
-  symptom: { what: string; worried?: boolean; notes?: string };
+  symptom: { what: string; worried?: boolean; notes?: string; visitId?: string };
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
   groom: { what: GroomWhat; notes?: string };

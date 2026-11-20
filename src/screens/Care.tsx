@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { store, useStore } from '../db/store';
 import { Chester } from '../chester/Chester';
-import { localDay } from '../engine/day';
+import { daysBetween, localDay } from '../engine/day';
 import { usePetText } from '../lib/pet';
 import { Sheet } from '../ui/Sheet';
 import {
@@ -235,7 +235,12 @@ const DEFAULTS: Record<CareKind, Record<string, unknown>> = {
 export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>; onClose: () => void }) {
   const { kind, item } = editing;
   const pt = usePetText();
-  const { care, cat } = useStore();
+  const { care, cat, pets } = useStore();
+  // which cat (the chip in the header; switchable on a new entry when there are several), and an in-sheet question
+  const [catId, setCatId] = useState(item?.catId ?? cat?.id ?? '');
+  const [pickCat, setPickCat] = useState(false);
+  const [asking, setAsking] = useState<'' | 'delete' | 'dup'>('');
+  const shown = pets.find((p) => p.id === catId) ?? cat;
   const d0 = { ...(item?.data ?? {}), ...(editing.preset ?? {}) } as any;
   // a medicine's daily course shows as Repeat + until in the form
   if (d0.course) { d0.times = String(d0.course.times); d0.until = d0.course.until; delete d0.course; }
@@ -252,12 +257,28 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const repeats = kind === 'med' && !item && !presetName ? recentMeds(care) : [];
   const set = (k: string, v: unknown) => setF((x: any) => ({ ...x, [k]: v }));
   const ok = kind === 'doc' ? !!f.title?.trim() : kind === 'food' ? !!f.name.trim() : kind === 'weight' ? Number(f.lb) > 0 && Number(f.lb) < 40 : kind === 'symptom' ? !!f.what.trim() : kind === 'vet' ? !!f.reason.trim() : kind === 'med' ? !!f.name.trim() && (!f.times || !!f.until) : true;
-  const save = async () => {
+  // a dose, weigh-in or symptom can belong to a visit: recent visits as chips, a visit that day picked by default
+  const linkable = (kind === 'med' || kind === 'weight' || kind === 'symptom') && catId === cat?.id;
+  const nearVisits = linkable ? care.filter((c): c is CareItem<'vet'> => c.kind === 'vet' && (c.data as CareData['vet']).status !== 'cancelled' && Math.abs(daysBetween(localDay(c.at), day)) <= 7)
+    .sort((a, b) => Math.abs(daysBetween(localDay(a.at), day)) - Math.abs(daysBetween(localDay(b.at), day))).slice(0, 3) : [];
+  const visitId: string | undefined = f.visitId === undefined ? (item ? undefined : nearVisits.find((v) => localDay(v.at) === day)?.id) : f.visitId || undefined;
+  // the same dose or a weigh-in already logged that day: ask before adding another
+  const dup = !item && catId === cat?.id && (kind === 'med' || kind === 'weight')
+    ? care.find((c) => c.kind === kind && localDay(c.at) === day && (kind === 'weight' || (c.data as CareData['med']).name.trim().toLowerCase() === String(f.name ?? '').trim().toLowerCase())) : undefined;
+  const label = (k: CareKind, d: any) => (k === 'weight' ? `${d.lb} lb` : k === 'med' || k === 'food' ? d.name : k === 'symptom' || k === 'groom' ? d.what : k === 'vet' ? d.reason : k === 'doc' ? d.title : TITLE[k as Exclude<CareKind, 'food'>]);
+  const save = async (force = false) => {
+    if (dup && !force) { setAsking('dup'); return; }
     const clean = (o: any) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined));
     // a visit dated after today is booked; saving one on or after its day (e.g. adding what the vet said) makes it done
     const data = kind === 'weight' ? { lb: Math.round(Number(f.lb) * 100) / 100, ...(f.doc ? { doc: f.doc } : {}), ...(f.visitId ? { visitId: f.visitId } : {}) } : clean({ ...(kind === 'med' ? withCourse(f) : f), name: f.name?.trim?.() ?? f.name, ...(kind === 'vet' ? { status: f.status === 'cancelled' ? 'cancelled' : day > localDay(Date.now()) ? 'booked' : 'done' } : {}) });
-    await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: docVisitId(care, item as CareItem<'doc'>, f.visitId) } : data) as never, { id: item?.id, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
-    audio.sparkle(); onClose();
+    const linked = linkable ? { ...data, visitId } : data;
+    const saved = await store.saveCare(kind, (kind === 'doc' ? { ...item!.data, title: f.title.trim(), visitId: docVisitId(care, item as CareItem<'doc'>, f.visitId) } : clean(linked)) as never,
+      { id: item?.id, catId, at: (kind === 'food' || kind === 'doc') && item ? item.at : entryTime(day, Date.now(), item?.at) });
+    onClose();
+    // the same toast for every save: new → Undo removes it; an edit → Undo puts the old version back
+    if (saved) showToast({ msg: `Saved · ${label(kind, saved.data)}${shown ? ` for ${shown.name}` : ''}`, action: { label: 'Undo', run: () => void (item
+      ? store.saveCare(kind, item.data as never, { id: item.id, at: item.at, catId: item.catId }) : store.deleteCare(saved.id)) } });
+    audio.sparkle();
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
     <div className="seg" role="group" aria-label={label}>{opts.map(([v, l]) => <button key={v} className={f[key] === v ? 'on' : ''} aria-pressed={f[key] === v} onClick={() => set(key, v)}>{l}</button>)}</div></>;
@@ -266,8 +287,15 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={kind === 'vet' ? undefined : localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
   return <Sheet label={item ? 'Edit entry' : 'New entry'} onClose={onClose}>
-      <div className="row"><b className="sp" style={{ fontSize: 18 }}>{kind === 'food' ? (item ? 'Edit food or treat' : 'Add food or treat') : (item ? 'Edit ' : '') + TITLE[kind]}</b>
+      <div className="row" style={{ gap: 8 }}>
+        {/* the cat this is for, always in the header; tap to switch on a new entry when there are several */}
+        {shown && <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 8, flex: 'none' }} disabled={!!item || pets.length < 2}
+          aria-label={`For ${shown.name}${!item && pets.length > 1 ? ', tap to change' : ''}`} aria-expanded={!item && pets.length > 1 ? pickCat : undefined} onClick={() => setPickCat(!pickCat)}>
+          <span aria-hidden="true" style={{ width: 26, height: 26, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}><Chester coat={shown.coat} eyes={shown.eyes} mood="happy" width={36} /></span>{shown.name}</button>}
+        <b className="sp" style={{ fontSize: 18 }}>· {kind === 'food' ? (item ? 'Edit food or treat' : 'Add food or treat') : (item ? 'Edit ' : '') + TITLE[kind]}</b>
         <button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
+      {pickCat && !item && pets.length > 1 && <div className="row chiprow" role="group" aria-label="Which cat" style={{ gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+        {pets.map((p) => <button key={p.id} className={'chipbtn' + (p.id === catId ? ' on' : '')} aria-pressed={p.id === catId} onClick={() => { setCatId(p.id); setPickCat(false); }}>{p.name}</button>)}</div>}
       {kind === 'food' && !item && <FoodFinder known={care.filter((c): c is CareItem<'food'> => c.kind === 'food')} onCode={(code) => setF((x: any) => ({ ...x, code }))}
         onPick={(h) => setF((x: any) => ({ ...x, name: h.name, brand: h.brand ?? '', type: h.type, code: h.code, ingredients: h.ingredients, image: h.image }))} />}
       {kind === 'food' && <>{f.image && <img src={f.image} alt="" style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 12, background: '#fff', marginTop: 12 }} />}
@@ -304,7 +332,16 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
           <p className="s" style={{ marginTop: 6 }}>Home shows what’s left to give each day, with a one-tap Given.</p></>
           : <><label className="field" htmlFor="c-next">Next due (optional)</label><input id="c-next" className="in" type="date" value={f.nextDue ?? ''} min={day} onChange={(e) => set('nextDue', e.target.value)} /></>}
         {text('Notes (optional)', 'notes', { placeholder: 'Dose, which leg, reactions…' })}</>}
-      <button className="btn sheetsave" style={{ marginTop: 20 }} disabled={!ok} onClick={save}>{item ? 'Save changes' : 'Save'}</button>
+      {nearVisits.length > 0 && <><span className="field">Part of a visit?</span>
+        <div className="row chiprow" role="group" aria-label="Part of a visit" style={{ gap: 6, flexWrap: 'wrap' }}>
+          <button className={'chipbtn' + (!visitId ? ' on' : '')} aria-pressed={!visitId} onClick={() => set('visitId', '')}>No</button>
+          {nearVisits.map((v) => <button key={v.id} className={'chipbtn' + (visitId === v.id ? ' on' : '')} aria-pressed={visitId === v.id} onClick={() => set('visitId', v.id)}>
+            {(v.data as CareData['vet']).reason} · {fmt(v.at)}</button>)}</div></>}
+      {asking === 'dup' && dup ? <div className="card butter" role="alert" style={{ marginTop: 16 }}>
+          <b style={{ color: 'var(--butter-ink)' }}>Already logged at {new Date(dup.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}{kind === 'weight' ? ` (${(dup.data as CareData['weight']).lb} lb)` : ''}. Add another?</b>
+          <div className="row" style={{ gap: 8, marginTop: 10 }}><button className="btn" style={{ flex: 1, marginTop: 0 }} onClick={() => void save(true)}>Add another</button>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => setAsking('')}>Cancel</button></div></div>
+        : <button className="btn sheetsave" style={{ marginTop: 20 }} disabled={!ok} onClick={() => void save()}>{item ? 'Save changes' : 'Save'}</button>}
       {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
         const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
         return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
@@ -313,14 +350,18 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
             <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'google')}>Google Calendar</button></div>
           <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
       })()}
-      {item && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={async () => {
-        // a weigh-in goes at once with Undo (like the daily log); everything else asks first
-        if (item.kind === 'weight') {
-          await store.deleteCare(item.id); onClose();
-          showToast({ msg: `Deleted ${(item.data as { lb: number }).lb} lb`, action: { label: 'Undo', run: () => void store.saveCare('weight', item.data as never, { id: item.id, at: item.at, catId: item.catId }) } });
-          return;
-        }
-        if (confirm('Delete this for everyone?')) { if (item.kind === 'doc') await store.removeDoc(item as CareItem<'doc'>); else await store.deleteCare(item.id); onClose(); } }}>Delete</button>}
+      {/* delete asks once, here in the sheet, then the same toast with Undo (a document's file can't come back) */}
+      {item && (asking === 'delete' ? <div className="card peach" role="alert" style={{ marginTop: 12 }}>
+          <b style={{ color: 'var(--peach-ink)' }}>Delete this {kind === 'doc' ? 'document' : TITLE[kind as Exclude<CareKind, 'food'>]?.toLowerCase() ?? 'entry'} for everyone?</b>
+          <p className="s" style={{ color: 'var(--peach-ink)', marginTop: 2 }}>{kind === 'doc' ? 'The file is removed too.' : 'You can undo for a few seconds after.'}</p>
+          <div className="row" style={{ gap: 8, marginTop: 10 }}>
+            <button className="btn" style={{ flex: 1, marginTop: 0, background: 'var(--rose)' }} onClick={async () => {
+              if (item.kind === 'doc') { await store.removeDoc(item as CareItem<'doc'>); onClose(); showToast({ msg: `Deleted · ${label('doc', item.data)}` }); return; }
+              await store.deleteCare(item.id); onClose();
+              showToast({ msg: `Deleted · ${label(item.kind, item.data)}`, action: { label: 'Undo', run: () => void store.saveCare(item.kind, item.data as never, { id: item.id, at: item.at, catId: item.catId }) } });
+            }}>Delete</button>
+            <button className="btn2" style={{ flex: 1 }} onClick={() => setAsking('')}>Keep it</button></div></div>
+        : <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }} onClick={() => setAsking('delete')}>Delete</button>)}
     </Sheet>;
 }
 
