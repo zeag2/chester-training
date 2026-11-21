@@ -1,4 +1,4 @@
-last-reviewed: 6b8ce52439e358abef9c999fdb0710c34ca915d4
+last-reviewed: 532523b390b131e4fe5c374fe53b531042884c69
 
 # UX review log
 
@@ -18,6 +18,13 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-21: 6b8ce52..532523b
+Checked after-the-visit part 1 with two cats and a visit today: the log sheet's cat chip ("Chester · Weight"), the
+"Part of a visit?" chips (today's visit picked by default), the duplicate guard ("Already logged at 6:46 AM… Add
+another?") and the Saved · Undo toast; Health with a medicine course; the "Is Hazel Dell Vet your vet?" suggestion.
+Light and dark mode. No changes needed. The returning Home cat-tab button and holiday cosmetics belong to the
+feature and art sessions and weren't touched.
 
 ### 2026-11-19: 5ef497e..4d125a7
 Checked the new navigation (Home · Health · + · Chester · Friends), the Settings gear on Home and the "Chester ›"
