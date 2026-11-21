@@ -16,6 +16,8 @@ export interface CareData {
   /** `time` (HH:MM): for an upcoming appointment, so it can go in the calendar. */
   /** `phone`, `address`: a one-off clinic's ("+ Other clinic" in Book a visit), when it isn't a saved vet. */
   vet: { reason: string; clinic?: string; phone?: string; address?: string; notes?: string; doc?: string; time?: string; vetId?: string; status?: 'booked' | 'done' | 'cancelled';
+    /** from the papers (after the visit): the invoice total, the vet's name, body condition (e.g. 4/9) */
+    cost?: number; vetName?: string; bcs?: string;
     /** how many times the calendar event was changed (rescheduled or cancelled): the .ics SEQUENCE */
     calSeq?: number };
   symptom: { what: string; worried?: boolean; notes?: string; visitId?: string };

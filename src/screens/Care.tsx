@@ -107,11 +107,16 @@ export function Care({ open }: { open?: CareKind } = {}) {
   </>;
   const kitten = plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
       <div className="card white">
-        {plan.map((st) => <button key={st.key} className="row" style={{ width: '100%', border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
-          onClick={() => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset })} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}. Tap to log it.`}>
+        {/* a row opens what's logged (the dose, or the visit); "Log it" is its own button, so reading a row never adds an entry */}
+        {plan.map((st) => { const log = () => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset });
+          const open = st.entry ? () => (st.entry!.kind === 'vet' ? go('health/visit/' + st.entry!.id) : setEditing({ kind: st.entry!.kind, item: st.entry })) : undefined;
+          return <div key={st.key} className="row" style={{ gap: 10, alignItems: 'center' }}>
+          <button className="row sp" style={{ border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
+            disabled={!open} onClick={open} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}${open ? '. Open the last one logged.' : ''}`}>
           <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
-          <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>)}
-        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to log it.</p></div></>;
+          <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>
+          {!st.done && <button className="chipbtn" style={{ flex: 'none' }} onClick={log} aria-label={`Log ${st.title}`}>Log it</button>}</div>; })}
+        <p className="s" style={{ marginTop: 6 }}>The usual schedule, as a guide. Your vet sets the real one. Tap a row to see what’s logged.</p></div></>;
   const weightCard = ws.length > 0 && <div className="card mint"><div className="row"><b className="sp">Weight</b><span className="chip num">{ws[ws.length - 1].data.lb} lb</span></div>
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
@@ -474,7 +479,10 @@ function DocVisitPicker({ care, doc, value, onChange }: { care: CareItem[]; doc:
     </select></>;
 }
 
-type Pick = { key: string; label: string; detail: string; on: boolean; save: (doc?: string) => Promise<unknown>; visit?: boolean };
+/** One row of the reader's review. `save` says what it created or changed, so the whole batch can be undone. */
+type Pick = { key: string; group: string; label: string; detail: string; on: boolean; already?: boolean; visit?: boolean;
+  save: (ctx: { doc?: string; visitId?: string }) => Promise<{ created?: CareItem | null; before?: CareItem }> };
+const GROUPS = ['Visit', 'Weight', 'Given today', 'Reminders', 'Past vaccines', 'For next time', 'Details'];
 
 /** Add a vet document: read it on the phone, store it (when sharing is set up), then confirm which entries to add.
     `visit`: added from a visit's page, so the document, doses and weight it finds are linked to that visit (and what
@@ -486,6 +494,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
   const [progress, setProgress] = useState(0);
   const [picks, setPicks] = useState<Pick[]>([]);
   const [doc, setDoc] = useState<CareItem<'doc'> | null>(null);
+  const [target, setTarget] = useState<CareItem<'vet'> | null>(null);
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
@@ -506,6 +515,11 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
     } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
     const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
     const list: Pick[] = [];
+    const careNow = store.get().care;
+    // which visit this belongs to: the page it was added from, or a visit already logged on the papers' date
+    const target = visit ?? (r.docDate ? careNow.find((c): c is CareItem<'vet'> => c.kind === 'vet' && localDay(c.at) === r.docDate && (c.data as CareData['vet']).status !== 'cancelled') : undefined);
+    setTarget(target ?? null);
+    const created = (x: CareItem | null) => ({ created: x });
     // profile details the pet doesn't have yet (birthday, microchip, neutered, home since)
     const cat = store.get().cat; const pr = r.profile;
     if (cat) {
@@ -514,21 +528,47 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
       if (pr.microchip && cat.microchip !== pr.microchip) { patch.microchip = pr.microchip; changes.push('microchip ' + pr.microchip); }
       if (pr.altered && !cat.altered) { patch.altered = true; changes.push(cat.sex === 'f' ? 'spayed' : 'neutered'); }
       if (pr.adopted && cat.homeDate !== pr.adopted) { patch.homeDate = pr.adopted; changes.push('home since ' + fmt(noon(pr.adopted)) + (pr.adoptedFrom ? ` (from ${pr.adoptedFrom})` : '')); }
-      if (changes.length) list.push({ key: 'profile', label: `Update ${cat.name}’s profile`, detail: changes.join(' · '), on: true, save: () => store.saveCat({ ...cat, ...patch }) });
+      if (changes.length) list.push({ key: 'profile', group: 'Details', label: `Update ${cat.name}’s profile`, detail: changes.join(' · '), on: true, save: async () => { await store.saveCat({ ...cat, ...patch }); return {}; } });
     }
-    if (visit) {
-      // from a visit's page: what the vet said goes into this visit's notes, not a new visit
-      const said = r.visits.map((v) => [v.reason, v.notes].filter(Boolean).join(': ')).filter(Boolean).join('. ');
-      if (said) list.push({ key: 'notes', label: 'Add to this visit’s notes', detail: said, on: !visit.data.notes,
-        save: () => store.saveCare('vet', { ...visit.data, notes: [visit.data.notes, said].filter(Boolean).join('\n') }, { id: visit.id, at: visit.at }) });
-    } else r.visits.forEach((v, i) => list.push({ key: 'v' + i, label: (/test/i.test(v.reason) ? 'Test: ' : 'Vet visit: ') + v.reason, detail: [v.notes, v.clinic, v.date && fmt(noon(v.date))].filter(Boolean).join(' · '), on: true, visit: true,
-      save: (doc) => store.saveCare('vet', { reason: v.reason, clinic: v.clinic ?? undefined, notes: v.notes ?? undefined, doc, status: 'done' }, { at: at(v.date) }) }));
-    const vid = visit ? { visitId: visit.id } : {};
-    const atV = (day: string | null) => (visit && !day ? visit.at : at(day));
-    r.weights.forEach((w, i) => list.push({ key: 'w' + i, label: `Weight: ${w.lb} lb`, detail: w.date ? fmt(noon(w.date)) : '', on: true,
-      save: (doc) => store.saveCare('weight', { lb: w.lb, doc, ...vid }, { at: atV(w.date) }) }));
-    r.items.forEach((it, i) => list.push({ key: 'm' + i, label: `${MED_LABEL[it.kind]}: ${it.name}`, detail: [it.date && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes].filter(Boolean).join(' · '), on: true,
-      save: (doc) => store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc, ...vid }, { at: atV(it.date) }) }));
+    if (target) {
+      // what the vet said goes into the visit's notes, not a new visit
+      const parts = [...r.visits.map((v) => [v.reason, v.notes].filter(Boolean).join(': ')), ...r.history.problems].filter(Boolean);
+      for (const n of r.history.notes) if (!parts.some((x) => x.includes(n))) parts.push(n); // the history's notes, unless a visit line already says it
+      const said = parts.filter((x, i, a) => a.indexOf(x) === i).join('. ');
+      if (said) list.push({ key: 'notes', group: 'For next time', label: 'Add to the visit’s notes', detail: said, on: !target.data.notes,
+        save: async () => ({ before: target, created: null, ...(await store.saveCare('vet', { ...target.data, notes: [target.data.notes, said].filter(Boolean).join('\n') }, { id: target.id, at: target.at }), {}) }) });
+    } else r.visits.forEach((v, i) => list.push({ key: 'v' + i, group: 'Visit', label: (/test/i.test(v.reason) ? 'Test: ' : 'Vet visit: ') + v.reason, detail: [v.notes, v.clinic, v.date && fmt(noon(v.date))].filter(Boolean).join(' · '), on: true, visit: true,
+      save: async ({ doc }) => created(await store.saveCare('vet', { reason: v.reason, clinic: v.clinic ?? undefined, notes: v.notes ?? undefined, doc, status: 'done' }, { at: at(v.date) })) }));
+    const atV = (day: string | null) => (target && !day ? target.at : at(day));
+    const linked = (ctx: { visitId?: string }) => (ctx.visitId ? { visitId: ctx.visitId } : {});
+    r.weights.forEach((w, i) => list.push({ key: 'w' + i, group: 'Weight', label: `${w.lb} lb`, detail: w.date ? fmt(noon(w.date)) : '', on: true,
+      save: async (ctx) => created(await store.saveCare('weight', { lb: w.lb, doc: ctx.doc, ...linked(ctx) }, { at: atV(w.date) })) }));
+    // doses: given that day (linked to the visit), earlier ones from the history, and reminders; one already logged starts unticked
+    const logged = (name: string, day: string | null) => !!day && careNow.some((c) => c.kind === 'med' && localDay(c.at) === day && (c.data as CareData['med']).name.trim().toLowerCase() === name.toLowerCase());
+    r.items.forEach((it, i) => {
+      const already = logged(it.name, it.date);
+      const group = !it.date ? 'Reminders' : it.date === r.docDate ? 'Given today' : 'Past vaccines';
+      list.push({ key: 'm' + i, group, label: `${it.name} · ${MED_LABEL[it.kind].toLowerCase()}`, detail: [it.date && group !== 'Given today' && fmt(noon(it.date)), it.nextDue && 'next due ' + fmt(noon(it.nextDue)), it.notes, already && '✓ already logged'].filter(Boolean).join(' · '), on: !already, already,
+        save: async (ctx) => created(await store.saveCare('med', { name: it.name, what: it.kind, nextDue: it.nextDue ?? undefined, notes: it.notes ?? undefined, doc: ctx.doc, ...(group === 'Given today' ? linked(ctx) : {}) }, { at: atV(it.date) })) });
+    });
+    // next-due dates from the papers' reminder list: on the latest dose of that name, a booked yearly exam, or a new reminder
+    for (const [i, rm] of r.reminders.entries()) {
+      if (r.items.some((it) => it.name === rm.name && it.nextDue === rm.due)) continue;
+      const last = careNow.filter((c): c is CareItem<'med'> => c.kind === 'med' && (c.data as CareData['med']).name.trim().toLowerCase() === rm.name.toLowerCase()).sort((a, b) => b.at - a.at)[0];
+      const exam = /exam/i.test(rm.name);
+      if (exam && careNow.some((c) => c.kind === 'vet' && localDay(c.at) === rm.due)) continue;
+      const already = !!last && last.data.nextDue === rm.due;
+      list.push({ key: 'r' + i, group: 'Reminders', label: exam ? 'Book the yearly exam' : rm.name, detail: [fmt(noon(rm.due)), already && '✓ already set'].filter(Boolean).join(' · '), on: !already, already,
+        save: async () => exam ? created(await store.saveCare('vet', { reason: 'Yearly exam', clinic: r.clinic ?? undefined, status: 'booked' }, { at: noon(rm.due) }))
+          : last ? { before: last, ...(await store.saveCare('med', { ...last.data, nextDue: rm.due }, { id: last.id, at: last.at }), {}) }
+          : created(await store.saveCare('med', { name: rm.name, what: /rabies|fvrcp|felv|vaccin/i.test(rm.name) ? 'vaccine' : 'medicine', nextDue: rm.due, notes: 'Reminder from the vet' }, { at: at(r.docDate) })) });
+    }
+    // details for the visit: the invoice total, the vet's name, body condition
+    const details: Partial<CareData['vet']> = { ...(r.cost.total !== null ? { cost: r.cost.total } : {}), ...(r.vet ? { vetName: r.vet } : {}), ...(r.exam.bodyCondition ? { bcs: r.exam.bodyCondition } : {}) };
+    if (Object.keys(details).length) list.push({ key: 'details', group: 'Details', label: 'Save on the visit', on: true,
+      detail: [details.cost !== undefined && `Cost $${details.cost.toFixed(2)}`, details.vetName, details.bcs && `Body condition ${details.bcs}`].filter(Boolean).join(' · '),
+      save: async (ctx) => { const id = target?.id ?? ctx.visitId; const v = id ? store.get().care.find((c): c is CareItem<'vet'> => c.id === id) : undefined; if (!v) return {};
+        await store.saveCare('vet', { ...v.data, ...details }, { id: v.id, at: v.at }); return { before: v }; } });
     setPicks(list); setMsg(r.summary); setStage('review');
   };
 
@@ -557,16 +597,34 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
       <b>Here’s what it found</b>{msg && <p className="s" style={{ marginTop: 4 }}>{msg}</p>}
       {note && <p className="s" style={{ marginTop: 6, color: 'var(--peach-ink)' }}>{note}</p>}
       {picks.length === 0 && <p className="s" style={{ marginTop: 8 }}>Nothing to add to the log. The document is saved.</p>}
-      {picks.map((p, i) => <label key={p.key} className="row" style={{ marginTop: 10, gap: 10, alignItems: 'flex-start' }}>
-        <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
-        <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
-      <p className="s" style={{ marginTop: 10 }}>Read automatically, so check it against the document. Anything it missed, add with “Log something” above.</p>
+      {/* grouped like the papers: what was given that day, reminders, the history; anything already in the log starts unticked */}
+      {GROUPS.filter((g) => picks.some((p) => p.group === g)).map((g) => <div key={g}>
+        <p className="s" style={{ marginTop: 14, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>{g}{g === 'Given today' && (target || picks.some((p) => p.visit)) ? ' · linked to the visit' : ''}</p>
+        {picks.map((p, i) => p.group !== g ? null : <label key={p.key} className="row" style={{ marginTop: 8, gap: 10, alignItems: 'flex-start', opacity: p.already && !p.on ? 0.6 : 1 }}>
+          <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
+          <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
+      </div>)}
+      <p className="s" style={{ marginTop: 12 }}>Read on your phone, so check it against the paper. Anything it missed, add with “Log something” above.</p>
       <button className="btn" style={{ marginTop: 12 }} onClick={async () => {
-        let linked: CareItem | null = null;
-        for (const p of picks) if (p.on) { const saved = await p.save(doc?.id); if (p.visit && !linked) linked = saved as CareItem | null; }
-        // the document belongs to the (first) visit it was read as
-        if (doc && linked && !visit) await store.saveCare('doc', { ...doc.data, visitId: linked.id }, { id: doc.id, at: doc.at });
-        audio.sparkle(); setStage('idle'); }}>{picks.some((p) => p.on) ? `Add ${picks.filter((p) => p.on).length} to the log` : 'Done'}</button>
+        // the visit first (if the papers make one), so everything else links to it; then one Undo for the whole batch
+        const chosen = picks.filter((p) => p.on).sort((x, y) => Number(!!y.visit) - Number(!!x.visit));
+        const ctx: { doc?: string; visitId?: string } = { doc: doc?.id, visitId: target?.id };
+        const made: CareItem[] = [], before: CareItem[] = [];
+        for (const p of chosen) {
+          const res = await p.save(ctx);
+          if (res.created) { made.push(res.created); if (p.visit && !ctx.visitId) ctx.visitId = res.created.id; }
+          if (res.before) before.push(res.before);
+        }
+        // the document belongs to the visit it was read as
+        const docBefore = doc; if (doc && ctx.visitId && !visit) await store.saveCare('doc', { ...doc.data, visitId: ctx.visitId }, { id: doc.id, at: doc.at });
+        audio.sparkle(); setStage('idle');
+        const n = chosen.length; const where = target ? ` to ${fmt(target.at)}’s visit` : '';
+        if (n) showToast({ msg: `Saved ${n} thing${n === 1 ? '' : 's'}${where}`, action: { label: 'Undo', run: () => void (async () => {
+          for (const m of made) await store.deleteCare(m.id);
+          for (const b of [...before].reverse()) await store.saveCare(b.kind, b.data as never, { id: b.id, at: b.at }); // newest change first, so the oldest version wins
+          if (docBefore && ctx.visitId && !visit) await store.saveCare('doc', docBefore.data, { id: docBefore.id, at: docBefore.at });
+        })() } });
+      }}>{picks.some((p) => p.on) ? `Save ${picks.filter((p) => p.on).length} thing${picks.filter((p) => p.on).length === 1 ? '' : 's'}` : 'Done'}</button>
     </>}
   </div>;
 }
