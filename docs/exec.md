@@ -40,11 +40,11 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Tue Nov 17, evening | Design system phase 1 (UX reviewer: direction, fonts, colors, settle animation → `docs/design-system.md` PR) | S / 3% | Josh's go for phase 2 | merged (PR #29) |
 | Wed Nov 18, 3:40 AM | Navigation Option A + onboarding (trigger set by the PM) → PR | M / 5% | ship it | merged (PR #30, incl. Settings in 3 groups + Home photo card) |
 | Wed Nov 18, 12:40 PM | QA + fixes for nav/onboarding | S / 2% | ship it | |
-| Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | done: PR #32; waiting on ship it |
-| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | done: PR #33 green (no SQL); waiting on ship it |
-| Thu Nov 19 | Home "Chester >" button (PR #31) reverted: broke things; redo once Josh says what he saw | S / 1–2% | Josh's report | waiting |
-| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | |
-| Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | |
+| Thu Nov 19, 3:40 AM | Holiday cosmetics (art director's picks from `docs/art.md`) → PR | M / 5% | ship it; live by ~Nov 20 | merged (PR #32) |
+| Thu Nov 19, 12:40 PM | Medicine reminders (in-app) → PR | M / 5% | ship it | merged (PR #33) |
+| Thu Nov 19 | Home "Chester >" button (PR #31) reverted: broke things; redo once Josh says what he saw | S / 1–2% | Josh's report | redone + merged (PR #34, with the iPhone tab-bar fix) |
+| Fri Nov 20, 3:40 AM | After the vet visit + log editing, part 1 (`docs/plans/2026-11-14-after-the-visit.md`, PR #28) → PR | M / 6% | ship it | merged (PR #35) |
+| Fri Nov 20, 12:40 PM | QA + fixes | S / 3% | ship it | **skipped** (Josh shipped #35 directly; saves ~3%) |
 | Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | |
 | Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | |
 | Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | |

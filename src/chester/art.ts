@@ -102,7 +102,7 @@ function headArt(c: Coat, eyeKey: string, mood: Mood, uid: string, wear: string,
 }
 
 /** Outfits from Chester's corner, drawn in head coordinates so they follow every pose, the rig and petting. */
-export const OUTFITS = ['bell', 'bowtie', 'bandana', 'flower', 'party', 'crown', 'scarf'] as const;
+export const OUTFITS = ['bell', 'bowtie', 'bandana', 'flower', 'party', 'crown', 'scarf', 'leafcrown', 'santa', 'antlers'] as const;
 export function outfit(c: Coat, wear: string): string {
   const L = `stroke="${c.line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
   switch (wear) {
@@ -122,6 +122,19 @@ export function outfit(c: Coat, wear: string): string {
       + `<path d="M70 132 Q75 140 72 146 M86 138 Q90 146 87 152 M114 138 Q110 146 113 152 M130 132 Q125 140 128 146" stroke="#6cc3b5" stroke-width="5" fill="none" stroke-linecap="round"/>`
       + `<path d="M118 144 L126 180 L110 182 L104 148 Z" fill="#ef8f9a" ${L}/><path d="M112 160 L123 158 M114 170 L125 168" stroke="#6cc3b5" stroke-width="5" stroke-linecap="round"/>`
       + `<path d="M110 182 L108 189 M115 182 L114 189 M120 181 L121 188 M125 180 L127 187" stroke="${c.line}" stroke-width="2.4" stroke-linecap="round"/></g>`;
+    // holidays: a ring of autumn leaves across the head
+    case 'leafcrown': return `<g class="wear wear-leafcrown">${[[70, 44, -55, '#e38b3d'], [82, 32, -32, '#c2563f'], [95, 26, -10, '#efc44a'], [107, 26, 10, '#e38b3d'], [120, 32, 32, '#c2563f'], [131, 44, 55, '#efc44a']]
+      .map(([x, y, a, f]) => `<path d="M${x} ${+y + 13} C${+x - 12} ${+y + 3} ${+x - 7} ${+y - 12} ${x} ${+y - 17} C${+x + 7} ${+y - 12} ${+x + 12} ${+y + 3} ${x} ${+y + 13} Z" fill="${f}" ${L} transform="rotate(${a} ${x} ${y})"/>`
+        + `<path d="M${x} ${+y + 10} L${x} ${+y - 10}" stroke="${c.line}" stroke-width="1.8" stroke-linecap="round" transform="rotate(${a} ${x} ${y})"/>`).join('')}`
+      + `<circle cx="100" cy="44" r="4.5" fill="#8a5a33" ${L}/></g>`;
+    // a red Santa hat flopping to the side, white band and pom
+    case 'santa': return `<g class="wear wear-santa"><path d="M76 48 C78 20 98 4 122 8 C140 11 150 24 152 40 C144 32 134 28 126 30 C128 38 128 44 126 48 Q100 54 76 48 Z" fill="#d2493f" ${L}/>`
+      + `<rect x="70" y="40" width="62" height="15" rx="7.5" fill="#fbfaf7" ${L}/><circle cx="152" cy="42" r="8.5" fill="#fbfaf7" ${L}/></g>`;
+    // felt reindeer antlers on a headband, with a little jingle bell
+    case 'antlers': { const felt = (d: string) => `<path d="${d}" stroke="${c.line}" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="#a0703f" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+      return `<g class="wear wear-antlers"><path d="M70 50 Q100 30 130 50" stroke="${c.line}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M70 50 Q100 30 130 50" stroke="#d2493f" stroke-width="5" fill="none" stroke-linecap="round"/>`
+        + felt('M84 40 L76 10 M80 25 L66 18 M78 15 L86 4') + felt('M116 40 L124 10 M120 25 L134 18 M122 15 L114 4')
+        + `<circle cx="100" cy="38" r="6" fill="#efc44a" ${L}/><path d="M96 39 H104" stroke="${c.line}" stroke-width="2" stroke-linecap="round"/></g>`; }
     default: return '';
   }
 }

@@ -72,7 +72,8 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Fed is logged and there's no account ("Not now" hides it on that phone). QA pass (2026-11-18 PM): **Settings in 3
   groups** (Your cats · Household & account · App, backup moved into App) and a **Home newest-photo card**
   (`src/ui/NewestPhoto.tsx`: a friend's newest photo → Friends tab; one fetch per 5 min; hidden without an account or
-  photos). Not done: tapping the cat on Home → his tab (tapping him is already petting; needs its own gesture). Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
+  photos). Home has a **button to the cat's tab** under the cat scene (2026-11-18, `claude/features-home-cat-button`):
+  a `.chipbtn` with his face and name, or "Cats" with several, phone and desktop; tapping the cat still pets him. Tests: `src/screens/navigation.test.tsx`, `layout.test.tsx`.
   Screenshots: `docs/screenshots/navigation/`.
 
 ### Layout (tracker first, training optional; plan in `docs/plans/2026-11-08-tracker-redesign.md`)
@@ -340,6 +341,16 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     on its day), **Documents** (+ Add a document reads it as usual, but links the document, doses and weight to this
     visit and offers what the vet said for this visit's notes instead of a new visit), Edit / Delete. Every visit opens
     it: Health's Next/Last, Coming up, the Health log and the summary.
+  - **One pattern for every entry** (after-the-visit part 1, 2026-11-20, `claude/features-after-visit-1`; plan
+    `docs/plans/2026-11-14-after-the-visit.md` steps 1–3): every save in `CareSheet` ends with **"Saved · FeLV for
+    Chester · Undo"** (a new entry: Undo removes it; an edit: Undo restores the old version), and Delete asks once in
+    the sheet ("Delete this weight for everyone? You can undo…"), then **"Deleted · … · Undo"** (documents: no Undo, the
+    file is gone; no more `confirm()`). The header shows the **cat chip** ("[face] Chester · Weight"); with several cats
+    it switches the cat on a new entry (`saveCare` `catId`). Dose, weight and symptom forms have **"Part of a visit?"**
+    chips (visits within 7 days; a visit that day picked by default; `visitId`, now on symptoms too). **Duplicate
+    guard:** a dose with the same name, or a weigh-in, already logged that day asks "Already logged at 10:30. Add
+    another?". Tests: `src/screens/entries.test.tsx`. Part 2 (reader additions, the review screen with batch Undo,
+    timeline rows) is next.
   - **Weigh-ins** (fixed 2026-11-14, `claude/fix-weight-dupes`): `saveCare('weight')` without an id updates the
     weigh-in for the same visit (`visitId`), or the same cat + day + value, instead of adding one (re-scanned
     documents, the visit's "+ Weight" and the Health form had each added a copy). Old copies are cleaned up with no
@@ -562,7 +573,14 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due).
-6. [ ] **Medicine reminders** (M): in-app first, then as push notifications.
+6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
+   medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
+   until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
+   card (`MedsDueCard` in `Care.tsx`, from `medsDue()` in `src/engine/care.ts`) lists a course's doses left today ("1 of
+   2 today · until Nov 25") and any dose whose next-due day has come or passed ("Overdue by 1 day"), each with a one-tap
+   **Given** that logs the dose and shows "Saved · Revolution for Chester · Undo". A next-due dose rolls on by the same
+   gap as last time (`nextDueLike`). Push notifications come later (agenda 5). Tests: `src/engine/meds.test.ts`,
+   `src/screens/meds.test.tsx`. Screenshots: `docs/screenshots/meds/`.
 7. [x] **Vet redesign, steps 3–5** (done 2026-11-10, pull request from `claude/features-vet-redesign-3-5`; no SQL) (Josh, 2026-11-09; plan `docs/plans/2026-11-09-vet-redesign.md`, steps 1–2 done):
    a page per visit (`#/health/visit/<id>`) with its documents, doses and weight linked by `visitId`; All documents
    (search, filters, newest 3 on Health, open on tap); Summary for the vet with the vet header, documents and Share.
@@ -838,7 +856,7 @@ src/
     types.ts            Cat, SetRecord, SkillDef, Wallet, Gift, SessionDraft…
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
-    corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels
+    corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels; seasonal items (`season` MM-DD from/to, `inSeason`)
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -1374,3 +1392,24 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   every tab, the gear, each + form, deep links (`#/train`, `#/feed`, `#/health/visit/<id>`, `#/me`, `#/tree`,
   `#/corner`), the cat tab → a training session, onboarding (setup and invited paths) and the sign-up card: no breaks,
   no page or console errors. No skills, plugins or new MCP servers.
+- 2026-11-18, Home cat-tab button (Features worker, `claude/features-home-cat-button`): no skills, plugins or new MCP
+  servers. Checks: Vitest (271), typecheck, build; Playwright shots `docs/screenshots/home-cat-button/`.
+- 2026-11-19, tab bar scrolling with the page on iPhone (Features worker, `claude/fix-tabbar-scroll`): Josh saw the
+  bottom bar move while scrolling the cat tab (installed app, after tapping "Chester ›"). Not reproducible here: only
+  Chromium is installed (no WebKit), and in Chromium the bar stays fixed and nothing is wider than the screen or
+  transforms the bar's ancestors. Most likely cause: iPhone **double-tap zoom** (the second tap of "Chester ›" lands on
+  the new page's cat card; only links, buttons and the cat had `touch-action`), and in a zoomed page a fixed bar looks
+  like it scrolls with the page. Fix: `html{touch-action:manipulation}` (no double-tap zoom anywhere; pinch zoom still
+  works) and `.tabs` on its own layer (`transform:translateZ(0)`, the usual iOS fixed-bar fix). Regression test in
+  `home.test.tsx` (CSS). The Home "Chester ›" button (PR #31, reverted in 56a6aea) is back on this branch. Needs a check
+  on Josh's iPhone before shipping. Screenshots: `docs/screenshots/tabbar-scroll/`.
+- 2026-11-19, holiday cosmetics (Features worker, `claude/features-holiday-cosmetics`): leaf crown, Santa hat and
+  reindeer antlers drawn in `outfit()`; `ShopItem.season` (MM-DD, wraps past New Year) hides them out of season unless
+  owned, and `canBuy`/`store.buy` refuse them out of season. No skills, plugins or new MCP servers. Checks: Vitest (272),
+  typecheck, build; Playwright renders with a fixed clock (Nov 19, Dec 5): `docs/screenshots/holiday/`.
+- 2026-11-19, medicine reminders in-app (Features worker, `claude/features-medicine-reminders`): no skills, plugins or
+  new MCP servers. Followed `docs/design-system.md` (existing card/chipbtn/seg, tokens) and the after-the-visit brief's
+  entry pattern (cat in the header, Saved · Undo). Checks: Vitest (272), typecheck, build; Playwright iPhone 13 shots.
+- 2026-11-20, after-the-visit part 1 (Features worker, `claude/features-after-visit-1`): no skills, plugins or new MCP
+  servers. Followed `docs/design-system.md` (existing chipbtn/card/btn, tokens). Checks: Vitest (279), typecheck,
+  build; Playwright iPhone 13 shots in `docs/screenshots/after-visit-1/`.
