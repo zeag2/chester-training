@@ -349,8 +349,18 @@ Josh runs separate sessions at the same time. To keep them from colliding:
     it switches the cat on a new entry (`saveCare` `catId`). Dose, weight and symptom forms have **"Part of a visit?"**
     chips (visits within 7 days; a visit that day picked by default; `visitId`, now on symptoms too). **Duplicate
     guard:** a dose with the same name, or a weigh-in, already logged that day asks "Already logged at 10:30. Add
-    another?". Tests: `src/screens/entries.test.tsx`. Part 2 (reader additions, the review screen with batch Undo,
-    timeline rows) is next.
+    another?". Tests: `src/screens/entries.test.tsx`.
+    **Part 2** (2026-11-21, `claude/features-after-visit-2`, steps 4–6): the reader's review (`DocAdder` in `Care.tsx`)
+    links to the visit it was added from, or a visit already logged on the papers' date (no second visit), and is
+    **grouped**: Visit · Weight · Given today (linked to the visit) · Reminders · Past vaccines · For next time ·
+    Details. A dose already in the log (same name and day) starts unticked "✓ already logged". The papers' reminder list
+    sets `nextDue` on the latest dose of that name (or adds a reminder), and "Physical exam" books a "Yearly exam".
+    History, problems and what the vet said go into the visit's notes. **Details** save the invoice total, the vet's name
+    and body condition on the visit (`vet.cost`, `vetName`, `bcs`; shown on the visit page). Save shows **"Saved 10 things
+    to Nov 14's visit · Undo"**, and that Undo removes everything added and restores what was changed. **Kitten
+    timeline** rows open the latest logged entry (a dose, or the visit's page); **Log it** is a separate button.
+    Tests: `src/screens/aftervisit.test.tsx` (OCR stubbed with the Hazel Dell fixtures). Screenshots:
+    `docs/screenshots/after-visit-2/`.
   - **Weigh-ins** (fixed 2026-11-14, `claude/fix-weight-dupes`): `saveCare('weight')` without an id updates the
     weigh-in for the same visit (`visitId`), or the same cat + day + value, instead of adding one (re-scanned
     documents, the visit's "+ Weight" and the Health form had each added a copy). Old copies are cleaned up with no
@@ -1413,3 +1423,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-20, after-the-visit part 1 (Features worker, `claude/features-after-visit-1`): no skills, plugins or new MCP
   servers. Followed `docs/design-system.md` (existing chipbtn/card/btn, tokens). Checks: Vitest (279), typecheck,
   build; Playwright iPhone 13 shots in `docs/screenshots/after-visit-1/`.
+- 2026-11-21, after-the-visit part 2 (Features worker, `claude/features-after-visit-2`): no skills, plugins or new MCP
+  servers. Checks: Vitest (281), typecheck, build; Playwright iPhone 13 shots with the OCR module routed to a stub that
+  returns the fixture pages (so the review screen renders without real OCR).
