@@ -511,7 +511,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   Better coverage would need a paid UPC API behind a Supabase Edge Function (to keep its key secret).
 
 ### App
-- **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colors are tokens in `src/styles/app.css`.
+- **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
   Appearance), Your data (backup JSON including care).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
@@ -642,6 +642,14 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
+  `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
+  (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
+  off-scale values left as they are and listed in the design doc ("Not yet on the scale"); the component inventory
+  and rules added to the doc and to `CLAUDE.md`; `useSettle` (`src/ui/settle.ts`) on the Health log (phone list and
+  desktop table). Pixels unchanged at 390 and 1440, light and dark (Pillow diff vs main, see section 7).
+  Next, each needing Josh's OK because it's visible: move `h1` 28 → 34 and `h2` 17 → 20, the 13/15/17/18 sizes and
+  the 6/10/14/18/22 gaps onto the scale; use `useSettle` in the quick-log sheet and the visit timeline.
 - [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
   permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -905,8 +913,10 @@ src/
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     images.ts, stats.ts, install.ts
-  ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home)
-  styles/app.css        tokens (light + dark), layout, components
+  ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home), settle (useSettle: a new row settles into place)
+  styles/tokens.css     design tokens: colour (light + dark), type, space, radius, depth, motion, the settle keyframes
+  styles/app.css        component classes and layout (imports tokens.css first)
+  styles/cssText.ts     tests only: app.css with the tokens written out (phone-CSS-unchanged tests)
 supabase/
   migrations/           SQL, run by hand in the Supabase SQL editor, in this order:
     20261107230000_shared_training.sql   cats, cat_members, sets, RLS, join_cat
@@ -1426,3 +1436,10 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-21, after-the-visit part 2 (Features worker, `claude/features-after-visit-2`): no skills, plugins or new MCP
   servers. Checks: Vitest (281), typecheck, build; Playwright iPhone 13 shots with the OCR module routed to a stub that
   returns the fixture pages (so the review screen renders without real OCR).
+- 2026-11-22, design system phase 2 (Features worker, `claude/design-system-2`): no skills, plugins or new MCP servers
+  (`lottiefiles-creator` connected, unused). A one-off Python codemod (not committed) swapped only literals equal to a
+  token. Checks: Vitest (281), typecheck, build; Playwright against Vite dev servers of main (a git worktree) and the
+  branch, a cat and a month of care seeded through `globalThis.__chesterStore`, clock fixed, reduced motion, 12 screens
+  at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
+  animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
+  changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.

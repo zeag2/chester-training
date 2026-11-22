@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup, act, fireEvent, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { Sheet } from './Sheet';
+import { appCssResolved } from '../styles/cssText';
 
 // A fake matchMedia for a window `width` px wide; setWidth() moves it and fires 'change' like a browser does.
 let width = 390;
@@ -49,8 +50,7 @@ describe('Sheets on phones (under 760 px) stay bottom sheets', () => {
     expect(document.activeElement).toBe(b);
   });
   it('keeps the phone CSS, and keys every new sheet rule off the tablet/desktop classes', async () => {
-    const fs = 'node:fs'; // read the file itself: vitest drops CSS imports
-    const css: string = (await import(/* @vite-ignore */ fs)).readFileSync('src/styles/app.css', 'utf8');
+    const css = await appCssResolved(); // tokens written out: the phone rules must be exactly as before
     expect(css).toContain('.sheetbg{background:rgba(10,10,8,.42);justify-content:flex-end}');
     expect(css).toContain('.sheet{background:var(--bg);border-radius:26px 26px 0 0;padding:16px 20px calc(24px + var(--safe-b));max-height:88dvh;overflow:auto;width:100%;max-width:480px;margin:0 auto;animation:ksheet 320ms var(--ease-out)}');
     const start = css.indexOf('/* ── Tablet and desktop sheets'), end = css.indexOf('/* ── Tablet and desktop navigation');

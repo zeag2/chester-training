@@ -13,7 +13,7 @@ export function FriendRequestRow({ q, style }: { q: FriendRequest; style?: React
   const name = q.name || 'Someone';
   return <div className="pop" role="group" aria-label={`Friend request from ${name}`} style={style}>
     <b style={{ fontSize: 15 }}>{name} wants to be friends. Accept?</b>
-    <div className="row" style={{ gap: 8, marginTop: 8 }}>
+    <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
     <button className="btn2" style={{ flex: 1, minHeight: 44, background: 'var(--ink)', color: 'var(--on-ink)' }} onClick={() => { audio.sparkle(); void store.answerFriend(q.userId, true).catch(() => {}); }}>Accept</button>
     <button className="btn2" style={{ flex: 1, minHeight: 44, background: 'var(--surface)' }} onClick={() => { void store.answerFriend(q.userId, false).catch(() => {}); }}>Not now</button>
     </div>
@@ -44,7 +44,7 @@ function HouseholdTile({ h, given, canTreat }: { h: { ownerName: string; pets: F
         return <button key={p.catId} className="householdcat" style={{ zIndex: shown.length - i }} onClick={() => { audio.chirp(); go('visit/' + p.catId); }}
           aria-label={`Visit ${p.card.name}, ${whose.toLowerCase() === 'a friend’s' ? 'a friend’s' : whose} cat${fresh ? '. Can have a treat today' : ''}`}>
           <Chester coat={p.card.coat} eyes={p.card.eyes} wear={p.card.wear} mood="curious" width={62} label={p.card.name} />
-          {fresh && <span className="treatbadge" aria-hidden="true"><Paw color="#d4a23a" size={12} /></span>}
+          {fresh && <span className="treatbadge" aria-hidden="true"><Paw color="var(--butter-strong)" size={12} /></span>}
         </button>; })}
       {more > 0 && <span className="s householdmore">+{more}</span>}
     </div>
@@ -65,18 +65,18 @@ export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
   return <div className="card sky" style={{ paddingBottom: 10 }}>
     {requests.filter((q) => q.incoming).map((q) => <FriendRequestRow key={q.userId} q={q} style={{ marginBottom: 10 }} />)}
     {treatNews && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
-      <Paw color="#d4a23a" size={22} />
+      <Paw color="var(--butter-strong)" size={22} />
       <b className="sp" style={{ fontSize: 15 }}>{treatLine(treatNews.cat, treatNews.names)}</b>
       {treatNews.items?.length ? (treatNews.thanked ? <span className="s" style={{ fontWeight: 700 }}>Thanks sent</span>
         : <button className="btn2" style={{ minHeight: 44, background: 'var(--surface)' }} onClick={() => { audio.chirp(); void store.thankTreats(); }}>Say thanks</button>) : null}
       <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissTreatNews()}><Icon name="close" size={18} /></button>
     </div>}
     {thanks.length > 0 && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
-      <Paw color="#d4a23a" size={22} />
+      <Paw color="var(--butter-strong)" size={22} />
       <b className="sp" style={{ fontSize: 15 }}>{[...new Set(thanks.map((t) => t.catName || 'A friend’s cat'))].join(' and ')} {thanks.length === 1 ? 'says' : 'say'} thank you for the treat!</b>
       <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissThanks()}><Icon name="close" size={18} /></button>
     </div>}
-    <div className="row" style={{ gap: 8 }}>
+    <div className="row" style={{ gap: 'var(--sp-2)' }}>
       <a href="#/friends" className="sp" style={{ color: 'inherit', textDecoration: 'none' }}><b>Friends’ cats</b>
         {!pets.length && <p className="s">{pendingFriend() ? 'A friend invited you. Tap to add them.' : `Each new friend: +${FRIEND_BONUS.treats} treats for ${cat?.name ?? 'your cat'}.`}</p>}</a>
       {pets.length > 0 && <a href="#/friends" className="s" style={{ color: 'inherit', fontWeight: 700 }}>See all</a>}

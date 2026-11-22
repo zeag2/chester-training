@@ -179,7 +179,7 @@ export function Hideout({ toy }: { toy: HideToy }) {
       onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') finger.current = at(e); }}
       onPointerUp={() => { finger.current = null; }} onPointerCancel={() => { finger.current = null; }}
       role="application" aria-label={`Play area. ${HINT[toy]}`}
-      style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 8, borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
+      style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 'var(--sp-2)', borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
       {!touched && <p className="s" style={{ position: 'absolute', top: 14, left: 16, right: 16, textAlign: 'center', pointerEvents: 'none' }}>{HINT[toy]}</p>}
       {toy === 'box' && <svg aria-hidden="true" width={size.w} height={size.h} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 0 }}><BoxArt spot={spot} floor={floor} part="back" /></svg>}
       {/* he's clipped at the floor, so sinking into the box never shows him below it */}

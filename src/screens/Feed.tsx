@@ -58,22 +58,22 @@ export function Feed({ skill, embedded = false }: { skill?: string; embedded?: b
     {!signedIn ? <>
       <h1 style={{ marginTop: 6 }}>Photos with friends</h1>
       <p className="m" style={{ marginTop: 6 }}>Sign in to post photos of your cats and see your friends’ cats.</p>
-      {sharingConfigured() && <button className="btn" style={{ marginTop: 20 }} onClick={() => go('together')}>Sign in</button>}
+      {sharingConfigured() && <button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={() => go('together')}>Sign in</button>}
     </> : <>
       {snap.pets.length > 0 && <Composer skill={skill} onPosted={() => { if (skill) history.replaceState(history.state, '', '#/feed'); void load(); }} />}
-      {state === 'loading' && <p className="m" aria-busy="true" style={{ marginTop: 20 }}>Loading photos…</p>}
+      {state === 'loading' && <p className="m" aria-busy="true" style={{ marginTop: 'var(--sp-5)' }}>Loading photos…</p>}
       {state === 'error' && <><ErrLine err={loadErr} /><button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setState('loading'); void load(); }}>Try again</button></>}
-      {state === 'ready' && !photos.length && <p className="m" style={{ marginTop: 20, textAlign: 'center' }}>No photos yet. Post {snap.pets[0]?.name ?? 'your cat'}’s first one!</p>}
+      {state === 'ready' && !photos.length && <p className="m" style={{ marginTop: 'var(--sp-5)', textAlign: 'center' }}>No photos yet. Post {snap.pets[0]?.name ?? 'your cat'}’s first one!</p>}
       {photos.map((p) => <article key={p.id} className="card white" style={{ padding: 0, overflow: 'hidden' }} aria-label={`${petName(p.catId)}, posted by ${person(p.by)}`}>
         {urls[p.path]
           ? <img src={urls[p.path]} alt={p.caption || `Photo of ${petName(p.catId)}`} loading="lazy" decoding="async" width={p.width} height={p.height}
               style={{ display: 'block', width: '100%', height: 'auto', aspectRatio: ratio(p), objectFit: 'cover', background: 'var(--grey)' }} />
           : <div style={{ aspectRatio: '4 / 3', background: 'var(--grey)' }} />}
-        <div style={{ padding: '12px 16px 14px' }}>
-          <div className="row" style={{ gap: 6 }}><b style={{ fontSize: 16 }}>{petName(p.catId)}</b><span className="s sp">· {person(p.by)}</span><span className="s">{timeAgo(p.at)}</span></div>
-          {p.caption && <p style={{ marginTop: 4, fontSize: 15, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{p.caption}</p>}
+        <div style={{ padding: 'var(--sp-3) var(--sp-4) 14px' }}>
+          <div className="row" style={{ gap: 6 }}><b style={{ fontSize: 'var(--fs-body)' }}>{petName(p.catId)}</b><span className="s sp">· {person(p.by)}</span><span className="s">{timeAgo(p.at)}</span></div>
+          {p.caption && <p style={{ marginTop: 'var(--sp-1)', fontSize: 15, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{p.caption}</p>}
           {p.skill && SKILL_BY_ID[p.skill] && <span className="chip" style={{ marginTop: 6, background: 'var(--butter)', color: 'var(--butter-ink)' }}>Mastered {SKILL_BY_ID[p.skill].name}</span>}
-          <div className="row" style={{ gap: 8, marginTop: 8 }}>
+          <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
             <button className={'chipbtn' + (p.pawed ? ' on' : '')} aria-pressed={p.pawed} aria-label={`Paw${p.pawed ? 'ed' : ''}, ${p.paws} ${p.paws === 1 ? 'paw' : 'paws'}`}
               onClick={() => void paw(p)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <Paw size={20} color={p.pawed ? 'var(--on-ink)' : 'var(--ink)'} /><span>{p.paws || ''}</span></button>
@@ -150,12 +150,12 @@ function Composer({ skill, onPosted }: { skill?: string; onPosted: () => void })
   return <div className="card mint" style={{ marginTop: 6 }}>
     <input ref={input} type="file" accept="image/*" hidden aria-hidden="true" onChange={(e) => pick(e.target.files?.[0])} />
     {!file ? <>
-      <b style={{ fontSize: 16 }}>{forSkill ? `Show off ${name}’s new trick` : 'Share a photo'}</b>
+      <b style={{ fontSize: 'var(--fs-body)' }}>{forSkill ? `Show off ${name}’s new trick` : 'Share a photo'}</b>
       <p className="s" style={{ marginTop: 2 }}>{forSkill ? `A photo of ${trick} for your household and friends.` : 'Your household and your friends see it.'}</p>
-      <button className="btn" style={{ marginTop: 12 }} onClick={() => input.current?.click()}>Add a photo</button>
+      <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={() => input.current?.click()}>Add a photo</button>
     </> : <>
       {preview && <img src={preview} alt="The photo you picked" style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 16, background: 'var(--grey)' }} />}
-      {snap.pets.length > 1 && <div className="row chiprow" role="group" aria-label="Which cat" style={{ gap: 6, marginTop: 12, overflowX: 'auto' }}>
+      {snap.pets.length > 1 && <div className="row chiprow" role="group" aria-label="Which cat" style={{ gap: 6, marginTop: 'var(--sp-3)', overflowX: 'auto' }}>
         {snap.pets.map((p) => <button key={p.id} className={'chipbtn' + (p.id === catId ? ' on' : '')} aria-pressed={p.id === catId} onClick={() => setCatId(p.id)}>{p.name}</button>)}
       </div>}
       <label className="field" htmlFor="ph-cap">Caption <span className="s">(optional)</span></label>
