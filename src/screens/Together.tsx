@@ -39,7 +39,7 @@ export function useRun() {
   const run = async (fn: () => Promise<void>) => { setBusy(true); setErr(''); try { await fn(); } catch (e) { setErr(errText(e)); } finally { setBusy(false); } };
   return { busy, err, setErr, run };
 }
-export const ErrLine = ({ err }: { err: string }) => (err ? <p role="alert" className="s" style={{ marginTop: 12, color: '#b4412b', fontWeight: 700 }}>{err}</p> : null);
+export const ErrLine = ({ err }: { err: string }) => (err ? <p role="alert" className="s" style={{ marginTop: 'var(--sp-3)', color: '#b4412b', fontWeight: 700 }}>{err}</p> : null);
 export const StepLabel = ({ n, of, label }: { n: number; of: number; label: string }) =>
   <p className="s" style={{ marginTop: 18, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Step {n} of {of} · {label}</p>;
 
@@ -63,7 +63,7 @@ export function AccountForm({ intro, share, onDone }: { intro: string; share: bo
       : <><p className="m" style={{ marginTop: 6 }}>We’ll email you a link to set a new one.</p>
         <label className="field" htmlFor="tre">Email</label>
         <input id="tre" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="send" /></>}
-    {forgot === 'ask' && <button className="btn" style={{ marginTop: 20 }} disabled={busy || !emailOk}
+    {forgot === 'ask' && <button className="btn" style={{ marginTop: 'var(--sp-5)' }} disabled={busy || !emailOk}
       onClick={() => run(async () => { await store.forgotPassword(email, resetRedirect()); setForgot('sent'); })}>{busy ? 'Sending…' : 'Send reset link'}</button>}
     <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setForgot(''); setErr(''); }}>Back to sign in</button>
     <ErrLine err={err} />
@@ -73,7 +73,7 @@ export function AccountForm({ intro, share, onDone }: { intro: string; share: bo
   return <>
     <h1 style={{ marginTop: 6 }}>{create ? 'Create your account' : 'Sign in'}</h1>
     <p className="m" style={{ marginTop: 6 }}>{intro}</p>
-    <div className="seg" role="group" aria-label="Account" style={{ marginTop: 16 }}>
+    <div className="seg" role="group" aria-label="Account" style={{ marginTop: 'var(--sp-4)' }}>
       <button className={create ? 'on' : ''} aria-pressed={create} onClick={() => pick(true)}>I’m new</button>
       <button className={!create ? 'on' : ''} aria-pressed={!create} onClick={() => pick(false)}>I already have one</button>
     </div>
@@ -82,12 +82,12 @@ export function AccountForm({ intro, share, onDone }: { intro: string; share: bo
     <label className="field" htmlFor="te">Email</label>
     <input id="te" className="in" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} enterKeyHint="next" />
     <label className="field" htmlFor="tp">{create ? 'Make a password' : 'Password'}</label>
-    <div className="row" style={{ gap: 8 }}>
+    <div className="row" style={{ gap: 'var(--sp-2)' }}>
       <input id="tp" className="in" type={show ? 'text' : 'password'} autoComplete={create ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="go" />
       <button className="btn2" onClick={() => setShow(!show)} aria-pressed={show}>{show ? 'Hide' : 'Show'}</button>
     </div>
-    {create && <p className="s" style={{ marginTop: 8 }}>At least 6 characters. No email is sent.</p>}
-    <button className="btn" style={{ marginTop: 20 }} disabled={busy || !valid}
+    {create && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>At least 6 characters. No email is sent.</p>}
+    <button className="btn" style={{ marginTop: 'var(--sp-5)' }} disabled={busy || !valid}
       onClick={() => run(async () => { await store.signIn(email, password, name, share, create); audio.sparkle(); onDone(name.trim()); })}>
       {busy ? (create ? 'Creating…' : 'Signing in…') : create ? 'Create account' : 'Sign in'}</button>
     {!create && <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setForgot('ask'); setErr(''); }}>Forgot password?</button>}
@@ -107,7 +107,7 @@ export function CodeForm({ name, onDone }: { name: string; onDone: () => void })
       : 'It’s 8 letters and numbers. The person who invited you can find it in Settings, under Training together.'}</p>
     <label className="field" htmlFor="ti">Invite code</label>
     <input id="ti" className="in" autoCapitalize="characters" autoComplete="off" maxLength={8} value={invite} onChange={(e) => setInvite(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''))} style={{ fontSize: 24, letterSpacing: 4, textAlign: 'center' }} />
-    <button className="btn" style={{ marginTop: 20 }} disabled={busy || invite.length < 6}
+    <button className="btn" style={{ marginTop: 'var(--sp-5)' }} disabled={busy || invite.length < 6}
       onClick={() => run(async () => {
         if (!(await store.join(invite, name || snap.account?.email.split('@')[0] || ''))) throw new Error('No cat has that code. Check it and try again.');
         audio.sparkle(); onDone();
@@ -132,7 +132,7 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
 
   const wrap = (n: 1 | 2, label: string, body: React.ReactNode) => <div className="screen" style={{ display: 'flex', flexDirection: 'column' }}>
     <Top onBack={leave} title={mode === 'join' ? 'Join with a code' : 'Train together'} />
-    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '14px 12px 6px', margin: 0 }}><Chester coat={snap.cat?.coat ?? 'black'} eyes={snap.cat?.eyes ?? 'gold'} mood="happy" width={100} interactive label={catName} /></div>
+    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '14px var(--sp-3) 6px', margin: 0 }}><Chester coat={snap.cat?.coat ?? 'black'} eyes={snap.cat?.eyes ?? 'gold'} mood="happy" width={100} interactive label={catName} /></div>
     <StepLabel n={n} of={2} label={label} />
     {body}
   </div>;
@@ -150,10 +150,10 @@ export function Together({ mode }: { mode: 'share' | 'join' }) {
       ? `${catName} is shared. Anyone else can join with this code too.`
       : 'Send them this code. They open the app, choose “Someone invited me”, make their own account, and enter it. They’ll see every pet in your household, including ones you add later.'}</p>
     {h ? <div className="card sky" style={{ textAlign: 'center' }}>
-      <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{h.inviteCode}</span>
+      <span style={{ fontSize: 'var(--fs-display)', fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{h.inviteCode}</span>
     </div> : <p className="s" style={{ marginTop: 14 }} aria-live="polite">{snap.sync === 'offline' ? 'Can’t reach the server. Check your connection.' : 'Getting your code…'}</p>}
-    {h && <button className="btn" style={{ marginTop: 16 }} onClick={async () => { if (await sendInvite(catName, h.inviteCode)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }}>{copied ? 'Copied' : 'Send invite'}</button>}
-    {!h && snap.sync === 'offline' && <button className="btn2" style={{ marginTop: 12 }} onClick={() => void store.sync()}>Try again</button>}
+    {h && <button className="btn" style={{ marginTop: 'var(--sp-4)' }} onClick={async () => { if (await sendInvite(catName, h.inviteCode)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }}>{copied ? 'Copied' : 'Send invite'}</button>}
+    {!h && snap.sync === 'offline' && <button className="btn2" style={{ marginTop: 'var(--sp-3)' }} onClick={() => void store.sync()}>Try again</button>}
     <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => go('settings')}>Done</button>
   </>);
 }
@@ -181,24 +181,24 @@ export function ResetPassword() {
       <h1 style={{ marginTop: 6 }}>Link didn’t work</h1>
       <ErrLine err={err} />
       <p className="m" style={{ marginTop: 6 }}>On the sign-in screen, tap “Forgot password?” to get a fresh link.</p>
-      <button className="btn" style={{ marginTop: 20 }} onClick={leave}>Back to the app</button>
+      <button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={leave}>Back to the app</button>
     </>}
     {state === 'ready' && <>
       <h1 style={{ marginTop: 6 }}>Set a new password</h1>
       <p className="m" style={{ marginTop: 6 }}>{store.get().account?.email ? `For ${store.get().account!.email}.` : ''} At least 6 characters.</p>
       <label className="field" htmlFor="np">New password</label>
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 'var(--sp-2)' }}>
         <input id="np" className="in" type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} enterKeyHint="done" />
         <button className="btn2" onClick={() => setShow(!show)} aria-pressed={show}>{show ? 'Hide' : 'Show'}</button>
       </div>
-      <button className="btn" style={{ marginTop: 20 }} disabled={busy || password.length < 6}
+      <button className="btn" style={{ marginTop: 'var(--sp-5)' }} disabled={busy || password.length < 6}
         onClick={() => run(async () => { await store.setPassword(password); audio.sparkle(); setState('done'); })}>{busy ? 'Saving…' : 'Save password'}</button>
       <ErrLine err={err} />
     </>}
     {state === 'done' && <>
       <h1 style={{ marginTop: 6 }}>Password changed</h1>
       <p className="m" style={{ marginTop: 6 }} role="status">You’re signed in. If you use PalDex from your Home Screen, open it there and sign in with the new password.</p>
-      <button className="btn" style={{ marginTop: 20 }} onClick={leave}>Done</button>
+      <button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={leave}>Done</button>
     </>}
   </div>;
 }

@@ -35,7 +35,7 @@ export function InstallSteps({ name }: { name: string }) {
   const choices = CHOICES[os];
   const [b, setB] = useState<Browser>(guess === 'inapp' || choices.includes(guess) ? guess : choices[0]);
   return <>
-    <div className="row" role="group" aria-label="Which browser are you using?" style={{ gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+    <div className="row" role="group" aria-label="Which browser are you using?" style={{ gap: 6, flexWrap: 'wrap', marginTop: 'var(--sp-3)' }}>
       {(guess === 'inapp' ? ['inapp' as Browser, ...choices] : choices).map((k) => <button key={k} className="chip" aria-pressed={b === k} onClick={() => setB(k)}
         style={{ border: 0, minHeight: 44, padding: '0 14px', background: b === k ? 'var(--ink)' : 'var(--grey)', color: b === k ? 'var(--on-ink)' : 'inherit', fontWeight: 700 }}>{NAMES[k as Exclude<Browser, 'other'>]}</button>)}
     </div>

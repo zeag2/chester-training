@@ -31,6 +31,26 @@ Rules: each block in the schedule names its size (S/M/L) and budget. When the da
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
+## Mon Nov 23 push (Josh: balance reset to full, resets again Tue; use it today; **one worker per task, up to 4 at once**)
+| Order | Worker | Work | Size | Status |
+|---|---|---|---|---|
+| 1 | W1 | Booking 2b: several cats at once | M / 4% | running |
+| 2 | W3 | Josh's design tweaks (input radius, dark-mode paw, doc) | S / 1% | running |
+| 3 | W1 | Small fixes: sync race, Visit two-pane | S / 3% | queued |
+| 1 | W2 | Push notifications build, PRs A + B (ship after Josh's SQL + secrets) | M / 8% | PR A #42 green; PR B next |
+| 2 | W4 | Delete my account + privacy policy page (needed before charging/App Store; any SQL → next week's run) | M / 5% | running |
+| next | either | "Pet me?" moments (up to 3 a day, 9 AM–9 PM) *(art)* | M / 5% | queued |
+| next | either | Backup import (export exists) | S / 2% | queued |
+| next | either | Log real play ("Played 10 min" + toy) + water/appetite chips on the daily check | S / 3% | queued |
+
+## Week 3 (from Tue Nov 24, 3 PM) — first items
+| When | Work | Size / budget | Gate | Status |
+|---|---|---|---|---|
+| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | waiting |
+| Wed Nov 25, 3:40 AM | Push build: pulled forward to Mon Nov 23 (W2) | — | — | moved |
+
+| Later | Small fixes left over (sync glitch, Visit two-pane); Josh's 4 design-system calls | S | | queued |
+
 ## Schedule, week 2 (Nov 17–24, Eastern)
 Paced at ~55% total (work ~42%, nightly UX review ~7%, pings and the Executive ~5%), leaving room for Josh's own
 use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
@@ -48,8 +68,8 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | merged (PR #36) |
 | Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | never started → **Mon Nov 23, 12:40 PM** |
 | Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | stuck (worker waiting on an approval); redo today in a fresh worker after DS phase 2 if the cap allows |
-| Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | set |
-| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | |
+| Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | merged (PR #37); 4 small calls open for Josh |
+| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | done: PR #38 (plan + SQL for next week's run, 3 setup steps for Josh); build = 2 PRs × ~4% next week |
 | Mon Nov 23, 12:40 PM | Booking 2b: several cats at once (moved from Sat) → PR | M / 4% | ship it | |
 | Tue Nov 24, until 3 PM | Reserve only | — | reset | |
 

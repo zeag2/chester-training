@@ -36,7 +36,7 @@ export function Documents() {
       <button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--bg)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => { setAdding(!adding); setDropped(undefined); }}><Icon name="plus" /></button></div>
     {(adding || all.length === 0) && <DocAdder signedIn={!!account} dropped={dropped} />}
     {all.length > 0 && <>
-      <div className="row" style={{ gap: 8, marginTop: 12, background: 'var(--grey)', borderRadius: 14, padding: '0 12px' }}>
+      <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', background: 'var(--grey)', borderRadius: 'var(--r-row)', padding: '0 var(--sp-3)' }}>
         <Icon name="search" size={18} />
         <input className="in sp" type="search" style={{ background: 'transparent', margin: 0, border: 0, paddingLeft: 0 }} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="Search documents" aria-label="Search documents" enterKeyHint="search" />
@@ -44,13 +44,13 @@ export function Documents() {
       <div className="row chiprow" role="group" aria-label="Show" style={{ gap: 6, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
         {DOC_FILTERS.map(([f, label]) => <button key={f} className={`chipbtn ${filter === f ? 'on' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>{label}</button>)}
       </div>
-      <p className="s" style={{ marginTop: 12, fontWeight: 800 }}>{q || filter !== 'all' ? `${list.length} of ${all.length}` : 'Newest first'}</p>
+      <p className="s" style={{ marginTop: 'var(--sp-3)', fontWeight: 800 }}>{q || filter !== 'all' ? `${list.length} of ${all.length}` : 'Newest first'}</p>
       {big ? <div className="docpanes">
-        <div className="doclist">{rows}{list.length === 0 && <p className="s" style={{ marginTop: 8 }}>No documents match. Try another word, or All.</p>}</div>
+        <div className="doclist">{rows}{list.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>No documents match. Try another word, or All.</p>}</div>
         {sel && <DocPreview key={sel.id} doc={sel} visit={visitOfDoc(care, sel)} onMore={() => setEditing({ kind: 'doc', item: sel })} />}
       </div> : <>
         {rows}
-        {list.length === 0 && <p className="s" style={{ marginTop: 8 }}>No documents match. Try another word, or All.</p>}
+        {list.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>No documents match. Try another word, or All.</p>}
       </>}
     </>}
     {drop.dragging && <DropNote />}
@@ -70,7 +70,7 @@ function DocPreview({ doc, visit, onMore }: { doc: CareItem<'doc'>; visit?: Care
   }, [doc.data.path]);
   const pdf = doc.data.mime === 'application/pdf';
   return <section className="docpreview" aria-label={`Preview of ${doc.data.title}`}>
-    <div className="row" style={{ gap: 8, alignItems: 'flex-start' }}>
+    <div className="row" style={{ gap: 'var(--sp-2)', alignItems: 'flex-start' }}>
       <div className="sp" style={{ minWidth: 0 }}>
         <h2 style={{ margin: 0, fontSize: 19, overflowWrap: 'anywhere' }}>{doc.data.title}</h2>
         <p className="s" style={{ marginTop: 2 }}>{docSub(doc, visit)}</p>

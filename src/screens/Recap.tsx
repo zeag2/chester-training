@@ -10,11 +10,11 @@ import { usePetText } from '../lib/pet';
 import { sharingConfigured } from '../sync/config';
 
 function Stepper({ label, value, set, min = 0, max = 99 }: { label: string; value: number; set: (n: number) => void; min?: number; max?: number }) {
-  return <div className="card grey" style={{ padding: '12px 14px' }}>
+  return <div className="card grey" style={{ padding: 'var(--sp-3) 14px' }}>
     <p className="s" style={{ fontWeight: 700 }}>{label}</p>
     <div className="row" style={{ marginTop: 6 }}>
       <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: 'var(--surface)' }} aria-label={`Fewer ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.max(min, value - 1)); }}>−</button>
-      <b className="num sp" style={{ fontSize: 34, textAlign: 'center' }} aria-live="polite">{value}</b>
+      <b className="num sp" style={{ fontSize: 'var(--fs-display)', textAlign: 'center' }} aria-live="polite">{value}</b>
       <button className="btn2" style={{ width: 64, minHeight: 56, fontSize: 26, background: 'var(--surface)' }} aria-label={`More ${label.toLowerCase()}`} onClick={() => { audio.buzz(6); set(Math.min(max, value + 1)); }}>+</button>
     </div></div>;
 }
@@ -38,7 +38,7 @@ export function Recap({ skillId }: { skillId: string }) {
   };
   return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="top"><button className="iconbtn" aria-label="Back to the session" onClick={() => go('session/' + skillId)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>How did it go?</b></div>
-    <div className="row" style={{ alignItems: 'flex-end' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="loaf" width={96} interactive label={cat.name} /><div style={{ marginBottom: 20 }}><span className="bubble mint">{reps === 0 ? 'No reps yet. That’s okay!' : `${good} of ${reps}, nice!`}</span></div></div>
+    <div className="row" style={{ alignItems: 'flex-end' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="loaf" width={96} interactive label={cat.name} /><div style={{ marginBottom: 'var(--sp-5)' }}><span className="bubble mint">{reps === 0 ? 'No reps yet. That’s okay!' : `${good} of ${reps}, nice!`}</span></div></div>
     <h1 style={{ marginTop: 6 }}>{def.name}</h1>
     <Stepper label="Tries" value={reps} set={(n) => { setReps(n); if (good > n) setGood(n); }} />
     <Stepper label="Good ones" value={Math.min(good, reps)} set={(n) => setGood(Math.min(n, reps))} max={reps} />
@@ -68,10 +68,10 @@ export function RewardMoment({ result, catName, coat, eyes, wear }: { result: Lo
     <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: 'calc(40px + var(--safe-t)) 20px calc(28px + var(--safe-b))', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'center' }}><Chester coat={coat} eyes={eyes} wear={wear} mood="happy" anim="dance" width={180} interactive label={catName} /></div>
       <div className="stag" style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: 30, marginTop: 8 }}>{title}</h1>
-        <p className="m" style={{ marginTop: 8 }}>{sub}</p>
+        <h1 style={{ fontSize: 30, marginTop: 'var(--sp-2)' }}>{title}</h1>
+        <p className="m" style={{ marginTop: 'var(--sp-2)' }}>{sub}</p>
         {reward.rewarded ? <>
-          <div className="card white row" style={{ textAlign: 'left' }}><Paw size={26} color="#d4a23a" /><div className="sp"><b>+{reward.treats} treats</b><p className="s">{set.good} good reps{reward.gift?.treats ? ` + ${reward.gift.treats} from the gift` : ''}</p></div></div>
+          <div className="card white row" style={{ textAlign: 'left' }}><Paw size={26} color="var(--butter-strong)" /><div className="sp"><b>+{reward.treats} treats</b><p className="s">{set.good} good reps{reward.gift?.treats ? ` + ${reward.gift.treats} from the gift` : ''}</p></div></div>
           {reward.gift && <div className="card white row" style={{ textAlign: 'left' }}><Icon name="star" /><div className="sp"><b>{pt(reward.gift.title)}</b><p className="s">{pt(reward.gift.detail)}</p></div></div>}
         </> : <div className="card white" style={{ textAlign: 'left' }}><b>{catName} is done for today</b><p className="s">{pt('The set is saved. Rewards reset tomorrow, so he never gets overtrained.')}</p></div>}
       </div>

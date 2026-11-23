@@ -43,9 +43,9 @@ export function CalendarSheet({ event, onClose, change }: { event: CalEvent; onC
   return <Sheet label={title} onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>{title}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     {change && <p className="s" style={{ marginTop: 6 }}>Pick the calendar you added it to. Apple Calendar {change === 'cancelled' ? 'marks the event cancelled' : 'moves the event'}; Google needs you to {change === 'cancelled' ? 'delete it there' : 'delete the old one'}.</p>}
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)', marginTop: 14 }}>
       {order.map((c) => { const preferred = c === last;
-        return <button key={c} className={preferred ? 'btn' : 'btn2'} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, ...(preferred ? {} : { background: 'var(--grey)' }) }} onClick={() => pick(c)}>
+        return <button key={c} className={preferred ? 'btn' : 'btn2'} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', ...(preferred ? {} : { background: 'var(--grey)' }) }} onClick={() => pick(c)}>
           <Icon name="cal" size={18} />{CAL_NAME[c]}{preferred && <span style={{ fontWeight: 600, opacity: 0.75 }}> · last used</span>}</button>; })}
       {change && <button className="btn2" style={{ width: '100%', background: 'transparent' }} onClick={onClose}>It’s not in a calendar</button>}
     </div>

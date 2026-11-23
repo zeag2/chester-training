@@ -18,10 +18,10 @@ export function Node({ d, st, sub, indent = 0 }: { d: SkillDef; st: State; sub: 
   const look = { m: { bg: 'var(--ink)', fg: 'var(--on-ink)', border: '0' }, p: { bg: 'var(--surface)', fg: 'var(--ink)', border: '2px solid var(--ink)' }, u: { bg: 'var(--surface)', fg: 'var(--ink)', border: '1.5px solid var(--line)' }, l: { bg: 'var(--grey)', fg: 'var(--muted-2)', border: '1.5px dashed var(--muted-2)' } }[st];
   return <div style={{ position: 'relative', marginTop: 14, marginLeft: indent }}>
     {indent > 0 && <div aria-hidden="true" style={{ position: 'absolute', left: -12, top: -14, width: 2, height: 42, background: st === 'l' ? 'var(--line)' : 'var(--ink)' }} />}
-    <a href={'#/skill/' + d.id} className="card" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 12, background: look.bg, color: look.fg, border: look.border, borderRadius: 20, padding: '10px 14px 10px 10px' }}>
+    <a href={'#/skill/' + d.id} className="card" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--sp-3)', background: look.bg, color: look.fg, border: look.border, borderRadius: 20, padding: '10px 14px 10px 10px' }}>
       <div style={{ width: 40, height: 40, borderRadius: '50%', background: st === 'm' ? 'var(--ink-2)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: look.fg }}>
         <Icon name={st === 'l' ? 'lock' : st === 'm' ? 'check' : ICON_FOR[d.branch]} size={20} /></div>
-      <div className="sp"><b style={{ fontSize: 15 }}>{d.name}</b><p style={{ fontSize: 12, opacity: .75 }}>{sub}</p></div>
+      <div className="sp"><b style={{ fontSize: 15 }}>{d.name}</b><p style={{ fontSize: 'var(--fs-label)', opacity: .75 }}>{sub}</p></div>
       <span className="chip" style={{ background: st === 'm' ? 'var(--ink-2)' : 'var(--surface)', color: look.fg }}>{STATE_LABEL[st]}</span></a></div>;
 }
 
@@ -40,7 +40,7 @@ export function Tree() {
       const ds = visible.filter((d) => d.branch === b);
       const hidden = SKILLS.filter((d) => d.branch === b && d.hidden && !unlockedHidden.includes(d.id)).length;
       if (!ds.length && !hidden) return null;
-      return <div key={b} className={`card ${BG[b]}`} style={{ padding: '16px 14px 18px' }}>
+      return <div key={b} className={`card ${BG[b]}`} style={{ padding: 'var(--sp-4) 14px 18px' }}>
         <div className="row"><h2 className="sp">{b}</h2>{hidden > 0 && <span className="chip">{hidden} hidden</span>}</div>
         {ds.map((d) => { const st = skillState(d, progress, unlockedHidden, started(d.id)); const p = progress[d.id];
           const sub = st === 'm' ? 'Mastered' : st === 'l' ? 'Needs ' + d.requires.map((r) => SKILLS.find((x) => x.id === r)!.name).join(', ') : st === 'p' ? `Step ${(p?.step ?? 0) + 1} of ${d.steps.length}` : `${d.steps.length} steps`;

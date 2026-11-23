@@ -1,7 +1,7 @@
 # PalDex design system
 
 The design doc for PalDex. New screens and changes follow it; anything it doesn't cover gets added here first.
-Phase 1 (this doc) names the direction and the tokens. Phase 2 moves the code onto them (see the end).
+Phase 1 named the direction and the tokens. Phase 2 (done) moved the code onto them: tokens, components and rules are below.
 
 ## Constraints (Josh)
 - **One named aesthetic direction, committed.** Never "modern and clean".
@@ -60,7 +60,7 @@ next to each other in one card. `--rose` is for destructive text and the emergen
 ## Space, shape, depth
 - **Space scale** (px): 4, 8, 12, 16, 20, 24, 32. The screen gutter is 20 on a phone. Sections are 24 apart, cards 12, inside a card 8–12.
 - **Radius:** 8 (small chips inside cards), 14 (rows, inputs, small tiles), 22 (cards), 26 (sheets), 999 (pills: buttons, chips).
-  That's 5 values. Today there are ~10, which Phase 2 maps onto these.
+  That's 5 values. Today there are ~10; Phase 2 swapped the exact matches, the rest are listed under "Not yet on the scale".
 - **Depth:** one card treatment, `.card.white` = a 1px `--line` hairline + `0 2px 10px rgba(35,35,32,.06)`. Wash cards have no edge.
   Sheets dim the page; nothing else casts a shadow.
 - **Tap targets:** at least 44 × 44. The primary button is 52 tall, secondary 48.
@@ -85,7 +85,71 @@ next to each other in one card. `--rose` is for destructive text and the emergen
 - Never on first page load (only on items added while you watch).
 - Replaces today's `.pop` (500 ms, which feels like a pop) for list items. `.pop` stays only for celebrations.
 
-## Phase 2 (after Josh says go)
+## Tokens in code (`src/styles/tokens.css`)
+Every token above lives in `src/styles/tokens.css`, which `app.css` imports first; `app.css` and `chester.css` hold only
+component classes. Use them as `var(--name)` in CSS and in inline styles (`style={{ fontSize: 'var(--fs-small)' }}`).
+
+| Group | Tokens |
+|---|---|
+| Colour (light + dark) | `--bg --surface --ink --ink-2 --muted --muted-2 --line --grey --on-ink --faint`, `--mint --teal --teal-ink`, `--peach --rose --peach-ink`, `--butter --butter-ink`, `--sky`, `--tabs --yes-active`; hover washes `--hov --hov-ink` (mouse only) |
+| Colour (same in both themes) | `--butter-strong` #d4a23a (the gold treat paw), `--paper` #fff (documents and photos sit on white) |
+| Type | `--font`; `--fs-display` 34, `--fs-heading` 20, `--fs-title` 16, `--fs-body` 16, `--fs-small` 14, `--fs-label` 12, each with its `--lh-*` |
+| Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
+| Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
+| Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
+| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40 |
+
+**Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
+token exactly. These are today's real values, off the scale; moving them is a visible change, so each needs its own
+go-ahead and a screenshot pass:
+- Type: `h1` is 28 (the doc says 34), `h2` 17 (doc: 20), `.s` 13, `.btn2` and many inline sub-lines 15, 17/18 for
+  card titles, 11 for tiny badges, 22–32 for big numbers.
+- Space: 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section heads, `10` between rows); the 110 px tab-bar clearance.
+- Radius: 16 (`.in` inputs; the doc says 14), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
+- Motion: press feedback is 160 ms (`.btn`, `.item`), between `--dur-fast` and `--dur`.
+- Colour: the cat's art and the toys (`src/chester/art.ts`, Corner, Hideout, Play, Chase, Yarn ball, the stars and
+  hearts in `chester.css`) keep their own palette: it's illustration, not UI. Camera and photo overlays keep fixed white
+  and black (they sit on video, whatever the theme). The coral paw on peach cards (Train, Recap: `#c2563f`) doesn't
+  switch in dark; `var(--rose)` would brighten it, so it waits for a decision.
+- The font stack keeps `system-ui` before `sans-serif`: Nunito has no arrow (→), and dropping it changed that glyph.
+
+## Components (use these; don't make new ones in a screen)
+| Component | Where | Key props / classes |
+|---|---|---|
+| **Button**, primary | `.btn` (`src/styles/app.css`) | `<button className="btn">`; 52 tall, ink pill, full width; `disabled` greys it |
+| Button, secondary | `.btn2` | 48 tall, grey pill, inline; add `style={{ width: '100%' }}` to fill |
+| Button, text / danger | `.btn2` with `background: transparent` (danger: `color: var(--rose)`); `.linkbtn` in the Health log | e.g. "Remove this vet" in `src/ui/VetCards.tsx` |
+| Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
+| Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
+| **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` and `textarea` use `.in` too |
+| Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
+| **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards |
+| Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` | `Icon({ name, size = 22 })`, `Paw({ color, size })` |
+| **Sheet / dialog** | `Sheet` from `src/ui/Sheet.tsx` | `label` (its accessible name), `onClose`, `children`; bottom sheet on phones, dialog or side sheet on desktop |
+| **Toast with Undo** | `showToast` / `hideToast` from `src/ui/Toast.tsx` (`<ToastHost />` is in App) | `{ msg, action?: { label, run }, ms? }` |
+| **List row** | `.item` (rows with a hairline), `.lgroup` + `.lrow` (grouped rows in a grey box, Settings) | `.ico` left, `.sp` middle, value right |
+| Document row | `DocRow` from `src/ui/DocRow.tsx` | `doc`, `visit?`, `onMore`, `onSelect?`, `selected?` |
+| **Table** | `.logtable` (desktop Health log, `HealthLogTable` in `src/screens/Care.tsx`) | `log`, `quick`, `who`, `onOpen`, `onQuickLogs` |
+| **Tab bar / side nav** | `TabBar` from `src/ui/TabBar.tsx` | `active`, `onPlus`, `dot?`, `catLabel?`; the same bar becomes the side nav from 760 px |
+| Pet switcher | `PetSwitcher` from `src/ui/PetSwitcher.tsx` | `style?`, `inNav?` |
+| **Tooltip** | `TooltipHost` from `src/ui/Tooltip.tsx` (mounted once) | automatic on `.iconbtn[aria-label]` and `[data-tip]`, hover devices only |
+| Progress bar | `.bar` > `<i style={{ width }}>` | |
+| **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
+| Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
+
+## Rules
+- **New screens use existing components and tokens only.** No literal colours, sizes, spacing or radii in new code.
+- **Anything new goes into the design system first** (this doc + `tokens.css` + the component list), then into screens.
+- **No second button style.** If a button needs to look different, it's a new variant here or it's wrong.
+- **Tabs vs. accordion:**
+  - **Tabs** for exclusive, equal views the user switches between, up to about 5–7 (e.g. Outfits / Toys / Cushions).
+  - **Accordion** for progressive or multiple disclosure, and on narrow screens (e.g. the "Is this an emergency?"
+    signs, a visit's older notes).
+  - **A table or side-by-side** when comparing values (the desktop Health log, weights over time, vaccine due dates).
+- New list rows that appear while you watch use `useSettle`; `.pop` is for celebrations only.
+
+## Phase 2 (done 2026-11-22, `claude/design-system-2`)
+What was planned, for the record:
 1. **`src/styles/tokens.css`:** every token above (colour light + dark, type sizes, space, radius, motion), imported first
    in `main.tsx`. `app.css` keeps only component classes.
 2. **Sweep:** every literal colour, font size, spacing and radius in `src/**/*.tsx` inline styles and `app.css` is swapped for a

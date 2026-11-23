@@ -9,7 +9,7 @@ import { Icon } from '../ui/icons';
 import { back as goBack } from '../ui/router';
 import { useLayout } from '../ui/layout';
 import { DocRow } from '../ui/DocRow';
-import { BookSheet, visitEvent, type BookPreset } from '../ui/VetCards';
+import { BookSheet, visitCats, visitEvent, type BookPreset } from '../ui/VetCards';
 import { CalendarSheet } from '../ui/CalendarChoice';
 import { Sheet } from '../ui/Sheet';
 import { CareSheet, DocAdder, type Editing } from './Care';
@@ -35,8 +35,8 @@ export function VisitPage({ id }: { id: string }) {
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
     <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{visit ? visit.data.reason : 'Visit'}</b></div>;
-  if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 16 }}>This visit was deleted, or hasn’t reached this phone yet.</p>
-    <button className="btn2" style={{ marginTop: 12 }} onClick={() => goBack('health')}>Back to Health</button></div>;
+  if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 'var(--sp-4)' }}>This visit was deleted, or hasn’t reached this phone yet.</p>
+    <button className="btn2" style={{ marginTop: 'var(--sp-3)' }} onClick={() => goBack('health')}>Back to Health</button></div>;
 
   const { primary } = yourVets(vets);
   // the clinic it was booked with, else your usual vet when it's the same clinic (or none was typed)
@@ -46,14 +46,24 @@ export function VisitPage({ id }: { id: string }) {
   const booked = isBooked(visit);
   const cancelled = visit.data.status === 'cancelled';
   const seq = (visit.data.calSeq ?? 0) + 1;
+  const who = visitCats(cat.name, visit);
+  const together = who !== cat.name;
+  // booked with other cats: the change goes to every cat's visit (one calendar event for them all); this one last,
+  // so its saved copy carries the event
+  const applyAll = async (change: (v: CareItem<'vet'>) => { data: CareItem<'vet'>['data']; at: number }) => {
+    const all = await store.visitGroup(visit);
+    for (const v of all.filter((x) => x.id !== visit.id)) { const c = change(v); await store.saveCare('vet', c.data, { id: v.id, at: c.at, catId: v.catId }); }
+    const c = change(visit);
+    return await store.saveCare('vet', c.data, { id: visit.id, at: c.at }) as CareItem<'vet'> | null;
+  };
   const cancel = async () => {
-    if (!confirm(`Cancel ${cat.name}’s visit? It stays here, marked cancelled.`)) return;
-    const item = await store.saveCare('vet', { ...visit.data, status: 'cancelled', calSeq: seq }, { id: visit.id, at: visit.at }) as CareItem<'vet'> | null;
+    if (!confirm(together ? `Cancel the visit for ${who}? It stays on each cat’s page, marked cancelled.` : `Cancel ${cat.name}’s visit? It stays here, marked cancelled.`)) return;
+    const item = await applyAll((v) => ({ data: { ...v.data, status: 'cancelled', calSeq: seq }, at: v.at }));
     if (item) setCalChange({ event: visitEvent(cat.name, item, vet), change: 'cancelled' });
   };
   const reschedule = async (newDay: string, time: string) => {
-    const { time: _old, ...rest } = visit.data;
-    const item = await store.saveCare('vet', { ...rest, ...(time ? { time } : {}), status: 'booked', calSeq: seq }, { id: visit.id, at: Date.parse(newDay + 'T12:00:00') }) as CareItem<'vet'> | null;
+    const item = await applyAll((v) => { const { time: _old, ...rest } = v.data;
+      return { data: { ...rest, ...(time ? { time } : {}), status: 'booked', calSeq: seq }, at: Date.parse(newDay + 'T12:00:00') }; });
     setMoving(false);
     if (item) setCalChange({ event: visitEvent(cat.name, item, vet), change: 'moved' });
   };
@@ -66,33 +76,34 @@ export function VisitPage({ id }: { id: string }) {
   // after the visit: the vaccines it gave that are due again, for "Book the next one?"
   const again = !cancelled && (!booked || passed) ? nextVaccines(doses, care) : null;
   const log = (kind: 'med' | 'weight') => setEditing({ kind, preset: { visitId: visit.id } as never, day: passed || !booked ? day : localDay(Date.now()) });
-  const h = (t: string) => <h2 style={{ marginTop: 20, fontSize: 17 }}>{t}</h2>;
+  const h = (t: string) => <h2 style={{ marginTop: 'var(--sp-5)', fontSize: 17 }}>{t}</h2>;
 
   const details = <>
-      <h1 style={{ marginTop: 4 }}>{visit.data.reason}</h1>
+      <h1 style={{ marginTop: 'var(--sp-1)' }}>{visit.data.reason}</h1>
       <p className="m">{[fmtDay(visit.at), fmtTime(visit.data.time), clinic].filter(Boolean).join(' · ')}</p>
-      {booked && <span className="chip" style={{ marginTop: 8, background: 'var(--teal)', color: 'var(--on-ink)' }}>Booked</span>}
-      {cancelled && <span className="chip" style={{ marginTop: 8, background: 'var(--rose)', color: 'var(--on-ink)' }}>Cancelled</span>}
-      {(tel || maps) && !cancelled && <div className="row" style={{ gap: 8, marginTop: 12 }}>
-        {tel && <a className="btn2" href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="phone" size={18} />Call</a>}
-        {maps && <a className="btn2" href={maps} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
+      {together && <p className="s" style={{ marginTop: 2 }}>Booked together with {visit.data.group!.names.filter((n) => n !== cat.name).join(' and ')}. Rescheduling or cancelling changes it for {visit.data.group!.names.length > 2 ? 'all of them' : 'both'}.</p>}
+      {booked && <span className="chip" style={{ marginTop: 'var(--sp-2)', background: 'var(--teal)', color: 'var(--on-ink)' }}>Booked</span>}
+      {cancelled && <span className="chip" style={{ marginTop: 'var(--sp-2)', background: 'var(--rose)', color: 'var(--on-ink)' }}>Cancelled</span>}
+      {(tel || maps) && !cancelled && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
+        {tel && <a className="btn2" href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="phone" size={18} />Call</a>}
+        {maps && <a className="btn2" href={maps} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
       </div>}
-      {booked && passed && <button className="card butter row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }} onClick={() => setEditing({ kind: 'vet', item: visit })}>
+      {booked && passed && <button className="card butter row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 'var(--sp-3)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>Add what the vet said. Saving marks it done.</span></span><span className="chip">Add notes</span></button>}
-      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => setCalFor(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
-      {booked && !passed && <div className="row" style={{ gap: 8, marginTop: 8 }}>
+      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} onClick={() => setCalFor(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
+      {booked && !passed && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setMoving(true)}>Reschedule</button>
         <button className="btn2 sp" style={{ background: 'var(--grey)', color: 'var(--rose)' }} onClick={cancel}>Cancel visit</button></div>}
-      {cancelled && <div className="row" style={{ gap: 8, marginTop: 12 }}>
+      {cancelled && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
         <button className="btn sp" onClick={() => setBook({ reason: visit.data.reason, notes: visit.data.notes })}>Book again</button>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setCalChange({ event: visitEvent(cat.name, visit, vet), change: 'cancelled' })}>Remove from calendar</button></div>}
 
       {/* a passed booking with no notes yet already asks "How did it go?" above: one prompt, not two */}
       {/* from the papers: the vet's name, body condition and what it cost */}
-      {(visit.data.vetName || visit.data.bcs || visit.data.cost !== undefined) && <p className="s" style={{ marginTop: 8 }}>
+      {(visit.data.vetName || visit.data.bcs || visit.data.cost !== undefined) && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>
         {[visit.data.vetName, visit.data.bcs && `Body condition ${visit.data.bcs}`, visit.data.cost !== undefined && `Cost $${visit.data.cost.toFixed(2)}`].filter(Boolean).join(' · ')}</p>}
       {(visit.data.notes || !(booked && passed)) && h((booked && !passed) || cancelled ? 'Notes' : 'What the vet said')}
-      {visit.data.notes ? <p style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
+      {visit.data.notes ? <p style={{ marginTop: 'var(--sp-1)', whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
         : !(booked && passed) && !cancelled && <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
 
   </>;
@@ -105,7 +116,7 @@ export function VisitPage({ id }: { id: string }) {
           <div className="sp"><b>{m.data.name}</b><p className="s">{MED_LABEL[m.data.what]}{m.data.nextDue ? ` · next ${fmtShort(m.data.nextDue)}` : ''}</p></div></button>)}
         {weight && <button className="item" onClick={() => setEditing({ kind: 'weight', item: weight })}>
           <div className="ico grey"><Icon name="target" /></div><div className="sp"><b>Weight</b><p className="s">{weight.data.lb} lb</p></div></button>}
-        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}>
           <button className="btn2" style={{ flex: 1, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => log('med')}><Icon name="plus" size={16} />Dose or vaccine</button>
           {!weight && <button className="btn2" style={{ flex: 1, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => log('weight')}><Icon name="plus" size={16} />Weight</button>}
         </div>
@@ -113,7 +124,7 @@ export function VisitPage({ id }: { id: string }) {
 
   </>;
   const bookNext = <>
-      {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }}
+      {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 'var(--sp-3)' }}
         onClick={() => setBook({ reason: 'Vaccines', day: bookingDay(again.due), notes: `${again.names.join(', ')} due ${fmtShortDay(again.due)}` })}>
         <span className="sp"><b>Book the next one?</b><span className="s" style={{ display: 'block' }}>{again.names.join(', ')} due again {fmtShortDay(again.due)}</span></span><span className="chip">Book</span></button>}
 
@@ -125,7 +136,7 @@ export function VisitPage({ id }: { id: string }) {
       <DocAdder signedIn={!!account} visit={visit} compact />
   </>;
   const actions = <>
-      <div className="row" style={{ gap: 8, marginTop: 24 }}>
+      <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>Edit visit</button>
         <button className="btn2 sp" style={{ background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this visit for everyone? Its documents and doses stay in the log.')) { await store.deleteCare(visit.id); goBack('health', { replace: true }); } }}>Delete</button>
       </div>

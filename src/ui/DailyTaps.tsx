@@ -76,26 +76,26 @@ export function DailyTaps() {
     { what: 'play', label: 'Played', icon: 'yarn', done: play.length > 0, sub: play.length ? `${play.length}× today` : 'Not yet today' },
   ];
   return <div className="card white">
-    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Quick log</b>
+    <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Quick log</b>
       <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 10 }}>
       {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => (t.done ? openEntries(t.what) : void log(t.what))}
         aria-label={`${t.label}. ${t.sub}${t.done ? '. Tap to see or fix today’s entries' : ''}`}
-        style={{ height: 'auto', minHeight: 76, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: '8px 4px', background: t.done ? 'var(--mint)' : 'var(--grey)' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{t.done ? <Icon name="check" size={18} /> : <Icon name={t.icon} size={18} />}<b style={{ fontSize: 15 }}>{t.label}</b></span>
-        <span className="s" style={{ fontSize: 12, lineHeight: 1.2, textAlign: 'center' }}>{t.sub}</span>
+        style={{ height: 'auto', minHeight: 76, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: 'var(--sp-2) var(--sp-1)', background: t.done ? 'var(--mint)' : 'var(--grey)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>{t.done ? <Icon name="check" size={18} /> : <Icon name={t.icon} size={18} />}<b style={{ fontSize: 15 }}>{t.label}</b></span>
+        <span className="s" style={{ fontSize: 'var(--fs-label)', lineHeight: 1.2, textAlign: 'center' }}>{t.sub}</span>
       </button>)}
     </div>
     {Object.values(today).some((l) => l.length > 0) && <button className="s" onClick={() => openEntries('all')}
       style={{ marginTop: 6, minHeight: 44, width: '100%', border: 0, background: 'none', padding: 0, fontFamily: 'inherit', color: 'var(--teal)', fontWeight: 700, textAlign: 'left' }}>Logged by mistake? Fix today’s entries</button>}
     {entries && createPortal(<DailyLogSheet what={entries === 'all' ? undefined : entries} onClose={() => setEntries(null)}
       onAgain={entries === 'all' ? undefined : () => void log(entries)} />, document.body)}
-    {off ? <div style={{ marginTop: 12, padding: 12, borderRadius: 16, background: 'var(--sky)' }}>
+    {off ? <div style={{ marginTop: 'var(--sp-3)', padding: 'var(--sp-3)', borderRadius: 16, background: 'var(--sky)' }}>
         <b style={{ fontSize: 15 }}>What’s off?</b>
         <p className="s" style={{ marginTop: 2 }}>{off.picked.length ? 'Picked from the last few days. Change it if it’s something else.' : 'Tap what you noticed.'}</p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>{off.chips.map((c) => { const on = off.picked.includes(c);
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 'var(--sp-2)' }}>{off.chips.map((c) => { const on = off.picked.includes(c);
           return <button key={c} className={`chipbtn ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => setOff({ ...off, picked: on ? off.picked.filter((x) => x !== c) : [...off.picked, c] })}>{c}</button>; })}</div>
-        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}>
           <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} onClick={() => { setOff(null); go('health/log/symptom'); }}>Other or details…</button>
           <button className="btn" style={{ flex: 1, width: 'auto', minHeight: 48, fontSize: 15 }} disabled={!off.picked.length || !!busy} onClick={async () => {
             if (busy) return; setBusy('check');
@@ -112,16 +112,16 @@ export function DailyTaps() {
         ? <button className="s row" onClick={() => reopen(check.id)} style={{ marginTop: 10, gap: 6, width: '100%', minHeight: 44, border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit' }}>
           <Icon name="check" size={16} /><span className="sp">Today’s check: something was off ({time(check.at)}).</span><b style={{ color: 'var(--teal)' }}>What was it?</b></button>
         : <p className="s row" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{check.data.ok === false ? `Today’s check: something was off (${time(check.at)}).` : `Today’s check: all normal (${time(check.at)}${who(check) === 'you' ? '' : `, ${who(check)}`}).`}</p>)
-      : <div style={{ marginTop: 12, padding: 12, borderRadius: 16, background: 'var(--sky)' }}>
+      : <div style={{ marginTop: 'var(--sp-3)', padding: 'var(--sp-3)', borderRadius: 16, background: 'var(--sky)' }}>
         <b style={{ fontSize: 15 }}>Daily check</b>
         <p className="s" style={{ marginTop: 2 }}>Is {cat.name} eating, using the litter box and acting like {cat.sex === 'f' ? 'herself' : 'himself'}?</p>
-        <div className="row" style={{ gap: 8, marginTop: 8 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
           <button className="btn2" style={{ flex: 1, padding: '0 10px', background: 'var(--surface)' }} disabled={!!busy} onClick={() => void log('check', { ok: true })}>All normal</button>
           <button className="btn2" style={{ flex: 1, padding: '0 10px', whiteSpace: 'nowrap', background: 'var(--surface)' }} disabled={!!busy} onClick={() => void somethingOff()}>Something’s off</button>
         </div>
       </div>}
     {undo && !off && createPortal(<div className="toast pop undo" role="status">
-      <Paw color="#d4a23a" size={18} /><span className="msg sp">{undo.all ? `${DONE[undo.what]} for all cats` : pets.length > 1 && undoCat ? `${undoCat.name}: ${DONE[undo.what]}` : DONE[undo.what]}</span>
+      <Paw color="var(--butter-strong)" size={18} /><span className="msg sp">{undo.all ? `${DONE[undo.what]} for all cats` : pets.length > 1 && undoCat ? `${undoCat.name}: ${DONE[undo.what]}` : DONE[undo.what]}</span>
       {others.length > 0 && undo.what !== 'check' && !undo.all && <button className="btn2" onClick={() => void logOthers()}>{alsoLabel}</button>}
       {undo.what === 'scoop' && !undo.all && <button className="btn2" onClick={async () => { await store.saveCare('symptom', { what: 'Litter box change' }, { catId: undo.catId }); setUndo(null); go('health'); }}>Looked off?</button>}
       <button className="btn2" onClick={() => { for (const id of undo.ids) void store.deleteCare(id); setUndo(null); if (undo.what === 'check') setOff(null); }}>Undo</button>

@@ -90,31 +90,31 @@ export function Corner() {
 
   return <div className="screen">
     <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('chester')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>{cat.name}’s corner</b>
-      <span className="chip num" style={{ background: 'var(--butter)', color: 'var(--butter-ink)', minHeight: 32, fontSize: 14 }} aria-label={`${balance} treats`}><Paw size={16} color="#d4a23a" />{balance}</span></div>
+      <span className="chip num" style={{ background: 'var(--butter)', color: 'var(--butter-ink)', minHeight: 32, fontSize: 'var(--fs-small)' }} aria-label={`${balance} treats`}><Paw size={16} color="var(--butter-strong)" />{balance}</span></div>
     <div className="stag">
-      <div className="card butter" style={{ padding: '18px 16px 14px', position: 'relative', overflow: 'hidden' }}>
+      <div className="card butter" style={{ padding: '18px var(--sp-4) 14px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'center', minHeight: 26 }}>{(line || toast) && <span key={line + toast} className="bubble mint">{toast || line}</span>}</div>
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 4 }}>
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 'var(--sp-1)' }}>
           <div style={{ position: 'relative', zIndex: 1, marginBottom: -34 }}>
             <Chester coat={cat.coat} eyes={cat.eyes} wear={c?.wearing} width={150} interactive label={cat.name} mood="curious" onPet={(l) => setLine(l)} react={react?.id ?? null} reactKey={react?.n} /></div>
           <CushionArt id={c?.cushion} />
         </div>
         <div style={{ marginTop: 10 }}>
           <div className="row"><b className="sp">Bond: {bond.name}</b><span className="s num">Level {bond.level}</span></div>
-          <div className="bar" style={{ marginTop: 8 }} role="progressbar" aria-label="Bond" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(bond.frac * 100)}><i style={{ width: `${Math.max(4, bond.frac * 100)}%` }} /></div>
+          <div className="bar" style={{ marginTop: 'var(--sp-2)' }} role="progressbar" aria-label="Bond" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(bond.frac * 100)}><i style={{ width: `${Math.max(4, bond.frac * 100)}%` }} /></div>
           <p className="s" style={{ marginTop: 6 }}>{bond.next == null ? pt('As close as it gets. He adores you.') : `${bond.next - wallet.bond} more bond to the next level${(() => { const g = BOND_LEVELS[bond.level]?.gift; return g && !have.has(g) ? `, which gives ${pt('him')} a free ${ITEM_BY_ID[g].name.toLowerCase()}` : ''; })()}. Gifts, play and friends build it.`}</p>
         </div>
       </div>
 
       {giftReady
         ? <button className="card mint row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', font: 'inherit' }} onClick={openGift} disabled={busy}>
-            <div className="ico"><Icon name="star" /></div><div className="sp"><b style={{ fontSize: 16 }}>Today’s gift is here</b><p className="s">Tap to open. One a day for {cat.name}, shared with your household.</p></div></button>
+            <div className="ico"><Icon name="star" /></div><div className="sp"><b style={{ fontSize: 'var(--fs-body)' }}>Today’s gift is here</b><p className="s">Tap to open. One a day for {cat.name}, shared with your household.</p></div></button>
         : <div className="card grey row"><div className="ico"><Icon name="check" /></div><div className="sp"><b>Today’s gift opened</b><p className="s">+{dailyGiftTreats(cat.id, day)} treats. Another one tomorrow.</p></div></div>}
 
       {toys.length > 0 && <>
         <div className="row" style={{ marginTop: 22 }}><h2 className="sp">Play</h2><span className="s">{playedToday(c, day) ? 'Bond point earned today' : 'First play today: +1 bond, +2 treats'}</span></div>
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 2px 4px', margin: '0 -2px' }}>
-          {toys.map((t, i) => <button key={t} className="card white" style={{ margin: 0, flex: 'none', width: 104, border: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: 12, color: 'inherit' }} onClick={() => playWith(t)} aria-label={`Play with ${toyName(t)}`}>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 2px var(--sp-1)', margin: '0 -2px' }}>
+          {toys.map((t, i) => <button key={t} className="card white" style={{ margin: 0, flex: 'none', width: 104, border: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: 'var(--sp-3)', color: 'inherit' }} onClick={() => playWith(t)} aria-label={`Play with ${toyName(t)}`}>
             <ToyArt name={t} i={i} /><span className="s" style={{ fontWeight: 700, color: 'var(--ink)', textAlign: 'center', lineHeight: 1.2 }}>{toyName(t)}</span></button>)}
         </div></>}
 
@@ -127,7 +127,7 @@ export function Corner() {
             const on = (item.kind === 'outfit' && c?.wearing === item.id) || (item.kind === 'cushion' && c?.cushion === item.id);
             const short = !mine && (!!item.special || balance < item.price);
             const label = mine ? (item.kind === 'toy' ? 'Play' : on ? (item.kind === 'outfit' ? 'Wearing' : 'In use') : item.kind === 'outfit' ? 'Wear' : 'Use') : `${item.price}`;
-            return <button key={item.id} className={`card ${on ? 'mint' : 'grey'}`} style={{ margin: 0, border: on ? '2px solid var(--teal)' : '2px solid transparent', textAlign: 'left', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 6, padding: 12 }}
+            return <button key={item.id} className={`card ${on ? 'mint' : 'grey'}`} style={{ margin: 0, border: on ? '2px solid var(--teal)' : '2px solid transparent', textAlign: 'left', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 6, padding: 'var(--sp-3)' }}
               onClick={() => tap(item)} aria-pressed={item.kind !== 'toy' && mine ? on : undefined} aria-label={mine ? `${item.name}: ${label}` : item.special ? `${item.name}: ${item.special}` : `Buy ${item.name} for ${item.price} treats`}>
               <div style={{ height: 76, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: short ? 0.55 : 1 }}>
                 {item.kind === 'outfit' ? <Chester coat={cat.coat} eyes={cat.eyes} wear={item.id} mood="happy" width={74} />
@@ -135,12 +135,12 @@ export function Corner() {
               <b style={{ fontSize: 15 }}>{item.name}</b>
               <p className="s" style={{ lineHeight: 1.3 }}>{item.blurb}{!mine && bondGiftLevel(item.id) ? ` · Free at ${bondGiftLevel(item.id)!.name}` : ''}{!mine && item.season ? ` · ${item.season.label} only` : ''}</p>
               <span className="chip num" style={{ alignSelf: 'flex-start', background: mine ? 'var(--surface)' : 'var(--butter)', color: mine ? 'var(--ink)' : 'var(--butter-ink)' }}>
-                {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : item.special ? <><Icon name="lock" size={14} />Make a friend</> : <><Paw size={14} color="#d4a23a" />{label}</>}</span>
+                {mine ? (on ? <><Icon name="check" size={14} />{label}</> : label) : item.special ? <><Icon name="lock" size={14} />Make a friend</> : <><Paw size={14} color="var(--butter-strong)" />{label}</>}</span>
             </button>;
           })}
         </div>
       </section>)}
-      <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>Treats come from the daily gift, logging {cat.name}’s care (a few a day, more for weigh-ins, doses on time and vet visits), training sets and friends. Tap an outfit or cushion again to take it off.</p>
+      <p className="s" style={{ textAlign: 'center', marginTop: 'var(--sp-5)' }}>Treats come from the daily gift, logging {cat.name}’s care (a few a day, more for weigh-ins, doses on time and vet visits), training sets and friends. Tap an outfit or cushion again to take it off.</p>
     </div>
   </div>;
 }

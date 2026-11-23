@@ -71,10 +71,10 @@ export function Session({ skillId }: { skillId: string }) {
   const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
 
   return <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface)', paddingTop: 'var(--safe-t)', paddingBottom: 'calc(12px + var(--safe-b))' }}>
-    <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '0 16px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '0 var(--sp-4)', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div className="top">
         <button className="iconbtn" aria-label="Close session" onClick={finish}><Icon name="close" /></button>
-        <div className="sp"><b style={{ fontSize: 16 }}>{def.name}</b><p className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Step {step + 1}: {pt(def.steps[step])}</p></div>
+        <div className="sp"><b style={{ fontSize: 'var(--fs-body)' }}>{def.name}</b><p className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Step {step + 1}: {pt(def.steps[step])}</p></div>
         <b className="num" style={{ fontSize: 22, minWidth: 54, textAlign: 'right' }} aria-live="off">{mm}:{ss}</b>
         <button className="iconbtn" aria-label="Restart the timer" onClick={tapRestart} style={left === 0 ? { background: 'var(--mint)' } : undefined}><Icon name="restart" /></button>
       </div>
@@ -83,9 +83,9 @@ export function Session({ skillId }: { skillId: string }) {
         <div style={{ position: 'absolute', left: '-4%', bottom: '2%', width: '38%' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} raised anim="bat" width={130} extra={wraps} interactive label={cat.name} react={react} onPet={(l) => setLine(l)} /></div>
         {(line || firstTime) && <span key={line} className="bubble butter" style={{ position: 'absolute', left: '30%', top: 0, fontSize: 13 }}>{line || 'Tap anywhere when I get it!'}</span>}
       </div>
-      <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: 'var(--mint)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">
+      <button onClick={yes} aria-label="Yes! Log a good rep" style={{ flex: 1, minHeight: 200, marginTop: 10, border: 0, borderRadius: 32, background: 'var(--mint)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', color: 'var(--ink)', position: 'relative', overflow: 'hidden' }} className="yespaw">
         <span key={pressed} className="pawstamp"><Paw size={120} color="var(--ink)" /></span>
-        <b style={{ fontSize: 34, fontWeight: 800 }}>Yes!</b>
+        <b style={{ fontSize: 'var(--fs-display)', fontWeight: 800 }}>Yes!</b>
         <span className="s num">{good} good · {reps - good} missed</span>
       </button>
       <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
@@ -99,7 +99,7 @@ export function Session({ skillId }: { skillId: string }) {
     {asking && <Sheet label="Restart the timer" onClose={() => setAsking(false)}>
         <b style={{ fontSize: 18 }}>Start the timer over?</b>
         <p className="m" style={{ marginTop: 6 }}>The timer goes back to 2:00. You’ve logged {good} good and {reps - good} missed so far.</p>
-        <button className="btn" style={{ marginTop: 16 }} onClick={() => restart(false)}>Keep the {reps} {reps === 1 ? 'rep' : 'reps'}</button>
+        <button className="btn" style={{ marginTop: 'var(--sp-4)' }} onClick={() => restart(false)}>Keep the {reps} {reps === 1 ? 'rep' : 'reps'}</button>
         <button className="btn2" style={{ width: '100%', marginTop: 10 }} onClick={() => restart(true)}>Clear them too</button>
         <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => setAsking(false)}>Cancel</button>
       </Sheet>}
