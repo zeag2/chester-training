@@ -88,6 +88,9 @@ export function VisitPage({ id }: { id: string }) {
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setCalChange({ event: visitEvent(cat.name, visit, vet), change: 'cancelled' })}>Remove from calendar</button></div>}
 
       {/* a passed booking with no notes yet already asks "How did it go?" above: one prompt, not two */}
+      {/* from the papers: the vet's name, body condition and what it cost */}
+      {(visit.data.vetName || visit.data.bcs || visit.data.cost !== undefined) && <p className="s" style={{ marginTop: 8 }}>
+        {[visit.data.vetName, visit.data.bcs && `Body condition ${visit.data.bcs}`, visit.data.cost !== undefined && `Cost $${visit.data.cost.toFixed(2)}`].filter(Boolean).join(' · ')}</p>}
       {(visit.data.notes || !(booked && passed)) && h((booked && !passed) || cancelled ? 'Notes' : 'What the vet said')}
       {visit.data.notes ? <p style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
         : !(booked && passed) && !cancelled && <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
