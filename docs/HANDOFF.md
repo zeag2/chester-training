@@ -789,8 +789,16 @@ Items marked *(art)* suit the art session.
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
   per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
-- [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
-  bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
+- [x] **"Pet me?" moments** (done 2026-11-23, `claude/features-pet-me`): `src/engine/petme.ts` + Home. Up to 3 a day,
+  9 AM to 9 PM, one at a seeded time in each third of the window (`petMeTimes(catId, day)`); opening the app late shows
+  only the latest one due, never a backlog, and each shows once per phone (`localStorage`, `shownPetMe`/`markPetMe`).
+  Only while the room is calm (not night, dozing, the litter gag, the chase or "full"). He runs on (the gag's `back`
+  entrance, `run` pose), sits with his paw up (`raised` + `wave`, happy) under "Pet me?" with one soft mrrp; a tap or a
+  stroke answers: "Prrr… thank you!", +1 bond the first time each day (corner log `pet-<day>`, kind `pet`, shared by
+  the household, so bond levels keep their pace), and for 10 minutes the rare moves (golden purr, zoomies: `RARE` in
+  `reactions.ts`) are 4× likelier (`lucky` prop on `Chester`). Ignored for 45 s, he curls up (`curl` pose, "*curls
+  up*") for 20 s and nothing is lost. Existing poses and animations only, no new art. Ideas: a push for it (push plan),
+  a tiny "+1 bond" pop-in.
 - [x] **Bond levels unlock outfits** (done 2026-11-08): Buddies a bell collar, Pals a bow tie, Best friends an ear
   flower, Partners in crime a party hat, Soulmates the crown, free (`BOND_LEVELS[].gift`, `owned(c, bond)`); the corner
   says which level gives what. Still open *(art)*: idle behaviours per level.
@@ -863,7 +871,7 @@ Items marked *(art)* suit the art session.
 ### The original phases (from the design doc, https://claude.ai/artifact/FX5FoXUmccY9j51Gzy14o9)
 - **Phase 1, train with Chester:** done.
 - **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case,
-  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album,
+  "Pet me?" moments (built 2026-11-23), photo album,
   notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
   Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
@@ -887,6 +895,7 @@ src/
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
     corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels; seasonal items (`season` MM-DD from/to, `inSeason`)
+    petme.ts            "Pet me?" moments: today's 3 seeded times, which is due, the once-a-day bond id, shown-on-this-phone
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -1467,3 +1476,9 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
   (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
   grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
+- 2026-11-23, "Pet me?" moments (Features worker, `claude/features-pet-me`): no skills, plugins or new MCP servers
+  (`lottiefiles-creator` connected, unused: existing poses only). Also fixed the paw on Train's "Go easy" card, which a
+  long line beside it squeezed to 11 px wide: `Paw` now has `flex: none` (not `Icon`: the tab-bar snapshot pins its
+  markup). Checks: Vitest (287, new `src/engine/petme.test.ts`), typecheck, build; Playwright 390 px light and dark with
+  a fixed clock at the day's first moment, a cat seeded through `globalThis.__chesterStore`: asking, then petted (+1
+  bond): `docs/screenshots/pet-me/`.
