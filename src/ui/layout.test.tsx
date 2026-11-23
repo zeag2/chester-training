@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup, act, fireEvent, screen } from '@testing-library/react';
 import { currentLayout } from './layout';
 import { TabBar } from './TabBar';
+import { appCssResolved } from '../styles/cssText';
 
 // A fake matchMedia for a window `width` px wide; setWidth() moves it and fires 'change' like a browser does.
 let width = 390;
@@ -37,8 +38,7 @@ describe('Tab bar on phones (under 760 px) stays exactly as before', () => {
     expect(document.documentElement.dataset.nav).toBeUndefined();
   });
   it('keeps the phone CSS for the bar and the page column, and keys every new rule off the tablet/desktop nav', async () => {
-    const fs = 'node:fs'; // read the file itself: vitest drops CSS imports
-    const css: string = (await import(/* @vite-ignore */ fs)).readFileSync('src/styles/app.css', 'utf8');
+    const css = await appCssResolved(); // tokens written out: the phone rules must be exactly as before
     expect(css).toContain('.screen{max-width:480px;margin:0 auto;padding:calc(20px + var(--safe-t)) 20px calc(110px + var(--safe-b));position:relative;min-height:100dvh}');
     expect(css).toContain('.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 max(10px,var(--safe-b));z-index:20}');
     expect(css).toContain('.tabs-in{display:flex;justify-content:space-around;width:100%;max-width:480px}');
@@ -70,7 +70,7 @@ describe('Desktop polish (steps 3 and 8): hover, focus rings and the centred set
       for (; j < block.length; j++) { if (block[j] === '{') depth++; else if (block[j] === '}' && --depth === 0) break; }
       i = j + 1; blocks++;
     }
-    expect(blocks).toBeGreaterThanOrEqual(4);
+    expect(blocks).toBeGreaterThanOrEqual(2); // the hover colour tokens moved to tokens.css
   });
   it('the setup screens opt into the 640 px column with .screen.centred', async () => {
     const fs = 'node:fs';

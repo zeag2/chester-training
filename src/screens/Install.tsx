@@ -33,18 +33,18 @@ export function Install({ onSkip }: { onSkip: () => void }) {
 
   if (state === 'installed') return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36, textAlign: 'center' }}>
-      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px 16px 14px', borderRadius: 32 }}><Chester coat="black" eyes="gold" mood="happy" anim="dance" width={170} /></div>
+      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px var(--sp-4) 14px', borderRadius: 32 }}><Chester coat="black" eyes="gold" mood="happy" anim="dance" width={170} /></div>
       <h1 style={{ marginTop: 26 }}>{named ? `${title} is on your Home Screen` : 'Added to your Home Screen'}</h1>
-      <p className="m" style={{ marginTop: 10, fontSize: 16 }}>Open it from there to finish setting up. You can close this page.</p>
+      <p className="m" style={{ marginTop: 10, fontSize: 'var(--fs-body)' }}>Open it from there to finish setting up. You can close this page.</p>
     </div></div>;
 
   return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
-    <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 12 }}>
-      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '14px 16px 6px', borderRadius: 32 }}><Chester coat={pets[open]?.coat ?? pets[0]?.coat} eyes={pets[open]?.eyes ?? pets[0]?.eyes} mood="happy" raised anim="wave" width={118} interactive /></div>
-      <h1 style={{ marginTop: 20, fontSize: 30 }}>Hi! Who’s your cat?</h1>
-      <p className="m" style={{ marginTop: 8, fontSize: 16 }}>The app gets their name and face, then lives on your Home Screen like any other app.</p>
-      {pets.map((p, i) => <div key={i} className="card grey" style={{ marginTop: i ? 8 : 16, padding: 12 }}>
-        <div className="row" style={{ gap: 8 }}>
+    <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 'var(--sp-3)' }}>
+      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '14px var(--sp-4) 6px', borderRadius: 32 }}><Chester coat={pets[open]?.coat ?? pets[0]?.coat} eyes={pets[open]?.eyes ?? pets[0]?.eyes} mood="happy" raised anim="wave" width={118} interactive /></div>
+      <h1 style={{ marginTop: 'var(--sp-5)', fontSize: 30 }}>Hi! Who’s your cat?</h1>
+      <p className="m" style={{ marginTop: 'var(--sp-2)', fontSize: 'var(--fs-body)' }}>The app gets their name and face, then lives on your Home Screen like any other app.</p>
+      {pets.map((p, i) => <div key={i} className="card grey" style={{ marginTop: i ? 8 : 16, padding: 'var(--sp-3)' }}>
+        <div className="row" style={{ gap: 'var(--sp-2)' }}>
           <span style={{ width: 46, height: 46, flex: 'none', display: 'flex' }}><Chester coat={p.coat} eyes={p.eyes} mood="happy" width={46} /></span>
           <input className="in sp" style={{ marginTop: 0, background: 'var(--surface)' }} value={p.name} onChange={(e) => set(i, { name: e.target.value })} onFocus={() => setOpen(i)} placeholder={i ? 'Another cat’s name' : 'Your cat’s name'} aria-label={i ? `Cat ${i + 1} name` : 'Your cat’s name'} autoComplete="off" enterKeyHint="done" />
           {i > 0 && <button className="iconbtn" aria-label={`Remove ${p.name || 'this cat'}`} onClick={() => { setPets((ps) => ps.filter((_, k) => k !== i)); setOpen(0); }}><Icon name="close" /></button>}
@@ -54,14 +54,14 @@ export function Install({ onSkip }: { onSkip: () => void }) {
             {Object.keys(COATS).map((k) => <button key={k} aria-label={COATS[k].name} aria-pressed={p.coat === k} onClick={() => set(i, { coat: k })}
               style={{ width: 32, height: 32, borderRadius: '50%', background: SWATCH[k], border: 0, outline: p.coat === k ? '3px solid var(--ink)' : '1px solid var(--line)', outlineOffset: 2 }} />)}
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }} role="group" aria-label={`${p.name || 'Cat'}’s eyes`}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 'var(--sp-2)' }} role="group" aria-label={`${p.name || 'Cat'}’s eyes`}>
             {Object.keys(EYES).map((k) => <button key={k} aria-label={EYES[k].name + ' eyes'} aria-pressed={p.eyes === k} onClick={() => set(i, { eyes: k })}
               style={{ width: 24, height: 24, borderRadius: '50%', background: EYESW[k], border: 0, outline: p.eyes === k ? '3px solid var(--ink)' : '1px solid var(--line)', outlineOffset: 2 }} />)}
           </div></>
           : <button className="s" style={{ marginTop: 6, background: 'none', border: 0, padding: 0, color: 'var(--teal)', fontWeight: 700 }} onClick={() => setOpen(i)}>Change {p.name || 'their'} colours</button>}
       </div>)}
       {pets.length < 4 && <button className="btn2" style={{ marginTop: 10, alignSelf: 'flex-start', minHeight: 40 }} onClick={() => { setPets((ps) => [...ps, { name: '', coat: 'orange', eyes: 'green' }]); setOpen(pets.length); }}><Icon name="plus" size={18} />&nbsp;Add another cat</button>}
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
+      <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>
         {named && <div className="row" style={{ justifyContent: 'center', gap: 10, marginBottom: 14 }} aria-label={`Your Home Screen icon will be called ${title}`}>
           <img src={icon ?? import.meta.env.BASE_URL + 'apple-touch-icon.png'} alt="" width={52} height={52} style={{ borderRadius: 12 }} />
           <span className="s">Your icon: <b style={{ color: 'var(--ink)' }}>{title}</b></span></div>}

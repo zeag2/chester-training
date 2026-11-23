@@ -45,21 +45,21 @@ export function DailyLogSheet({ what, days = 1, onAgain, onClose }: { what?: Dai
         <button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
       <p className="s" style={{ marginTop: 2 }}>Logged by mistake? Delete it, or change its time. Shared with your household.</p>
       {groups.length === 0 && <p className="s" style={{ marginTop: 14 }}>Nothing logged {days === 1 ? 'today' : `in the last ${days} days`}.</p>}
-      {groups.map((g) => <div key={g.day} style={{ marginTop: 12 }}>
+      {groups.map((g) => <div key={g.day} style={{ marginTop: 'var(--sp-3)' }}>
         {(days > 1) && <p className="s" style={{ fontWeight: 800 }}>{dayName(g.day, now)}</p>}
         {g.items.map((i) => <div key={i.id} className="row" style={{ gap: 10, padding: '10px 0', borderBottom: '1px solid var(--line)', minHeight: 56 }}>
           {asking === i.id
             ? <><span className="sp" style={{ fontWeight: 700 }}>Delete {THIS[i.data.what]} <span style={{ whiteSpace: 'nowrap' }}>({time(i.at)})?</span></span>
-              <button className="btn2" style={{ padding: '0 12px', background: 'var(--grey)' }} onClick={() => setAsking(null)}>Keep</button>
-              <button className="btn2" style={{ padding: '0 12px', background: 'var(--rose)', color: 'var(--bg)' }} onClick={() => void remove(i)}>Delete</button></>
+              <button className="btn2" style={{ padding: '0 var(--sp-3)', background: 'var(--grey)' }} onClick={() => setAsking(null)}>Keep</button>
+              <button className="btn2" style={{ padding: '0 var(--sp-3)', background: 'var(--rose)', color: 'var(--bg)' }} onClick={() => void remove(i)}>Delete</button></>
             : <><div className="ico grey"><Icon name={ICON[i.data.what]} /></div>
               <div className="sp" style={{ minWidth: 0 }}><b>{label(i)}</b>{who(i) && <p className="s">by {who(i)}</p>}</div>
               <input type="time" className="in" aria-label={`Change the time of ${named(i)}`} defaultValue={hhmm(i.at)} key={i.at}
-                style={{ width: 'auto', flex: 'none', height: 44, marginTop: 0, padding: '0 8px' }} onChange={(e) => setTime(i, e.target.value)} />
+                style={{ width: 'auto', flex: 'none', height: 44, marginTop: 0, padding: '0 var(--sp-2)' }} onChange={(e) => setTime(i, e.target.value)} />
               <button className="iconbtn" style={{ color: 'var(--rose)' }} aria-label={`Delete ${named(i)}`} onClick={() => setAsking(i.id)}><TrashIcon /></button></>}
         </div>)}
       </div>)}
-      {what && onAgain && <button className="btn" style={{ marginTop: 16 }} onClick={() => { onAgain(); onClose(); }}>{AGAIN[what]}</button>}
+      {what && onAgain && <button className="btn" style={{ marginTop: 'var(--sp-4)' }} onClick={() => { onAgain(); onClose(); }}>{AGAIN[what]}</button>}
     </Sheet>;
 }
 

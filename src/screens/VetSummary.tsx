@@ -22,9 +22,9 @@ export function VetSummary() {
   const about = [ageText(cat.birthday), cat.sex === 'f' ? 'female' : 'male', cat.altered ? (cat.sex === 'f' ? 'spayed' : 'neutered') : null, cat.breed].filter(Boolean).join(' · ') + (cat.microchip ? ` · chip ${cat.microchip}` : '');
   const sect = (title: string, body: React.ReactNode) => <div className="card white"><b>{title}</b><div style={{ marginTop: 2 }}>{body}</div></div>;
   // two lines, name then dates, so long names never wrap into three
-  const line = (a: string, b?: string, key?: string | number) => <div key={key} style={{ marginTop: 8 }}><span style={{ display: 'block' }}>{a}</span>{b && <span className="s" style={{ display: 'block' }}>{b}</span>}</div>;
+  const line = (a: string, b?: string, key?: string | number) => <div key={key} style={{ marginTop: 'var(--sp-2)' }}><span style={{ display: 'block' }}>{a}</span>{b && <span className="s" style={{ display: 'block' }}>{b}</span>}</div>;
   const none = (t: string) => <p className="s" style={{ marginTop: 6 }}>{t}</p>;
-  const rowBtn: React.CSSProperties = { display: 'flex', width: '100%', border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'center', gap: 8, minHeight: 44 };
+  const rowBtn: React.CSSProperties = { display: 'flex', width: '100%', border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'center', gap: 'var(--sp-2)', minHeight: 44 };
   const w0 = s.weights[0], wl = s.weights[s.weights.length - 1];
   const share = async () => {
     const text = summaryText(cat.name, about, s, primary?.data);
@@ -38,13 +38,13 @@ export function VetSummary() {
       <button className="btn2" style={{ minHeight: 40, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => void share()}>Share</button></div>
     {shared && <p className="s" role="status" style={{ textAlign: 'right' }}>{shared}</p>}
     <div className="stag">
-      <h1 style={{ marginTop: 4 }}>{cat.name}</h1>
+      <h1 style={{ marginTop: 'var(--sp-1)' }}>{cat.name}</h1>
       <p className="m">{about}</p>
       {primary && <div className="card sky" style={{ marginTop: 10 }}>
         <span className="s" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Vet</span>
         <b style={{ display: 'block' }}>{primary.data.clinic}</b>
         <p className="s">{[primary.data.vetName, primary.data.phone].filter(Boolean).join(' · ')}</p>
-        {telHref(primary.data.phone) && <a className="btn2" href={telHref(primary.data.phone)!} style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: 'inherit', background: 'var(--surface)' }}><Icon name="phone" size={16} />Call</a>}
+        {telHref(primary.data.phone) && <a className="btn2" href={telHref(primary.data.phone)!} style={{ marginTop: 'var(--sp-2)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: 'inherit', background: 'var(--surface)' }}><Icon name="phone" size={16} />Call</a>}
       </div>}
       {sect('Weight', s.weights.length ? <>{line(`${w0.lb} lb`, fmt(w0.day))}{s.weights.length > 1 && line(`${wl.lb} lb → ${w0.lb} lb`, `since ${fmt(wl.day)}`)}</> : none('No weigh-ins logged yet.'))}
       {sect('Medicine and vaccines', s.doses.length ? s.doses.map((x) => line(`${x.name} (${MED_LABEL[x.what as MedWhat] ?? x.what})`, `given ${fmt(x.given)}${x.nextDue ? ` · next ${fmt(x.nextDue)}` : ''}`, x.name)) : none('None logged.'))}
@@ -58,7 +58,7 @@ export function VetSummary() {
       {s.foods.length > 0 && sect('Eating now', <p className="s" style={{ marginTop: 6 }}>{s.foods.join(', ')}</p>)}
       {s.docs.length > 0 && sect('Documents', <>{s.docs.map((d) => <button key={d.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => void openDoc(d.path)}>
         <Icon name="book" size={18} /><span className="sp">{d.title}<span className="s" style={{ display: 'block' }}>{fmt(d.day)}{d.vaccine ? ' · vaccines' : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
-        <a href="#/health/docs" className="s" style={{ display: 'block', marginTop: 8, fontWeight: 800, color: 'var(--ink)' }}>All documents ›</a></>)}
+        <a href="#/health/docs" className="s" style={{ display: 'block', marginTop: 'var(--sp-2)', fontWeight: 800, color: 'var(--ink)' }}>All documents ›</a></>)}
       <p className="s" style={{ textAlign: 'center', marginTop: 14 }}>From {cat.name}’s PalDex log. Turn your phone around to show it, or Share to send it.</p>
     </div>
   </div>;

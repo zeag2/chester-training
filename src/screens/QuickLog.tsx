@@ -21,11 +21,11 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
   const next = training ? suggestNext(SKILLS, progress, sets, unlockedHidden, today())[0] : null;
   return <Sheet label="Log something" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Log something for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
       {items.map(([k, label, icon]) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 76, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => pick('health/log/' + k)}>
         <Icon name={icon} size={22} /><span style={{ fontSize: 13, textAlign: 'center', lineHeight: 1.2 }}>{label}</span></button>)}
     </div>
-    {training && <button className="card mint row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 12 }} onClick={() => pick('session/' + (next?.skill.id ?? 'clicker'))}>
+    {training && <button className="card mint row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 'var(--sp-3)' }} onClick={() => pick('session/' + (next?.skill.id ?? 'clicker'))}>
       <div className="ico"><Icon name="target" /></div><div className="sp"><b>Training set</b><p className="s">{next ? `Up next: ${next.skill.name}` : 'About 2 minutes'}</p></div></button>}
     <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => pick('health')}>Upload a vet document</button>
   </Sheet>;

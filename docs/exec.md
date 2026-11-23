@@ -48,8 +48,8 @@ use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
 | Sat Nov 21, 3:40 AM | After the vet visit + log editing, part 2 → PR | M / 5% | ship it | merged (PR #36) |
 | Sat Nov 21, 12:40 PM | Booking 2b: several cats at once → PR | M / 4% | ship it | never started → **Mon Nov 23, 12:40 PM** |
 | Sun Nov 22, 3:40 AM | Small fixes: late sync re-shows the old pet; desktop leftovers (Visit two-pane) → PR | S / 5% | ship it | stuck (worker waiting on an approval); redo today in a fresh worker after DS phase 2 if the cap allows |
-| Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | set |
-| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | |
+| Sun Nov 22, 12:40 PM | Design system phase 2 (tokens, sweep, component inventory): **Josh's go** (Nov 17) | M / 5% | ship it | merged (PR #37); 4 small calls open for Josh |
+| Mon Nov 23, 3:40 AM | Push notifications plan (trig_015xjsPE9nYE5gmrLhsqvgFD, re-armed) | S / 2% | — | done: PR #38 (plan + SQL for next week's run, 3 setup steps for Josh); build = 2 PRs × ~4% next week |
 | Mon Nov 23, 12:40 PM | Booking 2b: several cats at once (moved from Sat) → PR | M / 4% | ship it | |
 | Tue Nov 24, until 3 PM | Reserve only | — | reset | |
 
