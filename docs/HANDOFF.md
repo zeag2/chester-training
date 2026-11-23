@@ -603,6 +603,15 @@ Items marked *(art)* suit the art session.
    visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone)
    **(part 2a done 2026-11-11, PR from `claude/features-booking-2a`; Josh still to test on an iPhone)**, and
    booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
+   **(part 2b done 2026-11-23, PR from `claude/features-booking-2b`; no SQL):** Book a visit has the cat chip in its
+   header (as a new entry); with several pets, tap it to add or remove cats (at least one stays). Saving makes one visit
+   per cat (`saveCare(…, { catId })`), each carrying `group: { id, names }`, and one calendar event titled
+   "Vet: Luna + Chester" (reason in the notes) with UID `visit-<group id>`; a failed save takes back the ones already
+   saved. The toast names the cats; Undo removes every visit. On a grouped visit's page: "Booked together with Luna";
+   Reschedule and Cancel change every cat's visit (`store.visitGroup`, then `calSeq` + 1 on all) and re-send the one
+   event. Known limits: Edit visit and Delete still act on that one cat only (editing the date there would split the
+   event; the names list isn't trimmed after a delete). Tests: `src/ui/booking2b.test.tsx`. Screenshots:
+   `docs/screenshots/booking-2b/`.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
    comfortable on a laptop or desktop screen.
@@ -1454,3 +1463,7 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
   stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
   stubbed), then `supabase/tests/push_test.sql`: passed.
+- 2026-11-23, booking part 2b (Features worker, `claude/features-booking-2b`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
+  (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
+  grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
