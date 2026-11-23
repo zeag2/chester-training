@@ -174,7 +174,7 @@ export function Home() {
     : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Next up: ${next.skill.name}. Ready?` : 'Pet me!';
 
   // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
-  const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
+  const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>
       {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={S.big ? Math.min(520, sceneRef.current?.clientWidth || 480) : Math.min(360, window.innerWidth - 40)} size={S.cat} gap={S.gap} onDone={() => setChasing(false)} />
       : <div className={`bedspot${bed ? ' onbed' : ''}`}>{bed && <div className="bed" aria-hidden="true"><CushionArt id={bed} width={S.bed} /></div>}
       <div className={`gagwrap ${gag ?? ''}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
@@ -187,21 +187,21 @@ export function Home() {
       {!chasing && <div style={{ marginBottom: S.bubbleLift }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
     </div>;
   // the "hot button" to the cat's tab (tapping him still pets him); "Cats" when there are several, like the tab
-  const catLink = <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 10, alignSelf: 'flex-start' }}
+  const catLink = <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 10, alignSelf: 'flex-start' }}
     onClick={() => go('chester')} aria-label={pets.length > 1 ? 'Open the Cats tab' : `Open ${cat.name}’s tab`}>
     <span aria-hidden="true" style={{ width: 28, height: 28, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" width={38} /></span>
     {pets.length > 1 ? 'Cats' : cat.name} <span aria-hidden="true">›</span></button>;
   const moved = movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
-      <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
-      <a className="btn" style={{ marginTop: 12 }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
+      <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 'var(--sp-1)' }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
+      <a className="btn" style={{ marginTop: 'var(--sp-3)' }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
   const rest = <>
       <FriendsStrip onInvite={() => setInvite(true)} />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
         <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
         {next && !done && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>}</a>}
-      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="#d4a23a" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
+      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="var(--butter-strong)" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
       {friendNews && <div className="card butter pop" role="status">
@@ -209,7 +209,7 @@ export function Home() {
           <b style={{ color: 'var(--butter-ink)' }}>{friendNews.names.length === 1 ? `${friendNews.names[0]} is now your friend!` : `${friendNews.names.length} new friends!`}</b>
           <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 2 }}>+{FRIEND_BONUS.treats * friendNews.names.length} treats and +{friendNews.names.length} bond for {cat.name}{friendNews.scarf ? `, and a Friendship scarf in ${pt('his')} corner` : ''}.</p></div>
           <button className="iconbtn" aria-label="Dismiss" onClick={() => store.dismissFriendNews()}><Icon name="close" /></button></div>
-        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}>
           {friendNews.scarf && <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { void store.wear('scarf'); store.dismissFriendNews(); }}>Put the scarf on</button>}
           <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
       </div>}
@@ -224,16 +224,16 @@ export function Home() {
     </div>
     <div className="stag" style={{ position: 'relative' }}>
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
-        <div className="row"><h1 className="sp" style={{ marginTop: 4 }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
+        <div className="row"><h1 className="sp" style={{ marginTop: 'var(--sp-1)' }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
           {/* Settings lives here now (navigation Option A); the desktop side nav has it at the bottom */}
           <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><Icon name="gear" /></button></div>
-        {partners.length > 0 && <p className="s" style={{ marginTop: 4 }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
+        {partners.length > 0 && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
-        {account && !myName && <button className="chip" style={{ marginTop: 8, border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
+        {account && !myName && <button className="chip" style={{ marginTop: 'var(--sp-2)', border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
         : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
-      <p className="s" style={{ textAlign: 'center', marginTop: 20 }}>{cat.name} · {ageText(cat.birthday)}</p>
+      <p className="s" style={{ textAlign: 'center', marginTop: 'var(--sp-5)' }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;
 }

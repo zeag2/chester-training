@@ -18,7 +18,7 @@ export function HomeIconNote() {
   const site = new URL(import.meta.env.BASE_URL, location.href).host;
   return <>
     <div className="card sky" role="status" aria-label="Home Screen icon">
-      <div className="row" style={{ alignItems: 'flex-start', gap: 8 }}>
+      <div className="row" style={{ alignItems: 'flex-start', gap: 'var(--sp-2)' }}>
         <span className="sp"><b>Your Home Screen icon still shows the old cats</b>
           <span className="s" style={{ display: 'block', marginTop: 2 }}>iPhone keeps the icon and name from when it was added. Remove it and add it again to update.</span></span>
         <button className="iconbtn" aria-label="Close" onClick={close}><Icon name="close" /></button></div>
@@ -26,13 +26,13 @@ export function HomeIconNote() {
     </div>
     {how && <Sheet label="Update the Home Screen icon" onClose={() => setHow(false)}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>Update the Home Screen icon</b><button className="iconbtn" aria-label="Close" onClick={() => setHow(false)}><Icon name="close" /></button></div>
-      {!account && <p className="s" style={{ marginTop: 8, padding: '8px 12px', borderRadius: 14, background: 'var(--butter)', color: 'var(--butter-ink)' }}>
+      {!account && <p className="s" style={{ marginTop: 'var(--sp-2)', padding: 'var(--sp-2) var(--sp-3)', borderRadius: 'var(--r-row)', background: 'var(--butter)', color: 'var(--butter-ink)' }}>
         <b>Sign in first</b> (Me, then Account). Removing the icon removes what’s saved only on this phone; signed in, it all comes back.</p>}
       <ol className="steps">
         <li><span>Press and hold the old icon on your Home Screen, tap <b>Remove App</b>, then <b>Delete</b>.</span></li>
         <li><span>Open <b>{site}</b> in Safari and sign in.</span></li>
       </ol>
-      <p className="s" style={{ marginTop: 4 }}>Then add <b>{name}</b> again:</p>
+      <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Then add <b>{name}</b> again:</p>
       <InstallSteps name={name} />
       <button className="btn" style={{ marginTop: 14 }} onClick={close}>Got it</button>
     </Sheet>}

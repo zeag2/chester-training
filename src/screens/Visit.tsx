@@ -24,9 +24,9 @@ export function Visit({ catId }: { catId: string }) {
   const top = <div className="top"><button className="iconbtn" aria-label="Back" onClick={back}><Icon name="back" /></button>
     <b className="sp" style={{ fontSize: 17 }}>{pet ? `Visiting ${pet.card.name}` : 'Visit'}</b></div>;
   if (!pet) return <div className="screen">{top}
-    {loading ? <p className="s" style={{ marginTop: 16 }} aria-busy="true">Loading…</p>
-      : <div className="card grey"><b>This cat isn’t on your friends list</b><p className="s" style={{ marginTop: 4 }}>Friends’ cats show up once you’ve swapped friend codes.</p>
-        <button className="btn" style={{ marginTop: 12 }} onClick={() => { location.hash = '#/friends'; }}>Friends</button></div>}
+    {loading ? <p className="s" style={{ marginTop: 'var(--sp-4)' }} aria-busy="true">Loading…</p>
+      : <div className="card grey"><b>This cat isn’t on your friends list</b><p className="s" style={{ marginTop: 'var(--sp-1)' }}>Friends’ cats show up once you’ve swapped friend codes.</p>
+        <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={() => { location.hash = '#/friends'; }}>Friends</button></div>}
   </div>;
 
   const who = pet.ownerName || 'this friend';
@@ -48,20 +48,20 @@ export function Visit({ catId }: { catId: string }) {
   return <div className="screen">{top}
     <div className="stag">
       <p className="m">{pet.ownerName ? `${pet.ownerName}’s cat` : 'A friend’s cat'}{c.birthday ? ` · ${ageText(c.birthday)}` : ''}</p>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 'var(--sp-2)' }}>
         <div style={{ minHeight: 44 }}><span key={line + (react?.n ?? 0)} className="bubble mint">{line || `Hi! I’m ${c.name}. Pet me!`}</span></div>
         <div style={{ marginTop: -36 }}><Chester coat={c.coat} eyes={c.eyes} wear={c.wear} mood="happy" width={200} interactive label={c.name}
           onPet={(l) => setLine(l)} react={react?.id ?? null} reactKey={react?.n ?? 0} /></div>
       </div>
       <div className="card butter" style={{ textAlign: 'center' }}>
         {off ? <><b style={{ color: 'var(--butter-ink)' }}>Treats aren’t switched on yet</b>
-            <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>Whoever runs this PalDex needs to run its treats setup once. You can still pet {him}.</p></>
+            <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 'var(--sp-1)' }}>Whoever runs this PalDex needs to run its treats setup once. You can still pet {him}.</p></>
           : <><b style={{ color: 'var(--butter-ink)' }}>{given ? `You gave ${c.name} a treat today` : `Give ${c.name} a treat`}</b>
-            <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 4 }}>{given ? 'Come back tomorrow for another.' : `One free treat a day. It goes into ${him === 'her' ? 'her' : 'his'} corner, to spend on outfits and toys.`}</p>
-            <button className="btn" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} disabled={busy || given} onClick={give}>
+            <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 'var(--sp-1)' }}>{given ? 'Come back tomorrow for another.' : `One free treat a day. It goes into ${him === 'her' ? 'her' : 'his'} corner, to spend on outfits and toys.`}</p>
+            <button className="btn" style={{ marginTop: 'var(--sp-3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} disabled={busy || given} onClick={give}>
               <Paw color="currentColor" size={20} />{busy ? 'Giving…' : given ? 'Given today' : 'Give a treat'}</button></>}
       </div>
-      <div className="card white" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="card white" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
         <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
           <span className="chip" style={{ background: 'var(--mint)' }}>{mastered.length} {mastered.length === 1 ? 'skill' : 'skills'}</span>
           {(c.streak ?? 0) > 0 && <span className="chip" style={{ background: 'var(--butter)', color: 'var(--butter-ink)' }}>{c.streak}-day streak</span>}
@@ -73,8 +73,8 @@ export function Visit({ catId }: { catId: string }) {
       <div className="card grey">
         {removing === 'ask' || removing === 'busy' ? <>
           <b>Remove {who} as a friend?</b>
-          <p className="s" style={{ marginTop: 4 }}>You’ll stop seeing each other’s cats. They aren’t told; either of you can send a request again later.</p>
-          <div className="row" style={{ gap: 8, marginTop: 12 }}>
+          <p className="s" style={{ marginTop: 'var(--sp-1)' }}>You’ll stop seeing each other’s cats. They aren’t told; either of you can send a request again later.</p>
+          <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
             <button className="btn2" style={{ flex: 1, background: 'var(--peach)', color: 'var(--peach-ink)' }} disabled={removing === 'busy'} onClick={remove}>{removing === 'busy' ? 'Removing…' : 'Remove'}</button>
             <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} disabled={removing === 'busy'} onClick={() => setRemoving('')}>Keep</button>
           </div></>

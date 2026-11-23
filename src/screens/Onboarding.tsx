@@ -37,15 +37,15 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
   const total = 3;
   const dots = (at: number) => { return <div className="dots" aria-label={`Step ${at} of ${total}`}>{Array.from({ length: total }, (_, i) => <i key={i} className={i + 1 === at ? 'on' : ''} />)}</div>; };
   const back = (n: number, label: string) => <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => setStep(n)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{label}</b></div>;
-  const foot = (n: number, label: string, onClick: () => void, disabled = false) => <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(n)}<button className="btn" style={{ marginTop: 20 }} onClick={onClick} disabled={disabled}>{label}</button></div>;
+  const foot = (n: number, label: string, onClick: () => void, disabled = false) => <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(n)}<button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={onClick} disabled={disabled}>{label}</button></div>;
   const wrap = (children: React.ReactNode) => <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>{children}</div>;
 
   if (step === 1) return wrap(<div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36 }}>
-    <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '30px 16px 16px', borderRadius: 32 }}><Chester coat={coat} eyes={eyes} mood="happy" raised anim="wave" width={190} interactive /></div>
+    <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '30px var(--sp-4) var(--sp-4)', borderRadius: 32 }}><Chester coat={coat} eyes={eyes} mood="happy" raised anim="wave" width={190} interactive /></div>
     <h1 style={{ marginTop: 30, fontSize: 32 }}>Let’s look after {waiting.length ? titleFor(waiting) : 'your cat'}.</h1>
-    <p className="m" style={{ marginTop: 12, fontSize: 16 }}>Weight, health, vet visits and food in one place, shared with the people you live with. And clicker training, if you want it.</p>
-    {sharingConfigured() ? <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(1)}
-      <button className="btn" style={{ marginTop: 20 }} onClick={() => { setInvited(false); next(4); }}>Set up my cat</button>
+    <p className="m" style={{ marginTop: 'var(--sp-3)', fontSize: 'var(--fs-body)' }}>Weight, health, vet visits and food in one place, shared with the people you live with. And clicker training, if you want it.</p>
+    {sharingConfigured() ? <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(1)}
+      <button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={() => { setInvited(false); next(4); }}>Set up my cat</button>
       <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setInvited(true); next(account ? 8 : 3); }}>Someone invited me</button></div>
       : foot(1, 'Get started', () => next(4))}</div>);
 
@@ -53,24 +53,24 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
     {invited && <StepLabel n={1} of={2} label="Your account" />}
     <AccountForm share={!invited} onDone={(n) => { setMyName(n); next(invited ? 8 : 4); }}
       intro={invited ? 'You need your own account to train together. Next you’ll enter the invite code.' : 'Your account keeps your cat’s progress safe online, and lets you invite someone to train with you later.'} />
-    <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(2)}</div></div></>);
+    <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(2)}</div></div></>);
 
   if (step === 8) return wrap(<>{back(account ? 1 : 3, 'Invite code')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <StepLabel n={2} of={2} label="Invite code" />
     <CodeForm name={myName} onDone={() => { setPendingPets([]); go('home'); }} />
-    <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(3)}</div></div></>);
+    <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(3)}</div></div></>);
 
   if (step === 4) return wrap(<>{adding ? <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('settings')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>Add another pet</b></div> : back(1, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>{adding && waiting.length && name ? `Now, ${name}` : 'Tell us about your cat'}</h1><p className="m" style={{ marginTop: 6 }}>{waiting.length > 1 ? `${titleFor(waiting)}: one at a time. You can change this later.` : 'You can change this later.'}</p>
     <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" placeholder="Your cat’s name" />
     <span className="field">Boy or girl?</span>
     <div className="seg" role="group" aria-label="Boy or girl"><button className={sex === 'm' ? 'on' : ''} aria-pressed={sex === 'm'} onClick={() => setSex('m')}>Boy</button><button className={sex === 'f' ? 'on' : ''} aria-pressed={sex === 'f'} onClick={() => setSex('f')}>Girl</button></div>
-    <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 12px 12px' }}>
+    <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--sp-5) var(--sp-3) var(--sp-3)' }}>
       <Chester key={coat + eyes} coat={coat} eyes={eyes} raised anim="wave" width={170} interactive label={name} />
-      <b style={{ fontSize: 16, marginTop: 6 }}>{COATS[coat].name} · {EYES[eyes].name} eyes</b></div>
+      <b style={{ fontSize: 'var(--fs-body)', marginTop: 6 }}>{COATS[coat].name} · {EYES[eyes].name} eyes</b></div>
     <span className="field">Coat</span>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }} role="group" aria-label="Coat">
-      {Object.keys(COATS).map((k) => <button key={k} aria-pressed={k === coat} onClick={() => { audio.chirp(); setCoat(k); }} className="chipbtn" style={{ height: 'auto', padding: '8px 2px', borderRadius: 16, background: 'var(--surface)', outline: k === coat ? '3px solid var(--ink)' : '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 'var(--sp-2)' }} role="group" aria-label="Coat">
+      {Object.keys(COATS).map((k) => <button key={k} aria-pressed={k === coat} onClick={() => { audio.chirp(); setCoat(k); }} className="chipbtn" style={{ height: 'auto', padding: 'var(--sp-2) 2px', borderRadius: 16, background: 'var(--surface)', outline: k === coat ? '3px solid var(--ink)' : '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--sp-1)' }}>
         <span style={{ width: 34, height: 34, borderRadius: '50%', background: SWATCH[k], border: '2px solid var(--faint)' }} /><span style={{ fontSize: 11, lineHeight: 1.1 }}>{COATS[k].name}</span></button>)}
     </div>
     <span className="field">Eyes</span>
@@ -94,7 +94,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
       <div className="ico"><Icon name="star" /></div><div className="sp"><b style={{ fontSize: 17 }}>Yes, let’s train</b><p className="s">{pt('Adds a Train tab with his skills and rewards.')}</p></div></button>
     <button className="card sky row" style={{ textAlign: 'left', border: 0, color: 'inherit' }} onClick={() => { setTrain(false); void save(false); }}>
       <div className="ico"><Icon name="hand" /></div><div className="sp"><b style={{ fontSize: 17 }}>Not now, just tracking</b><p className="s">Health, weight, vet visits and food.</p></div></button>
-    <div style={{ marginTop: 'auto', paddingTop: 24 }}>{dots(3)}</div></div></>);
+    <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(3)}</div></div></>);
 
   return null;
 }
@@ -107,10 +107,10 @@ export function AnotherCat() {
   const training = cat.training !== false;
   return <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>
     <div className="stag" style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingTop: 36 }}>
-      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px 16px 14px', borderRadius: 32 }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" anim="dance" width={170} label={cat.name} /></div>
+      <div className="card mint" style={{ margin: 0, display: 'flex', justifyContent: 'center', padding: '26px var(--sp-4) 14px', borderRadius: 32 }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" anim="dance" width={170} label={cat.name} /></div>
       <h1 style={{ marginTop: 26 }}>{cat.name} is all set!</h1>
-      <p className="m" style={{ marginTop: 8, fontSize: 16 }}>{next ? `Next up: ${next.name}.` : 'Do you have another cat? Each one gets their own health log, and they all show up together on Home.'}</p>
-      <div style={{ marginTop: 'auto', paddingTop: 24 }}>
+      <p className="m" style={{ marginTop: 'var(--sp-2)', fontSize: 'var(--fs-body)' }}>{next ? `Next up: ${next.name}.` : 'Do you have another cat? Each one gets their own health log, and they all show up together on Home.'}</p>
+      <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>
         {next ? <button className="btn" onClick={() => go('add-pet')}>Set up {next.name}</button>
           : <button className="btn" onClick={() => go(training ? 'session/clicker' : 'home')}>{training ? `Start ${cat.name}’s first session` : 'Go to Home'}</button>}
         <button className="btn2" style={{ width: '100%', marginTop: 10, background: next ? 'transparent' : undefined }} onClick={() => { if (next) { setPendingPets([]); go(training ? 'session/clicker' : 'home'); } else go('add-pet'); }}>

@@ -33,8 +33,8 @@ export function VisitPage({ id }: { id: string }) {
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
     <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{visit ? visit.data.reason : 'Visit'}</b></div>;
-  if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 16 }}>This visit was deleted, or hasn’t reached this phone yet.</p>
-    <button className="btn2" style={{ marginTop: 12 }} onClick={() => goBack('health')}>Back to Health</button></div>;
+  if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 'var(--sp-4)' }}>This visit was deleted, or hasn’t reached this phone yet.</p>
+    <button className="btn2" style={{ marginTop: 'var(--sp-3)' }} onClick={() => goBack('health')}>Back to Health</button></div>;
 
   const { primary } = yourVets(vets);
   // the clinic it was booked with, else your usual vet when it's the same clinic (or none was typed)
@@ -64,35 +64,35 @@ export function VisitPage({ id }: { id: string }) {
   // after the visit: the vaccines it gave that are due again, for "Book the next one?"
   const again = !cancelled && (!booked || passed) ? nextVaccines(doses, care) : null;
   const log = (kind: 'med' | 'weight') => setEditing({ kind, preset: { visitId: visit.id } as never, day: passed || !booked ? day : localDay(Date.now()) });
-  const h = (t: string) => <h2 style={{ marginTop: 20, fontSize: 17 }}>{t}</h2>;
+  const h = (t: string) => <h2 style={{ marginTop: 'var(--sp-5)', fontSize: 17 }}>{t}</h2>;
 
   return <div className="screen">
     {back}
     <div className="stag">
-      <h1 style={{ marginTop: 4 }}>{visit.data.reason}</h1>
+      <h1 style={{ marginTop: 'var(--sp-1)' }}>{visit.data.reason}</h1>
       <p className="m">{[fmtDay(visit.at), fmtTime(visit.data.time), clinic].filter(Boolean).join(' · ')}</p>
-      {booked && <span className="chip" style={{ marginTop: 8, background: 'var(--teal)', color: 'var(--on-ink)' }}>Booked</span>}
-      {cancelled && <span className="chip" style={{ marginTop: 8, background: 'var(--rose)', color: 'var(--on-ink)' }}>Cancelled</span>}
-      {(tel || maps) && !cancelled && <div className="row" style={{ gap: 8, marginTop: 12 }}>
-        {tel && <a className="btn2" href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="phone" size={18} />Call</a>}
-        {maps && <a className="btn2" href={maps} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
+      {booked && <span className="chip" style={{ marginTop: 'var(--sp-2)', background: 'var(--teal)', color: 'var(--on-ink)' }}>Booked</span>}
+      {cancelled && <span className="chip" style={{ marginTop: 'var(--sp-2)', background: 'var(--rose)', color: 'var(--on-ink)' }}>Cancelled</span>}
+      {(tel || maps) && !cancelled && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
+        {tel && <a className="btn2" href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="phone" size={18} />Call</a>}
+        {maps && <a className="btn2" href={maps} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
       </div>}
-      {booked && passed && <button className="card butter row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }} onClick={() => setEditing({ kind: 'vet', item: visit })}>
+      {booked && passed && <button className="card butter row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 'var(--sp-3)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>Add what the vet said. Saving marks it done.</span></span><span className="chip">Add notes</span></button>}
-      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => setCalFor(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
-      {booked && !passed && <div className="row" style={{ gap: 8, marginTop: 8 }}>
+      {booked && !passed && <button className="btn2" style={{ width: '100%', marginTop: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} onClick={() => setCalFor(visitEvent(cat.name, visit, vet))}><Icon name="cal" size={18} />Add to calendar</button>}
+      {booked && !passed && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setMoving(true)}>Reschedule</button>
         <button className="btn2 sp" style={{ background: 'var(--grey)', color: 'var(--rose)' }} onClick={cancel}>Cancel visit</button></div>}
-      {cancelled && <div className="row" style={{ gap: 8, marginTop: 12 }}>
+      {cancelled && <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
         <button className="btn sp" onClick={() => setBook({ reason: visit.data.reason, notes: visit.data.notes })}>Book again</button>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setCalChange({ event: visitEvent(cat.name, visit, vet), change: 'cancelled' })}>Remove from calendar</button></div>}
 
       {/* a passed booking with no notes yet already asks "How did it go?" above: one prompt, not two */}
       {/* from the papers: the vet's name, body condition and what it cost */}
-      {(visit.data.vetName || visit.data.bcs || visit.data.cost !== undefined) && <p className="s" style={{ marginTop: 8 }}>
+      {(visit.data.vetName || visit.data.bcs || visit.data.cost !== undefined) && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>
         {[visit.data.vetName, visit.data.bcs && `Body condition ${visit.data.bcs}`, visit.data.cost !== undefined && `Cost $${visit.data.cost.toFixed(2)}`].filter(Boolean).join(' · ')}</p>}
       {(visit.data.notes || !(booked && passed)) && h((booked && !passed) || cancelled ? 'Notes' : 'What the vet said')}
-      {visit.data.notes ? <p style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
+      {visit.data.notes ? <p style={{ marginTop: 'var(--sp-1)', whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
         : !(booked && passed) && !cancelled && <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
 
       {(!booked || passed) && !cancelled && <>
@@ -103,13 +103,13 @@ export function VisitPage({ id }: { id: string }) {
           <div className="sp"><b>{m.data.name}</b><p className="s">{MED_LABEL[m.data.what]}{m.data.nextDue ? ` · next ${fmtShort(m.data.nextDue)}` : ''}</p></div></button>)}
         {weight && <button className="item" onClick={() => setEditing({ kind: 'weight', item: weight })}>
           <div className="ico grey"><Icon name="target" /></div><div className="sp"><b>Weight</b><p className="s">{weight.data.lb} lb</p></div></button>}
-        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}>
           <button className="btn2" style={{ flex: 1, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => log('med')}><Icon name="plus" size={16} />Dose or vaccine</button>
           {!weight && <button className="btn2" style={{ flex: 1, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => log('weight')}><Icon name="plus" size={16} />Weight</button>}
         </div>
       </>}
 
-      {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 12 }}
+      {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 'var(--sp-3)' }}
         onClick={() => setBook({ reason: 'Vaccines', day: bookingDay(again.due), notes: `${again.names.join(', ')} due ${fmtShortDay(again.due)}` })}>
         <span className="sp"><b>Book the next one?</b><span className="s" style={{ display: 'block' }}>{again.names.join(', ')} due again {fmtShortDay(again.due)}</span></span><span className="chip">Book</span></button>}
 
@@ -118,7 +118,7 @@ export function VisitPage({ id }: { id: string }) {
       {docs.length === 0 && <p className="s">{booked && !passed ? 'After the visit, add a photo of the invoice or certificate here.' : 'A photo of the invoice, certificate or discharge notes goes here.'}</p>}
       <DocAdder signedIn={!!account} visit={visit} compact />
 
-      <div className="row" style={{ gap: 8, marginTop: 24 }}>
+      <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>Edit visit</button>
         <button className="btn2 sp" style={{ background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this visit for everyone? Its documents and doses stay in the log.')) { await store.deleteCare(visit.id); goBack('health', { replace: true }); } }}>Delete</button>
       </div>

@@ -18,7 +18,7 @@ export function CareTreatNote() {
   return <div key={careNews.at} className="card butter row pop" role="status" onClick={() => store.dismissCareNews()}
     style={{ position: 'fixed', left: layout === 'desktop' ? 236 : layout === 'tablet' ? 104 : 16, right: 16,
       bottom: layout === 'phone' ? (toast ? 'calc(168px + env(safe-area-inset-bottom))' : 'calc(96px + env(safe-area-inset-bottom))') : (toast ? 'calc(110px + env(safe-area-inset-bottom))' : 'calc(20px + env(safe-area-inset-bottom))'), zIndex: 30, margin: 0, maxWidth: 480, marginInline: 'auto', boxShadow: '0 6px 24px rgba(0,0,0,.15)' }}>
-    <Paw color="#d4a23a" size={22} />
+    <Paw color="var(--butter-strong)" size={22} />
     <p className="sp" style={{ color: 'var(--butter-ink)', fontWeight: 700 }}>+{careNews.treats} treats for {cat.name} {WHY[careNews.why]}</p>
   </div>;
 }

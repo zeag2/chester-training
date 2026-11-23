@@ -129,7 +129,7 @@ function ChaseToy({ toy }: { toy: Toy }) {
   return <PlayShell toy={toy} title={TITLE[toy]} toast={toast} line={line}>
     <div ref={stage} className="playstage" onPointerDown={(e) => { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); point(e); }} onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') point(e); }}
       role="application" aria-label={`Play area. ${HINT[toy]}`}
-      style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 8, borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
+      style={{ position: 'relative', height: 'min(440px, 58dvh)', marginTop: 'var(--sp-2)', borderRadius: 28, overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: 'linear-gradient(var(--sky) 0 calc(100% - 34px), var(--butter) calc(100% - 34px))' }}>
       {!touched && <p className="s" style={{ position: 'absolute', top: 14, left: 16, right: 16, textAlign: 'center', pointerEvents: 'none' }}>{HINT[toy]}</p>}
       <div ref={catEl} style={{ position: 'absolute', left: 0, top: floor - S * 0.957, width: S, pointerEvents: 'none', willChange: 'transform' }}>
         <div style={{ transform: side && face < 0 ? 'scaleX(-1)' : undefined }}><div ref={tiltEl} style={{ transformOrigin: '51% 70%' }}>
