@@ -31,6 +31,14 @@ Rules: each block in the schedule names its size (S/M/L) and budget. When the da
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
+## Week 3 (from Tue Nov 24, 3 PM) — first items
+| When | Work | Size / budget | Gate | Status |
+|---|---|---|---|---|
+| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys). Never in the repo or chat. | — | Josh | waiting |
+| Wed Nov 25, 3:40 AM | Push notifications build, part 1 → PR | M / 4% | Josh's SQL + secrets done | |
+| Thu Nov 26, 3:40 AM | Push notifications build, part 2 → PR | M / 4% | ship it part 1 | |
+| Later | Small fixes left over (sync glitch, Visit two-pane); Josh's 4 design-system calls | S | | queued |
+
 ## Schedule, week 2 (Nov 17–24, Eastern)
 Paced at ~55% total (work ~42%, nightly UX review ~7%, pings and the Executive ~5%), leaving room for Josh's own
 use (last week that was ~10% unplanned). Freeze lifted Tue Nov 17 3 PM.
