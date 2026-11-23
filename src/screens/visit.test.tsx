@@ -39,6 +39,26 @@ describe('visit page and all documents', () => {
     expect(screen.queryByRole('button', { name: 'Add what the vet said' })).toBeNull();
     expect(screen.getByText('Booked')).toBeTruthy();
   });
+  it('shows two panes at 1100 px and up (details and actions left; doses, weight and documents right), one column on phones', async () => {
+    const v = store.get().care.find((c) => c.kind === 'vet' && (c.data as { reason: string }).reason === 'Checkup + rabies')!;
+    const real = window.matchMedia;
+    const media = (w: number) => { window.matchMedia = ((q: string) => ({ matches: w >= Number(/min-width:\s*(\d+)px/.exec(q)?.[1] ?? 0), media: q, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia; };
+    try {
+      cleanup(); media(390);
+      const phone = render(<VisitPage id={v.id} />);
+      expect(phone.container.querySelector('.healthcols')).toBeNull();
+      cleanup(); media(1440);
+      const desk = render(<VisitPage id={v.id} />);
+      const [left, right] = [...desk.container.querySelectorAll('.healthcols > .healthcol')] as HTMLElement[];
+      expect(left.querySelector('h1')?.textContent).toBe('Checkup + rabies');
+      expect(left.textContent).toContain('Healthy, 7.0 lb.');
+      expect(left.textContent).toContain('Edit visit');
+      expect(right.textContent).toContain('Rabies');
+      expect(right.textContent).toContain('7 lb');
+      expect(right.querySelector('[aria-label="Open Visit invoice"]')).toBeTruthy();
+      expect(left.textContent).not.toContain('Documents');
+    } finally { window.matchMedia = real; cleanup(); }
+  });
   it('searches and filters all documents', async () => {
     cleanup();
     render(<Documents />);

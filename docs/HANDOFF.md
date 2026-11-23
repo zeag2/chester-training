@@ -1394,7 +1394,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   servers. Checks: clean `npm ci`, Vitest (264, 3 new in `src/db/weights.test.tsx`), typecheck, build. No screenshots
   (small change to the Health weight card; covered by the UI test). Found on the way: a sync that started for one pet
   rebuilds that pet when it ends, even if another was opened meanwhile (`syncNow` keeps the cat it started with);
-  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats").
+  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats"). Fixed
+  2026-11-23 (`claude/fix-sync-and-visit`).
 - 2026-11-18, navigation Option A + onboarding (Features worker, `claude/features-navigation`): no skills, plugins or
   new MCP servers. Checks: Vitest (267), typecheck, build; Playwright iPhone 13 shots (Home dark, cat tab light,
   onboarding light) from the Vite dev server with Supabase stubbed.
@@ -1426,3 +1427,14 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-21, after-the-visit part 2 (Features worker, `claude/features-after-visit-2`): no skills, plugins or new MCP
   servers. Checks: Vitest (281), typecheck, build; Playwright iPhone 13 shots with the OCR module routed to a stub that
   returns the fixture pages (so the review screen renders without real OCR).
+- 2026-11-23, late sync + Visit in two panes (Features worker, `claude/fix-sync-and-visit`): no skills, plugins or new
+  MCP servers (`lottiefiles-creator` connected, unused). **Sync race:** a sync that was still running when another pet
+  was shown (e.g. a pet just added with `saveCat`, which rebuilds outside the serial chain) rebuilt the pet it started
+  with at the end, and the queued follow-up sync then kept that pet. `syncNow` now checks the pet on screen before its
+  final rebuild: if it changed, it only clears "syncing", refreshes the pet list and queues a sync for the pet shown.
+  Test: `sync.test.ts` "a sync that finishes late never brings back the pet it started with" (holds `pullSets` half-way).
+  **Visit page** (`#/health/visit/<id>`): at 1100 px and up it reuses Health's `.healthcols`/`.healthcol` (left: details,
+  call/directions, notes, Book the next one, Edit/Delete; right: Given and Documents); phones and tablets keep the one
+  column in the same order. Test in `visit.test.tsx`. Checks: Vitest (283), typecheck, build; Playwright against the
+  Vite dev server (store seeded through `globalThis.__chesterStore`) at 390 and 1440 px:
+  `docs/screenshots/visit-panes/`.

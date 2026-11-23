@@ -562,6 +562,8 @@ export class Store {
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       const vetsSync = shared?.cat.householdId ? await this.syncVets(r, shared.cat.householdId).catch(() => 'ok' as const) : 'ok';
+      // another pet was shown while this ran (e.g. one just added): don't bring this one back; that pet syncs next
+      if (this.snap.cat && this.snap.cat.id !== cat.id) { this.set({ sync: 'ok', pets: await this.petList() }); void this.sync(); return; }
       await this.rebuild((await this.db.cats.get(cat.id)) ?? cat, { household, sync: 'ok', careSync, vetsSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);
