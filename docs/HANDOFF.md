@@ -651,8 +651,14 @@ Items marked *(art)* suit the art session.
   off-scale values left as they are and listed in the design doc ("Not yet on the scale"); the component inventory
   and rules added to the doc and to `CLAUDE.md`; `useSettle` (`src/ui/settle.ts`) on the Health log (phone list and
   desktop table). Pixels unchanged at 390 and 1440, light and dark (Pillow diff vs main, see section 7).
-  Next, each needing Josh's OK because it's visible: move `h1` 28 → 34 and `h2` 17 → 20, the 13/15/17/18 sizes and
-  the 6/10/14/18/22 gaps onto the scale; use `useSettle` in the quick-log sheet and the visit timeline.
+  Next: use `useSettle` in the quick-log sheet and the visit timeline.
+- [x] **Design system tweaks** (2026-11-23, `claude/design-system-tweaks`, Josh's answers on the phase 2 judgement
+  calls): the doc's heading scale is now the app's real sizes (`h1` 28, `h2` 17; new tokens `--fs-h1`, `--fs-h2`;
+  the unused `--fs-heading` 20 removed; 34 stays as `--fs-display` for big numbers), no visible change. The sizes
+  13/15/17/18 and gaps 6/10/14/18/22 stay and are recorded as allowed exceptions. Inputs (`.in`) use `--r-row` 14
+  (was 16). The coral paw on peach cards (Train, Recap) is `--paw-coral`: #c2563f light, a toned-down #c96f5a dark
+  (4.2:1 on the dark peach card; `--rose` would be 5.9:1 and too bright). Before/after at 390 px, light and dark:
+  `docs/screenshots/design-tweaks/`.
 - [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
   permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -1449,6 +1455,11 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
   animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
   changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.
+- 2026-11-23, design system tweaks (Features worker, `claude/design-system-tweaks`): no skills, plugins or new MCP
+  servers (`lottiefiles-creator` connected, unused). Checks: Vitest (281), typecheck, build; Playwright (pre-installed
+  Chromium) rendering an input and the two peach paw cards with the real `tokens.css` + `app.css` from main and from
+  the branch, at 390 px, light and dark (`docs/screenshots/design-tweaks/`); WCAG contrast of paw candidates on the
+  peach cards worked out in Python.
 - 2026-11-23, push notifications plan (night job, `claude/features-push-plan`): no skills, plugins or new MCP servers.
   Wrote `docs/plans/2026-11-23-push-notifications.md` and `supabase/migrations/20261123000000_push.sql`. Checks: a
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),

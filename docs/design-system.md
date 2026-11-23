@@ -23,8 +23,9 @@ no neon.
 ## Type
 | Role | Font | Weight | Size / line height | Use |
 |---|---|---|---|---|
-| Display | **Nunito** | 800 | 34 / 38, letter-spacing −0.5px | screen titles ("Chester's health") |
-| Heading | Nunito | 800 | 20 / 26 | section heads ("Visits", "Log something") |
+| Screen title (`h1`) | **Nunito** | 800 | 28 / 1.15, letter-spacing −0.01em | screen titles ("Chester's health") |
+| Section head (`h2`) | Nunito | 800 | 17 | section heads ("Visits", "Log something") |
+| Big number | Nunito | 800 | 34 / 38 | friend and invite codes, the Recap count, "Yes!" |
 | Title | Nunito | 700 | 16 / 22 | card and row titles |
 | Body | Nunito | 400 | 16 / 24 | sentences, form values |
 | Small | Nunito | 600 | 14 / 20 | sub-lines, chips |
@@ -33,7 +34,10 @@ no neon.
 
 - **One family:** Nunito (Google Fonts, 400/600/700/800, already loaded). It's rounded and friendly, readable at 14 px, and it
   suits the cat. The stack is `Nunito, "Avenir Next", sans-serif` (drop `system-ui`).
-- Hierarchy comes from **size and weight jumps** (34 → 20 → 16), not from colour or boxes. There are only five sizes: 34, 20, 16, 14, 12.
+- Hierarchy comes from **size and weight jumps** (28 → 17 → 16 → 14 → 12, with 34 for big numbers), not from colour or boxes.
+  These are the app's real sizes (Josh, 2026-11-23: the doc follows the app, the app doesn't move).
+- **Allowed in-between sizes** (Josh, 2026-11-23: they stay): 13 (`.s` sub-lines, field labels), 15 (`.btn2`, inline
+  sub-lines), 17 and 18 (card titles). Use them only where the same role already uses them; a new role takes a scale size.
 
 ## Colour tokens
 Keep today's values (they're tuned and tested for contrast); give them roles and names. **Light / Dark**:
@@ -53,14 +57,17 @@ Keep today's values (they're tuned and tested for contrast); give them roles and
 | `--peach` / `--rose` / `--peach-ink` | #fdede5 / #c2563f / #6e3424 | #33231d / #e58a74 / #f1bba6 | attention, warnings, delete |
 | `--butter` / `--butter-ink` | #fbf3d8 / #5b4a1c | #2d2918 / #e9d79a | treats, rewards, toasts |
 | `--sky` | #e7effa | #1c2333 | planning, vet, friends |
+| `--paw-coral` | #c2563f | #c96f5a | the coral paw on peach cards (Train, Recap); dark is toned down, quieter than `--rose` |
 
 Rules: a wash colour (`--mint`, `--peach`, `--butter`, `--sky`) is a **card background** with its `-ink` text; never two washes
 next to each other in one card. `--rose` is for destructive text and the emergency call only.
 
 ## Space, shape, depth
 - **Space scale** (px): 4, 8, 12, 16, 20, 24, 32. The screen gutter is 20 on a phone. Sections are 24 apart, cards 12, inside a card 8–12.
+- **Allowed in-between gaps** (Josh, 2026-11-23: they stay): 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section
+  heads, `10` between rows, 6 under a field label). Same rule: only where that spot already uses them.
 - **Radius:** 8 (small chips inside cards), 14 (rows, inputs, small tiles), 22 (cards), 26 (sheets), 999 (pills: buttons, chips).
-  That's 5 values. Today there are ~10; Phase 2 swapped the exact matches, the rest are listed under "Not yet on the scale".
+  That's 5 values. Inputs (`.in`) moved from 16 to `--r-row` 14 on 2026-11-23. The remaining off-scale radii are listed under "Not yet on the scale".
 - **Depth:** one card treatment, `.card.white` = a 1px `--line` hairline + `0 2px 10px rgba(35,35,32,.06)`. Wash cards have no edge.
   Sheets dim the page; nothing else casts a shadow.
 - **Tap targets:** at least 44 × 44. The primary button is 52 tall, secondary 48.
@@ -92,8 +99,9 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Group | Tokens |
 |---|---|
 | Colour (light + dark) | `--bg --surface --ink --ink-2 --muted --muted-2 --line --grey --on-ink --faint`, `--mint --teal --teal-ink`, `--peach --rose --peach-ink`, `--butter --butter-ink`, `--sky`, `--tabs --yes-active`; hover washes `--hov --hov-ink` (mouse only) |
+| Colour (light + dark, one job) | `--paw-coral` (the coral paw on peach cards) |
 | Colour (same in both themes) | `--butter-strong` #d4a23a (the gold treat paw), `--paper` #fff (documents and photos sit on white) |
-| Type | `--font`; `--fs-display` 34, `--fs-heading` 20, `--fs-title` 16, `--fs-body` 16, `--fs-small` 14, `--fs-label` 12, each with its `--lh-*` |
+| Type | `--font`; `--fs-h1` 28 (`--lh-h1` 1.15), `--fs-h2` 17, `--fs-display` 34 (big numbers), `--fs-title` 16, `--fs-body` 16, `--fs-small` 14, `--fs-label` 12, each with its `--lh-*` |
 | Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
@@ -102,15 +110,13 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
 token exactly. These are today's real values, off the scale; moving them is a visible change, so each needs its own
 go-ahead and a screenshot pass:
-- Type: `h1` is 28 (the doc says 34), `h2` 17 (doc: 20), `.s` 13, `.btn2` and many inline sub-lines 15, 17/18 for
-  card titles, 11 for tiny badges, 22–32 for big numbers.
-- Space: 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section heads, `10` between rows); the 110 px tab-bar clearance.
-- Radius: 16 (`.in` inputs; the doc says 14), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
+- Type: 11 for tiny badges, 22–32 for big numbers. (13, 15, 17, 18 are now allowed exceptions, see Type.)
+- Space: the 110 px tab-bar clearance. (6, 10, 14, 18, 22 are now allowed exceptions, see Space.)
+- Radius: 16 (`.hit`, `.bkvet`, `.bkcall`), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
 - Motion: press feedback is 160 ms (`.btn`, `.item`), between `--dur-fast` and `--dur`.
 - Colour: the cat's art and the toys (`src/chester/art.ts`, Corner, Hideout, Play, Chase, Yarn ball, the stars and
   hearts in `chester.css`) keep their own palette: it's illustration, not UI. Camera and photo overlays keep fixed white
-  and black (they sit on video, whatever the theme). The coral paw on peach cards (Train, Recap: `#c2563f`) doesn't
-  switch in dark; `var(--rose)` would brighten it, so it waits for a decision.
+  and black (they sit on video, whatever the theme). The coral paw on peach cards now uses `--paw-coral` (2026-11-23).
 - The font stack keeps `system-ui` before `sans-serif`: Nunito has no arrow (→), and dropping it changed that glyph.
 
 ## Components (use these; don't make new ones in a screen)
