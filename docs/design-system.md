@@ -119,6 +119,7 @@ go-ahead and a screenshot pass:
 | **Button**, primary | `.btn` (`src/styles/app.css`) | `<button className="btn">`; 52 tall, ink pill, full width; `disabled` greys it |
 | Button, secondary | `.btn2` | 48 tall, grey pill, inline; add `style={{ width: '100%' }}` to fill |
 | Button, text / danger | `.btn2` with `background: transparent` (danger: `color: var(--rose)`); `.linkbtn` in the Health log | e.g. "Remove this vet" in `src/ui/VetCards.tsx` |
+| Button, destructive confirm | `.btn.danger`: the primary button in `--rose` | only as the last step of something that can't be undone, inside its sheet ("Remove from household", "Delete my account"); the row that opens it is a danger row |
 | Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
 | Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
 | **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` and `textarea` use `.in` too |

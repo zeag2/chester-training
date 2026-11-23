@@ -6,7 +6,7 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, PetCard, Photo, ReceivedTreat, Remote } from '../sync/remote';
+import type { Account, AddFriendResult, DeletionPlan, Friend, FriendPet, FriendRequest, Member, PetCard, Photo, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
@@ -632,6 +632,21 @@ export class Store {
     const cat = this.snap.cat; const a = this.snap.account;
     if (cat && a && this.remote) { await this.remote.setName(cat.id, n).catch(() => {}); await this.sync(); }
     else this.set({});
+  }
+
+  /** What deleting the account would do; null when signed out or until its SQL is run ("coming soon"). */
+  async accountDeletion(): Promise<DeletionPlan | null> { return this.remote && this.snap.account ? this.remote.accountDeletion() : null; }
+  /** Delete the account (server: files, then pets handed over or deleted, then the user), then everything on this
+      phone, so the app starts again at Welcome. */
+  async deleteAccount(plan: DeletionPlan) {
+    const uid = this.snap.account?.userId;
+    await this.remote!.deleteAccount(plan);
+    await this.serial(async () => {
+      await this.db.transaction('rw', this.db.tables, async () => { for (const t of this.db.tables) await t.clear(); });
+      try { if (uid) localStorage.removeItem(this.nameKey(uid)); localStorage.removeItem('paldex-active-pet'); localStorage.removeItem('paldex-thanks-seen'); } catch { /* private mode */ }
+      this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, careNews: null, thanks: [], requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear();
+      await this.rebuild(null, { vets: [] });
+    });
   }
 
   async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }

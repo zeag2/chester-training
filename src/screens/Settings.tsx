@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
@@ -12,6 +12,7 @@ import { sendInvite } from './Together';
 import { Icon } from '../ui/icons';
 import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
+import type { DeletionPlan } from '../sync/remote';
 import { Sheet as SheetFrame } from '../ui/Sheet';
 
 /* Settings, grouped like iPhone Settings: the pet, the people, the app, your data. */
@@ -84,7 +85,7 @@ function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
     {m.sets !== undefined && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>{m.sets} training set{m.sets === 1 ? '' : 's'} logged</p>}
     {same && <div className="card butter" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
     {iOwn ? <>
-      <button className="btn" style={{ marginTop: 'var(--sp-4)', background: 'var(--rose)' }} onClick={async () => {
+      <button className="btn danger" style={{ marginTop: 'var(--sp-4)' }} onClick={async () => {
         if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from the household? They lose access to every pet in it. Sets they logged stay.`)) return;
         try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up the household can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
       }}>Remove from household</button>
@@ -103,11 +104,51 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
   </Sheet>;
 }
 
+const names = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+/** Delete my account: what goes and what stays (from the server), a typed DELETE, then the app starts again. Until the
+    delete-account SQL is run it says it's coming soon. */
+function DeleteAccount({ onClose, onBackup }: { onClose: () => void; onBackup: () => void }) {
+  const { account } = useStore();
+  const [plan, setPlan] = useState<DeletionPlan | null | undefined>(undefined);
+  const [err, setErr] = useState('');
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = () => { setErr(''); store.accountDeletion().then(setPlan, () => setErr('Couldn’t reach PalDex. Check your connection and try again.')); };
+  useEffect(load, []);
+  const ready = typed.trim().toUpperCase() === 'DELETE';
+  const run = async () => {
+    if (!plan || !ready) return; setBusy(true); setErr('');
+    try { await store.deleteAccount(plan); onClose(); go('home'); }
+    catch { setBusy(false); setErr('Couldn’t delete your account. Nothing on this phone was removed. Check your connection and try again.'); }
+  };
+  return <Sheet title="Delete your account" onClose={onClose}>
+    {plan === null ? <>
+      <div className="card butter" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}><b>Coming soon.</b> Deleting your account from the app needs one more setup step on PalDex’s side. Until then you can sign out, and remove pets from your household in Settings.</p></div>
+      <button className="btn2" style={{ marginTop: 'var(--sp-4)', width: '100%' }} onClick={() => go('privacy')}>What PalDex stores</button>
+    </> : plan === undefined ? <p className="s" style={{ marginTop: 'var(--sp-3)' }} aria-live="polite">{err || 'Checking what would be deleted…'}</p>
+      : <>
+      <p className="m" style={{ marginTop: 'var(--sp-1)' }}>This deletes your account{account ? ` (${account.email})` : ''} for good. It can’t be undone.</p>
+      <div className="lgroup" style={{ marginTop: 'var(--sp-4)' }}>
+        <Row label="Deleted" sub={`Your account, friends and friend requests, the photos you posted${plan.deleted.length ? `, and ${names(plan.deleted.map((p) => p.name))} with all ${plan.deleted.length === 1 ? 'its' : 'their'} logs, documents and photos` : ''}.`} />
+        {plan.kept.length > 0 && <Row label="Stays" sub={`${plan.kept.map((k) => `${k.name} stays with ${k.keeper || 'your household'}`).join('; ')}, with ${plan.kept.length === 1 ? 'its' : 'their'} history. What you logged stays, without your name.`} />}
+        <Row label="This phone" sub="Everything PalDex keeps here is removed too." />
+      </div>
+      <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={onBackup}>Download a backup first</button>
+      <label className="field" htmlFor="del">Type DELETE to confirm</label>
+      <input id="del" className="in" value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} />
+      <button className="btn danger" style={{ marginTop: 'var(--sp-4)' }} disabled={!ready || busy} onClick={() => void run()}>{busy ? 'Deleting…' : 'Delete my account'}</button>
+    </>}
+    {err && plan !== undefined && <p className="s" role="alert" style={{ marginTop: 'var(--sp-3)', color: 'var(--rose)' }}>{err}</p>}
+    {err && plan === undefined && <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={load}>Try again</button>}
+  </Sheet>;
+}
+
 export function Settings() {
   const { cat, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
-  const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
+  const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install' | 'delete'>('');
   const [person, setPerson] = useState('');
   const showInstall = useInstallHint();
   if (!cat) return null;
@@ -140,6 +181,7 @@ export function Settings() {
       <Row label="Your name" value={me?.name || store.myName || 'Add'} onClick={() => setSheet('name')} />
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? Your cats stay on this phone; sign back in to sync again.`)) void store.signOut(); }} />
+      <Row label="Delete my account" danger onClick={() => setSheet('delete')} />
     </Group> : <Group title="Household & account" foot="Sign in to share your cats with the people you live with, and to add friends.">
       <Row label="Create an account or sign in" onClick={() => go('together')} />
       <Row label="Join a household with a code" onClick={() => go('join')} />
@@ -151,9 +193,11 @@ export function Settings() {
         <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 'var(--sp-2)' }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
       {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
+      <Row label="Privacy" sub="What PalDex keeps, and who sees it" onClick={() => go('privacy')} />
     </Group>
 
     {sheet === 'pet' && <EditPet cat={cat} onClose={() => setSheet('')} />}
+    {sheet === 'delete' && <DeleteAccount onClose={() => setSheet('')} onBackup={() => void exportData()} />}
     {sheet === 'name' && <EditMyName onClose={() => setSheet('')} />}
     {person && <Person userId={person} onClose={() => setPerson('')} />}
     {sheet === 'invite' && household && <Invite catName={cat.name} code={household.inviteCode} onClose={() => setSheet('')} />}

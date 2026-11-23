@@ -14,6 +14,7 @@ import { CatPage } from './screens/CatPage';
 import { Feed } from './screens/Feed';
 import { ResetPassword, Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
+import { Privacy } from './screens/Privacy';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
 import { Train } from './screens/Train';
@@ -61,6 +62,7 @@ export default function App() {
   if (!snap.cat && movedTo()) { location.replace(movedTo()!); return <div className="screen" aria-busy="true" />; }
   if (import.meta.env.DEV && r0 === 'gallery') return <Gallery />;
   if (r0 === 'reset-password') return <ResetPassword />;
+  if (r0 === 'privacy') return <Privacy />; // readable before there's a pet (Welcome, the account form)
   if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
   if (r0 === 'add-pet') return <Onboarding adding key={pendingPets().map((p) => p.name).join()} />;
   if (r0 === 'another' && snap.cat) return <AnotherCat />;
