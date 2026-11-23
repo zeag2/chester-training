@@ -449,6 +449,26 @@ describe('training Chester together', () => {
     expect([...server.care.values()].filter((c) => c.catId === luna.id).map((c) => (c.data as { what: string }).what)).toEqual(['fed']);
     expect(await josh.saveCare('daily', { what: 'fed' }, { catId: 'not-mine' })).toBeNull();
   });
+  it('a sync that finishes late never brings back the pet it started with', async () => {
+    const server = new FakeServer();
+    const josh = device(server); await josh.load(); await josh.signIn('josh@example.com', 'catnip1', 'Josh', true, true);
+    const luna = await josh.saveCat({ ...chester, name: 'Luna' }); await josh.sync();
+    expect(josh.get().cat!.id).toBe(luna.id);
+    // hold the next sync half-way (while it fetches Luna's sets)
+    const r = josh.remote!; const pull = r.pullSets.bind(r);
+    let release!: () => void; let reached!: () => void;
+    const gate = new Promise<void>((ok) => { release = ok; }); const atGate = new Promise<void>((ok) => { reached = ok; });
+    r.pullSets = async (id: string) => { reached(); await gate; return pull(id); };
+    const slow = josh.sync(); await atGate;
+    r.pullSets = pull;
+    const seen: string[] = []; const off = josh.subscribe(() => seen.push(josh.get().cat?.name ?? ''));
+    await josh.saveCat({ ...chester }); // a new pet is shown while Luna's sync is still running
+    expect(josh.get().cat!.name).toBe('Chester');
+    release(); await slow; await josh.settled(); off();
+    expect(seen.slice(seen.indexOf('Chester'))).not.toContain('Luna');
+    expect(josh.get().cat!.name).toBe('Chester');
+    expect(josh.get().sync).toBe('ok');
+  });
   it('keeps your vet on the phone, then shares it with the household', async () => {
     const server = new FakeServer();
     const josh = device(server); await josh.load(); await josh.saveCat(chester);

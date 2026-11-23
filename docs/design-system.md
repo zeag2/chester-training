@@ -168,3 +168,5 @@ What was planned, for the record:
    - **Accordion** for progressive or multiple disclosure, and on narrow screens (e.g. the "Is this an emergency?"
      signs, a visit's older notes).
    - **A table or side-by-side** when comparing values (the desktop Health log, weights over time, vaccine due dates).
+   - **Two panes** at 1100 px and up: `.healthcols` with two `.healthcol` children (`src/styles/app.css`), used by
+     Health and the Visit page. Phones and tablets keep one column; render the panes only when `useLayout()` is `desktop`.

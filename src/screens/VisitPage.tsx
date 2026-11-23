@@ -7,6 +7,7 @@ import { bookingDay, fmtTime, isBooked, mapsHref, nextVaccines, telHref, yourVet
 import type { CalEvent } from '../lib/calendar';
 import { Icon } from '../ui/icons';
 import { back as goBack } from '../ui/router';
+import { useLayout } from '../ui/layout';
 import { DocRow } from '../ui/DocRow';
 import { BookSheet, visitCats, visitEvent, type BookPreset } from '../ui/VetCards';
 import { CalendarSheet } from '../ui/CalendarChoice';
@@ -29,6 +30,7 @@ export function VisitPage({ id }: { id: string }) {
   // after a reschedule or cancel: the changed event, to send to the calendar it was added to
   const [calChange, setCalChange] = useState<{ event: CalEvent; change: 'moved' | 'cancelled' } | null>(null);
   const [moving, setMoving] = useState(false);
+  const big = useLayout() === 'desktop';
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
   const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
@@ -76,9 +78,7 @@ export function VisitPage({ id }: { id: string }) {
   const log = (kind: 'med' | 'weight') => setEditing({ kind, preset: { visitId: visit.id } as never, day: passed || !booked ? day : localDay(Date.now()) });
   const h = (t: string) => <h2 style={{ marginTop: 'var(--sp-5)', fontSize: 17 }}>{t}</h2>;
 
-  return <div className="screen">
-    {back}
-    <div className="stag">
+  const details = <>
       <h1 style={{ marginTop: 'var(--sp-1)' }}>{visit.data.reason}</h1>
       <p className="m">{[fmtDay(visit.at), fmtTime(visit.data.time), clinic].filter(Boolean).join(' · ')}</p>
       {together && <p className="s" style={{ marginTop: 2 }}>Booked together with {visit.data.group!.names.filter((n) => n !== cat.name).join(' and ')}. Rescheduling or cancelling changes it for {visit.data.group!.names.length > 2 ? 'all of them' : 'both'}.</p>}
@@ -106,6 +106,8 @@ export function VisitPage({ id }: { id: string }) {
       {visit.data.notes ? <p style={{ marginTop: 'var(--sp-1)', whiteSpace: 'pre-wrap' }}>{visit.data.notes}</p>
         : !(booked && passed) && !cancelled && <button className="btn2" style={{ marginTop: 6, background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>{booked && !passed ? 'Add notes' : 'Add what the vet said'}</button>}
 
+  </>;
+  const given = <>
       {(!booked || passed) && !cancelled && <>
         {h('Given')}
         {doses.length === 0 && !weight && <p className="s">No doses or weight logged for this visit yet.</p>}
@@ -120,19 +122,35 @@ export function VisitPage({ id }: { id: string }) {
         </div>
       </>}
 
+  </>;
+  const bookNext = <>
       {again && <button className="card sky row" style={{ width: '100%', textAlign: 'left', border: 0, marginTop: 'var(--sp-3)' }}
         onClick={() => setBook({ reason: 'Vaccines', day: bookingDay(again.due), notes: `${again.names.join(', ')} due ${fmtShortDay(again.due)}` })}>
         <span className="sp"><b>Book the next one?</b><span className="s" style={{ display: 'block' }}>{again.names.join(', ')} due again {fmtShortDay(again.due)}</span></span><span className="chip">Book</span></button>}
 
+  </>;
+  const documents = <>
       {h('Documents')}
       {docs.map((d) => <DocRow key={d.id} doc={d} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
       {docs.length === 0 && <p className="s">{booked && !passed ? 'After the visit, add a photo of the invoice or certificate here.' : 'A photo of the invoice, certificate or discharge notes goes here.'}</p>}
       <DocAdder signedIn={!!account} visit={visit} compact />
-
+  </>;
+  const actions = <>
       <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-6)' }}>
         <button className="btn2 sp" style={{ background: 'var(--grey)' }} onClick={() => setEditing({ kind: 'vet', item: visit })}>Edit visit</button>
         <button className="btn2 sp" style={{ background: 'transparent', color: 'var(--rose)' }} onClick={async () => { if (confirm('Delete this visit for everyone? Its documents and doses stay in the log.')) { await store.deleteCare(visit.id); goBack('health', { replace: true }); } }}>Delete</button>
       </div>
+  </>;
+
+  return <div className={big ? 'screen wide' : 'screen'}>
+    {back}
+    {/* desktop (1100 px and up): details and actions on the left, documents, doses and weight on the right; phones
+       keep the one column in the same order */}
+    <div className="stag">
+      {big ? <div className="healthcols">
+        <div className="healthcol">{details}{bookNext}{actions}</div>
+        <div className="healthcol">{given}{documents}</div>
+      </div> : <>{details}{given}{bookNext}{documents}{actions}</>}
     </div>
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
