@@ -512,7 +512,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
     if (signedIn) {
       try { d = await store.addDoc(file); d = (await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? (visit ? localDay(visit.at) : undefined), summary: r.summary, categories: r.categories, type: guessDocType(`${r.title} ${r.summary}`), ...(visit ? { visitId: visit.id } : {}) }, { id: d.id, at: d.at })) as CareItem<'doc'> | null ?? d; setDoc(d); }
       catch (e) { setNote(/bucket|not found|404|row-level|policy/i.test(String((e as Error).message)) ? 'The file itself wasn’t saved: document storage isn’t set up in Supabase yet. Your log entries still save.' : 'The file itself wasn’t saved (' + (e as Error).message + '). Your log entries still save.'); }
-    } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
+    } else setNote('Only the details are saved. Sign in (Settings, from the gear on Home) to keep the document itself.');
     const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
     const list: Pick[] = [];
     const careNow = store.get().care;
@@ -604,7 +604,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
           <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
           <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
       </div>)}
-      <p className="s" style={{ marginTop: 12 }}>Read on your phone, so check it against the paper. Anything it missed, add with “Log something” above.</p>
+      <p className="s" style={{ marginTop: 12 }}>Read on your phone, so check it against the paper. Anything it missed, you can add by hand afterwards.</p>
       <button className="btn" style={{ marginTop: 12 }} onClick={async () => {
         // the visit first (if the papers make one), so everything else links to it; then one Undo for the whole batch
         const chosen = picks.filter((p) => p.on).sort((x, y) => Number(!!y.visit) - Number(!!x.visit));

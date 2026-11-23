@@ -11,6 +11,7 @@
   --bg:#141513;--surface:#32332e;--on-ink:#141513;--line:#34352f;--faint:rgba(241,240,234,.2);--ink-2:#d6d5ce;--muted-2:#8f8f88;
   --butter-ink:#e9d79a;--peach-ink:#f1bba6;--teal-ink:#a3ddd1;--tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
 *{box-sizing:border-box}
+input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Avenir Next",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 /* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
    then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */

@@ -1,4 +1,4 @@
-last-reviewed: 532523b390b131e4fe5c374fe53b531042884c69
+last-reviewed: 836c4aa3a28dc2bebe4c8e498aa96a9530bdf991
 
 # UX review log
 
@@ -18,6 +18,19 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-23: 532523b..836c4aa
+Checked after-the-visit part 2: reading the Hazel Dell chart and invoice fixtures (OCR stubbed) from a visit's page,
+and the grouped review (Weight, Given today, Reminders, Past vaccines with "already logged", For next time, Details),
+in light and dark mode.
+
+Fixed:
+- The review's checkboxes (and every other checkbox) were the browser's bright blue; they now use the app's teal
+  (`accent-color`).
+- The footer said "add with 'Log something' above", but the visit page has no Log something; now "you can add by
+  hand afterwards".
+- The signed-out note pointed to "Settings → Train together", which no longer exists after the navigation change;
+  now "Settings, from the gear on Home".
 
 ### 2026-11-21: 6b8ce52..532523b
 Checked after-the-visit part 1 with two cats and a visit today: the log sheet's cat chip ("Chester · Weight"), the
