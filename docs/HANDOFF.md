@@ -582,7 +582,10 @@ Items marked *(art)* suit the art session.
    `deletePhoto`. Who pawed (long-press), report/block: later.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
-   medicine due).
+   medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
+   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
+   service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -1109,6 +1112,9 @@ npm run build      # what CI runs
   2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Since parts 2–3 of the bundle: `photos_test.sql`
   right after the bundle, before `security_test.sql`. `household_test` leaves `public._h`: drop it before `vets_test`. Roles are cluster-wide, so drop
   `anon`/`authenticated` before reloading the stubs into a fresh database.
+  2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
+  drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
+  upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1443,3 +1449,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
   animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
   changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.
+- 2026-11-23, push notifications plan (night job, `claude/features-push-plan`): no skills, plugins or new MCP servers.
+  Wrote `docs/plans/2026-11-23-push-notifications.md` and `supabase/migrations/20261123000000_push.sql`. Checks: a
+  throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
+  stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
+  stubbed), then `supabase/tests/push_test.sql`: passed.
