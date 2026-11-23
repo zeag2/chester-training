@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2022", "lib": ["ES2022", "DOM", "DOM.Iterable"], "module": "ESNext",
     "moduleResolution": "bundler", "jsx": "react-jsx", "strict": true, "noEmit": true,
-    "skipLibCheck": true, "types": ["vite/client", "vitest/globals", "vite-plugin-pwa/client"], "isolatedModules": true
+    "skipLibCheck": true, "types": ["vite/client", "vitest/globals", "vite-plugin-pwa/client"], "isolatedModules": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "supabase/functions/_shared", "supabase/functions/send-push/core*.ts"]
 }

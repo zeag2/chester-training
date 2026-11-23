@@ -586,6 +586,21 @@ Items marked *(art)* suit the art session.
    batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
    `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
    service worker, then the app (asks, Settings → Notifications).
+   **Part 1 built 2026-11-23** (PR from `claude/features-push-a`; no SQL change): Edge Function
+   `supabase/functions/send-push` (`drain`: claims up to 200 unsent rows with a conditional `tries + 1`, so two
+   overlapping runs never send a row twice; sends with `npm:web-push@3.6.7`'s `generateRequestDetails` + `fetch`,
+   TTL 12 h, `Topic` = a 32-character hash of the tag; 2xx → `sent_at`, 404/410 → that subscription deleted, 408/429/5xx
+   or a network error → tried again next minute up to 3 times, other 4xx or no phone left → given up (`tries = 3`);
+   `meds`: at each person's `med_hour` in their `tz`, one notification per pet from `medsDue` with the Home card's
+   words, tag `meds-<cat>-<day>`, inserted straight into the outbox by the service role after the same dedupe and
+   daily cap as `enqueue_push`). It reads **all** medicine entries, not the plan's 60 days: a yearly vaccine's
+   next-due date comes from last year's entry. `medsDue` moved to `supabase/functions/_shared/meds.ts` (with a time
+   zone) and `src/engine/care.ts` wraps it. Service worker: `public/push-sw.js` via workbox `importScripts` (shows
+   `{title, body, url, tag}` with `icon-192.png` and the new `badge-96.png`; a tap focuses an open PalDex and posts
+   `paldex-open` → `src/lib/pushopen.ts` sets the hash, or opens `<scope>#/…`; only `#/` routes). Nothing is sent
+   until the secrets and the SQL exist. Tests: `supabase/functions/send-push/core.test.ts` (drain with 201/410/500,
+   claims, meds per time zone, the key check), `src/lib/pushsw.test.ts`; `supabase/tests/send-push-e2e/run.sh` (the
+   real function end to end, see section 4).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -915,6 +930,7 @@ src/
     install.ts, invite.ts, moved.ts  install prompt/guide, friend invite links, the old address's redirect
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
+    pushopen.ts         a tapped notification on an open PalDex: moves to the screen the service worker names
     images.ts, stats.ts, install.ts
   ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home), settle (useSettle: a new row settles into place)
   styles/tokens.css     design tokens: colour (light + dark), type, space, radius, depth, motion, the settle keyframes
@@ -933,10 +949,17 @@ supabase/
     20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
     20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
     20261115000000_vets.sql              your vet: the household's vet contacts (vets), household-only RLS
+    20261116000000_bundle.sql            the 2026-11-16 batch (photo feed, push_subscriptions, …)
+    20261123000000_push.sql              push: push_prefs, push_outbox, enqueue_push, 3 triggers, pg_cron jobs (not run yet)
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
+  tests/send-push-e2e/  run.sh: the real send-push in Deno + PostgREST + Postgres 16 + a fake push service (not CI)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
+  functions/send-push/  push sender (Edge Function, called by pg_cron): index.ts wires core.ts (logic, Vitest-tested)
+                        to supabase-js and web-push. Deploy with --no-verify-jwt (the cron sends x-cron-key).
+  functions/_shared/meds.ts  medsDue(): medicine due today, used by the app (src/engine/care.ts) and send-push
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
-public/                 icons, sfx samples
+public/                 icons, sfx samples; push-sw.js (push + notification tap, pulled into the generated
+                        service worker by workbox importScripts); badge-96.png (Android's white notification badge)
 docs/
   HANDOFF.md            this file
   sharing-setup.md      step-by-step Supabase setup (all SQL steps)
@@ -1115,6 +1138,14 @@ npm run build      # what CI runs
   2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
   drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
   upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
+- **send-push end to end** (not in CI): `supabase/tests/send-push-e2e/run.sh` installs Deno 2.9.6 (npm) and
+  PostgREST 12.2.3 (GitHub release) into `/tmp/send-push-e2e`, builds a throwaway Postgres 16 with every migration
+  (push.sql with cron stubbed), and runs the real `index.ts` against it, sending to a fake HTTPS push service that
+  decrypts each push. Run Deno with `--node-modules-dir=none --no-lock` (the repo's `package.json` otherwise makes
+  Deno look for `npm:` packages in `node_modules`, and it would write a `deno.lock` here). Real push services aren't
+  reachable from Playwright's Chromium (no Google keys: "push service not available"); to check the built service
+  worker, `ServiceWorker.deliverPushMessage` over CDP with `chromium.launch({ channel: 'chromium' })` (the headless
+  shell shows no notifications).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1454,3 +1485,11 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
   stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
   stubbed), then `supabase/tests/push_test.sql`: passed.
+- 2026-11-23, push notifications part 1, server + service worker (Features worker, `claude/features-push-a`): no
+  skills, plugins or new MCP servers (`lottiefiles-creator` connected, unused). Tools, all in the session's scratch
+  space, none added to the repo's dependencies: **Deno 2.9.6** (the `deno` npm package) to run and `deno check` the
+  Edge Function; **PostgREST 12.2.3** (static binary from its GitHub release) in front of a throwaway Postgres 16, so
+  supabase-js talks to a real API; `npm:web-push@3.6.7` and `npm:http_ece@1.2.0` (a fake push service that decrypts);
+  `openssl` for its certificate; Playwright Chromium + CDP `ServiceWorker.deliverPushMessage` to check the built
+  service worker shows the notification; Playwright to render `public/badge-96.png` from `icon.svg`. Checks: Vitest
+  (308), typecheck, build, `supabase/tests/send-push-e2e/run.sh` (17 checks passed).

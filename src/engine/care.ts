@@ -2,6 +2,7 @@
    Items can be edited and deleted (unlike sets), so each carries updatedAt and a deleted flag; the newest edit wins. */
 import { daysBetween, localDay } from './day';
 import { fmtTime } from './vets';
+import { medsDue as sharedMedsDue, type MedDue as SharedMedDue } from '../../supabase/functions/_shared/meds';
 
 export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc' | 'daily';
 /** One-tap everyday logs: a meal, a litter scoop, a play session, or the daily health check. */
@@ -191,25 +192,12 @@ export function recentMeds(items: CareItem[], n = 3): CareItem<'med'>[] {
   return out;
 }
 
-export interface MedDue { key: string; name: string; what: MedWhat; kind: 'course' | 'due'; given: number; times: number; until?: string; daysLeft: number; last: CareItem<'med'> }
-/** Medicine to give today (in-app reminders): a daily course still running with doses left today, or a dose whose
-    next-due day has come (or passed). The latest entry per medicine name decides, as in `reminders`. */
+export type MedDue = SharedMedDue<CareItem<'med'>>;
+/** Medicine to give today (in-app reminders and the daily push): a daily course still running with doses left today,
+    or a dose whose next-due day has come (or passed). Lives in `supabase/functions/_shared/meds.ts` so the server's
+    medicine notification agrees with Home's Medicine card. */
 export function medsDue(items: CareItem[], now = Date.now()): MedDue[] {
-  const today = localDay(now);
-  const meds = items.filter((i): i is CareItem<'med'> => i.kind === 'med' && !i.deleted).sort((a, b) => a.at - b.at);
-  const latest = new Map<string, CareItem<'med'>>();
-  for (const m of meds) latest.set(m.data.name.trim().toLowerCase(), m);
-  const out: MedDue[] = [];
-  for (const [k, m] of latest) {
-    const c = m.data.course;
-    if (c && c.times > 0 && localDay(m.at) <= today && today <= c.until) {
-      const given = meds.filter((x) => x.data.name.trim().toLowerCase() === k && localDay(x.at) === today).length;
-      if (given < c.times) out.push({ key: k, name: m.data.name, what: m.data.what, kind: 'course', given, times: c.times, until: c.until, daysLeft: 0, last: m });
-    } else if (!c && m.data.nextDue && m.data.nextDue <= today) {
-      out.push({ key: k, name: m.data.name, what: m.data.what, kind: 'due', given: 0, times: 1, daysLeft: daysBetween(today, m.data.nextDue), last: m });
-    }
-  }
-  return out.sort((a, b) => a.daysLeft - b.daysLeft || a.name.localeCompare(b.name));
+  return sharedMedsDue(items.filter((i): i is CareItem<'med'> => i.kind === 'med'), now);
 }
 
 /** Repeating a medicine: the same gap to the next dose as last time ("" when last time had no next due date). */
