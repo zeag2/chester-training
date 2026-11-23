@@ -19,7 +19,11 @@ export interface CareData {
     /** from the papers (after the visit): the invoice total, the vet's name, body condition (e.g. 4/9) */
     cost?: number; vetName?: string; bcs?: string;
     /** how many times the calendar event was changed (rescheduled or cancelled): the .ics SEQUENCE */
-    calSeq?: number };
+    calSeq?: number;
+    /** booked together with other cats (Book a visit, several cats): one visit per cat, all with the same `id`, and the
+        cats' names at booking time. They share one calendar event ("Vet: Chester + Luna", UID visit-<id>) and are
+        rescheduled and cancelled together. */
+    group?: { id: string; names: string[] } };
   symptom: { what: string; worried?: boolean; notes?: string; visitId?: string };
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
