@@ -511,7 +511,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   Better coverage would need a paid UPC API behind a Supabase Edge Function (to keep its key secret).
 
 ### App
-- **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colors are tokens in `src/styles/app.css`.
+- **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
   Appearance), Your data (backup JSON including care).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
@@ -582,7 +582,10 @@ Items marked *(art)* suit the art session.
    `deletePhoto`. Who pawed (long-press), report/block: later.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
-   medicine due).
+   medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
+   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
+   service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -600,6 +603,15 @@ Items marked *(art)* suit the art session.
    visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone)
    **(part 2a done 2026-11-11, PR from `claude/features-booking-2a`; Josh still to test on an iPhone)**, and
    booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
+   **(part 2b done 2026-11-23, PR from `claude/features-booking-2b`; no SQL):** Book a visit has the cat chip in its
+   header (as a new entry); with several pets, tap it to add or remove cats (at least one stays). Saving makes one visit
+   per cat (`saveCare(…, { catId })`), each carrying `group: { id, names }`, and one calendar event titled
+   "Vet: Luna + Chester" (reason in the notes) with UID `visit-<group id>`; a failed save takes back the ones already
+   saved. The toast names the cats; Undo removes every visit. On a grouped visit's page: "Booked together with Luna";
+   Reschedule and Cancel change every cat's visit (`store.visitGroup`, then `calSeq` + 1 on all) and re-send the one
+   event. Known limits: Edit visit and Delete still act on that one cat only (editing the date there would split the
+   event; the names list isn't trimmed after a delete). Tests: `src/ui/booking2b.test.tsx`. Screenshots:
+   `docs/screenshots/booking-2b/`.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
    comfortable on a laptop or desktop screen.
@@ -642,6 +654,14 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
+  `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
+  (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
+  off-scale values left as they are and listed in the design doc ("Not yet on the scale"); the component inventory
+  and rules added to the doc and to `CLAUDE.md`; `useSettle` (`src/ui/settle.ts`) on the Health log (phone list and
+  desktop table). Pixels unchanged at 390 and 1440, light and dark (Pillow diff vs main, see section 7).
+  Next, each needing Josh's OK because it's visible: move `h1` 28 → 34 and `h2` 17 → 20, the 13/15/17/18 sizes and
+  the 6/10/14/18/22 gaps onto the scale; use `useSettle` in the quick-log sheet and the visit timeline.
 - [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
   permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -905,8 +925,10 @@ src/
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     images.ts, stats.ts, install.ts
-  ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home)
-  styles/app.css        tokens (light + dark), layout, components
+  ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home), settle (useSettle: a new row settles into place)
+  styles/tokens.css     design tokens: colour (light + dark), type, space, radius, depth, motion, the settle keyframes
+  styles/app.css        component classes and layout (imports tokens.css first)
+  styles/cssText.ts     tests only: app.css with the tokens written out (phone-CSS-unchanged tests)
 supabase/
   migrations/           SQL, run by hand in the Supabase SQL editor, in this order:
     20261107230000_shared_training.sql   cats, cat_members, sets, RLS, join_cat
@@ -1099,6 +1121,9 @@ npm run build      # what CI runs
   2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Since parts 2–3 of the bundle: `photos_test.sql`
   right after the bundle, before `security_test.sql`. `household_test` leaves `public._h`: drop it before `vets_test`. Roles are cluster-wide, so drop
   `anon`/`authenticated` before reloading the stubs into a fresh database.
+  2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
+  drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
+  upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1394,7 +1419,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   servers. Checks: clean `npm ci`, Vitest (264, 3 new in `src/db/weights.test.tsx`), typecheck, build. No screenshots
   (small change to the Health weight card; covered by the UI test). Found on the way: a sync that started for one pet
   rebuilds that pet when it ends, even if another was opened meanwhile (`syncNow` keeps the cat it started with);
-  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats").
+  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats"). Fixed
+  2026-11-23 (`claude/fix-sync-and-visit`).
 - 2026-11-18, navigation Option A + onboarding (Features worker, `claude/features-navigation`): no skills, plugins or
   new MCP servers. Checks: Vitest (267), typecheck, build; Playwright iPhone 13 shots (Home dark, cat tab light,
   onboarding light) from the Vite dev server with Supabase stubbed.
@@ -1426,3 +1452,30 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-21, after-the-visit part 2 (Features worker, `claude/features-after-visit-2`): no skills, plugins or new MCP
   servers. Checks: Vitest (281), typecheck, build; Playwright iPhone 13 shots with the OCR module routed to a stub that
   returns the fixture pages (so the review screen renders without real OCR).
+- 2026-11-23, late sync + Visit in two panes (Features worker, `claude/fix-sync-and-visit`): no skills, plugins or new
+  MCP servers (`lottiefiles-creator` connected, unused). **Sync race:** a sync that was still running when another pet
+  was shown (e.g. a pet just added with `saveCat`, which rebuilds outside the serial chain) rebuilt the pet it started
+  with at the end, and the queued follow-up sync then kept that pet. `syncNow` now checks the pet on screen before its
+  final rebuild: if it changed, it only clears "syncing", refreshes the pet list and queues a sync for the pet shown.
+  Test: `sync.test.ts` "a sync that finishes late never brings back the pet it started with" (holds `pullSets` half-way).
+  **Visit page** (`#/health/visit/<id>`): at 1100 px and up it reuses Health's `.healthcols`/`.healthcol` (left: details,
+  call/directions, notes, Book the next one, Edit/Delete; right: Given and Documents); phones and tablets keep the one
+  column in the same order. Test in `visit.test.tsx`. Checks: Vitest (283), typecheck, build; Playwright against the
+  Vite dev server (store seeded through `globalThis.__chesterStore`) at 390 and 1440 px:
+  `docs/screenshots/visit-panes/`.
+- 2026-11-22, design system phase 2 (Features worker, `claude/design-system-2`): no skills, plugins or new MCP servers
+  (`lottiefiles-creator` connected, unused). A one-off Python codemod (not committed) swapped only literals equal to a
+  token. Checks: Vitest (281), typecheck, build; Playwright against Vite dev servers of main (a git worktree) and the
+  branch, a cat and a month of care seeded through `globalThis.__chesterStore`, clock fixed, reduced motion, 12 screens
+  at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
+  animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
+  changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.
+- 2026-11-23, push notifications plan (night job, `claude/features-push-plan`): no skills, plugins or new MCP servers.
+  Wrote `docs/plans/2026-11-23-push-notifications.md` and `supabase/migrations/20261123000000_push.sql`. Checks: a
+  throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
+  stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
+  stubbed), then `supabase/tests/push_test.sql`: passed.
+- 2026-11-23, booking part 2b (Features worker, `claude/features-booking-2b`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
+  (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
+  grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.

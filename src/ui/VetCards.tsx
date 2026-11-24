@@ -11,6 +11,7 @@ import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
 import { Icon } from './icons';
 import { Sheet } from './Sheet';
+import { Chester } from '../chester/Chester';
 
 /* The vet part of Health (docs/plans/2026-11-09-vet-redesign.md, steps 1 and 2): who your vet is with one-tap Call
    and Directions, the emergency vet and the warning signs together, and visits: next, last, and Book a visit with one
@@ -25,15 +26,21 @@ export function visitEvent(catName: string, v: CareItem<'vet'>, vet?: Vet): CalE
   const clinic = v.data.clinic || d?.clinic;
   const address = d?.address || v.data.address;
   const phone = d?.phone || v.data.phone;
-  return { title: `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined, uid: 'visit-' + v.id, seq: v.data.calSeq ?? 0, cancelled: v.data.status === 'cancelled',
+  // several cats booked together: one event for all of them, keyed by the group so a change to one updates it
+  const group = v.data.group && v.data.group.names.length > 1 ? v.data.group : null;
+  return { title: group ? `Vet: ${group.names.join(' + ')}` : `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined,
+    uid: 'visit-' + (group ? group.id : v.id), seq: v.data.calSeq ?? 0, cancelled: v.data.status === 'cancelled',
     place: address || clinic || undefined,
-    notes: [address && clinic, phone && `Phone: ${phone}`, v.data.notes].filter(Boolean).join('\n') || undefined };
+    notes: [group && v.data.reason, address && clinic, phone && `Phone: ${phone}`, v.data.notes].filter(Boolean).join('\n') || undefined };
 }
+
+/** "Chester + Luna" for a visit booked together, else the cat's own name. */
+export const visitCats = (catName: string, v: CareItem<'vet'>) => (v.data.group && v.data.group.names.length > 1 ? v.data.group.names.join(' + ') : catName);
 
 function CallButton({ vet, label, primary }: { vet: Vet; label: string; primary?: boolean }) {
   const tel = telHref(vet.data.phone);
   if (!tel) return null;
-  return <a className={primary ? 'btn' : 'btn2'} href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', ...(primary ? {} : { background: 'var(--surface)', color: 'inherit' }) }}
+  return <a className={primary ? 'btn' : 'btn2'} href={tel} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', ...(primary ? {} : { background: 'var(--surface)', color: 'inherit' }) }}
     onClick={() => audio.chirp()}><Icon name="phone" size={18} />{label}</a>;
 }
 
@@ -51,21 +58,21 @@ export function VetCard() {
       <div className="row"><span className="s sp" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Your vet</span>
         {primary && <button className="btn2" style={{ minHeight: 36, background: 'var(--grey)' }} onClick={() => setEdit({ kind: 'primary', vet: primary })}>Edit</button>}</div>
       {primary ? <>
-        <b style={{ fontSize: 19, display: 'block', marginTop: 4 }}>{primary.data.clinic}</b>
+        <b style={{ fontSize: 19, display: 'block', marginTop: 'var(--sp-1)' }}>{primary.data.clinic}</b>
         {(primary.data.vetName || primary.data.address) && <p className="s">{[primary.data.vetName, primary.data.address].filter(Boolean).join(' · ')}</p>}
-        <div className="row" style={{ gap: 8, marginTop: 12 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
           {telHref(primary.data.phone) ? <CallButton vet={primary} label="Call" primary /> : <button className="btn" style={{ flex: 1 }} onClick={() => setEdit({ kind: 'primary', vet: primary })}>Add their phone</button>}
-          {mapsHref(primary.data) && <a className="btn2" href={mapsHref(primary.data)!} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
+          {mapsHref(primary.data) && <a className="btn2" href={mapsHref(primary.data)!} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)', textDecoration: 'none', color: 'inherit', background: 'var(--grey)' }}><Icon name="pin" size={18} />Directions</a>}
         </div>
       </> : <>
-        <b style={{ fontSize: 17, display: 'block', marginTop: 4 }}>Add your vet</b>
+        <b style={{ fontSize: 17, display: 'block', marginTop: 'var(--sp-1)' }}>Add your vet</b>
         <p className="s" style={{ marginTop: 2 }}>One tap to call them, or get directions, when you need to.</p>
         {suggestion
-          ? <div className="row" style={{ gap: 8, marginTop: 12, flexWrap: 'wrap' }}><button className="btn" style={{ flex: 1, minWidth: 180 }} onClick={() => setEdit({ kind: 'primary', clinic: suggestion })}>Is {suggestion} your vet?</button>
+          ? <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', flexWrap: 'wrap' }}><button className="btn" style={{ flex: 1, minWidth: 180 }} onClick={() => setEdit({ kind: 'primary', clinic: suggestion })}>Is {suggestion} your vet?</button>
               <button className="btn2" style={{ background: 'var(--grey)' }} onClick={() => setEdit({ kind: 'primary' })}>Someone else</button></div>
-          : <button className="btn" style={{ marginTop: 12 }} onClick={() => setEdit({ kind: 'primary' })}>Add your vet</button>}
+          : <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={() => setEdit({ kind: 'primary' })}>Add your vet</button>}
       </>}
-      <div className="row" style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--grey)', gap: 8 }}>
+      <div className="row" style={{ marginTop: 'var(--sp-3)', paddingTop: 10, borderTop: '1px solid var(--grey)', gap: 'var(--sp-2)' }}>
         <span className="sp s">{emergency ? <>Emergency: <b style={{ color: 'var(--ink)' }}>{emergency.data.clinic}</b></> : 'No emergency vet saved'}</span>
         {emergency && telHref(emergency.data.phone) ? <a className="btn2" href={telHref(emergency.data.phone)!} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: 'var(--peach-ink)', background: 'var(--peach)' }}><Icon name="phone" size={16} />Call</a>
           : <button className="btn2" style={{ minHeight: 44, background: 'var(--grey)' }} onClick={() => setEdit({ kind: 'emergency', vet: emergency })}>{emergency ? 'Add phone' : 'Add'}</button>}
@@ -76,7 +83,7 @@ export function VetCard() {
     {sos && <Sheet label="Is this an emergency?" onClose={() => setSos(false)}>
       <div className="row"><b className="sp" style={{ fontSize: 18 }}>Call now if {cat.name}…</b><button className="iconbtn" aria-label="Close" onClick={() => setSos(false)}><Icon name="close" /></button></div>
       <ul className="s" style={{ margin: '10px 0 0', paddingLeft: 18 }}>{RED_FLAGS.map((f) => <li key={f} style={{ marginTop: 5 }}>{pt(f)}</li>)}</ul>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)', marginTop: 14 }}>
         {primary && <CallButton vet={primary} label={`Call ${primary.data.clinic}`} primary />}
         {emergency && <CallButton vet={emergency} label={`Call ${emergency.data.clinic} (emergency)`} />}
         {!primary && !emergency && <p className="s">Save your vet and an emergency vet on the Health page so their numbers are right here.</p>}
@@ -99,7 +106,7 @@ function VetSheet({ kind, vet, clinic, onClose }: { kind: VetKind; vet?: Vet; cl
   };
   return <Sheet label={kind === 'emergency' ? 'Emergency vet' : 'Your vet'} onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>{vet ? 'Edit ' : 'Add '}{kind === 'emergency' ? 'emergency vet' : 'your vet'}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
-    {kind === 'emergency' && !vet && <p className="s" style={{ marginTop: 4 }}>A 24-hour or after-hours clinic, for when your vet is closed.</p>}
+    {kind === 'emergency' && !vet && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>A 24-hour or after-hours clinic, for when your vet is closed.</p>}
     {field('clinic', 'Clinic', { placeholder: kind === 'emergency' ? 'e.g. CityPets 24h Emergency' : 'e.g. Maple Street Vet', autoFocus: !f.clinic })}
     {field('phone', 'Phone', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', placeholder: '(555) 010-0100' })}
     {field('address', 'Address (for directions)', { autoComplete: 'street-address' })}
@@ -125,9 +132,9 @@ export function VisitsCard({ onOpen }: { onOpen: (v: CareItem<'vet'>) => void })
   return <>
     <div className="card white" aria-label="Visits">
       <span className="s" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Visits</span>
-      {due && <button className="row visitrow" style={{ background: 'var(--butter)', borderRadius: 16, padding: '10px 12px', marginTop: 8 }} onClick={() => onOpen(due)}>
+      {due && <button className="row visitrow" style={{ background: 'var(--butter)', borderRadius: 16, padding: '10px var(--sp-3)', marginTop: 'var(--sp-2)' }} onClick={() => onOpen(due)}>
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>{line(due)} · add what the vet said</span></span><span className="chip">Add notes</span></button>}
-      <div className="row visitrow" style={{ marginTop: 8 }}>
+      <div className="row visitrow" style={{ marginTop: 'var(--sp-2)' }}>
         <span className="s" style={{ width: 44, fontWeight: 800 }}>Next</span>
         {next ? <><button className="sp" style={{ border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit' }} onClick={() => onOpen(next)}><b>{line(next, true)}</b>{next.data.clinic && <span className="s" style={{ display: 'block' }}>{next.data.clinic}</span>}</button>
           <button className="iconbtn" style={{ background: 'var(--grey)' }} aria-label="Add to calendar" onClick={() => setCalFor(visitEvent(cat.name, next, vetOf(next)))}><Icon name="cal" size={20} /></button></>
@@ -139,7 +146,7 @@ export function VisitsCard({ onOpen }: { onOpen: (v: CareItem<'vet'>) => void })
           <span className="s" style={{ display: 'block' }}>{[last.data.clinic, nDocs(last) ? `${nDocs(last)} document${nDocs(last) === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || 'Tap to see notes'}</span></button>
           : <span className="sp s">No visits logged yet</span>}
       </div>
-      <button className="btn" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => { audio.chirp(); setBook(true); }}><Icon name="plus" size={18} />Book a visit</button>
+      <button className="btn" style={{ marginTop: 'var(--sp-3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} onClick={() => { audio.chirp(); setBook(true); }}><Icon name="plus" size={18} />Book a visit</button>
     </div>
     {book && <BookSheet onClose={() => setBook(false)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}
@@ -171,7 +178,10 @@ const trimmed = (c: Clinic) => ({ clinic: c.clinic.trim(), ...(c.phone.trim() ? 
     quick time, then which calendar: Apple or Google, asked each time with the last choice preselected. Saving closes
     the sheet and says so in a toast with Undo. One sheet, no dead ends. */
 export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: BookPreset }) {
-  const { cat, vets, care } = useStore();
+  const { cat, vets, care, pets } = useStore();
+  // which cats: the one shown, and any others coming along (one visit each, one calendar event)
+  const [forIds, setForIds] = useState<string[]>(() => (cat ? [cat.id] : []));
+  const [pickCat, setPickCat] = useState(false);
   const { primary, emergency } = yourVets(vets);
   const [vetId, setVetId] = useState(primary?.id ?? emergency?.id ?? '');
   // 'add': "+ Add vet", saved as the household vet with the visit; 'other': a one-off clinic, kept on the visit only
@@ -195,6 +205,10 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
   const typed = mode === 'add' ? nv : mode === 'other' ? ov : null;
   const call = typed ? { name: typed.clinic.trim(), tel: telHref(typed.phone) } : { name: saved?.data.clinic ?? '', tel: telHref(saved?.data.phone) };
   const why = reason === 'Other' ? custom.trim() : reason;
+  const going = pets.filter((p) => forIds.includes(p.id));
+  if (!going.length) going.push(cat);
+  const names = going.map((p) => p.name).join(' + ');
+  const toggleCat = (id: string) => setForIds((ids) => (ids.includes(id) ? (ids.length > 1 ? ids.filter((x) => x !== id) : ids) : [...ids, id]));
   // why Save can't be tapped yet, said under it (and read out with it)
   const blocker = typed && !typed.clinic.trim() ? 'Add the clinic’s name to save.' : !why ? 'Say what the visit is for to save.'
     : !day ? 'Pick a date to save.' : !cal ? 'Pick a calendar above (or Don’t add) to save.' : '';
@@ -215,16 +229,23 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
         if (vet) { setVetId(vet.id); setMode('saved'); }
       }
       const where = mode === 'other' ? trimmed(ov) : vet ? { clinic: vet.data.clinic } : {};
-      const data = { reason: why, ...where, ...(time ? { time } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}), ...(vet ? { vetId: vet.id } : {}), status: 'booked' as const };
-      const item = await store.saveCare('vet', data, { at: Date.parse(day + 'T12:00:00') }) as CareItem<'vet'> | null;
-      if (!item) throw new Error('The visit wasn’t saved');
+      const group = going.length > 1 ? { id: Math.random().toString(36).slice(2) + Date.now().toString(36), names: going.map((p) => p.name) } : undefined;
+      const data = { reason: why, ...where, ...(time ? { time } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}), ...(vet ? { vetId: vet.id } : {}), status: 'booked' as const, ...(group ? { group } : {}) };
+      // one visit per cat; if one fails, the ones already saved are taken back so it's all or nothing
+      const items: CareItem<'vet'>[] = [];
+      for (const p of going) {
+        const item = await store.saveCare('vet', data, { at: Date.parse(day + 'T12:00:00'), catId: p.id }) as CareItem<'vet'> | null;
+        if (!item) { for (const i of items) await store.deleteCare(i.id); throw new Error('The visit wasn’t saved'); }
+        items.push(item);
+      }
       rememberCalendar(cal);
       const added = cal !== 'none' && !googleOffline;
-      if (added) addToCalendar(visitEvent(cat.name, item, vet), cal, tab); else tab?.close();
+      if (added) addToCalendar(visitEvent(cat.name, items[0], vet), cal, tab); else tab?.close();
       audio.sparkle(); onClose();
+      const visitWord = items.length > 1 ? 'Visits' : 'Visit';
       showToast({
-        msg: `Booked ${fmtDay(day)}${time ? ', ' + fmtTime(time) : ''}${added ? ' · Added to calendar' : googleOffline ? ' · Add it to Google Calendar once you’re online' : ''}`,
-        action: { label: 'Undo', run: () => { void store.deleteCare(item.id); showToast({ msg: added ? 'Visit removed. Delete it from your calendar too.' : 'Visit removed.' }); } },
+        msg: `Booked ${fmtDay(day)}${time ? ', ' + fmtTime(time) : ''}${items.length > 1 ? ' · ' + names : ''}${added ? ' · Added to calendar' : googleOffline ? ' · Add it to Google Calendar once you’re online' : ''}`,
+        action: { label: 'Undo', run: () => { void Promise.all(items.map((i) => store.deleteCare(i.id))); showToast({ msg: added ? `${visitWord} removed. Delete it from your calendar too.` : `${visitWord} removed.` }); } },
       });
     } catch {
       tab?.close(); setBusy(false);
@@ -243,7 +264,17 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
     {(v.data.vetName || v.data.address || v.data.phone) && <span className="s" style={{ display: 'block' }}>{[v.data.vetName, v.data.address || v.data.phone].filter(Boolean).join(' · ')}</span>}</button>;
   const calLabel = googleOffline || cal === 'none' ? 'Save visit' : cal === 'apple' ? 'Save and add to Apple Calendar' : cal === 'google' ? 'Save and add to Google Calendar' : 'Save and add to calendar';
   return <Sheet label="Book a visit" onClose={onClose}>
-    <div className="row"><b className="sp" style={{ fontSize: 18 }}>Book a visit for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
+    <div className="row" style={{ gap: 'var(--sp-2)' }}>
+      {/* the cats it's for, in the header like a new entry; with several pets, tap to bring others along */}
+      <button className="chipbtn bkcats" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 'var(--sp-2)', flex: 'none', maxWidth: '60%' }} disabled={pets.length < 2}
+        aria-label={`For ${names}${pets.length > 1 ? ', tap to add or remove cats' : ''}`} aria-expanded={pets.length > 1 ? pickCat : undefined} onClick={() => setPickCat(!pickCat)}>
+        <span aria-hidden="true" style={{ width: 26, height: 26, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center', flex: 'none' }}><Chester coat={going[0].coat} eyes={going[0].eyes} mood="happy" width={36} /></span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{names}</span></button>
+      <b className="sp" style={{ fontSize: 18 }}>· Book a visit</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
+    {pickCat && pets.length > 1 && <div className="row chiprow" role="group" aria-label="Which cats" style={{ gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+      {pets.map((p) => { const on = going.some((g) => g.id === p.id);
+        return <button key={p.id} className={'chipbtn' + (on ? ' on' : '')} aria-pressed={on} onClick={() => toggleCat(p.id)}>{p.name}</button>; })}</div>}
+    {going.length > 1 && <p className="s" style={{ marginTop: 6 }}>One visit for each cat, one event in your calendar.</p>}
     {call.tel && <div className="row bkcall">
       <span className="sp s">Call the clinic, then record what they gave you.</span>
       <a className="btn2" href={call.tel} aria-label={`Call ${call.name || 'the clinic'}`} onClick={() => audio.chirp()}><Icon name="phone" size={18} />Call</a></div>}
@@ -282,7 +313,7 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
         <button key={c} role="radio" aria-checked={cal === c} className={`chipbtn ${cal === c ? 'on' : ''}`} onClick={() => setCal(c)}>{label}</button>)}
     </div>
     {googleOffline && <p className="s bkoffline" role="status">You’re offline. The Google Calendar link will work once you’re online; the visit still saves now. (Apple Calendar works offline.)</p>}
-    <button className="btn sheetsave" style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} disabled={!ok} aria-describedby={blocker ? 'bk-why' : undefined} onClick={() => void save()}>{cal && cal !== 'none' && !googleOffline && <Icon name="cal" size={18} />}{busy ? 'Saving…' : calLabel}</button>
+    <button className="btn sheetsave" style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} disabled={!ok} aria-describedby={blocker ? 'bk-why' : undefined} onClick={() => void save()}>{cal && cal !== 'none' && !googleOffline && <Icon name="cal" size={18} />}{busy ? 'Saving…' : calLabel}</button>
     {blocker && <p className="s" id="bk-why" style={{ marginTop: 6 }}>{blocker}</p>}
     {err && <p className="s" role="alert" style={{ marginTop: 6, color: 'var(--rose)', fontWeight: 700 }}>{err}</p>}
     {!blocker && cal && cal !== 'none' && !googleOffline && <p className="s" style={{ marginTop: 6 }}>The event has the clinic’s address and phone, with reminders {weekBefore({ title: '', day }) ? 'a week before, ' : ''}the day before{time ? ' and 2 hours before' : ''}.</p>}

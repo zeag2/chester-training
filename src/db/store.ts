@@ -321,6 +321,14 @@ export class Store {
     if (drop.length) await this.db.care.bulkPut(drop.map((w) => ({ ...w, deleted: true, updatedAt: Math.max(Date.now(), w.updatedAt + 1), dirty: 1 })));
     return drop.length;
   }
+  /** The visits booked together with this one (several cats, one appointment), for any of my pets; the visit itself
+      when it wasn't booked with others. Deleted ones are left out. */
+  visitGroup(visit: CareItem<'vet'>): Promise<CareItem<'vet'>[]> {
+    const id = visit.data.group?.id; if (!id) return Promise.resolve([visit]);
+    // queued with the writes, so it reads after any save in flight (and `settled()` covers the saves that follow it)
+    return this.serial(async () => (await this.db.care.filter((c) => c.kind === 'vet' && !c.deleted && (c.data as CareData['vet']).group?.id === id).toArray())
+      .map(({ dirty: _d, ...c }) => c as CareItem<'vet'>));
+  }
   deleteCare(id: string): Promise<void> {
     return this.serial(async () => {
       const cat = this.snap.cat; const old = await this.db.care.get(id); if (!cat || !old) return;
@@ -562,6 +570,8 @@ export class Store {
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       const vetsSync = shared?.cat.householdId ? await this.syncVets(r, shared.cat.householdId).catch(() => 'ok' as const) : 'ok';
+      // another pet was shown while this ran (e.g. one just added): don't bring this one back; that pet syncs next
+      if (this.snap.cat && this.snap.cat.id !== cat.id) { this.set({ sync: 'ok', pets: await this.petList() }); void this.sync(); return; }
       await this.rebuild((await this.db.cats.get(cat.id)) ?? cat, { household, sync: 'ok', careSync, vetsSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);

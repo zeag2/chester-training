@@ -27,6 +27,7 @@ import { useLayout } from '../ui/layout';
 import { showToast } from '../ui/Toast';
 import { DropNote, isDocFile, useDocDrop, type Dropped } from '../ui/DocDrop';
 import { dailyLogDays } from '../engine/dailylog';
+import { useSettle } from '../ui/settle';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -63,6 +64,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const docs = useMemo(() => findDocs(care), [care]);
   const ws = weights(care);
   const plan = useMemo(() => (cat ? kittenPlan(cat, care) : null), [cat, care]);
+  const logRef = useSettle<HTMLDivElement>(log.map((i) => i.id)); // a new entry settles into place (phone list)
   const [quickLogs, setQuickLogs] = useState(false);
   const nameOf = (uid?: string) => (uid && uid !== account?.userId ? household?.members.find((m) => m.userId === uid)?.name : '') || '';
   const big = useLayout() === 'desktop';
@@ -80,10 +82,10 @@ export function Care({ open }: { open?: CareKind } = {}) {
     {/* vet first: who to call (and the warning signs), then visits; docs/plans/2026-11-09-vet-redesign.md */}
     <VetCard />
     <VisitsCard onOpen={(v) => go('health/visit/' + v.id)} />
-    <button className="btn2" style={{ marginTop: 4, background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
+    <button className="btn2" style={{ marginTop: 'var(--sp-1)', background: 'var(--sky)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => go('vet-summary')}><Icon name="box" size={18} />Summary for the vet</button>
   </>;
   const comingUp = due.length > 0 && <><h2 style={{ marginTop: 22 }}>Coming up</h2>
-      {due.map((r) => <div key={r.id} className="row" style={{ gap: 8, marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
+      {due.map((r) => <div key={r.id} className="row" style={{ gap: 'var(--sp-2)', marginTop: 10, alignItems: 'stretch' }}><button className={`card ${r.daysLeft < 0 ? 'peach' : 'sky'} row sp`} style={{ margin: 0 }}
         onClick={() => { const booked = r.kind === 'visit' ? care.find((c) => c.id === r.id.slice(6)) : undefined;
           if (booked) { go('health/visit/' + booked.id); return; }
           setEditing(r.kind === 'groom' ? { kind: 'groom', preset: { what: r.id.split(':')[1] as GroomWhat } } : r.kind === 'vet' ? { kind: 'vet', preset: { reason: 'Yearly checkup' } } : { kind: 'med', preset: { name: r.title } }); }}>
@@ -99,10 +101,10 @@ export function Care({ open }: { open?: CareKind } = {}) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg></button>}</div>)}</>;
   const logSomething = <>
     <h2 style={{ marginTop: 22 }}>Log something</h2>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 10 }}>
-      {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
-        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 12 }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
-      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 12 }}>Food or treat</span></button>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 10 }}>
+      {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)', whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
+        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
+      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)' }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>Food or treat</span></button>
     </div>
   </>;
   const kitten = plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
@@ -111,7 +113,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
         {plan.map((st) => { const log = () => setEditing('reason' in st.preset ? { kind: 'vet', preset: st.preset } : { kind: 'med', preset: st.preset });
           const open = st.entry ? () => (st.entry!.kind === 'vet' ? go('health/visit/' + st.entry!.id) : setEditing({ kind: st.entry!.kind, item: st.entry })) : undefined;
           return <div key={st.key} className="row" style={{ gap: 10, alignItems: 'center' }}>
-          <button className="row sp" style={{ border: 0, background: 'none', padding: '8px 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
+          <button className="row sp" style={{ border: 0, background: 'none', padding: 'var(--sp-2) 0', textAlign: 'left', color: 'inherit', font: 'inherit', alignItems: 'flex-start', gap: 10, minHeight: 44 }}
             disabled={!open} onClick={open} aria-label={`${st.title}: ${st.done ? 'done' : 'not logged yet'}${open ? '. Open the last one logged.' : ''}`}>
           <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: 'none', display: 'grid', placeItems: 'center', marginTop: 1, background: st.done ? 'var(--teal)' : 'transparent', color: 'var(--on-ink, #fff)', boxShadow: st.done ? 'none' : 'inset 0 0 0 2px var(--faint, #bbb)' }}>{st.done && <Icon name="check" size={14} />}</span>
           <span className="sp"><b style={{ fontSize: 15 }}>{st.title}</b><span className="s" style={{ display: 'block' }}>{st.done ? 'Done' : st.when}{!st.done && st.progress && !st.progress.startsWith('0') ? ` · ${st.progress}` : ''}</span></span></button>
@@ -121,18 +123,18 @@ export function Care({ open }: { open?: CareKind } = {}) {
       {ws.length > 1 && <Spark values={ws.map((w) => w.data.lb)} />}
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
       {/* tap a weigh-in to change its value or date, or delete it */}
-      <div style={{ marginTop: 8 }} role="group" aria-label="Weigh-ins">
-        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)', padding: '10px 14px', marginTop: 6, borderRadius: 14, borderBottom: 0 }} onClick={() => setEditing({ kind: 'weight', item: w })}
+      <div style={{ marginTop: 'var(--sp-2)' }} role="group" aria-label="Weigh-ins">
+        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)', padding: 'var(--sp-2) 14px', marginTop: 6, borderRadius: 14, borderBottom: 0 }} onClick={() => setEditing({ kind: 'weight', item: w })}
           aria-label={`Edit weight ${w.data.lb} lb on ${fmt(w.at)}`}>
           <div className="sp"><b className="num">{w.data.lb} lb</b><p className="s">{fmt(w.at)}</p></div><span className="s">Edit</span></button>)}
-        {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: '8px 0', minHeight: 44, fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
+        {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: 'var(--sp-2) 0', minHeight: 44, fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
       </div>
-      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 4 }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
+      {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
   const foodSection = <>
     <h2 style={{ marginTop: 22 }}>Food and treats</h2>
-    {foods.length === 0 && <p className="s" style={{ marginTop: 8 }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
+    {foods.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
     {(['love', 'ok', 'no'] as Verdict[]).map((v) => { const list = foods.filter((f) => f.data.verdict === v); if (!list.length) return null;
-      return <div key={v} style={{ marginTop: 12 }}><p className="s" style={{ fontWeight: 800 }}>{VERDICT_LABEL[v]}</p>
+      return <div key={v} style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ fontWeight: 800 }}>{VERDICT_LABEL[v]}</p>
         {list.map((f) => <button key={f.id} className="item" onClick={() => setEditing({ kind: 'food', item: f })}>
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
@@ -148,8 +150,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
     <PetSwitcher />
     <CareTreatNote />
-    <p className="m" style={{ marginTop: 4 }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
-    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 4, color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
+    <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
+    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 'var(--sp-1)', color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
     {/* desktop (1100 px and up): two columns, then the log as a table across both (docs/plans/2026-11-11-desktop-layout.md, step 5) */}
     {big ? <>
@@ -167,11 +169,11 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <div className="sp"><b>Quick logs</b><p className="s">Fed, scooped, played and daily checks from the last 7 days. Tap to fix a mistake.</p></div>
       <span className="s" aria-hidden="true">›</span></button>
     {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
-    {log.length === 0 && <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
-    {log.map((i) => <button key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
+    {log.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
+    <div ref={logRef}>{log.map((i) => <button key={i.id} data-settle-key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
       <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
       <div className="sp"><b>{i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
-      <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}
+      <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}</div>
     </>}
 
     {drop.dragging && <DropNote />}
@@ -197,15 +199,16 @@ export function HealthLogTable({ log, quick, who, onOpen, onQuickLogs }: { log: 
   const rows = [...log, ...quick].sort((a, b) => b.at - a.at);
   // "Who" only once someone else shares the cat (a column of blanks otherwise)
   const showWho = rows.some((i) => who(i.by));
+  const settleRef = useSettle<HTMLTableSectionElement>(rows.map((i) => i.id)); // a new entry settles into place
   return <section className="healthlog" aria-labelledby="healthlog-h">
     <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 id="healthlog-h" className="sp" style={{ margin: 0 }}>Health log</h2>
       <button className="linkbtn s" onClick={onQuickLogs}>Quick logs, last 7 days ›</button></div>
     {rows.length === 0
-      ? <p className="s" style={{ marginTop: 8 }}>Weigh-ins, symptoms, grooming, vet visits, medicine and the quick logs show up here, newest first. A timeline like this is gold at the vet.</p>
+      ? <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Weigh-ins, symptoms, grooming, vet visits, medicine and the quick logs show up here, newest first. A timeline like this is gold at the vet.</p>
       : <div className="logtable-wrap"><table className="logtable">
         <thead><tr><th scope="col">Date</th><th scope="col">What</th><th scope="col">Details</th>{showWho && <th scope="col">Who</th>}</tr></thead>
-        <tbody>{rows.map((i) => { const q = i.kind === 'daily' ? (i as CareItem<'daily'>) : null;
-          return <tr key={i.id} className={q ? 'quick' : undefined} onClick={() => (q ? onQuickLogs() : onOpen(i))}>
+        <tbody ref={settleRef}>{rows.map((i) => { const q = i.kind === 'daily' ? (i as CareItem<'daily'>) : null;
+          return <tr key={i.id} data-settle-key={i.id} className={q ? 'quick' : undefined} onClick={() => (q ? onQuickLogs() : onOpen(i))}>
             <td className="num">{fmt(i.at)}{q && <span className="s"> · {clock(i.at)}</span>}</td>
             <td><button className="logopen" aria-label={q ? `${QUICK[q.data.what]} at ${clock(i.at)}: open the quick logs to fix it` : undefined}>
               <span className="ico grey" aria-hidden="true"><Icon name={q ? QUICK_ICON[q.data.what] : ICON[i.kind]} size={18} /></span>
@@ -218,7 +221,7 @@ export function HealthLogTable({ log, quick, who, onOpen, onQuickLogs }: { log: 
 function Spark({ values }: { values: number[] }) {
   const w = 300, h = 60, min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
   const pts = values.map((v, i) => [(i / (values.length - 1)) * w, h - 6 - ((v - min) / span) * (h - 12)]);
-  return <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} style={{ marginTop: 8 }} aria-label={`Weight from ${values[0]} to ${values[values.length - 1]} pounds`}>
+  return <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} style={{ marginTop: 'var(--sp-2)' }} aria-label={`Weight from ${values[0]} to ${values[values.length - 1]} pounds`}>
     <polyline points={pts.map((p) => p.join(',')).join(' ')} fill="none" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.5" fill="var(--ink)" />)}</svg>;
 }
@@ -292,9 +295,9 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
   const when = kind !== 'food' && kind !== 'doc' && <><label className="field" htmlFor="c-day">Date</label><input id="c-day" className="in" type="date" value={day} max={kind === 'vet' ? undefined : localDay(Date.now())} onChange={(e) => setDay(e.target.value)} /></>;
 
   return <Sheet label={item ? 'Edit entry' : 'New entry'} onClose={onClose}>
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 'var(--sp-2)' }}>
         {/* the cat this is for, always in the header; tap to switch on a new entry when there are several */}
-        {shown && <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 8, flex: 'none' }} disabled={!!item || pets.length < 2}
+        {shown && <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 'var(--sp-2)', flex: 'none' }} disabled={!!item || pets.length < 2}
           aria-label={`For ${shown.name}${!item && pets.length > 1 ? ', tap to change' : ''}`} aria-expanded={!item && pets.length > 1 ? pickCat : undefined} onClick={() => setPickCat(!pickCat)}>
           <span aria-hidden="true" style={{ width: 26, height: 26, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}><Chester coat={shown.coat} eyes={shown.eyes} mood="happy" width={36} /></span>{shown.name}</button>}
         <b className="sp" style={{ fontSize: 18 }}>· {kind === 'food' ? (item ? 'Edit food or treat' : 'Add food or treat') : (item ? 'Edit ' : '') + TITLE[kind]}</b>
@@ -303,16 +306,16 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
         {pets.map((p) => <button key={p.id} className={'chipbtn' + (p.id === catId ? ' on' : '')} aria-pressed={p.id === catId} onClick={() => { setCatId(p.id); setPickCat(false); }}>{p.name}</button>)}</div>}
       {kind === 'food' && !item && <FoodFinder known={care.filter((c): c is CareItem<'food'> => c.kind === 'food')} onCode={(code) => setF((x: any) => ({ ...x, code }))}
         onPick={(h) => setF((x: any) => ({ ...x, name: h.name, brand: h.brand ?? '', type: h.type, code: h.code, ingredients: h.ingredients, image: h.image }))} />}
-      {kind === 'food' && <>{f.image && <img src={f.image} alt="" style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 12, background: '#fff', marginTop: 12 }} />}
+      {kind === 'food' && <>{f.image && <img src={f.image} alt="" style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 12, background: 'var(--paper)', marginTop: 'var(--sp-3)' }} />}
         {text('Name', 'name', { placeholder: 'e.g. Chicken pâté' })}{text('Brand (optional)', 'brand')}
         {seg<FoodType>('Type', 'type', [['dry', 'Dry'], ['wet', 'Wet'], ['treat', 'Treat'], ['other', 'Other']])}
         {seg<Verdict>(pt('What he thinks'), 'verdict', [['love', 'Loves it'], ['ok', 'It’s OK'], ['no', 'Won’t eat it']])}
         <label className="row" style={{ marginTop: 14, gap: 10 }}><input type="checkbox" checked={!!f.current} onChange={(e) => set('current', e.target.checked)} style={{ width: 22, height: 22 }} /><span>We’re using this now</span></label>
         {text('Notes (optional)', 'notes', { placeholder: 'Flavor, where to buy, tummy trouble…' })}
-        {f.ingredients && <details style={{ marginTop: 12 }}><summary className="s" style={{ fontWeight: 700 }}>Ingredients</summary><p className="s" style={{ marginTop: 6 }}>{f.ingredients}</p></details>}</>}
+        {f.ingredients && <details style={{ marginTop: 'var(--sp-3)' }}><summary className="s" style={{ fontWeight: 700 }}>Ingredients</summary><p className="s" style={{ marginTop: 6 }}>{f.ingredients}</p></details>}</>}
       {kind === 'doc' && item && <>{text('Name', 'title')}
         <DocVisitPicker care={care} doc={item as CareItem<'doc'>} value={f.visitId} onChange={(v) => set('visitId', v)} />
-        <div className="row" style={{ gap: 8, marginTop: 12 }}>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
           <button className="btn2" style={{ flex: 1 }} onClick={() => void openDoc((item as CareItem<'doc'>).data.path)}>Open document</button>
           {visitOfDoc(care, item as CareItem<'doc'>) && <button className="btn2" style={{ flex: 1 }} onClick={() => { onClose(); go('health/visit/' + visitOfDoc(care, item as CareItem<'doc'>)!.id); }}>Go to the visit</button>}</div>
         {(item.data as CareData['doc']).summary && <p className="s" style={{ marginTop: 10 }}>{(item.data as CareData['doc']).summary}</p>}</>}
@@ -342,24 +345,24 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
           <button className={'chipbtn' + (!visitId ? ' on' : '')} aria-pressed={!visitId} onClick={() => set('visitId', '')}>No</button>
           {nearVisits.map((v) => <button key={v.id} className={'chipbtn' + (visitId === v.id ? ' on' : '')} aria-pressed={visitId === v.id} onClick={() => set('visitId', v.id)}>
             {(v.data as CareData['vet']).reason} · {fmt(v.at)}</button>)}</div></>}
-      {asking === 'dup' && dup ? <div className="card butter" role="alert" style={{ marginTop: 16 }}>
+      {asking === 'dup' && dup ? <div className="card butter" role="alert" style={{ marginTop: 'var(--sp-4)' }}>
           <b style={{ color: 'var(--butter-ink)' }}>Already logged at {new Date(dup.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}{kind === 'weight' ? ` (${(dup.data as CareData['weight']).lb} lb)` : ''}. Add another?</b>
-          <div className="row" style={{ gap: 8, marginTop: 10 }}><button className="btn" style={{ flex: 1, marginTop: 0 }} onClick={() => void save(true)}>Add another</button>
+          <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}><button className="btn" style={{ flex: 1, marginTop: 0 }} onClick={() => void save(true)}>Add another</button>
             <button className="btn2" style={{ flex: 1 }} onClick={() => setAsking('')}>Cancel</button></div></div>
-        : <button className="btn sheetsave" style={{ marginTop: 20 }} disabled={!ok} onClick={() => void save()}>{item ? 'Save changes' : 'Save'}</button>}
+        : <button className="btn sheetsave" style={{ marginTop: 'var(--sp-5)' }} disabled={!ok} onClick={() => void save()}>{item ? 'Save changes' : 'Save'}</button>}
       {kind === 'vet' && ok && day > localDay(Date.now()) && (() => {
         const ev: CalEvent = { title: `${cat?.name ?? 'Pet'}: vet (${f.reason.trim()})`, day, time: f.time || undefined, place: f.clinic?.trim() || undefined, notes: f.notes?.trim() || undefined };
-        return <div style={{ marginTop: 12 }}><span className="field">Add to calendar</span>
-          <div className="row" style={{ gap: 8, marginTop: 6 }}>
+        return <div style={{ marginTop: 'var(--sp-3)' }}><span className="field">Add to calendar</span>
+          <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 6 }}>
             <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'apple')}>Apple Calendar</button>
             <button className="btn2" style={{ flex: 1 }} onClick={() => addToCalendar(ev, 'google')}>Google Calendar</button></div>
           <p className="s" style={{ marginTop: 6 }}>Adds a reminder the day before.</p></div>;
       })()}
       {/* delete asks once, here in the sheet, then the same toast with Undo (a document's file can't come back) */}
-      {item && (asking === 'delete' ? <div className="card peach" role="alert" style={{ marginTop: 12 }}>
+      {item && (asking === 'delete' ? <div className="card peach" role="alert" style={{ marginTop: 'var(--sp-3)' }}>
           <b style={{ color: 'var(--peach-ink)' }}>Delete this {kind === 'doc' ? 'document' : TITLE[kind as Exclude<CareKind, 'food'>]?.toLowerCase() ?? 'entry'} for everyone?</b>
           <p className="s" style={{ color: 'var(--peach-ink)', marginTop: 2 }}>{kind === 'doc' ? 'The file is removed too.' : 'You can undo for a few seconds after.'}</p>
-          <div className="row" style={{ gap: 8, marginTop: 10 }}>
+          <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 10 }}>
             <button className="btn" style={{ flex: 1, marginTop: 0, background: 'var(--rose)' }} onClick={async () => {
               if (item.kind === 'doc') { await store.removeDoc(item as CareItem<'doc'>); onClose(); showToast({ msg: `Deleted · ${label('doc', item.data)}` }); return; }
               await store.deleteCare(item.id); onClose();
@@ -380,16 +383,16 @@ export function TodayCard() {
   const prev = ws[ws.length - 2];
   const delta = last && prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : null;
   return <div className="card sky">
-    <div className="row"><b className="sp" style={{ fontSize: 16 }}>Today</b>
+    <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Today</b>
       {last && <a href="#/health" className="chip num" style={{ textDecoration: 'none' }}>{last.data.lb} lb{delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}</a>}</div>
     {due.length ? due.map((r) => <a key={r.id} href="#/health" className="row" style={{ marginTop: 10, color: 'inherit', textDecoration: 'none', gap: 10 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? '#d4a23a' : 'var(--teal)' }} />
+        <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? 'var(--butter-strong)' : 'var(--teal)' }} />
         <span className="sp" style={{ fontSize: 15 }}>{r.title}</span><span className="s">{dueText(r.daysLeft)}</span></a>)
       : <p className="s" style={{ marginTop: 6 }}>{care.length ? 'All caught up. Nothing due.' : `Start ${cat.name}’s health log: a weigh-in is a great first entry.`}</p>}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 'var(--sp-3)' }}>
       {([['weight', 'Weight', 'target'], ['symptom', 'Symptom', 'ear'], ['food', 'Food', 'leaf'], ['vet', 'Vet', 'box']] as const).map(([k, label, icon]) =>
-        <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
-          <Icon name={icon} size={20} /><span style={{ fontSize: 12 }}>{label}</span></button>)}
+        <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)', background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
+          <Icon name={icon} size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{label}</span></button>)}
     </div>
   </div>;
 }
@@ -412,8 +415,8 @@ export function MedsDueCard() {
     } finally { setBusy(''); }
   };
   return <div className="card peach" role="region" aria-label={`${cat.name}’s medicine today`}>
-    <div className="row" style={{ gap: 8 }}><span aria-hidden="true" style={{ width: 28, height: 28, flex: 'none', overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" width={38} /></span>
-      <b className="sp" style={{ fontSize: 16, color: 'var(--peach-ink)' }}>{cat.name} · Medicine</b></div>
+    <div className="row" style={{ gap: 'var(--sp-2)' }}><span aria-hidden="true" style={{ width: 28, height: 28, flex: 'none', overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}><Chester coat={cat.coat} eyes={cat.eyes} mood="happy" width={38} /></span>
+      <b className="sp" style={{ fontSize: 'var(--fs-body)', color: 'var(--peach-ink)' }}>{cat.name} · Medicine</b></div>
     {due.map((d) => <div key={d.key} className="row" style={{ marginTop: 10, gap: 10 }}>
       <div className="sp"><b style={{ fontSize: 15 }}>{d.name}</b>
         <p className="s" style={{ color: 'var(--peach-ink)' }}>{d.kind === 'course' ? `${d.given} of ${d.times} today · until ${fmt(noon(d.until!))}` : d.daysLeft < 0 ? `Overdue by ${-d.daysLeft} day${d.daysLeft === -1 ? '' : 's'}` : 'Due today'}</p></div>
@@ -449,21 +452,21 @@ function FoodFinder({ onPick, onCode, known }: { onPick: (h: FoodHit) => void; o
       'This one isn’t in the open food databases yet. Type its name below; the barcode is saved with it, so next time a scan fills it in.');
   };
   const isCode = /^[\d\s]{8,14}$/.test(q.trim());
-  return <div className="card grey" style={{ marginTop: 12 }}>
+  return <div className="card grey" style={{ marginTop: 'var(--sp-3)' }}>
     <b>Find it</b><p className="s" style={{ marginTop: 2 }}>Scan the barcode or search by name, and we’ll fill it in.</p>
     {scan ? <Scanner onCode={(c) => { setScan(false); setQ(c); void lookup(c); }} onClose={() => setScan(false)} />
       : <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'var(--surface)' }} onClick={() => setScan(true)}>Scan barcode</button>}
-    <div className="row" style={{ gap: 8, marginTop: 8 }}>
+    <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
       <input className="in" style={{ background: 'var(--surface)' }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, brand or barcode numbers" aria-label="Search for a food or treat" enterKeyHint="search"
         onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void (isCode ? lookup(q) : run(() => search(q))); }} />
       <button className="btn2" style={{ background: 'var(--surface)' }} disabled={busy || q.trim().length < 2} onClick={() => void (isCode ? lookup(q) : run(() => search(q)))}>{busy ? '…' : 'Find'}</button>
     </div>
-    {msg && <p className="s" style={{ marginTop: 8 }} role="status">{msg}</p>}
+    {msg && <p className="s" style={{ marginTop: 'var(--sp-2)' }} role="status">{msg}</p>}
     {hits && hits.length > 1 && hits.map((h) => <button key={h.code} className="hit" onClick={() => { onPick(h); setHits([h]); audio.chirp(true); }}>
       {h.image ? <img src={h.image} alt="" /> : <span className="ico grey" style={{ width: 44, height: 44 }} />}
-      <span className="sp"><b style={{ fontSize: 14 }}>{h.name}</b><span className="s" style={{ display: 'block' }}>{[h.brand, h.quantity, h.forCats ? '' : 'not marked for cats'].filter(Boolean).join(' · ')}</span></span></button>)}
-    {hits && hits.length === 1 && <p className="s" style={{ marginTop: 8 }} role="status">Filled in: <b>{hits[0].name}</b>. Check it below.</p>}
-    <p className="s" style={{ marginTop: 8, fontSize: 11 }}>Product data from Open Pet Food Facts and Open Food Facts (open databases, ODbL).</p>
+      <span className="sp"><b style={{ fontSize: 'var(--fs-small)' }}>{h.name}</b><span className="s" style={{ display: 'block' }}>{[h.brand, h.quantity, h.forCats ? '' : 'not marked for cats'].filter(Boolean).join(' · ')}</span></span></button>)}
+    {hits && hits.length === 1 && <p className="s" style={{ marginTop: 'var(--sp-2)' }} role="status">Filled in: <b>{hits[0].name}</b>. Check it below.</p>}
+    <p className="s" style={{ marginTop: 'var(--sp-2)', fontSize: 11 }}>Product data from Open Pet Food Facts and Open Food Facts (open databases, ODbL).</p>
   </div>;
 }
 
@@ -588,24 +591,24 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
     <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label>;
   return <div ref={box} className="card grey" style={{ marginTop: 10 }}>
     {stage === 'idle' && <><p className="s">Vet records, vaccine certificates, adoption papers or ESA/housing forms: snap a photo or pick a PDF (several pages is fine). It’s read right on your phone, free, and you check what it found before anything is saved.</p>
-      <label className="btn" style={{ marginTop: 12, cursor: 'pointer' }}>Add a document
+      <label className="btn" style={{ marginTop: 'var(--sp-3)', cursor: 'pointer' }}>Add a document
         <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ''; }} /></label></>}
     {stage === 'read' && <><p className="s" aria-live="polite">Reading the document on your phone… {progress > 0 ? Math.round(progress * 100) + '%' : 'getting ready (the first time takes a little longer)'}</p>
-      <div className="bar" style={{ marginTop: 8 }}><i style={{ width: Math.max(4, progress * 100) + '%', animation: 'none' }} /></div></>}
+      <div className="bar" style={{ marginTop: 'var(--sp-2)' }}><i style={{ width: Math.max(4, progress * 100) + '%', animation: 'none' }} /></div></>}
     {stage === 'error' && <><p className="s" role="alert">{msg}</p><button className="btn2" style={{ marginTop: 10, background: 'var(--surface)' }} onClick={() => setStage('idle')}>OK</button></>}
     {stage === 'review' && <>
-      <b>Here’s what it found</b>{msg && <p className="s" style={{ marginTop: 4 }}>{msg}</p>}
+      <b>Here’s what it found</b>{msg && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>{msg}</p>}
       {note && <p className="s" style={{ marginTop: 6, color: 'var(--peach-ink)' }}>{note}</p>}
-      {picks.length === 0 && <p className="s" style={{ marginTop: 8 }}>Nothing to add to the log. The document is saved.</p>}
+      {picks.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Nothing to add to the log. The document is saved.</p>}
       {/* grouped like the papers: what was given that day, reminders, the history; anything already in the log starts unticked */}
       {GROUPS.filter((g) => picks.some((p) => p.group === g)).map((g) => <div key={g}>
         <p className="s" style={{ marginTop: 14, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>{g}{g === 'Given today' && (target || picks.some((p) => p.visit)) ? ' · linked to the visit' : ''}</p>
-        {picks.map((p, i) => p.group !== g ? null : <label key={p.key} className="row" style={{ marginTop: 8, gap: 10, alignItems: 'flex-start', opacity: p.already && !p.on ? 0.6 : 1 }}>
+        {picks.map((p, i) => p.group !== g ? null : <label key={p.key} className="row" style={{ marginTop: 'var(--sp-2)', gap: 10, alignItems: 'flex-start', opacity: p.already && !p.on ? 0.6 : 1 }}>
           <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
-          <span><b style={{ fontSize: 14 }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
+          <span><b style={{ fontSize: 'var(--fs-small)' }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
       </div>)}
-      <p className="s" style={{ marginTop: 12 }}>Read on your phone, so check it against the paper. Anything it missed, you can add by hand afterwards.</p>
-      <button className="btn" style={{ marginTop: 12 }} onClick={async () => {
+      <p className="s" style={{ marginTop: 'var(--sp-3)' }}>Read on your phone, so check it against the paper. Anything it missed, you can add by hand afterwards.</p>
+      <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={async () => {
         // the visit first (if the papers make one), so everything else links to it; then one Undo for the whole batch
         const chosen = picks.filter((p) => p.on).sort((x, y) => Number(!!y.visit) - Number(!!x.visit));
         const ctx: { doc?: string; visitId?: string } = { doc: doc?.id, visitId: target?.id };

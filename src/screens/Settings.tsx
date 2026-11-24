@@ -23,7 +23,7 @@ function Row({ label, value, onClick, danger, children, sub }: { label: string; 
   return onClick ? <button className="lrow" onClick={onClick}>{body}</button> : <div className="lrow">{body}</div>;
 }
 const Group = ({ title, children, foot }: { title: string; children: React.ReactNode; foot?: string }) =>
-  <section style={{ marginTop: 24 }}><h2 className="lhead">{title}</h2><div className="lgroup">{children}</div>{foot && <p className="s" style={{ margin: '8px 4px 0' }}>{foot}</p>}</section>;
+  <section style={{ marginTop: 'var(--sp-6)' }}><h2 className="lhead">{title}</h2><div className="lgroup">{children}</div>{foot && <p className="s" style={{ margin: 'var(--sp-2) var(--sp-1) 0' }}>{foot}</p>}</section>;
 
 function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return <button role="switch" aria-checked={on} aria-label={label} className={`switch ${on ? 'on' : ''}`} onClick={() => onChange(!on)}><i /></button>;
@@ -48,13 +48,13 @@ function EditPet({ cat, onClose }: { cat: Cat; onClose: () => void }) {
       <div style={{ flex: 1, minWidth: 0 }}><label className="field" htmlFor="ph">Home since</label><input id="ph" className="in" type="date" value={f.homeDate} onChange={(e) => set('homeDate', e.target.value)} /></div>
     </div>
     <label className="field" htmlFor="pm">Microchip number</label><input id="pm" className="in" inputMode="numeric" value={f.microchip} onChange={(e) => set('microchip', e.target.value)} placeholder="15 digits, from adoption or vet papers" />
-    <div className="lgroup" style={{ marginTop: 16 }}><Row label={f.sex === 'f' ? 'Spayed' : 'Neutered'}><Switch on={f.altered} onChange={(v) => set('altered', v)} label={f.sex === 'f' ? 'Spayed' : 'Neutered'} /></Row>
+    <div className="lgroup" style={{ marginTop: 'var(--sp-4)' }}><Row label={f.sex === 'f' ? 'Spayed' : 'Neutered'}><Switch on={f.altered} onChange={(v) => set('altered', v)} label={f.sex === 'f' ? 'Spayed' : 'Neutered'} /></Row>
       <Row label="Training" sub="Adds skills, sets and rewards in the Train tab"><Switch on={f.training} onChange={(v) => set('training', v)} label="Training" /></Row>
       <Row label="Meals a day" sub="For the Fed button on Home"><div className="row" style={{ gap: 6 }}>
         <button className="iconbtn" aria-label="Fewer meals" disabled={f.meals <= 1} onClick={() => set('meals', Math.max(1, f.meals - 1))}>−</button>
         <b className="num" style={{ minWidth: 20, textAlign: 'center' }} aria-live="polite">{f.meals}</b>
         <button className="iconbtn" aria-label="More meals" disabled={f.meals >= 8} onClick={() => set('meals', Math.min(8, f.meals + 1))}>+</button></div></Row></div>
-    <button className="btn sheetsave" style={{ marginTop: 20 }} onClick={save} disabled={!f.name.trim()}>Save</button>
+    <button className="btn sheetsave" style={{ marginTop: 'var(--sp-5)' }} onClick={save} disabled={!f.name.trim()}>Save</button>
   </Sheet>;
 }
 
@@ -63,9 +63,9 @@ function EditMyName({ onClose }: { onClose: () => void }) {
   const meRow = household?.members.find((m) => m.userId === account?.userId);
   const [name, setName] = useState(household?.members.find((m) => m.userId === account?.userId)?.name || store.myName);
   return <Sheet title="Your name" onClose={onClose}>
-    <p className="s" style={{ marginTop: 4 }}>Home greets you with it, and it’s what the people you train with see.</p>
-    <input className="in" style={{ marginTop: 12 }} value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" autoFocus aria-label="Your name" />
-    <button className="btn sheetsave" style={{ marginTop: 16 }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
+    <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Home greets you with it, and it’s what the people you train with see.</p>
+    <input className="in" style={{ marginTop: 'var(--sp-3)' }} value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" autoFocus aria-label="Your name" />
+    <button className="btn sheetsave" style={{ marginTop: 'var(--sp-4)' }} disabled={!name.trim()} onClick={async () => { await store.renameMe(name); onClose(); }}>Save</button>
     {meRow && !meRow.owner && meRow.email !== undefined && cat && <button className="btn2" style={{ marginTop: 10, width: '100%', background: 'transparent', color: 'var(--rose)' }}
       onClick={async () => { if (confirm(`Leave this household? Its pets are removed from this phone; you can rejoin with an invite code.`)) { await store.removeMember(meRow.userId).catch(() => {}); onClose(); } }}>Leave household</button>}
   </Sheet>;
@@ -80,15 +80,15 @@ function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
   if (!m || !cat) return null;
   const same = household!.members.filter((x) => x.name && x.name === m.name).length > 1;
   return <Sheet title={m.name || 'Someone'} onClose={onClose}>
-    <p className="m" style={{ marginTop: 4 }}>{m.email ?? 'Email shows once the latest PalDex setup step is done.'}</p>
-    {m.sets !== undefined && <p className="s" style={{ marginTop: 4 }}>{m.sets} training set{m.sets === 1 ? '' : 's'} logged</p>}
-    {same && <div className="card butter" style={{ marginTop: 12 }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
+    <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{m.email ?? 'Email shows once the latest PalDex setup step is done.'}</p>
+    {m.sets !== undefined && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>{m.sets} training set{m.sets === 1 ? '' : 's'} logged</p>}
+    {same && <div className="card butter" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
     {iOwn ? <>
-      <button className="btn" style={{ marginTop: 16, background: 'var(--rose)' }} onClick={async () => {
+      <button className="btn" style={{ marginTop: 'var(--sp-4)', background: 'var(--rose)' }} onClick={async () => {
         if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from the household? They lose access to every pet in it. Sets they logged stay.`)) return;
         try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up the household can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
       }}>Remove from household</button>
-      <p className="s" style={{ marginTop: 8 }}>They lose access to every pet in the household. Everything they logged stays.</p></>
+      <p className="s" style={{ marginTop: 'var(--sp-2)' }}>They lose access to every pet in the household. Everything they logged stays.</p></>
       : <p className="s" style={{ marginTop: 14 }}>Only the person who set up the household can remove people.</p>}
     {err && <p className="s" role="alert" style={{ marginTop: 10, color: 'var(--rose)' }}>{err}</p>}
   </Sheet>;
@@ -97,8 +97,8 @@ function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
 function Invite({ catName, code, onClose }: { catName: string; code: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   return <Sheet title="Invite someone to your household" onClose={onClose}>
-    <p className="s" style={{ marginTop: 4 }}>They open PalDex, choose “Someone invited me”, make an account, and enter this code. They’ll see and help train every pet in your household, including ones you add later.</p>
-    <div className="card sky" style={{ textAlign: 'center' }}><span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{code}</span></div>
+    <p className="s" style={{ marginTop: 'var(--sp-1)' }}>They open PalDex, choose “Someone invited me”, make an account, and enter this code. They’ll see and help train every pet in your household, including ones you add later.</p>
+    <div className="card sky" style={{ textAlign: 'center' }}><span style={{ fontSize: 'var(--fs-display)', fontWeight: 800, letterSpacing: 4, fontVariantNumeric: 'tabular-nums' }}>{code}</span></div>
     <button className="btn" style={{ marginTop: 14 }} onClick={async () => { if (await sendInvite(catName, code)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }}>{copied ? 'Copied' : 'Send invite'}</button>
   </Sheet>;
 }
@@ -123,7 +123,7 @@ export function Settings() {
   const edit = async (id: string) => { if (id !== cat.id) await store.switchPet(id); setSheet('pet'); };
   return <div className="screen">
     <div className="row" style={{ marginTop: 10 }}><button className="iconbtn" aria-label="Back" onClick={() => back('home')}><Icon name="back" /></button><h1 className="sp">Settings</h1></div>
-    {account && <p className="m" style={{ marginTop: 4 }}>{me?.name || store.myName || 'You'} · {account.email}</p>}
+    {account && <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{me?.name || store.myName || 'You'} · {account.email}</p>}
 
     <Group title="Your cats">
       {pets.map((p) => { const full = p.id === cat.id ? cat : null; return <Row key={p.id} label={p.name} sub={full ? [ageText(cat.birthday).replace(/^about /, ''), cat.training === false ? 'Health tracking' : 'Training on', `${care.length} health entries`].filter(Boolean).join(' · ') : 'Tap to edit'}
@@ -148,7 +148,7 @@ export function Settings() {
     <Group title="App" foot={account ? 'Your data is saved on this phone and online.' : 'Your data is saved on this phone only. Download a backup now and then.'}>
       <Row label="Sound"><Switch on={!muted} label="Sound" onChange={(on) => { setMuted(!on); localStorage.setItem('chester-muted', on ? '0' : '1'); setM(!on); if (on) chirp(); }} /></Row>
       <div className="lrow" style={{ display: 'block' }}><span style={{ fontWeight: 600 }}>Appearance</span>
-        <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 8 }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
+        <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 'var(--sp-2)' }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
       {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
     </Group>

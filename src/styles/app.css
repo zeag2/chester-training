@@ -1,18 +1,8 @@
-:root{--ink:#232320;--muted:#6a6a64;--mint:#e6f3ee;--peach:#fdede5;--sky:#e7effa;--butter:#fbf3d8;--grey:#f4f4f1;--teal:#2a7a6f;--rose:#c2563f;
-  --bg:#ffffff;--surface:#ffffff;--on-ink:#ffffff;--line:#eeeeea;--faint:rgba(35,35,32,.18);--ink-2:#3a3a36;--muted-2:#8a8a84;
-  --butter-ink:#5b4a1c;--peach-ink:#6e3424;--teal-ink:#1d5a52;--tabs:rgba(255,255,255,.96);--yes-active:#d6ece3;color-scheme:light;
-  --ease-out:cubic-bezier(0.23,1,0.32,1);--ease-in-out:cubic-bezier(0.77,0,0.175,1);--sine:cubic-bezier(.45,0,.55,1);--back:cubic-bezier(.34,1.56,.64,1);
-  --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
-/* dark: follows the phone unless Settings picks Light or Dark */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#f1f0ea;--muted:#a6a69e;--mint:#1c2c27;--peach:#33231d;--sky:#1c2333;--butter:#2d2918;--grey:#1f201d;--teal:#6cc3b5;--rose:#e58a74;
-  --bg:#141513;--surface:#32332e;--on-ink:#141513;--line:#34352f;--faint:rgba(241,240,234,.2);--ink-2:#d6d5ce;--muted-2:#8f8f88;
-  --butter-ink:#e9d79a;--peach-ink:#f1bba6;--teal-ink:#a3ddd1;--tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}}
-:root[data-theme="dark"]{--ink:#f1f0ea;--muted:#a6a69e;--mint:#1c2c27;--peach:#33231d;--sky:#1c2333;--butter:#2d2918;--grey:#1f201d;--teal:#6cc3b5;--rose:#e58a74;
-  --bg:#141513;--surface:#32332e;--on-ink:#141513;--line:#34352f;--faint:rgba(241,240,234,.2);--ink-2:#d6d5ce;--muted-2:#8f8f88;
-  --butter-ink:#e9d79a;--peach-ink:#f1bba6;--teal-ink:#a3ddd1;--tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
+@import "./tokens.css";
+/* tokens (colour, type, space, radius, motion) live in tokens.css; this file is component classes only */
 *{box-sizing:border-box}
 input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Avenir Next",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 /* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
    then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */
 html{touch-action:manipulation}
@@ -25,42 +15,42 @@ button{cursor:pointer}
 h1{font-size:28px;line-height:1.15;font-weight:800;margin:0;letter-spacing:-.01em}
 h2{font-size:17px;font-weight:800;margin:0}
 p{margin:0}
-.m{color:var(--muted);font-size:14px}.s{font-size:13px;color:var(--muted)}
-.screen{max-width:480px;margin:0 auto;padding:calc(20px + var(--safe-t)) 20px calc(110px + var(--safe-b));position:relative;min-height:100dvh}
-.card{border-radius:22px;padding:16px;margin-top:12px;display:block}
+.m{color:var(--muted);font-size:var(--fs-small)}.s{font-size:13px;color:var(--muted)}
+.screen{max-width:480px;margin:0 auto;padding:calc(var(--sp-5) + var(--safe-t)) var(--sp-5) calc(110px + var(--safe-b));position:relative;min-height:100dvh}
+.card{border-radius:var(--r-card);padding:var(--sp-4);margin-top:var(--sp-3);display:block}
 .mint{background:var(--mint)}.peach{background:var(--peach)}.sky{background:var(--sky)}.butter{background:var(--butter)}.grey{background:var(--grey)}.white{background:var(--surface)}
-.card.white{box-shadow:0 0 0 1px var(--line),0 2px 10px rgba(35,35,32,.06)}
-.row{display:flex;align-items:center;gap:12px}.sp{flex:1;min-width:0}
-.btn{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 20px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-weight:800;font-size:16px;text-decoration:none;border:0;width:100%;transition:transform 160ms var(--ease-out)}
+.card.white{box-shadow:0 0 0 1px var(--line),var(--shadow-card)}
+.row{display:flex;align-items:center;gap:var(--sp-3)}.sp{flex:1;min-width:0}
+.btn{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 var(--sp-5);border-radius:var(--r-pill);background:var(--ink);color:var(--on-ink);font-weight:800;font-size:var(--fs-body);text-decoration:none;border:0;width:100%;transition:transform 160ms var(--ease-out)}
 .btn::after{content:"";position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:rgba(255,255,255,.35);transform:scale(0);opacity:0;transition:transform 450ms var(--ease-out),opacity 450ms var(--ease-out)}
 .btn:active::after{transform:scale(16);opacity:1;transition:transform 0s,opacity 0s}
 .btn:disabled{background:var(--grey);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}.btn:disabled::after{display:none}.btn:disabled:active{transform:none}
-.btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:999px;background:var(--grey);color:var(--ink);font-weight:700;font-size:15px;text-decoration:none;border:0;transition:transform 160ms var(--ease-out)}
+.btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:var(--r-pill);background:var(--grey);color:var(--ink);font-weight:700;font-size:15px;text-decoration:none;border:0;transition:transform 160ms var(--ease-out)}
 .btn:active,.btn2:active,a.card:active,button.card:active,.item:active,.chipbtn:active{transform:scale(.97)}
 a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:none;color:inherit;border:0;width:100%;text-align:left;font-family:inherit;font-size:inherit}
-.chip{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surface);color:var(--ink);white-space:nowrap;gap:4px}
-.chipbtn{min-height:44px;padding:0 16px;font-size:14px;border:0;border-radius:999px;background:var(--grey);font-weight:700;color:var(--ink);white-space:nowrap;transition:transform 160ms var(--ease-out)}
+.chip{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:var(--r-pill);font-size:var(--fs-label);font-weight:700;background:var(--surface);color:var(--ink);white-space:nowrap;gap:var(--sp-1)}
+.chipbtn{min-height:44px;padding:0 var(--sp-4);font-size:var(--fs-small);border:0;border-radius:var(--r-pill);background:var(--grey);font-weight:700;color:var(--ink);white-space:nowrap;transition:transform 160ms var(--ease-out)}
 .chipbtn.on{background:var(--ink);color:var(--on-ink)}
-.ico{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;background:var(--surface)}
+.ico{width:44px;height:44px;border-radius:var(--r-row);display:flex;align-items:center;justify-content:center;flex:none;background:var(--surface)}
 .ico svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--ink);border-radius:9px;transform-origin:left center;animation:kfill 900ms var(--ease-out) both .15s}
-.seg{display:flex;background:var(--grey);border-radius:999px;padding:4px;gap:4px}
-.seg button{flex:1;min-height:44px;border-radius:999px;font-size:14px;font-weight:700;color:var(--muted);background:transparent;border:0}
+.seg{display:flex;background:var(--grey);border-radius:var(--r-pill);padding:var(--sp-1);gap:var(--sp-1)}
+.seg button{flex:1;min-height:44px;border-radius:var(--r-pill);font-size:var(--fs-small);font-weight:700;color:var(--muted);background:transparent;border:0}
 .seg button.on{background:var(--surface);color:var(--ink)}
-.field{display:block;font-size:13px;font-weight:700;margin:16px 0 6px}
-.in{height:52px;border-radius:16px;background:var(--grey);border:0;padding:0 14px;font-size:16px;font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
-.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font-family:inherit;transition:transform 160ms var(--ease-out)}
+.field{display:block;font-size:13px;font-weight:700;margin:var(--sp-4) 0 6px}
+.in{height:52px;border-radius:16px;background:var(--grey);border:0;padding:0 14px;font-size:var(--fs-body);font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+.item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font-family:inherit;transition:transform 160ms var(--ease-out)}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;gap:6px;min-height:52px}
 .iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .iconbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 0 max(10px,var(--safe-b));z-index:20}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:var(--sp-2) 0 max(10px,var(--safe-b));z-index:20}
 .tabs-in{display:flex;justify-content:space-around;width:100%;max-width:480px}
 /* a floating note just above the tab bar (Quick log's Undo): one row, never under the bar */
-.toast{position:fixed;left:12px;right:12px;bottom:calc(max(10px,var(--safe-b)) + 68px);max-width:456px;margin:0 auto;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-radius:18px;background:var(--butter);box-shadow:0 6px 20px rgba(0,0,0,.18)}
-.toast .msg{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--butter-ink);font-weight:700;font-size:14px}
-.toast.wrap .msg{white-space:normal;line-height:1.25;padding:4px 0}
-.toast .btn2{min-height:44px;padding:0 12px;white-space:nowrap;flex:none;background:var(--surface)}
+.toast{position:fixed;left:12px;right:12px;bottom:calc(max(10px,var(--safe-b)) + 68px);max-width:456px;margin:0 auto;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 6px 6px var(--sp-3);border-radius:18px;background:var(--butter);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.toast .msg{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--butter-ink);font-weight:700;font-size:var(--fs-small)}
+.toast.wrap .msg{white-space:normal;line-height:1.25;padding:var(--sp-1) 0}
+.toast .btn2{min-height:44px;padding:0 var(--sp-3);white-space:nowrap;flex:none;background:var(--surface)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted-2);text-decoration:none;min-width:64px;min-height:48px;justify-content:center;background:none;border:0}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform 200ms var(--ease-out)}
 .tab:active svg{transform:translateY(-3px) scale(1.12)}
@@ -71,7 +61,7 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .stag > *{animation:krise 420ms var(--ease-out) both}
 .stag > *:nth-child(2){animation-delay:60ms}.stag > *:nth-child(3){animation-delay:120ms}.stag > *:nth-child(4){animation-delay:180ms}.stag > *:nth-child(5){animation-delay:240ms}.stag > *:nth-child(6){animation-delay:300ms}.stag > *:nth-child(7){animation-delay:360ms}.stag > *:nth-child(n+8){animation-delay:420ms}
 .pop{animation:kpop 500ms var(--ease-out) both}
-.bubble{display:inline-block;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;font-weight:700;animation:kbubble 380ms var(--ease-out)}
+.bubble{display:inline-block;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:var(--fs-small);font-weight:700;animation:kbubble 380ms var(--ease-out)}
 .beam{position:absolute;top:-60px;width:120px;height:520px;transform:rotate(28deg);pointer-events:none;animation:kbeam 26s var(--sine) infinite alternate}
 .mote{position:absolute;width:4px;height:4px;border-radius:50%;pointer-events:none;animation:kmote 14s linear infinite}
 .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;animation:ktwinkle 3s var(--sine) infinite}
@@ -85,7 +75,7 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 @keyframes kmote{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}85%{opacity:.6}100%{transform:translate(30px,-160px);opacity:0}}
 @keyframes ktwinkle{0%,100%{opacity:.2}50%{opacity:1}}
 @keyframes kfade{from{opacity:0}to{opacity:1}}
-.yespaw{transition:transform 120ms var(--ease-out),background 200ms ease}
+.yespaw{transition:transform var(--dur-fast) var(--ease-out),background 200ms ease}
 .yespaw:active{transform:scale(.97);background:var(--yes-active)}
 .pawstamp{display:inline-flex;animation:kstamp 420ms var(--back)}
 @keyframes kstamp{0%{transform:scale(.7) rotate(-8deg)}60%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
@@ -127,31 +117,31 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 @keyframes stinkdrift{0%{opacity:0;transform:translate(0,0) scaleX(.7)}15%{opacity:.85}70%{opacity:.6}100%{opacity:0;transform:translate(-62vw,-14px) scaleX(1.15)}}
 /* bottom sheet */
 .sheetbg{background:rgba(10,10,8,.42);justify-content:flex-end}
-.sheet{background:var(--bg);border-radius:26px 26px 0 0;padding:16px 20px calc(24px + var(--safe-b));max-height:88dvh;overflow:auto;width:100%;max-width:480px;margin:0 auto;animation:ksheet 320ms var(--ease-out)}
+.sheet{background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:var(--sp-4) var(--sp-5) calc(var(--sp-6) + var(--safe-b));max-height:88dvh;overflow:auto;width:100%;max-width:480px;margin:0 auto;animation:ksheet var(--dur-slow) var(--ease-out)}
 @keyframes ksheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .ico.grey{background:var(--grey)}
 /* barcode scanner */
-.scanner{position:relative;border-radius:20px;overflow:hidden;background:#000;margin-top:12px;aspect-ratio:4/3}
+.scanner{position:relative;border-radius:20px;overflow:hidden;background:#000;margin-top:var(--sp-3);aspect-ratio:4/3}
 .scanner video{width:100%;height:100%;object-fit:cover;display:block}
-.scanframe{position:absolute;left:10%;right:10%;top:28%;bottom:28%;overflow:hidden;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.scanframe{position:absolute;left:10%;right:10%;top:28%;bottom:28%;overflow:hidden;border:3px solid rgba(255,255,255,.9);border-radius:var(--r-row);box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .scanhint{position:absolute;left:12px;right:12px;bottom:56px;color:#fff!important;text-align:center;font-weight:700}
 .scanclose{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(255,255,255,.92)!important;color:#232320!important;min-height:40px}
-.hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:8px;color:var(--ink);font-family:inherit}
-.hit img{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#fff;flex:none}
+.hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:var(--sp-2);color:var(--ink);font-family:inherit}
+.hit img{width:44px;height:44px;object-fit:contain;border-radius:var(--r-chip);background:var(--paper);flex:none}
 /* grouped settings lists */
-.lhead{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 4px 8px}
+.lhead{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 var(--sp-1) var(--sp-2)}
 .lgroup{background:var(--grey);border-radius:18px;overflow:hidden}
-.lrow{display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 16px;width:100%;background:none;border:0;text-align:left;font:inherit;font-size:16px;color:var(--ink)}
+.lrow{display:flex;align-items:center;gap:var(--sp-3);min-height:54px;padding:10px var(--sp-4);width:100%;background:none;border:0;text-align:left;font:inherit;font-size:var(--fs-body);color:var(--ink)}
 .lrow + .lrow{border-top:1px solid var(--line)}
 button.lrow:active{background:var(--line)}
 .chev{color:var(--muted);font-size:22px;line-height:1;margin-left:2px}
-.switch{position:relative;width:52px;height:32px;border-radius:999px;border:0;background:var(--line);flex:none;transition:background 200ms var(--ease-out)}
-.switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform 220ms var(--ease-out)}
+.switch{position:relative;width:52px;height:32px;border-radius:var(--r-pill);border:0;background:var(--line);flex:none;transition:background 200ms var(--ease-out)}
+.switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--dur) var(--ease-out)}
 .switch.on{background:var(--teal)}
 .switch.on i{transform:translateX(20px)}
 /* install guide */
-.steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:12px}
-.steps li{counter-increment:st;display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45}
+.steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:var(--sp-3)}
+.steps li{counter-increment:st;display:flex;gap:var(--sp-3);align-items:flex-start;font-size:15px;line-height:1.45}
 .steps li::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;background:var(--mint);color:var(--teal-ink);font-weight:800;display:flex;align-items:center;justify-content:center}
 .pointdown{text-align:center;font-size:30px;font-weight:800;color:var(--teal);margin-top:6px;animation:kpointdown 1.1s var(--ease-in-out,ease-in-out) infinite}
 @keyframes kpointdown{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
@@ -163,8 +153,8 @@ button.lrow:active{background:var(--line)}
 .plusbtn svg{stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
 .tabdot{position:absolute;top:-2px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--rose);border:2px solid var(--bg)}
 /* cat switcher: faces with names; the one being shown is ringed */
-.petswitch{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px 4px}
-.petswitch button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:12px;font-weight:700;flex:none;min-width:56px}
+.petswitch{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px var(--sp-1)}
+.petswitch button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:var(--fs-label);font-weight:700;flex:none;min-width:56px}
 .petswitch .face{width:52px;height:52px;border-radius:50%;background:var(--grey);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;outline:2px solid transparent;outline-offset:2px;transition:outline-color 160ms}
 .petswitch .face svg{margin-bottom:-6px}
 .petswitch button.on{color:var(--ink)}.petswitch button.on .face{outline-color:var(--ink);background:var(--mint)}
@@ -183,7 +173,7 @@ button.lrow:active{background:var(--line)}
 .yarnbtn{border:0;background:var(--grey);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;align-self:flex-end;margin-bottom:6px}
 /* a bed bought in the corner, under the cat on Home (it stays put when he walks off for the litter gag) */
 .bedspot{position:relative;flex:none;display:inline-block}
-.bedspot.onbed{margin-bottom:16px}
+.bedspot.onbed{margin-bottom:var(--sp-4)}
 .bedspot .bed{position:absolute;left:-23px;bottom:-16px;z-index:0;pointer-events:none}
 .bedspot .gagwrap{position:relative;z-index:1}
 /* on a real bed he kneads into it, so the knead pose's own pink pillow goes */
@@ -198,7 +188,7 @@ button.lrow:active{background:var(--line)}
    (the cats beside him, the nuzzle, the bed, the chase's leap) grow by the same ratio, so the scene keeps its look. */
 .homecols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0 28px;align-items:start;max-width:1040px}
 .homecol{min-width:0}
-.homescene.big{gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.homescene.big{gap:var(--sp-2);margin-bottom:6px;flex-wrap:wrap}
 /* the speech bubble takes what's left of the row, and drops under the cats when that's too narrow (three cats at 1100 px) */
 .homescene.big>div:last-child:not(.chase){flex:1 1 110px;min-width:0}
 .homescene.big .homecats .other{margin-left:-28px}
@@ -218,15 +208,15 @@ html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px -
    Health adds .healthcols and .healthlog only at 1100 px and up (src/screens/Care.tsx), so phones and tablets never
    match these. Left: your vet, visits, Coming up, Log something (and the kitten plan). Right: documents, weight, food.
    The log runs across both as a table. .dropnote shows only while a file is dragged over Health or All documents. */
-.healthcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px;align-items:start;max-width:1056px}
+.healthcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--sp-8);align-items:start;max-width:1056px}
 .healthcol{min-width:0}
-.healthcol>.row:first-child,.healthcol>h2:first-child{margin-top:12px!important}
+.healthcol>.row:first-child,.healthcol>h2:first-child{margin-top:var(--sp-3)!important}
 .healthlog{max-width:1056px;margin-top:10px}
 .healthlog .linkbtn{border:0;background:none;padding:6px 2px;font:inherit;font-size:13px;font-weight:800;color:var(--ink);cursor:pointer}
 .healthlog .logtable-wrap{margin-top:10px;border-radius:18px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
-.healthlog .logtable{width:100%;border-collapse:collapse;font-size:14px}
-.healthlog .logtable th{text-align:left;font-size:12px;font-weight:800;color:var(--muted);padding:10px 14px;background:var(--grey)}
-.healthlog .logtable td{padding:8px 14px;border-top:1px solid var(--line);vertical-align:middle;color:var(--ink)}
+.healthlog .logtable{width:100%;border-collapse:collapse;font-size:var(--fs-small)}
+.healthlog .logtable th{text-align:left;font-size:var(--fs-label);font-weight:800;color:var(--muted);padding:10px 14px;background:var(--grey)}
+.healthlog .logtable td{padding:var(--sp-2) 14px;border-top:1px solid var(--line);vertical-align:middle;color:var(--ink)}
 .healthlog .logtable td:first-child{white-space:nowrap;width:1%}
 .healthlog .logtable td:nth-child(4){white-space:nowrap;width:1%;color:var(--muted)}
 .healthlog .logtable td:nth-child(2){white-space:nowrap;width:1%}
@@ -236,26 +226,26 @@ html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px -
 .healthlog .logopen{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--ink);cursor:pointer;min-height:36px}
 .healthlog .logopen .ico{width:32px;height:32px;border-radius:10px}
 .healthlog .logopen .ico svg{width:18px;height:18px}
-.healthlog .logopen:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+.healthlog .logopen:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:var(--r-chip)}
 @media (hover:hover){.healthlog .logtable tbody tr:hover td{background-image:linear-gradient(var(--hov),var(--hov))}}
-.dropnote{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:24px;background:rgba(10,10,8,.28);pointer-events:none}
+.dropnote{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:var(--sp-6);background:rgba(10,10,8,.28);pointer-events:none}
 html[data-nav="rail"] .dropnote{left:88px}
 html[data-nav="side"] .dropnote{left:220px}
-.dropnote-in{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;max-width:420px;padding:36px 32px;border-radius:26px;background:var(--bg);color:var(--ink);border:2px dashed var(--ink);box-shadow:0 18px 60px rgba(0,0,0,.22)}
+.dropnote-in{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;max-width:420px;padding:36px var(--sp-8);border-radius:var(--r-sheet);background:var(--bg);color:var(--ink);border:2px dashed var(--ink);box-shadow:var(--shadow-float)}
 .dropnote-in b{font-size:18px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dropnote-in{background:var(--surface)}}
 :root[data-theme="dark"] .dropnote-in{background:var(--surface)}
 /* ── end of desktop Health ── */
 /* Home's friends card: one tile per friend, their cats sitting together on a little floor, whose they are and names */
-.households{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x proximity}
-.household{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;min-width:112px;padding:8px 12px 10px;border-radius:22px;background:var(--surface);text-align:center}
-.householdcats{display:flex;align-items:flex-end;justify-content:center;height:66px;padding:0 4px;border-bottom:3px solid var(--grey);border-radius:0 0 6px 6px}
+.households{display:flex;gap:10px;margin-top:10px;overflow-x:auto;padding:2px 2px var(--sp-1);scroll-snap-type:x proximity}
+.household{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;min-width:112px;padding:var(--sp-2) var(--sp-3) 10px;border-radius:var(--r-card);background:var(--surface);text-align:center}
+.householdcats{display:flex;align-items:flex-end;justify-content:center;height:66px;padding:0 var(--sp-1);border-bottom:3px solid var(--grey);border-radius:0 0 6px 6px}
 .householdcat{position:relative;border:0;background:none;padding:0;margin:0 -14px;display:block;line-height:0;min-height:44px}
 .householdcat:first-child{margin-left:0}.householdcat:last-child{margin-right:0}
 .householdcat .tapme{display:block}
 .householdcat .treatbadge{position:absolute;top:2px;right:6px;width:20px;height:20px;border-radius:10px;background:var(--butter);display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
 .householdmore{align-self:center;margin-left:10px;font-weight:800}
-.householdwho{margin-top:6px;font-size:14px;line-height:1.2}
+.householdwho{margin-top:6px;font-size:var(--fs-small);line-height:1.2}
 .householdnames{font-size:12.5px;line-height:1.25;max-width:150px}
 /* Health: the vet card and visits (the vet-first top of Health) */
 .vetcard{border:2px solid var(--grey)}
@@ -263,7 +253,7 @@ html[data-nav="side"] .dropnote{left:220px}
 .docrow{border-bottom:1px solid var(--line)}
 .docrow .item{border-bottom:0}
 .chiprow .chipbtn{flex:none}
-.visitrow{width:100%;border:0;text-align:left;color:inherit;font:inherit;align-items:flex-start;gap:8px;min-height:44px}
+.visitrow{width:100%;border:0;text-align:left;color:inherit;font:inherit;align-items:flex-start;gap:var(--sp-2);min-height:44px}
 button.visitrow{background:none;padding:0}
 
 /* the play screen's box: a little jolt when he pops up, swats or springs out (Hideout.tsx) */
@@ -275,30 +265,30 @@ button.visitrow{background:none;padding:0}
 .bkvet{display:block;width:100%;text-align:left;border:2px solid transparent;border-radius:16px;background:var(--grey);color:var(--ink);padding:10px 14px;font:inherit;min-height:52px;transition:transform 160ms var(--ease-out)}
 .bkvet.on{border-color:var(--ink)}
 .bkvet:active{transform:scale(.98)}
-.bkadd{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:2px dashed var(--faint);color:var(--ink)}
-.bkvetform{margin-top:8px;padding:4px 12px 12px;border-radius:18px;border:2px solid var(--line)}
+.bkadd{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);background:transparent;border:2px dashed var(--faint);color:var(--ink)}
+.bkvetform{margin-top:var(--sp-2);padding:var(--sp-1) var(--sp-3) var(--sp-3);border-radius:18px;border:2px solid var(--line)}
 .bkvetform .field{margin-top:10px}
-.bkcall{gap:10px;margin-top:10px;padding:8px 8px 8px 14px;border-radius:16px;background:var(--sky)}
+.bkcall{gap:10px;margin-top:10px;padding:var(--sp-2) var(--sp-2) var(--sp-2) 14px;border-radius:16px;background:var(--sky)}
 .bkcall .s{color:var(--ink)}
 .bkcall .btn2{min-height:44px;flex:none;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:var(--surface)}
-.bookdue{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:800;color:var(--ink)}
+.bookdue{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:var(--fs-label);font-weight:800;color:var(--ink)}
 .bktimes{display:flex;flex-wrap:wrap;gap:6px}.bktimes .chipbtn{padding:0 13px}
-.bkoffline{margin-top:8px;padding:8px 12px;border-radius:14px;background:var(--butter);color:var(--butter-ink)}
+.bkoffline{margin-top:var(--sp-2);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-row);background:var(--butter);color:var(--butter-ink)}
 
 /* ── Desktop All documents: two panes with a preview (docs/plans/2026-11-11-desktop-layout.md, step 6) ──
    Documents adds .docpanes only at 1100 px and up (src/screens/Documents.tsx). Left: the list; right: the selected
    document, sticky while the list scrolls. The selected row gets --grey, like the side nav's active item. */
 .docpanes{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:0 28px;align-items:start;max-width:1056px}
 .doclist{min-width:0}
-.docrow.on{background:var(--grey);border-radius:14px;border-bottom-color:transparent}
+.docrow.on{background:var(--grey);border-radius:var(--r-row);border-bottom-color:transparent}
 .docrow.on .item{background:transparent}
-.docpreview{position:sticky;top:20px;min-width:0;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:22px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 24px rgba(0,0,0,.05)}
+.docpreview{position:sticky;top:20px;min-width:0;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:var(--r-card);background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 24px rgba(0,0,0,.05)}
 .docsum{margin:0;font-size:15px;line-height:1.45;color:var(--ink-2);max-width:70ch}
-.docview{display:grid;place-items:center;height:calc(100vh - 380px);min-height:320px;border-radius:14px;background:var(--grey);overflow:hidden}
-.docview iframe{width:100%;height:100%;border:0;background:#fff}
+.docview{display:grid;place-items:center;height:calc(100vh - 380px);min-height:320px;border-radius:var(--r-row);background:var(--grey);overflow:hidden}
+.docview iframe{width:100%;height:100%;border:0;background:var(--paper)}
 .docview img{max-width:100%;max-height:100%;object-fit:contain}
 /* tooltips on icon-only buttons (src/ui/Tooltip.tsx): only ever shown with a mouse */
-.tooltip{position:fixed;z-index:60;transform:translateX(-50%);max-width:220px;padding:5px 9px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700;line-height:1.3;text-align:center;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18);animation:tipin 120ms ease-out}
+.tooltip{position:fixed;z-index:60;transform:translateX(-50%);max-width:220px;padding:5px 9px;border-radius:var(--r-chip);background:var(--ink);color:var(--bg);font-size:var(--fs-label);font-weight:700;line-height:1.3;text-align:center;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18);animation:tipin var(--dur-fast) ease-out}
 .tooltip.above{transform:translate(-50%,-100%)}
 @keyframes tipin{from{opacity:0}}
 @media (prefers-reduced-motion: reduce){.tooltip{animation:none}}
@@ -307,10 +297,10 @@ button.visitrow{background:none;padding:0}
    Keyed on .sheetbg.dialog / .sheetbg.panel, which <Sheet> (src/ui/Sheet.tsx) adds only at 760 px and up, so the
    phone bottom sheet above is untouched. dialog (760–1099 px): centred, 520 px, at most 85vh, scrolling inside, with
    the .sheetsave button stuck to the bottom. panel (1100 px and up): 420 px on the right, page readable behind it. */
-.sheetbg.dialog{justify-content:center;align-items:center;padding:24px}
-.sheetbg.dialog .sheet{max-width:520px;max-height:85vh;border-radius:26px;padding:20px 24px 24px;margin:0;box-shadow:0 18px 60px rgba(0,0,0,.22);animation:kdialog 240ms var(--ease-out)}
+.sheetbg.dialog{justify-content:center;align-items:center;padding:var(--sp-6)}
+.sheetbg.dialog .sheet{max-width:520px;max-height:85vh;border-radius:var(--r-sheet);padding:var(--sp-5) var(--sp-6) var(--sp-6);margin:0;box-shadow:var(--shadow-float);animation:kdialog 240ms var(--ease-out)}
 .sheetbg.panel{background:rgba(10,10,8,.2);flex-direction:row;justify-content:flex-end}
-.sheetbg.panel .sheet{width:420px;max-width:420px;height:100%;max-height:none;margin:0;border-radius:0;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.12);padding:calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));animation:kpanel 280ms var(--ease-out)}
+.sheetbg.panel .sheet{width:420px;max-width:420px;height:100%;max-height:none;margin:0;border-radius:0;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.12);padding:calc(var(--sp-6) + var(--safe-t)) var(--sp-6) calc(var(--sp-6) + var(--safe-b));animation:kpanel 280ms var(--ease-out)}
 .sheetbg:is(.dialog,.panel) .sheet:focus{outline:none}
 /* the band behind a stuck Save: the shadow fills round its corners, the border image squares off the outside */
 .sheetbg:is(.dialog,.panel) .sheetsave{position:sticky;bottom:0;z-index:1;box-shadow:0 0 0 24px var(--bg);border-image:linear-gradient(var(--bg),var(--bg)) 1/24px/24px}
@@ -329,25 +319,25 @@ button.visitrow{background:none;padding:0}
    The page column is 640 px; a screen that adds columns later can opt into .screen.wide (up to 1120 px on desktop). */
 html[data-nav="rail"] body{padding-left:88px}
 html[data-nav="side"] body{padding-left:220px}
-html[data-nav] .screen{max-width:640px;padding:calc(28px + var(--safe-t)) 32px calc(48px + var(--safe-b))}
+html[data-nav] .screen{max-width:640px;padding:calc(28px + var(--safe-t)) var(--sp-8) calc(48px + var(--safe-b))}
 html[data-nav="side"] .screen.wide{max-width:1120px}
 html[data-nav="rail"] .toast{left:100px;bottom:calc(20px + var(--safe-b))}
 html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
-.tabs.rail{top:0;right:auto;width:88px;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);background:var(--bg);padding:calc(16px + var(--safe-t)) 0 calc(16px + var(--safe-b))}
+.tabs.rail{top:0;right:auto;width:88px;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);background:var(--bg);padding:calc(var(--sp-4) + var(--safe-t)) 0 calc(var(--sp-4) + var(--safe-b))}
 .tabs.rail .tabs-in{flex-direction:column;justify-content:flex-start;align-items:center;gap:10px;max-width:none}
 .tabs.rail .tab{min-width:72px;min-height:60px;border-radius:16px}
 .tabs.rail .tab.on{background:var(--grey)}
 .tabs.rail .plus{margin:0 0 10px}
-.sidenav{position:fixed;top:0;bottom:0;left:0;width:220px;z-index:20;display:flex;flex-direction:column;gap:6px;overflow-y:auto;background:var(--bg);border-right:1px solid var(--line);padding:calc(20px + var(--safe-t)) 14px calc(20px + var(--safe-b))}
-.sidenav .brand{display:flex;align-items:center;gap:8px;padding:4px 10px 14px;font-weight:800;font-size:18px;color:var(--ink);text-decoration:none}
+.sidenav{position:fixed;top:0;bottom:0;left:0;width:220px;z-index:20;display:flex;flex-direction:column;gap:6px;overflow-y:auto;background:var(--bg);border-right:1px solid var(--line);padding:calc(var(--sp-5) + var(--safe-t)) 14px calc(var(--sp-5) + var(--safe-b))}
+.sidenav .brand{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) 10px 14px;font-weight:800;font-size:18px;color:var(--ink);text-decoration:none}
 .sidenav .brand svg{stroke-width:1.9}
-.sidenav .navlog{gap:8px;min-height:48px;margin-bottom:12px}
+.sidenav .navlog{gap:var(--sp-2);min-height:48px;margin-bottom:var(--sp-3)}
 .sidenav .navlog svg{stroke-width:2.6}
 .navtabs{display:flex;flex-direction:column;gap:2px}
-.sidenav .tab{flex-direction:row;justify-content:flex-start;gap:12px;min-height:46px;padding:0 12px;border-radius:14px;font-size:15px;color:var(--muted)}
+.sidenav .tab{flex-direction:row;justify-content:flex-start;gap:var(--sp-3);min-height:46px;padding:0 var(--sp-3);border-radius:var(--r-row);font-size:15px;color:var(--muted)}
 .sidenav .tab.on{background:var(--grey);color:var(--ink)}
-.petswitch.innav{flex-direction:column;gap:6px;margin-top:18px;padding:16px 0 0;border-top:1px solid var(--line);overflow:visible}
-.petswitch.innav button{flex-direction:row;gap:10px;padding:4px 10px;border-radius:14px;font-size:14px;min-height:48px}
+.petswitch.innav{flex-direction:column;gap:6px;margin-top:18px;padding:var(--sp-4) 0 0;border-top:1px solid var(--line);overflow:visible}
+.petswitch.innav button{flex-direction:row;gap:10px;padding:var(--sp-1) 10px;border-radius:var(--r-row);font-size:var(--fs-small);min-height:48px}
 .petswitch.innav .face{width:44px;height:44px}
 .petswitch.innav button.on{background:var(--grey)}
 
@@ -358,7 +348,6 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
    it works on every colour, darker in light mode and lighter in dark (--hov), and the reverse on ink buttons
    (--hov-ink). src/ui/layout.test.tsx checks this block stays inside those queries. */
 @media (hover:hover){
-  :root{--hov:rgba(35,35,32,.06);--hov-ink:rgba(255,255,255,.14)}
   a[href],summary,label[for],select,input:is([type="checkbox"],[type="radio"],[type="file"]),[role="button"]{cursor:pointer}
   button:disabled{cursor:default}
   :is(.btn2,a.card,button.card,.chipbtn:not(.on),a.item,button.item,.iconbtn,a.lrow,button.lrow,.seg button:not(.on),.tab,.yarnbtn,.bkvet,.hit,button.visitrow,.switch,.scanclose,.scantorch):hover,
@@ -366,8 +355,6 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
   :is(.btn:not(:disabled),.chipbtn.on,.plusbtn):hover,.tab:hover .plus{background-image:linear-gradient(var(--hov-ink),var(--hov-ink))!important}
   .tab:hover{color:var(--ink)}
 }
-@media (hover:hover) and (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hov:rgba(255,255,255,.07);--hov-ink:rgba(20,21,19,.14)}}
-@media (hover:hover){:root[data-theme="dark"]{--hov:rgba(255,255,255,.07);--hov-ink:rgba(20,21,19,.14)}}
 @media (hover:hover),(min-width:760px){
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   /* inside clipped or scrolling groups the ring goes just inside, so it isn't cut off */
@@ -376,5 +363,5 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
 }
 /* step 8: the setup screens (no side nav there) use the same 640 px column as Settings, Week, Trophies and Library */
 @media (min-width:760px){
-  .screen.centred{max-width:640px;padding-left:32px;padding-right:32px}
+  .screen.centred{max-width:640px;padding-left:var(--sp-8);padding-right:var(--sp-8)}
 }

@@ -15,10 +15,10 @@ export function CatPage() {
   return <div className="screen">
     <h1 style={{ marginTop: 18 }}>{cat.name}</h1>
     <PetSwitcher />
-    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '22px 12px 12px' }}>
+    <div className="card mint" style={{ display: 'flex', justifyContent: 'center', padding: '22px var(--sp-3) var(--sp-3)' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" raised anim="wave" width={170} interactive label={cat.name} />
     </div>
-    <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="#d4a23a" size={24} />
+    <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="var(--butter-strong)" size={24} />
       <div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{wallet ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions` : 'Outfits, toys and cushions'}</p></div>
       {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>Gift</span>}</a>
