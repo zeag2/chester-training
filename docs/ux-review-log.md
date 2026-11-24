@@ -1,4 +1,4 @@
-last-reviewed: 836c4aa3a28dc2bebe4c8e498aa96a9530bdf991
+last-reviewed: 955472bd8e156affa546290bc40ae930bbfe1181
 
 # UX review log
 
@@ -18,6 +18,13 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-24: 836c4aa..955472b
+Main brought design-system phase 2 (tokens and the sweep of hard-coded values), the settle helper, booking several
+cats at once, and the two-pane visit page on desktop. Merged it into this PR: Care.tsx, VisitPage.tsx and app.css
+conflicted with this PR's fixes, and the merge keeps main's tokens with the fixes on top (weigh-in rows, 44 px Show
+all, review footer, "Vet visit" title, teal checkboxes). Checked Home, Health and Book a visit for two cats
+("Luna + Chester", one visit each, one calendar event) in light and dark mode. No new changes needed.
 
 ### 2026-11-23: 532523b..836c4aa
 Checked after-the-visit part 2: reading the Hazel Dell chart and invoice fixtures (OCR stubbed) from a visit's page,
