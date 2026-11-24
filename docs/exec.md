@@ -26,6 +26,7 @@ Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage
 | 2026-11-14 2 PM | **82%** (Josh's usage page) | 18% | 10% | ~3 | **freeze** | — |
 | 2026-11-16 | **91%** (Josh; other use) | 9% | into reserve | ~1 | **full stop**, fixes only if urgent | — |
 | 2026-11-17 3 PM | 0% (new week; resets Tue Nov 24, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
+| 2026-11-24 3 PM | 0% (week 3; resets Tue Dec 1, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
 
 Rules: each block in the schedule names its size (S/M/L) and budget. When the day's cap is reached, no new work
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
