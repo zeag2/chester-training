@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, NewPhoto, PetCard, Photo, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewPhoto, PetCard, Photo, ReceivedTreat, Remote } from './remote';
 
 const MISSING = /does not exist|schema cache|could not find|PGRST20[25]|42P01|bucket not found/i;
 
@@ -45,6 +45,23 @@ export class SupabaseRemote implements Remote {
   async setPassword(password: string) {
     const r = await this.sb.auth.updateUser({ password });
     if (r.error) throw new Error(/different from the old/i.test(r.error.message) ? 'same-password' : r.error.message);
+  }
+
+  async accountDeletion(): Promise<DeletionPlan | null> {
+    const r = await this.sb.rpc('account_deletion_preview');
+    if (r.error) { if (MISSING.test(r.error.message) || MISSING.test((r.error as { code?: string }).code ?? '')) return null; throw new Error(r.error.message); }
+    const d = r.data as Partial<DeletionPlan> | null;
+    return { deleted: d?.deleted ?? [], kept: d?.kept ?? [], files: d?.files ?? [] };
+  }
+  async deleteAccount(plan: DeletionPlan) {
+    // files first, while still a member (the storage delete policies need membership); SQL can't delete them
+    for (const bucket of new Set(plan.files.map((f) => f.bucket))) {
+      const paths = plan.files.filter((f) => f.bucket === bucket).map((f) => f.path);
+      for (let i = 0; i < paths.length; i += 100) { const r = await this.sb.storage.from(bucket).remove(paths.slice(i, i + 100)); if (r.error) throw new Error(r.error.message); }
+    }
+    check(await this.sb.rpc('delete_my_account'));
+    // the user is gone, so a global sign-out would fail: just forget the session on this phone
+    await this.sb.auth.signOut({ scope: 'local' }).catch(() => {});
   }
 
   // ---- households: people and pets together. Until the households SQL is run, each pet is shared on its own. ----
@@ -137,7 +154,7 @@ export class SupabaseRemote implements Remote {
     const out: SetRecord[] = []; const page = 1000;
     for (let from = 0; ; from += page) {
       const rows = check(await this.sb.from('sets').select('id, by_user, data').eq('cat_id', catId).order('at').order('id').range(from, from + page - 1)) ?? [];
-      for (const r of rows) out.push({ ...(r.data as SetRecord), id: r.id as string, catId, by: r.by_user as string });
+      for (const r of rows) out.push({ ...(r.data as SetRecord), id: r.id as string, catId, by: (r.by_user as string | null) ?? undefined });
       if (rows.length < page) return out;
     }
   }

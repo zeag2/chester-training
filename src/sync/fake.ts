@@ -1,7 +1,7 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, Member, NewPhoto, PetCard, Photo, Remote } from './remote';
+import type { Account, DeletionPlan, Member, NewPhoto, PetCard, Photo, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
 
@@ -40,6 +40,8 @@ export class FakeServer {
   /** paws and hides, keyed `photo|user` */
   paws = new Set<string>();
   hides = new Set<string>();
+  /** Whether the delete-account SQL is run. */
+  deletionTable = true;
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -74,6 +76,42 @@ export class FakeRemote implements Remote {
   async setPassword(password: string) {
     const u = this.user(); if (this.s.passwords.get(u.email) === password) throw new Error('same-password');
     this.s.passwords.set(u.email, password);
+  }
+  async accountDeletion(): Promise<DeletionPlan | null> {
+    const u = this.user(); if (!this.s.deletionTable) return null;
+    const plan: DeletionPlan = { deleted: [], kept: [], files: [] };
+    for (const id of await this.myCatIds()) {
+      const c = this.s.cats.get(id)!; const heir = this.s.houses.get(c.householdId)!.members.find((m) => m.userId !== u.userId);
+      if (heir) {
+        plan.kept.push({ id, name: c.cat.name, keeper: heir.name });
+        for (const p of this.s.photos) if (p.catId === id && p.by === u.userId) plan.files.push({ bucket: 'pet-photos', path: p.path });
+      } else {
+        plan.deleted.push({ id, name: c.cat.name });
+        for (const f of this.s.files.keys()) if (f.startsWith(id + '/')) plan.files.push({ bucket: 'pet-docs', path: f });
+        for (const f of this.s.files.keys()) if (f.startsWith('pet-photos/' + id + '/')) plan.files.push({ bucket: 'pet-photos', path: f.slice(11) });
+      }
+    }
+    return plan;
+  }
+  async deleteAccount(plan: DeletionPlan) {
+    const u = this.user(); if (!this.s.deletionTable) throw new Error('Could not find the function public.delete_my_account');
+    for (const f of plan.files) this.s.files.delete(f.bucket === 'pet-docs' ? f.path : 'pet-photos/' + f.path);
+    for (const h of this.myHouses()) {
+      h.members = h.members.filter((m) => m.userId !== u.userId);
+      if (!h.members.length) {
+        for (const [id, c] of [...this.s.cats]) if (c.householdId === h.id) {
+          this.s.cats.delete(id);
+          for (const [k, x] of [...this.s.sets]) if (x.catId === id) this.s.sets.delete(k);
+          for (const [k, x] of [...this.s.care]) if (x.catId === id) this.s.care.delete(k);
+        }
+        this.s.houses.delete(h.id);
+      } else if (h.owner === u.userId) h.owner = h.members[0].userId;
+    }
+    for (const x of this.s.sets.values()) if (x.by === u.userId) x.by = undefined;
+    this.s.photos = this.s.photos.filter((p) => p.by !== u.userId);
+    for (const k of [...this.s.friendships]) if (k.split('|').includes(u.userId)) this.s.friendships.delete(k);
+    this.s.profiles.delete(u.userId); this.s.passwords.delete(u.email);
+    this.me = null;
   }
   private myHouses() { const u = this.user(); return [...this.s.houses.values()].filter((h) => h.members.some((m) => m.userId === u.userId)); }
   async myCatIds() { const hs = new Set(this.myHouses().map((h) => h.id)); return [...this.s.cats].filter(([, c]) => hs.has(c.householdId)).map(([id]) => id); }
