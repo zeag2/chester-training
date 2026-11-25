@@ -67,7 +67,7 @@ describe('Fixing a mistaken quick log', () => {
     const mochi = await store.saveCat(cat('Mochi'));
     await act(async () => { await store.switchPet(mochi.id); });
     render(<DailyTaps />);
-    await tap(/^Scooped\./); await tap(/^Played\./); await tap('All normal');
+    await tap(/^Scooped\./); await tap(/^Played\./); await tap('Save'); await tap('All normal');
     await tap(/Fix today’s entries/);
     const sheet = screen.getByRole('dialog', { name: 'Mochi: Today’s quick logs' });
     // only Mochi's entries, not Chester's meals

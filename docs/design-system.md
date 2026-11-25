@@ -141,6 +141,7 @@ go-ahead and a screenshot pass:
 | Pet switcher | `PetSwitcher` from `src/ui/PetSwitcher.tsx` | `style?`, `inNav?` |
 | **Tooltip** | `TooltipHost` from `src/ui/Tooltip.tsx` (mounted once) | automatic on `.iconbtn[aria-label]` and `[data-tip]`, hover devices only |
 | Progress bar | `.bar` > `<i style={{ width }}>` | |
+| Inline question panel | `PANEL` + `Choice` in `src/ui/DailyTaps.tsx` (What's off?, Playtime, Daily check) | a `--sky` box inside the Quick log card: bold title, `.s` line, then `.seg` one-of rows (`Choice`: label above, tap the picked one again to clear) or `.chipbtn` chips, then `.btn2` + `.btn` side by side |
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
 

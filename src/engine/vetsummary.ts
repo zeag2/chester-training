@@ -15,6 +15,9 @@ export interface VetSummary {
   visits: { id: string; day: string; reason: string; clinic?: string; notes?: string; docs: number; unconfirmed?: boolean }[];
   next?: { id: string; day: string; time?: string; reason: string; clinic?: string };
   checks: { days: number; off: number };
+  /** The daily check's water and appetite chips over the same 30 days: days noted, and days with each answer. */
+  water: { days: number; more: number; less: number };
+  appetite: { days: number; picky: number; none: number };
   foods: string[];
   /** The newest vaccine paperwork, then the other newest documents (up to 3 in all). */
   docs: { id: string; title: string; day: string; path: string; vaccine: boolean }[];
@@ -40,9 +43,32 @@ export function vetSummary(care: CareItem[], now = Date.now()): VetSummary {
       ...(isBooked(v, now) ? { unconfirmed: true } : {}) })),
     next: next && { id: next.id, day: localDay(next.at), time: next.data.time, reason: next.data.reason, clinic: next.data.clinic },
     checks: { days: new Set(checks.map((c) => localDay(c.at))).size, off: checks.filter((c) => c.data.ok === false).length },
+    water: noted(checks, 'water', ['more', 'less']) as VetSummary['water'],
+    appetite: noted(checks, 'appetite', ['picky', 'none']) as VetSummary['appetite'],
     foods: of('food').filter((f) => f.data.current).map((f) => f.data.name),
     docs: [...(vax ? [vax] : []), ...docs.filter((d) => d !== vax)].slice(0, 3),
   };
+}
+
+/** Per day (the latest check that day wins): how many days had the chip noted, and how many with each answer. */
+function noted(checks: CareItem<'daily'>[], key: 'water' | 'appetite', answers: string[]): Record<string, number> {
+  const byDay = new Map<string, string>();
+  for (const c of checks) { const v = c.data[key]; const d = localDay(c.at); if (v && !byDay.has(d)) byDay.set(d, v); } // checks are newest first
+  const out: Record<string, number> = { days: byDay.size };
+  for (const a of answers) out[a] = [...byDay.values()].filter((v) => v === a).length;
+  return out;
+}
+const plural = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
+/** "more than usual on 2 days, less on 1 day", or "normal (5 days noted)"; '' when never noted. */
+export function waterText(w: VetSummary['water']): string {
+  if (!w.days) return '';
+  const p = [w.more && `more than usual on ${plural(w.more)}`, w.less && `less than usual on ${plural(w.less)}`].filter(Boolean);
+  return p.length ? `${p.join(', ')} (of ${plural(w.days)} noted)` : `normal (${plural(w.days)} noted)`;
+}
+export function appetiteText(a: VetSummary['appetite']): string {
+  if (!a.days) return '';
+  const p = [a.picky && `picky on ${plural(a.picky)}`, a.none && `didn’t eat on ${plural(a.none)}`].filter(Boolean);
+  return p.length ? `${p.join(', ')} (of ${plural(a.days)} noted)` : `normal (${plural(a.days)} noted)`;
 }
 
 const fmt = (day: string) => new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -56,7 +82,8 @@ export function summaryText(name: string, about: string, s: VetSummary, vet?: Ve
   sect('Weight', w0 ? [`${w0.lb} lb (${fmt(w0.day)})`, ...(s.weights.length > 1 ? [`${wl.lb} lb on ${fmt(wl.day)} → ${w0.lb} lb`] : [])] : [], 'No weigh-ins logged yet.');
   sect('Medicine and vaccines', s.doses.map((x) => `${x.name} (${MED_LABEL[x.what as MedWhat] ?? x.what}): given ${fmt(x.given)}${x.nextDue ? `, next ${fmt(x.nextDue)}` : ''}`));
   sect('Symptoms (last 60 days)', s.symptoms.map((x) => `${fmt(x.day)}: ${x.what}${x.worried ? ' (we were worried)' : ''}`));
-  sect('Daily checks (last 30 days)', s.checks.days ? [`${s.checks.days} days checked, ${s.checks.off ? `${s.checks.off} with something off` : 'all normal'}`] : [], 'No daily checks yet.');
+  sect('Daily checks (last 30 days)', s.checks.days ? [`${s.checks.days} days checked, ${s.checks.off ? `${s.checks.off} with something off` : 'all normal'}`,
+    ...(waterText(s.water) ? [`Water: ${waterText(s.water)}`] : []), ...(appetiteText(s.appetite) ? [`Appetite: ${appetiteText(s.appetite)}`] : [])] : [], 'No daily checks yet.');
   sect('Recent vet visits', s.visits.map((v) => `${fmt(v.day)}: ${v.reason}${v.clinic ? ` at ${v.clinic}` : ''}${v.unconfirmed ? ' (booked, not marked done)' : ''}${v.notes ? `. ${v.notes}` : ''}`));
   if (s.next) sect('Next visit', [`${fmt(s.next.day)}${s.next.time ? ` ${fmtTime(s.next.time)}` : ''}: ${s.next.reason}${s.next.clinic ? ` at ${s.next.clinic}` : ''}`]);
   if (s.foods.length) sect('Eating now', [s.foods.join(', ')]);
