@@ -47,15 +47,14 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
    secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
-**Waiting on Josh** (one word each): push setup done? (then merge #42, #47) ·
-keep the daily 12:41 PM auto-start? (it reads the archived secretary's `docs/exec.md`; repoint it to this file or stop it).
+**Waiting on Josh** (one word each): push setup done? (then merge #42, #47).
 
 **Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
 2026-11-25; the old PM `session_019xqnwe2xGc6E2Zfb29YqrL` is "(archive)"). Keep the UX reviewer (nightly review,
 1:45 AM) and, until Josh has copied the push keys from its chat, "PalDex · worker · push notifications build"
 (`session_019xqnwhi5L7q6CocwuxdBKK`; archive it after). The secretary/executive and the art director are archived
 (Josh, 2026-11-25). Scheduled tasks: "PalDex daily ping to Josh (PM)" 8:45 AM (in the PM session; recreate it in the
-new PM if needed), "PalDex daytime block (12:41 PM)" (see above), "PalDex UX review" 1:45 AM. Workers: one job each,
+new PM if needed), "PalDex daytime block (12:41 PM)" (`trig_01HJD4cwMABd4DKMcjXHUqrK`, fires into the PM, reads this section; Josh kept it 2026-11-25. Recreate it in a new PM; the old exec.md one is retired), "PalDex UX review" 1:45 AM. Workers: one job each,
 at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
 
 ---
