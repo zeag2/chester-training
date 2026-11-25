@@ -37,6 +37,23 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
     contacts stay on the phone they were saved on.
 14. **Friend requests.** Run `supabase/migrations/20261114000000_friend_requests.sql` (after step 10). Until then,
     entering a code makes you friends straight away, as before.
+16. **Push notifications** (plan `docs/plans/2026-11-23-push-notifications.md`). Until all of this is done the app
+    hides notifications completely. The two secret values (the cron key and the VAPID private key) come from Claude in
+    chat, once; never put them in the repo, a PR or the app.
+    1. SQL Editor: run `supabase/migrations/20261123000000_push.sql` (it turns on `pg_net` and `pg_cron` itself).
+    2. SQL Editor, one line, with the cron key in the quotes:
+       `select vault.create_secret('<cron key>', 'push_cron_key');`
+       (or Integrations → Vault → Add new secret, name `push_cron_key`).
+    3. Edge Functions → Secrets → add four:
+       `PUSH_CRON_KEY` = the same cron key · `VAPID_PUBLIC_KEY` = the public key in `src/sync/config.ts`
+       (`BEhGzXYF…`) · `VAPID_PRIVATE_KEY` = the private key · `VAPID_SUBJECT` = `mailto:` + your email.
+    4. Edge Functions → Deploy a new function → Via editor. Name it exactly `send-push`, replace the code with all of
+       `supabase/deploy/send-push.ts`, and deploy. Then open it → Details (or Settings) → turn **off** "Verify JWT"
+       ("Enforce JWT verification") and save: the cron calls it with its own key, not a sign-in.
+       (With the Supabase CLI instead: `supabase functions deploy send-push --no-verify-jwt`.)
+    5. Check: Integrations → Cron shows `paldex-push-drain`, `paldex-push-meds` and `paldex-push-tidy`. Turn
+       notifications on in Settings → Notifications (iPhone: from the Home Screen app), have a second account send you
+       a friend request, and it arrives within a minute; the function's Logs show each call.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

@@ -146,6 +146,8 @@ go-ahead and a screenshot pass:
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
 | **Badge** | `BadgeTile` in `src/screens/Trophies.tsx` (`.badgetile`), `BadgeShine` from `src/ui/BadgeShine.tsx` | see "Badges, shine and icons" |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
+| **Ask card** (a yes/not-now question at the right moment) | `PushAsk` from `src/ui/PushAsk.tsx`: `.card butter`, a Title line, a `.s` sub-line, then "Turn on" (`.btn2` on `--surface`) and "Not now" (`.btn2` transparent) | `title`, `sub`; inline where the moment is (after a friend request), or `askForPush(…)` → `<PushAskHost />` (mounted once in App) shows it in a `Sheet` after a sheet has closed (after saving a repeating medicine). Same pattern as `AccountNudge`. |
+| Settings group with switches | `Group` + `Row` + `Switch` in `src/screens/Settings.tsx`; a value picker in a row is a `select.in` | Settings → Notifications: this phone, then one switch per kind, the medicine hour (`select`), quiet hours as text |
 
 ## Badges, shine and icons (approved by Josh 2026-11-25; art from artifact 6e9huJ9Z23diCgKwxCHzds)
 - **Badges** (`src/assets/badges`, viewBox 100, drawn for 56–96 px; the trophy case uses `--badge-tile` 64). One shape
