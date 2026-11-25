@@ -1,6 +1,7 @@
 @import "./tokens.css";
 /* tokens (colour, type, space, radius, motion) live in tokens.css; this file is component classes only */
 *{box-sizing:border-box}
+input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 /* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
    then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */

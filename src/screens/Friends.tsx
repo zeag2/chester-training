@@ -115,7 +115,7 @@ export function Friends({ code: linkCode }: { code?: string }) {
 
   return <div className="screen">{top}
     {friends && !friends.missing && <Feed embedded />}
-    <h2 style={{ marginTop: 22 }}>Friends’ cats</h2>
+    <h2 style={{ marginTop: 22 }}>Add friends</h2>
     <div className="stag">
       <p className="m">Friends see each other’s cats: their look, outfit, skills, streak and bond. Never care records, documents or the training log.</p>
       {loading ? <p className="s" style={{ marginTop: 'var(--sp-4)' }} aria-busy="true">Loading…</p>
