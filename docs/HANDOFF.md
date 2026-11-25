@@ -48,7 +48,7 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
 **Build next (Josh's go recorded)**
-1. **Badge art + icons** (M, Josh approved 2026-11-25; no SQL). Art lives on the artifact
+1. **Badge art + icons** (M, Josh approved 2026-11-25 and said "start now"; worker started 2026-11-25 on `claude/features-badge-art`; no SQL). Art lives on the artifact
    https://claude.ai/artifact/6e9huJ9Z23diCgKwxCHzds as files under `paldex-art/` (read with the Artifact tool, action
    read + path; start with `paldex-art/HANDOFF.md`, `manifest.json`). 35 earned + 35 locked + 5 hidden badge SVGs,
    27 Chester-style + 27 line icons, `shine/BadgeShine.tsx` + `shine/badge-shine.css`, `generate.mjs`. Josh's choices:
@@ -59,6 +59,8 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
    reduced motion = brief brighten only. Wire into `#/trophies` (`src/screens/Trophies.tsx` BadgeTile,
    `src/engine/badges.ts`). Design system first: add the badge, shine and icon sets to `docs/design-system.md` and
    tokens (branch colours as tokens, not literals). One worker, branch `claude/features-badge-art`, PR for Josh.
+
+**Running**: UX review worker (review only, ranked list to Josh, `session_019xqnwfDGvFp2G6M7EmbCmp`); badge art worker (`session_019xqnwgUq5RoHwxaU53uAQq`).
 
 **Waiting on Josh** (one word each): push setup done? (then merge #42, #47).
 
