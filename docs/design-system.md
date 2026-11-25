@@ -105,7 +105,8 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
-| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40 |
+| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine) |
+| Badge and icon art (same in both themes) | `--branch-<foundation\|care\|manners\|adventure\|tricks>` with `-light` and `-ink`; `--icon-sky --icon-grey` (Chester icon fills); `--art-outline` (Chester icon outline, light and dark); `--badge-outline`; `--badge-tile` 64; `--icon-idle` (a tab icon that isn't current) |
 
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
 token exactly. These are today's real values, off the scale; moving them is a visible change, so each needs its own
@@ -131,7 +132,7 @@ go-ahead and a screenshot pass:
 | **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` uses `.in` too. A `textarea.in` (several lines, e.g. the Contact us message) sizes by `rows`, with `--sp-3` padding top and bottom and `--lh-body` lines, and can be dragged taller. Optional fields say so in the label: "Your name (optional)" |
 | Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
 | **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards |
-| Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` | `Icon({ name, size = 22 })`, `Paw({ color, size })` (`flex: none`, so it never squeezes in a `.row`) |
+| Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` (line set; `ChesterIcon` only in the nav, see "Badges, shine and icons") | `Icon({ name, size = 22 })`, `Paw({ color, size })` (`flex: none`, so it never squeezes in a `.row`) |
 | **Sheet / dialog** | `Sheet` from `src/ui/Sheet.tsx` | `label` (its accessible name), `onClose`, `children`; bottom sheet on phones, dialog or side sheet on desktop |
 | **Toast with Undo** | `showToast` / `hideToast` from `src/ui/Toast.tsx` (`<ToastHost />` is in App) | `{ msg, action?: { label, run }, ms? }` |
 | **List row** | `.item` (rows with a hairline), `.lgroup` + `.lrow` (grouped rows in a grey box, Settings) | `.ico` left, `.sp` middle, value right |
@@ -143,7 +144,33 @@ go-ahead and a screenshot pass:
 | Progress bar | `.bar` > `<i style={{ width }}>` | |
 | Inline question panel | `PANEL` + `Choice` in `src/ui/DailyTaps.tsx` (What's off?, Playtime, Daily check) | a `--sky` box inside the Quick log card: bold title, `.s` line, then `.seg` one-of rows (`Choice`: label above, tap the picked one again to clear) or `.chipbtn` chips, then `.btn2` + `.btn` side by side |
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
+| **Badge** | `BadgeTile` in `src/screens/Trophies.tsx` (`.badgetile`), `BadgeShine` from `src/ui/BadgeShine.tsx` | see "Badges, shine and icons" |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
+
+## Badges, shine and icons (approved by Josh 2026-11-25; art from artifact 6e9huJ9Z23diCgKwxCHzds)
+- **Badges** (`src/assets/badges`, viewBox 100, drawn for 56–96 px; the trophy case uses `--badge-tile` 64). One shape
+  and colour per skill branch: **Foundation gold coin, Care rose shield, Manners teal hexagon, Adventure sky diamond,
+  Tricks orange rosette** (tokens `--branch-*`; the branch heads in the trophy case carry a dot in that colour, next to
+  the name). Three states, from `badgeArtKey()` in `src/engine/badges.ts`: `earned/<skill id>` (full colour),
+  `locked/<skill id>` (faded grey with a small lock; not earned yet), `hidden/<branch>` (the branch shape dashed with a
+  "?"; a hidden skill not unlocked yet, shown without its name, not tappable). The SVG files are illustration and keep
+  their own colours, like the cat. URLs: `badgeArtUrl(key)` from `src/ui/badgeArt.ts`. The art's other styles (medal,
+  sticker, "alts") were not chosen.
+- **Tap shine** (`BadgeShine` from `src/ui/BadgeShine.tsx`, CSS `.badgeshine` in `app.css`): `src`, `size?`,
+  `shine` (earned only), `pulse` (bump to play). A white glint sweeps across the badge, clipped to its shape (the file is
+  its own mask), a small pop and tilt, two sparkles, all within `--shine-ms` (520 ms, `SHINE_MS`), plus a short buzz.
+  An earned badge waits `SHINE_MS` before opening its skill page so the shine is seen; locked badges open at once and
+  never shine; hidden ones don't open (`tapDelay()`). **Reduced motion:** no movement, a `--shine-flash-ms` (240 ms)
+  brighten only, and the wait is 240 ms.
+- **Icons, two sets** (24 px grid, `src/ui/iconArt.ts`, generated from the art):
+  - **Chester-style** (`ChesterIcon({ name, size = 24 })`, class `.cicon`): pastel fill (tokens) + `--art-outline`.
+    Only for the tab bar / rail / side nav (Home, Health, +, the cat, Friends, the brand paw, Settings) and the way into
+    Settings (Home's gear). Full colour on the current tab, `--icon-idle` on the others. The phone + is the gold
+    Chester plus at 48 px (`.plus.cplus`), not the ink circle; the desktop "Log" button keeps `.btn` with a line +.
+  - **Line** (`Icon({ name })`, currentColor, stroke 1.9): everything small and inline. The approved line set now
+    draws `Icon`; old names are aliases (`heart`→health, `user`→friends, `gear`→settings, `cal`→calendar,
+    `click`→clicker). `plus` and `check` keep the plain glyphs (they sit inside round buttons); the circled ones are
+    `plus-circle` and `check-circle`. Names the set doesn't have (book, phone, pin, yarn, …) keep their old paths.
 
 ## Rules
 - **New screens use existing components and tokens only.** No literal colours, sizes, spacing or radii in new code.
