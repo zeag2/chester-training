@@ -5,6 +5,7 @@ import { BOND_LEVELS, bondGiftLevel, bondLevel, dailyGiftTreats, giftClaimed, in
 import { localDay } from '../engine/day';
 import type { ReactionId } from '../chester/reactions';
 import { Icon, Paw } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { usePetText } from '../lib/pet';
@@ -89,8 +90,8 @@ export function Corner() {
   });
 
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('chester')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>{cat.name}’s corner</b>
-      <span className="chip num" style={{ background: 'var(--butter)', color: 'var(--butter-ink)', minHeight: 32, fontSize: 'var(--fs-small)' }} aria-label={`${balance} treats`}><Paw size={16} color="var(--butter-strong)" />{balance}</span></div>
+    <ScreenHeader onBack={() => go('chester')} title={`${cat.name}’s corner`}
+      trailing={<span className="chip num" style={{ background: 'var(--butter)', color: 'var(--butter-ink)', fontSize: 'var(--fs-small)' }} aria-label={`${balance} treats`}><Paw size={16} color="var(--butter-strong)" />{balance}</span>} />
     <div className="stag">
       <div className="card butter" style={{ padding: '18px var(--sp-4) 14px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'center', minHeight: 26 }}>{(line || toast) && <span key={line + toast} className="bubble mint">{toast || line}</span>}</div>

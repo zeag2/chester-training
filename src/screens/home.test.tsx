@@ -34,7 +34,7 @@ describe('Home on phones and tablets (under 1100 px) stays as before', () => {
     // the cat row is still the first thing after the greeting, then the cards, all straight under .stag
     const stag = container.querySelector('.stag')!;
     expect(stag.children[1].className).toBe('row');
-    expect(stag.querySelector(':scope > a[href="#/train"]')).toBeTruthy();
+    expect(stag.querySelector(':scope > .traincard')).toBeTruthy();
   });
 });
 
@@ -46,8 +46,8 @@ describe('Home on desktop (1100 px and up)', () => {
     const cols = container.querySelectorAll('.homecols > .homecol');
     expect(cols).toHaveLength(2);
     expect(cols[0].firstElementChild!.className).toBe('row homescene big');
-    expect(cols[0].querySelector('a[href="#/train"]')).toBeNull();
-    expect(cols[1].querySelector('a[href="#/train"]')).toBeTruthy();
+    expect(cols[0].querySelector('.traincard')).toBeNull();
+    expect(cols[1].querySelector('.traincard')).toBeTruthy();
     expect(catWidth(container)).toBe('160');
   });
   it('scales everything measured against the cat by the same ratio (160 / 104)', () => {

@@ -10,6 +10,7 @@ import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { sharingConfigured } from '../sync/config';
 import { sendInvite } from './Together';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
 import type { DeletionPlan } from '../sync/remote';
@@ -24,7 +25,7 @@ import { readBackup, type BackupRead } from '../lib/backup';
 function Row({ label, value, onClick, danger, children, sub }: { label: string; value?: React.ReactNode; onClick?: () => void; danger?: boolean; children?: React.ReactNode; sub?: string }) {
   const body = <><span className="sp"><span style={{ color: danger ? 'var(--rose)' : undefined, fontWeight: danger ? 700 : 600 }}>{label}</span>{sub && <span className="s" style={{ display: 'block' }}>{sub}</span>}</span>
     {value !== undefined && <span className="s" style={{ textAlign: 'right' }}>{value}</span>}{children}
-    {onClick && !danger && <span className="chev" aria-hidden="true">›</span>}</>;
+    {onClick && !danger && <span className="chev"><Icon name="chevron" size={18} /></span>}</>;
   return onClick ? <button className="lrow" onClick={onClick}>{body}</button> : <div className="lrow">{body}</div>;
 }
 const Group = ({ title, children, foot }: { title: string; children: React.ReactNode; foot?: string }) =>
@@ -270,7 +271,7 @@ export function Settings() {
 
   const edit = async (id: string) => { if (id !== cat.id) await store.switchPet(id); setSheet('pet'); };
   return <div className="screen">
-    <div className="row" style={{ marginTop: 10 }}><button className="iconbtn" aria-label="Back" onClick={() => back('home')}><Icon name="back" /></button><h1 className="sp">Settings</h1></div>
+    <ScreenHeader onBack={() => back('home')} title="Settings" />
     {account && <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{me?.name || store.myName || 'You'} · {account.email}</p>}
 
     <Group title="Your cats">

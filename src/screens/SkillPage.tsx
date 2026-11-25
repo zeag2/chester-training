@@ -3,6 +3,7 @@ import { useStore } from '../db/store';
 import { SKILL_BY_ID } from '../engine/skills';
 import { isUnlocked } from '../engine/rules';
 import { Icon, ICON_FOR } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back, go } from '../ui/router';
 import { usePetText } from '../lib/pet';
 
@@ -21,10 +22,10 @@ export function SkillPage({ id }: { id: string }) {
   const p = progress[id]; const step = p?.step ?? 0; const open = isUnlocked(d, progress, unlockedHidden);
   const atStep = sets.filter((s) => s.skillId === id && s.step === step && !s.review).slice(-2);
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => back('library')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{d.branch}</b></div>
+    <ScreenHeader onBack={() => back('library')} title={d.branch} heading={false} />
     <div className="card sky" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', padding: 18 }}>
       <div className="ico" style={{ width: 64, height: 64, borderRadius: 20 }}><Icon name={ICON_FOR[d.branch]} size={32} /></div>
-      <div><h1 style={{ fontSize: 24 }}>{d.name}</h1><p className="s">{p?.mastered ? 'Mastered' : open ? `Step ${step + 1} of ${d.steps.length}` : 'Locked'}</p></div></div>
+      <div><h1>{d.name}</h1><p className="s">{p?.mastered ? 'Mastered' : open ? `Step ${step + 1} of ${d.steps.length}` : 'Locked'}</p></div></div>
     <div className="card mint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--sp-4) var(--sp-4) var(--sp-3)' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} anim={ANIM[id] ?? ''} raised={ANIM[id] === 'wave' || ANIM[id] === 'play'} pose={id === 'carrier' ? 'loaf' : 'sit'} width={140} interactive label={cat.name} />
       <p className="s" style={{ marginTop: 6, textAlign: 'center' }}>{pt(d.why)}</p></div>

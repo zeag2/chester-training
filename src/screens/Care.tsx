@@ -143,8 +143,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
   </>;
   const documents = <>
-    <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 className="sp" style={{ margin: 0 }}>Documents</h2>
-      {docs.length > 0 && <a href="#/health/docs" className="s" style={{ fontWeight: 800, color: 'var(--ink)' }}>All documents ({docs.length}) ›</a>}</div>
+    <div className="row" style={{ marginTop: 22 }}><h2 className="sp" style={{ margin: 0 }}>Documents</h2>
+      {docs.length > 0 && <a href="#/health/docs" className="btn2 plain" style={{ marginRight: 'calc(-1 * var(--sp-2))' }}>All documents ({docs.length})<Icon name="chevron" size={16} /></a>}</div>
     {docs.slice(0, 3).map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
     <DocAdder signedIn={!!account} compact={docs.length > 0} dropped={dropped} />
   </>;
@@ -170,7 +170,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <button className="item" onClick={() => setQuickLogs(true)}>
       <div className="ico grey"><Paw size={22} /></div>
       <div className="sp"><b>Quick logs</b><p className="s">Fed, scooped, played and daily checks from the last 7 days. Tap to fix a mistake.</p></div>
-      <span className="s" aria-hidden="true">›</span></button>
+      <span className="chev"><Icon name="chevron" size={18} /></span></button>
     {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
     {log.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
     <div ref={logRef}>{log.map((i) => <button key={i.id} data-settle-key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
@@ -200,8 +200,8 @@ export function HealthLogTable({ log, quick, who, onOpen, onQuickLogs }: { log: 
   const showWho = rows.some((i) => who(i.by));
   const settleRef = useSettle<HTMLTableSectionElement>(rows.map((i) => i.id)); // a new entry settles into place
   return <section className="healthlog" aria-labelledby="healthlog-h">
-    <div className="row" style={{ marginTop: 22, alignItems: 'baseline' }}><h2 id="healthlog-h" className="sp" style={{ margin: 0 }}>Health log</h2>
-      <button className="linkbtn s" onClick={onQuickLogs}>Quick logs, last 7 days ›</button></div>
+    <div className="row" style={{ marginTop: 22 }}><h2 id="healthlog-h" className="sp" style={{ margin: 0 }}>Health log</h2>
+      <button className="btn2 plain" onClick={onQuickLogs}>Quick logs, last 7 days<Icon name="chevron" size={16} /></button></div>
     {rows.length === 0
       ? <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Weigh-ins, symptoms, grooming, vet visits, medicine and the quick logs show up here, newest first. A timeline like this is gold at the vet.</p>
       : <div className="logtable-wrap"><table className="logtable">
@@ -605,7 +605,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
       {picks.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Nothing to add to the log. The document is saved.</p>}
       {/* grouped like the papers: what was given that day, reminders, the history; anything already in the log starts unticked */}
       {GROUPS.filter((g) => picks.some((p) => p.group === g)).map((g) => <div key={g}>
-        <p className="s" style={{ marginTop: 14, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>{g}{g === 'Given today' && (target || picks.some((p) => p.visit)) ? ' · linked to the visit' : ''}</p>
+        <p className="label" style={{ marginTop: 14 }}>{g}{g === 'Given today' && (target || picks.some((p) => p.visit)) ? ' · linked to the visit' : ''}</p>
         {picks.map((p, i) => p.group !== g ? null : <label key={p.key} className="row" style={{ marginTop: 'var(--sp-2)', gap: 10, alignItems: 'flex-start', opacity: p.already && !p.on ? 0.6 : 1 }}>
           <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
           <span><b style={{ fontSize: 'var(--fs-small)' }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}

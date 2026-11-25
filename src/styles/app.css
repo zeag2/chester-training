@@ -27,13 +27,22 @@ p{margin:0}
 .btn.danger{background:var(--rose)}
 .btn:disabled{background:var(--grey);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}.btn:disabled::after{display:none}.btn:disabled:active{transform:none}
 .btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:var(--r-pill);background:var(--grey);color:var(--ink);font-weight:700;font-size:15px;text-decoration:none;border:0;transition:transform 160ms var(--ease-out)}
+.btn2.plain{background:transparent;min-height:44px;padding:0 var(--sp-2);font-size:var(--fs-small);font-weight:800;gap:2px}
 .btn:active,.btn2:active,a.card:active,button.card:active,.item:active,.chipbtn:active{transform:scale(.97)}
+/* a card that is one link plus one chip button (the Home Training card): the link stretches over the whole card, the
+   chip sits above it, so the card is the button and the chip still works (docs/design-system.md, "Card link") */
+.cardlink{position:relative;transition:transform 160ms var(--ease-out)}
+.cardlink>a{color:inherit;text-decoration:none}
+.cardlink>a::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.cardlink>a .chip{background:var(--surface)}
+.cardlink>.chipbtn{position:relative;z-index:1;margin:var(--sp-2) 0 0 calc(44px + var(--sp-3));background:var(--surface)}
+.cardlink:has(>a:active){transform:scale(.97)}
 a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:none;color:inherit;border:0;width:100%;text-align:left;font-family:inherit;font-size:inherit}
 .chip{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:var(--r-pill);font-size:var(--fs-label);font-weight:700;background:var(--surface);color:var(--ink);white-space:nowrap;gap:var(--sp-1)}
 .chipbtn{min-height:44px;padding:0 var(--sp-4);font-size:var(--fs-small);border:0;border-radius:var(--r-pill);background:var(--grey);font-weight:700;color:var(--ink);white-space:nowrap;transition:transform 160ms var(--ease-out)}
 .chipbtn.on{background:var(--ink);color:var(--on-ink)}
 .ico{width:44px;height:44px;border-radius:var(--r-row);display:flex;align-items:center;justify-content:center;flex:none;background:var(--surface)}
-.ico svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ico svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--ink);border-radius:9px;transform-origin:left center;animation:kfill 900ms var(--ease-out) both .15s}
 .seg{display:flex;background:var(--grey);border-radius:var(--r-pill);padding:var(--sp-1);gap:var(--sp-1)}
 .seg button{flex:1;min-height:44px;border-radius:var(--r-pill);font-size:var(--fs-small);font-weight:700;color:var(--muted);background:transparent;border:0}
@@ -44,8 +53,11 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font-family:inherit;transition:transform 160ms var(--ease-out)}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;gap:6px;min-height:52px}
+/* the screen header (ScreenHeader in src/ui/ScreenHeader.tsx): back, the name at section-head size, a trailing action */
+.toptitle{flex:1;min-width:0;margin:0;font-size:var(--fs-h2);line-height:var(--lh-title);font-weight:800;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .btn2{min-height:44px;flex:none}
 .iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink)}
-.iconbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tabs);border-top:1px solid var(--line);display:flex;justify-content:center;padding:var(--sp-2) 0 max(10px,var(--safe-b));z-index:20}
 .tabs-in{display:flex;justify-content:space-around;width:100%;max-width:480px}
 /* a floating note just above the tab bar (Quick log's Undo): one row, never under the bar */
@@ -53,7 +65,7 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .toast .msg{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--butter-ink);font-weight:700;font-size:var(--fs-small)}
 .toast.wrap .msg{white-space:normal;line-height:1.25;padding:var(--sp-1) 0}
 .toast .btn2{min-height:44px;padding:0 var(--sp-3);white-space:nowrap;flex:none;background:var(--surface)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted-2);text-decoration:none;min-width:64px;min-height:48px;justify-content:center;background:none;border:0}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:var(--fs-label);font-weight:700;color:var(--muted);text-decoration:none;min-width:64px;min-height:48px;justify-content:center;background:none;border:0}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform 200ms var(--ease-out)}
 .tab:active svg{transform:translateY(-3px) scale(1.12)}
 .tab.on{color:var(--ink)}.tab.on svg{animation:ktabin 450ms var(--ease-out)}
@@ -70,6 +82,8 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .conf{position:absolute;inset:0;overflow:hidden;pointer-events:none}.conf i{position:absolute;top:0;width:9px;height:14px;border-radius:3px;animation:kconf 3.2s linear infinite}
 .overlay{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;animation:kfade 250ms var(--ease-out)}
 .hide{display:none!important}
+/* read by VoiceOver, not shown (e.g. "Locked" beside a lock icon) */
+.visually-hidden{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @keyframes kfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes krise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes ktabin{0%{transform:scale(.9)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
@@ -131,12 +145,14 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;margin-top:var(--sp-2);color:var(--ink);font-family:inherit}
 .hit img{width:44px;height:44px;object-fit:contain;border-radius:var(--r-chip);background:var(--paper);flex:none}
 /* grouped settings lists */
-.lhead{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 var(--sp-1) var(--sp-2)}
+/* the Label type role (docs/design-system.md, Type): "YOUR VET", "VISITS", the Settings group heads */
+.label,.lhead{font-size:var(--fs-label);line-height:var(--lh-label);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.lhead{display:block;margin:0 var(--sp-1) var(--sp-2)}
 .lgroup{background:var(--grey);border-radius:18px;overflow:hidden}
 .lrow{display:flex;align-items:center;gap:var(--sp-3);min-height:54px;padding:10px var(--sp-4);width:100%;background:none;border:0;text-align:left;font:inherit;font-size:var(--fs-body);color:var(--ink)}
 .lrow + .lrow{border-top:1px solid var(--line)}
 button.lrow:active{background:var(--line)}
-.chev{color:var(--muted);font-size:22px;line-height:1;margin-left:2px}
+.chev{color:var(--muted);flex:none;display:inline-flex;margin-left:2px}
 .switch{position:relative;width:52px;height:32px;border-radius:var(--r-pill);border:0;background:var(--line);flex:none;transition:background 200ms var(--ease-out)}
 .switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--dur) var(--ease-out)}
 .switch.on{background:var(--teal)}
@@ -172,7 +188,7 @@ button.lrow:active{background:var(--line)}
 /* other cats on Home sit beside the one being shown; tap to switch */
 .homecats{display:flex;align-items:flex-end}
 .homecats .other{border:0;background:none;padding:0;margin-left:-18px;opacity:.97}
-.yarnbtn{border:0;background:var(--grey);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;align-self:flex-end;margin-bottom:6px}
+.yarnbtn{border:0;background:var(--grey);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;align-self:flex-end;margin-bottom:2px;color:var(--ink)}
 /* a bed bought in the corner, under the cat on Home (it stays put when he walks off for the litter gag) */
 .bedspot{position:relative;flex:none;display:inline-block}
 .bedspot.onbed{margin-bottom:var(--sp-4)}
@@ -247,7 +263,6 @@ html[data-nav="side"] .toast.undo{left:auto;right:max(32px,calc((100vw - 220px -
 .healthcol{min-width:0}
 .healthcol>.row:first-child,.healthcol>h2:first-child{margin-top:var(--sp-3)!important}
 .healthlog{max-width:1056px;margin-top:10px}
-.healthlog .linkbtn{border:0;background:none;padding:6px 2px;font:inherit;font-size:13px;font-weight:800;color:var(--ink);cursor:pointer}
 .healthlog .logtable-wrap{margin-top:10px;border-radius:18px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
 .healthlog .logtable{width:100%;border-collapse:collapse;font-size:var(--fs-small)}
 .healthlog .logtable th{text-align:left;font-size:var(--fs-label);font-weight:800;color:var(--muted);padding:10px 14px;background:var(--grey)}
@@ -283,7 +298,6 @@ html[data-nav="side"] .dropnote{left:220px}
 .householdwho{margin-top:6px;font-size:var(--fs-small);line-height:1.2}
 .householdnames{font-size:12.5px;line-height:1.25;max-width:150px}
 /* Health: the vet card and visits (the vet-first top of Health) */
-.vetcard{border:2px solid var(--grey)}
 /* documents: the row opens the file, "…" beside it for rename / link / delete */
 .docrow{border-bottom:1px solid var(--line)}
 .docrow .item{border-bottom:0}

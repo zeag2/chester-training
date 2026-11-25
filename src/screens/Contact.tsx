@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { store, useStore } from '../db/store';
 import { APP_VERSION } from '../lib/version';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back } from '../ui/router';
 
 const MAX = 2000;
@@ -33,7 +34,7 @@ export function Contact() {
   };
 
   return <div className="screen">
-    <div className="row" style={{ marginTop: 'var(--sp-3)' }}><button className="iconbtn" aria-label="Back" onClick={() => back('settings')}><Icon name="back" /></button><h1 className="sp">Contact us</h1></div>
+    <ScreenHeader onBack={() => back('settings')} title="Contact us" />
 
     {state === 'sent' ? <>
       <div className="card mint" role="status" style={{ marginTop: 'var(--sp-4)' }}>

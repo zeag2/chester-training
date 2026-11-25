@@ -55,10 +55,10 @@ export function VetCard() {
   const suggestion = !primary ? suggestClinic(care) : null;
   return <>
     <div className="card white vetcard" aria-label="Your vet">
-      <div className="row"><span className="s sp" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Your vet</span>
-        {primary && <button className="btn2" style={{ minHeight: 36, background: 'var(--grey)' }} onClick={() => setEdit({ kind: 'primary', vet: primary })}>Edit</button>}</div>
+      <div className="row"><span className="label sp">Your vet</span>
+        {primary && <button className="btn2" style={{ minHeight: 44 }} onClick={() => setEdit({ kind: 'primary', vet: primary })}>Edit</button>}</div>
       {primary ? <>
-        <b style={{ fontSize: 19, display: 'block', marginTop: 'var(--sp-1)' }}>{primary.data.clinic}</b>
+        <b style={{ fontSize: 18, display: 'block', marginTop: 'var(--sp-1)' }}>{primary.data.clinic}</b>
         {(primary.data.vetName || primary.data.address) && <p className="s">{[primary.data.vetName, primary.data.address].filter(Boolean).join(' · ')}</p>}
         <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
           {telHref(primary.data.phone) ? <CallButton vet={primary} label="Call" primary /> : <button className="btn" style={{ flex: 1 }} onClick={() => setEdit({ kind: 'primary', vet: primary })}>Add their phone</button>}
@@ -131,7 +131,7 @@ export function VisitsCard({ onOpen }: { onOpen: (v: CareItem<'vet'>) => void })
   const nDocs = (v: CareItem<'vet'>) => visitLinks(care, v).docs.length;
   return <>
     <div className="card white" aria-label="Visits">
-      <span className="s" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Visits</span>
+      <span className="label">Visits</span>
       {due && <button className="row visitrow" style={{ background: 'var(--butter)', borderRadius: 16, padding: '10px var(--sp-3)', marginTop: 'var(--sp-2)' }} onClick={() => onOpen(due)}>
         <span className="sp"><b>How did {cat.name}’s visit go?</b><span className="s" style={{ display: 'block', color: 'var(--butter-ink)' }}>{line(due)} · add what the vet said</span></span><span className="chip">Add notes</span></button>}
       <div className="row visitrow" style={{ marginTop: 'var(--sp-2)' }}>
@@ -285,12 +285,12 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
       {mode !== 'other' && <button className="btn2 bkadd" onClick={() => setMode('other')}><Icon name="plus" size={18} />Other clinic</button>}
     </div>
     {mode === 'add' && <div className="bkvetform" aria-label="New vet">
-      <div className="row"><b className="sp">Your vet</b><button className="btn2" style={{ minHeight: 36, background: 'transparent' }} onClick={() => setMode('saved')}>Cancel</button></div>
+      <div className="row"><b className="sp">Your vet</b><button className="btn2 plain" onClick={() => setMode('saved')}>Cancel</button></div>
       {clinicFields(nv, setNv, 'bk-vet-', 'Vet or clinic name')}
       <p className="s" style={{ marginTop: 6 }}>Saved as your household’s vet, with Call and Directions on Health.</p>
     </div>}
     {mode === 'other' && <div className="bkvetform" aria-label="Other clinic">
-      <div className="row"><b className="sp">Other clinic</b><button className="btn2" style={{ minHeight: 36, background: 'transparent' }} onClick={() => setMode('saved')}>Cancel</button></div>
+      <div className="row"><b className="sp">Other clinic</b><button className="btn2 plain" onClick={() => setMode('saved')}>Cancel</button></div>
       {clinicFields(ov, setOv, 'bk-ov-', 'Clinic name')}
       <p className="s" style={{ marginTop: 6 }}>Just for this visit{primary ? `: ${primary.data.clinic} stays your vet` : ''}.</p>
     </div>}
