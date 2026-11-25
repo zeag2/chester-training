@@ -59,6 +59,44 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ## 1. What's built
 
+- **Delete my account + privacy page** (2026-11-23, PR from `claude/features-delete-account`). **SQL waiting:**
+  `supabase/migrations/20261124000000_delete_account.sql` (idempotent; for the next single SQL run). Until it's run,
+  Settings → Household & account → **Delete my account** opens a sheet that says "Coming soon" (the preview RPC is
+  missing, `accountDeletion()` returns null); nothing else changes.
+  - **Flow:** the sheet asks the server what would happen (`account_deletion_preview()`: pets **deleted** because
+    nobody else has them, pets **kept** and who keeps them, and the storage **files** to remove), shows it in plain
+    words, offers "Download a backup first", and needs **DELETE** typed (any case). Then `store.deleteAccount(plan)`:
+    the app removes the files through the Storage API while still a member (Supabase refuses deletes from
+    `storage.objects` in SQL, and the bucket policies need membership), calls `delete_my_account()`, forgets the
+    session locally (`signOut({ scope: 'local' })`: the user no longer exists), clears every table on the phone plus
+    its name / active pet / thanks keys, and lands on Welcome. If the server call fails, nothing on the phone is touched.
+  - **Server rules** (`delete_my_account()`, security definer, acts only on `auth.uid()`): each pet the person can reach
+    or set up goes to the longest-standing other member of its household (or, for a pre-household pet, of the pet);
+    `cats.created_by` is handed over first because it cascades on a user delete. A pet with nobody else is deleted
+    (cascades its care, sets, photos rows). A household is handed over the same way or deleted when empty. Then
+    `delete from auth.users`, which cascades memberships, friends, requests, treats, paws, hides, push. Training sets
+    on kept pets now survive as anonymous (`sets.by_user` → nullable, `on delete set null`, like care and vets);
+    `pullSets` maps a null `by_user` to no name. Their own photos rows go (cascade), their files are removed first.
+    Documents they added to a pet that stays are kept: they're the pet's health record.
+  - **Check after the SQL run** (Josh, or a session with the live database): that the `postgres` role may
+    `delete from auth.users` in a security-definer function on this project (the usual Supabase pattern; if refused,
+    the function errors and the whole delete rolls back, so nothing half-happens; the fallback is an Edge Function
+    with the service role calling `auth.admin.deleteUser`). Then try it end to end with a throwaway account.
+  - **Privacy page** `#/privacy` (`src/screens/Privacy.tsx`, reachable without a pet): what stays on the phone, what an
+    account stores (by kind), who sees what (household / friends / nobody else), the services (Supabase, Cloudflare,
+    Google Fonts, Open Pet Food Facts, the browser push service, calendar and maps links only when tapped), how long,
+    and how deleting works. Linked from Welcome ("How PalDex uses your data") and Settings → App → Privacy. Not linked
+    from the account form on purpose: leaving onboarding mid-form loses what was typed. **Keep it true:** the
+    `read-vet-doc` Edge Function sends documents to Anthropic, but nothing in the app calls it today; if it's wired up,
+    add it here in the same PR. **Josh:** pick a contact address and set `PRIVACY_CONTACT` (the "Questions" section
+    appears once it's set; it's empty so no personal address ships by accident), and read the "people who run PalDex"
+    sentence.
+  - Design system: new variant **`.btn.danger`** (rose primary, only for the last step of something that can't be
+    undone); the existing "Remove from household" button now uses it instead of an inline colour.
+  - Tests: `src/sync/delete.test.tsx` (handover + history kept + phone emptied, a lone pet deleted with its files,
+    coming soon and a failed delete, the Settings sheet, the privacy page and route). Policy test:
+    `supabase/tests/delete_account_test.sql`. Screenshots: `docs/screenshots/delete-account/`.
+
 - **Navigation (Option A) + short onboarding** (2026-11-18, PR from `claude/features-navigation`; plan
   `docs/plans/2026-11-14-navigation.md`, Josh's pick): tabs are **Home · Health · + · <cat's name, or "Cats" with
   several> · Friends** (`src/ui/TabBar.tsx`, `catLabel`). The cat's tab `#/chester` (`src/screens/CatPage.tsx`): the
@@ -522,7 +560,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
-  Appearance), Your data (backup JSON including care).
+  Appearance), Your data (backup JSON including care; "Restore from a backup" reads it back in).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
   except mid-session or recap (`src/lib/updates.ts`). No more close-and-reopen.
 - Renamed to **PalDex** (home-screen name, title, manifest). The URL path stays `/chester-training/` so installs don't
@@ -542,7 +580,7 @@ Items marked *(art)* suit the art session.
 3. [x] **Playable toys, part 2: box and tunnel** (done 2026-11-10, branch `claude/features-box-tunnel`). See "Play" below.
 - [x] **Security review + Forgot password** (done 2026-11-12, PR from `claude/features-security`; SQL: part 1 of
    `supabase/migrations/20261116000000_bundle.sql`; Josh adds the redirect URL). Later, before charging or the App
-   Store: privacy policy and delete-my-account. Free tier has no backups: decide on Pro or a manual export.
+   Store: privacy policy and delete-my-account (built 2026-11-23, see section 1; its SQL waits for the next run). Free tier has no backups: decide on Pro or a manual export.
    - **Forgot password?** under Sign in → email → "Check your email". The email's link opens the app with the session
      in the hash; `src/lib/recovery.ts` takes it out of the address bar at startup and opens `#/reset-password`
      (`ResetPassword` in `src/screens/Together.tsx`): set a new password, or "Link didn't work" for a stale link. The
@@ -592,7 +630,7 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
-   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   batch: `supabase/migrations/20261123000000_push.sql`, run as part of `20261125000000_week3_bundle.sql` (prefs, outbox, triggers, pg_cron; tested with
    `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
    service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
@@ -663,6 +701,15 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
+  the JSON file, `readBackup` (`src/lib/backup.ts`) checks it (not JSON / not PalDex, older shape, newer `format`, no
+  pets: each a clear message with "Choose another file") and the sheet previews pets, days of logs (training days plus
+  health-entry days) and documents. **Merge** (default) adds pets, sets and health entries by id, never a second copy
+  (a health entry edited later in the backup wins); **Replace** asks in the sheet first. Then "Saved · … · Undo" (Undo
+  restores every table as it was). `store.importBackup` delays the sync 8 s so Undo doesn't race the upload; after
+  Replace, pets shared online come back on the next sync (said in the sheet). The export now writes `format: 1`
+  (files without it read as format 1) and goes through `store.backup()`. Vets aren't in the backup (they weren't in
+  the export either). Tests: `src/lib/backup.test.tsx`. Screenshots: `docs/screenshots/backup-import/`.
 - [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
   `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
   (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
@@ -842,7 +889,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
   `hiddenUnlocks` in `rules.ts`).
 - [ ] **Glossary in the library** (S).
-- [ ] **Backup import** (S): export exists, import doesn't.
+- [x] **Backup import** (done 2026-11-25, `claude/features-backup-import`): see "Done recently".
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
@@ -889,7 +936,7 @@ Items marked *(art)* suit the art session.
   "Pet me?" moments (built 2026-11-23), photo album,
   notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
-  Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
+  Left: check-ins and hidden skills, weekly recap, a glossary in the library, an App
   Store wrapper (Capacitor) if wanted.
 - The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
   The checklist above is grouped the same way.
@@ -1145,9 +1192,19 @@ npm run build      # what CI runs
   2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Since parts 2–3 of the bundle: `photos_test.sql`
   right after the bundle, before `security_test.sql`. `household_test` leaves `public._h`: drop it before `vets_test`. Roles are cluster-wide, so drop
   `anon`/`authenticated` before reloading the stubs into a fresh database.
+  2026-11-23 (delete account): stubs, every migration in order (push stubbed as below), `20261124000000_delete_account.sql`
+  twice, `photos_test.sql`, then `delete_account_test.sql` (its own people: Sam, Tia, Uma): passed. `security_test.sql`
+  then fails on **main's** push migration, not this one: `private.push_on_friend_request/_friend_treat/_pet_photo()`
+  are executable by anon in plain Postgres (they're trigger functions; the push file doesn't revoke them). Harmless
+  (trigger functions error when called directly) but worth a `revoke ... from public, anon, authenticated` in the push SQL.
   2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
   drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
   upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
+  2026-11-23 (later): `security_test.sql` goes after `push_test.sql`. Order that passed end to end: stubs, the four
+  oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
+  friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
+  `security_test` last. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
+  migrations, rls_test, people_test).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1223,7 +1280,7 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
-| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Not used yet. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
+| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`). (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
 | `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Not used yet. |
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
@@ -1504,10 +1561,22 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
   stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
   stubbed), then `supabase/tests/push_test.sql`: passed.
+- 2026-11-23, delete my account + privacy page (Features worker, `claude/features-delete-account`): used the repo's
+  `supabase` and `supabase-postgres-best-practices` skills for the migration (security-definer functions in public only
+  as RPCs with `auth.uid()` checks and `search_path = ''`, helpers in `private` with no grants, storage deletes through
+  the Storage API, idempotent constraint swap). No plugins or new MCP servers (`lottiefiles-creator` connected, unused).
+  Checks: throwaway Postgres 16 with the migration twice and `delete_account_test.sql`; Vitest (288), typecheck, build;
+  Playwright iPhone-size (390 × 844) shots, light and dark, against the Vite dev server with a seeded store and a stubbed
+  preview: `docs/screenshots/delete-account/`.
 - 2026-11-23, booking part 2b (Features worker, `claude/features-booking-2b`): no skills, plugins or new MCP servers.
   Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
   (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
   grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
+- 2026-11-25, backup import (Features worker, `claude/features-backup-import`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (Sheet, `.lgroup` rows, `.seg`, butter card, `.btn` / `.btn2`, Saved · Undo toast;
+  no new components or tokens). Checks: Vitest (291, new `src/lib/backup.test.tsx`), typecheck, build; Playwright
+  390 px light and dark against the Vite dev server (backup made in the page from a second `Store`, picked with
+  `setInputFiles`): `docs/screenshots/backup-import/`.
 - 2026-11-23, "Pet me?" moments (Features worker, `claude/features-pet-me`): no skills, plugins or new MCP servers
   (`lottiefiles-creator` connected, unused: existing poses only). Also fixed the paw on Train's "Go easy" card, which a
   long line beside it squeezed to 11 px wide: `Paw` now has `flex: none` (not `Icon`: the tab-bar snapshot pins its
@@ -1518,3 +1587,11 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   servers. Existing `.btn`/`.btn2`/cards and tokens only. Checks: Vitest (293, new `src/screens/train.test.tsx` and
   `recommendNext` cases), typecheck, build; Playwright 390 px light and dark of the cat tab's training card and Home's
   Training card, a cat seeded through `import('/chester-training/src/db/store.ts')`: `docs/screenshots/train-last/`.
+- 2026-11-23, push revoke fix (Features worker, `claude/fix-push-revoke`): no skills, plugins or new MCP servers.
+  `20261123000000_push.sql` now revokes EXECUTE on its three trigger functions from public, anon and authenticated
+  (triggers don't need it at fire time; cron doesn't call them), so `security_test.sql` passes. Checks: the full SQL
+  chain on a throwaway Postgres 16 (order above, later migrations twice, every `supabase/tests/*.sql`): passed;
+  Vitest (284), typecheck, build.
+  Then (PM ask) `supabase/migrations/20261125000000_week3_bundle.sql`: the fixed push file + PR #43's
+  `20261124000000_delete_account.sql`, one file for Josh's run. Chain passed twice: with the separate push file first,
+  and with only the combined file (each run twice); then push_test, PR #43's `delete_account_test.sql`, security_test.
