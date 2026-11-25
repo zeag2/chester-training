@@ -11,8 +11,8 @@ html{touch-action:manipulation}
 a{color:var(--teal)}
 a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}
 button{cursor:pointer}
-h1{font-size:28px;line-height:1.15;font-weight:800;margin:0;letter-spacing:-.01em}
-h2{font-size:17px;font-weight:800;margin:0}
+h1{font-size:var(--fs-h1);line-height:var(--lh-h1);font-weight:800;margin:0;letter-spacing:-.01em}
+h2{font-size:var(--fs-h2);font-weight:800;margin:0}
 p{margin:0}
 .m{color:var(--muted);font-size:var(--fs-small)}.s{font-size:13px;color:var(--muted)}
 .screen{max-width:480px;margin:0 auto;padding:calc(var(--sp-5) + var(--safe-t)) var(--sp-5) calc(110px + var(--safe-b));position:relative;min-height:100dvh}
@@ -38,7 +38,7 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .seg button{flex:1;min-height:44px;border-radius:var(--r-pill);font-size:var(--fs-small);font-weight:700;color:var(--muted);background:transparent;border:0}
 .seg button.on{background:var(--surface);color:var(--ink)}
 .field{display:block;font-size:13px;font-weight:700;margin:var(--sp-4) 0 6px}
-.in{height:52px;border-radius:16px;background:var(--grey);border:0;padding:0 14px;font-size:var(--fs-body);font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+.in{height:52px;border-radius:var(--r-row);background:var(--grey);border:0;padding:0 14px;font-size:var(--fs-body);font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
 .item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font-family:inherit;transition:transform 160ms var(--ease-out)}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;gap:6px;min-height:52px}

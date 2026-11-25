@@ -15,7 +15,9 @@ import type { CareRow, VetRow } from './db';
 import type { Vet, VetData } from '../engine/vets';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
+import { makeBackup, type Backup } from '../lib/backup';
 import { MOVE_REWARD } from '../engine/play';
+import { PET_ME, petMeId } from '../engine/petme';
 import { inSeason, FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
@@ -225,6 +227,12 @@ export class Store {
     });
   }
 
+  /** Petting him in a "Pet me?" moment: a bond point, the first time each day. False if today's is already in. */
+  petMe(): Promise<boolean> {
+    const id = petMeId(localDay(Date.now()));
+    return this.corner((c) => (c.log.some((e) => e.id === id) ? null : { ...c, log: [...c.log, this.event('pet', id, 0, PET_ME.bond)] }));
+  }
+
   /** A play move found for the first time (see PLAY_MOVES): a few treats, once per pet. False if already found. */
   foundMove(toy: string, move: string): Promise<boolean> {
     const id = `move-${toy}-${move}`;
@@ -320,6 +328,14 @@ export class Store {
     const drop = weightDupes(await this.db.care.where('catId').equals(catId).toArray());
     if (drop.length) await this.db.care.bulkPut(drop.map((w) => ({ ...w, deleted: true, updatedAt: Math.max(Date.now(), w.updatedAt + 1), dirty: 1 })));
     return drop.length;
+  }
+  /** The visits booked together with this one (several cats, one appointment), for any of my pets; the visit itself
+      when it wasn't booked with others. Deleted ones are left out. */
+  visitGroup(visit: CareItem<'vet'>): Promise<CareItem<'vet'>[]> {
+    const id = visit.data.group?.id; if (!id) return Promise.resolve([visit]);
+    // queued with the writes, so it reads after any save in flight (and `settled()` covers the saves that follow it)
+    return this.serial(async () => (await this.db.care.filter((c) => c.kind === 'vet' && !c.deleted && (c.data as CareData['vet']).group?.id === id).toArray())
+      .map(({ dirty: _d, ...c }) => c as CareItem<'vet'>));
   }
   deleteCare(id: string): Promise<void> {
     return this.serial(async () => {
@@ -562,6 +578,8 @@ export class Store {
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       const vetsSync = shared?.cat.householdId ? await this.syncVets(r, shared.cat.householdId).catch(() => 'ok' as const) : 'ok';
+      // another pet was shown while this ran (e.g. one just added): don't bring this one back; that pet syncs next
+      if (this.snap.cat && this.snap.cat.id !== cat.id) { this.set({ sync: 'ok', pets: await this.petList() }); void this.sync(); return; }
       await this.rebuild((await this.db.cats.get(cat.id)) ?? cat, { household, sync: 'ok', careSync, vetsSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);
@@ -650,6 +668,58 @@ export class Store {
   }
 
   async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
+
+  // ---- backup ----
+
+  /** Everything on this phone, as the backup file's contents. */
+  async backup(): Promise<Backup> {
+    return makeBackup({ cats: await this.db.cats.toArray(), sets: await this.db.sets.toArray(), care: await this.db.care.toArray(), wallet: await this.db.wallet.toArray() });
+  }
+  private importSync = 0;
+  /** Restore a backup file (already checked by `readBackup`). `merge` adds what this phone doesn't have: pets, sets and
+      health entries by id (a health entry edited later in the backup replaces the older one), never a second copy.
+      `replace` swaps this phone's pets and logs for the backup's. Returns how many rows were added or changed, and
+      `undo`, which puts this phone back as it was. Syncing waits a few seconds, so Undo doesn't race the upload. */
+  importBackup(b: Backup, mode: 'merge' | 'replace'): Promise<{ changed: number; undo: () => Promise<void> }> {
+    return this.serial(async () => {
+      const t = [this.db.cats, this.db.sets, this.db.care, this.db.wallet, this.db.drafts, this.db.progress];
+      const before = { cats: await this.db.cats.toArray(), sets: await this.db.sets.toArray(), care: await this.db.care.toArray(), wallet: await this.db.wallet.toArray(), drafts: await this.db.drafts.toArray(), progress: await this.db.progress.toArray() };
+      const care = (rows: CareItem[]) => rows.map((c) => ({ ...c, dirty: 1 }) as CareRow);
+      let changed = 0;
+      await this.db.transaction('rw', t, async () => {
+        if (mode === 'replace') {
+          for (const x of t) await x.clear();
+          await this.db.cats.bulkPut(b.cats); await this.db.sets.bulkPut(b.sets); await this.db.care.bulkPut(care(b.care)); await this.db.wallet.bulkPut(b.wallet);
+          changed = b.cats.length + b.sets.length + b.care.length;
+          return;
+        }
+        const has = <T extends { id: string }>(rows: T[]) => new Set(rows.map((r) => r.id));
+        const cats = b.cats.filter((c) => !has(before.cats).has(c.id));
+        const sets = b.sets.filter((s) => !has(before.sets).has(s.id));
+        const mine = new Map(before.care.map((c) => [c.id, c]));
+        const newCare = b.care.filter((c) => { const m = mine.get(c.id); return !m || c.updatedAt > m.updatedAt; });
+        const wallets = b.wallet.filter((w) => !before.wallet.some((x) => x.catId === w.catId));
+        await this.db.cats.bulkPut(cats); await this.db.sets.bulkPut(sets); await this.db.care.bulkPut(care(newCare)); await this.db.wallet.bulkPut(wallets);
+        changed = cats.length + sets.length + newCare.length;
+      });
+      for (const c of await this.db.cats.toArray()) { if (!(await this.db.wallet.get(c.id))) await this.db.wallet.put(newWallet(c.id)); await this.dedupeWeights(c.id); }
+      const was = this.snap.cat?.id;
+      const show = async (want = this.snap.cat?.id) => { const cats = (await this.db.cats.toArray()).sort((a, c) => a.createdAt - c.createdAt); await this.rebuild(cats.find((c) => c.id === want) ?? cats[0] ?? null); };
+      await show();
+      window.clearTimeout(this.importSync);
+      if (this.snap.account) this.importSync = window.setTimeout(() => void this.sync(), 8000);
+      const undo = () => this.serial(async () => {
+        window.clearTimeout(this.importSync);
+        await this.db.transaction('rw', t, async () => {
+          for (const x of t) await x.clear();
+          await this.db.cats.bulkPut(before.cats); await this.db.sets.bulkPut(before.sets); await this.db.care.bulkPut(before.care);
+          await this.db.wallet.bulkPut(before.wallet); await this.db.drafts.bulkPut(before.drafts); await this.db.progress.bulkPut(before.progress);
+        });
+        await show(was);
+      });
+      return { changed, undo };
+    });
+  }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {

@@ -13,6 +13,8 @@ export interface ChesterProps {
   interactive?: boolean; label?: string; onPet?: (line: string, id: ReactionId) => void; react?: ReactionId | null; reactKey?: number;
   /** A rig move driven from outside (the play screen): starts when it changes or `moveKey` does; null stops a loop. */
   move?: 'hop' | 'pounce' | 'stalk' | 'bat' | null; moveKey?: number;
+  /** Rare moves are likelier (for a while after a "Pet me?" moment). */
+  lucky?: boolean;
 }
 
 /** How long the roll's splat pose stays on (matches cRoll in chester.css). */
@@ -115,7 +117,7 @@ export function Chester(p: ChesterProps) {
       p.onPet?.('WHEEEE! Rainbow dash!', 'r5');
       return;
     }
-    const id = pickReaction(last.current, Math.random, (pose ?? 'sit') === 'sit'); last.current = id;
+    const id = pickReaction(last.current, Math.random, (pose ?? 'sit') === 'sit', p.lucky); last.current = id;
     const r = REACTIONS.find((x) => x.id === id)!;
     if (r.sound === 'purr') { audio.purr(id === 'r12' ? 3.4 : 1 + Math.random() * 0.8); audio.buzz([8, 40, 8, 40, 8]); }
     else if (r.sound === 'sparkle') { audio.sparkle(); audio.buzz([10, 30, 30]); }

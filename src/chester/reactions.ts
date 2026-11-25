@@ -23,11 +23,16 @@ export const SESSION_REACTIONS: Partial<Record<ReactionId, number>> = { r14: 180
 /** Moves that only work sitting up. Lying, loafing or kneading he just purrs, bonks, blinks or sneezes. */
 export const LYING_OK: ReactionId[] = ['r3', 'r8', 'r9', 'r10', 'r12', 'r15'];
 
+/** The rare moves: likelier for a while after a "Pet me?" moment (`lucky`). */
+export const RARE: ReactionId[] = ['r11', 'r5'];
+const RARE_BOOST = 4;
+
 /** Weighted random reaction that never repeats the previous one. `sitting` false = only the gentle ones. */
-export function pickReaction(last: ReactionId | null, rand: () => number = Math.random, sitting = true): ReactionId {
+export function pickReaction(last: ReactionId | null, rand: () => number = Math.random, sitting = true, lucky = false): ReactionId {
   const pool = REACTIONS.filter((r) => r.id !== last && (sitting || LYING_OK.includes(r.id)));
-  const total = pool.reduce((t, r) => t + r.weight, 0);
+  const w = (r: (typeof REACTIONS)[number]) => r.weight * (lucky && RARE.includes(r.id) ? RARE_BOOST : 1);
+  const total = pool.reduce((t, r) => t + w(r), 0);
   let x = rand() * total;
-  for (const r of pool) { x -= r.weight; if (x < 0) return r.id; }
+  for (const r of pool) { x -= w(r); if (x < 0) return r.id; }
   return pool[pool.length - 1].id;
 }

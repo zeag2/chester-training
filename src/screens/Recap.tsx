@@ -44,7 +44,7 @@ export function Recap({ skillId }: { skillId: string }) {
     <Stepper label="Good ones" value={Math.min(good, reps)} set={(n) => setGood(Math.min(n, reps))} max={reps} />
     <span className="field">How was {cat.name}?</span>
     <div className="seg" role="group" aria-label="Mood">{(['Happy', 'Distracted', 'Stressed'] as Mood[]).map((m) => <button key={m} className={m === mood ? 'on' : ''} aria-pressed={m === mood} onClick={() => { audio.buzz(6); setMood(m); }}>{m}</button>)}</div>
-    {mood === 'Stressed' && <div className="card peach row"><Paw color="#c2563f" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}>Good call stopping. Next time, make the step easier or shorter.</p></div>}
+    {mood === 'Stressed' && <div className="card peach row"><Paw color="var(--paw-coral)" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}>Good call stopping. Next time, make the step easier or shorter.</p></div>}
     <button className="btn" style={{ marginTop: 22 }} onClick={save} disabled={saving}>{reps === 0 ? 'Skip this set' : 'Save set'}</button>
   </div>;
 }

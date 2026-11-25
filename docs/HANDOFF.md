@@ -551,7 +551,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
-  Appearance), Your data (backup JSON including care).
+  Appearance), Your data (backup JSON including care; "Restore from a backup" reads it back in).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
   except mid-session or recap (`src/lib/updates.ts`). No more close-and-reopen.
 - Renamed to **PalDex** (home-screen name, title, manifest). The URL path stays `/chester-training/` so installs don't
@@ -621,7 +621,7 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
-   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   batch: `supabase/migrations/20261123000000_push.sql`, run as part of `20261125000000_week3_bundle.sql` (prefs, outbox, triggers, pg_cron; tested with
    `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
    service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
@@ -641,6 +641,15 @@ Items marked *(art)* suit the art session.
    visit page (re-send the .ics with the same UID and SEQUENCE+1, or STATUS:CANCELLED; test on a real iPhone)
    **(part 2a done 2026-11-11, PR from `claude/features-booking-2a`; Josh still to test on an iPhone)**, and
    booking several cats at once (one visit per cat, one calendar event "Vet: Chester + Luna"). Before the photo feed.
+   **(part 2b done 2026-11-23, PR from `claude/features-booking-2b`; no SQL):** Book a visit has the cat chip in its
+   header (as a new entry); with several pets, tap it to add or remove cats (at least one stays). Saving makes one visit
+   per cat (`saveCare(…, { catId })`), each carrying `group: { id, names }`, and one calendar event titled
+   "Vet: Luna + Chester" (reason in the notes) with UID `visit-<group id>`; a failed save takes back the ones already
+   saved. The toast names the cats; Undo removes every visit. On a grouped visit's page: "Booked together with Luna";
+   Reschedule and Cancel change every cat's visit (`store.visitGroup`, then `calSeq` + 1 on all) and re-send the one
+   event. Known limits: Edit visit and Delete still act on that one cat only (editing the date there would split the
+   event; the names list isn't trimmed after a delete). Tests: `src/ui/booking2b.test.tsx`. Screenshots:
+   `docs/screenshots/booking-2b/`.
 9. [ ] **Desktop website layout** (big picture; Josh, 2026-11-10; size unknown, start with a UX brief): today a
    desktop browser gets the phone layout in a narrow column. Make the same app (https://paldex-4qh.pages.dev/)
    comfortable on a laptop or desktop screen.
@@ -683,14 +692,29 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
+  the JSON file, `readBackup` (`src/lib/backup.ts`) checks it (not JSON / not PalDex, older shape, newer `format`, no
+  pets: each a clear message with "Choose another file") and the sheet previews pets, days of logs (training days plus
+  health-entry days) and documents. **Merge** (default) adds pets, sets and health entries by id, never a second copy
+  (a health entry edited later in the backup wins); **Replace** asks in the sheet first. Then "Saved · … · Undo" (Undo
+  restores every table as it was). `store.importBackup` delays the sync 8 s so Undo doesn't race the upload; after
+  Replace, pets shared online come back on the next sync (said in the sheet). The export now writes `format: 1`
+  (files without it read as format 1) and goes through `store.backup()`. Vets aren't in the backup (they weren't in
+  the export either). Tests: `src/lib/backup.test.tsx`. Screenshots: `docs/screenshots/backup-import/`.
 - [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
   `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
   (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
   off-scale values left as they are and listed in the design doc ("Not yet on the scale"); the component inventory
   and rules added to the doc and to `CLAUDE.md`; `useSettle` (`src/ui/settle.ts`) on the Health log (phone list and
   desktop table). Pixels unchanged at 390 and 1440, light and dark (Pillow diff vs main, see section 7).
-  Next, each needing Josh's OK because it's visible: move `h1` 28 → 34 and `h2` 17 → 20, the 13/15/17/18 sizes and
-  the 6/10/14/18/22 gaps onto the scale; use `useSettle` in the quick-log sheet and the visit timeline.
+  Next: use `useSettle` in the quick-log sheet and the visit timeline.
+- [x] **Design system tweaks** (2026-11-23, `claude/design-system-tweaks`, Josh's answers on the phase 2 judgement
+  calls): the doc's heading scale is now the app's real sizes (`h1` 28, `h2` 17; new tokens `--fs-h1`, `--fs-h2`;
+  the unused `--fs-heading` 20 removed; 34 stays as `--fs-display` for big numbers), no visible change. The sizes
+  13/15/17/18 and gaps 6/10/14/18/22 stay and are recorded as allowed exceptions. Inputs (`.in`) use `--r-row` 14
+  (was 16). The coral paw on peach cards (Train, Recap) is `--paw-coral`: #c2563f light, a toned-down #c96f5a dark
+  (4.2:1 on the dark peach card; `--rose` would be 5.9:1 and too bright). Before/after at 390 px, light and dark:
+  `docs/screenshots/design-tweaks/`.
 - [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
   permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -818,8 +842,16 @@ Items marked *(art)* suit the art session.
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
   per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
-- [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
-  bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
+- [x] **"Pet me?" moments** (done 2026-11-23, `claude/features-pet-me`): `src/engine/petme.ts` + Home. Up to 3 a day,
+  9 AM to 9 PM, one at a seeded time in each third of the window (`petMeTimes(catId, day)`); opening the app late shows
+  only the latest one due, never a backlog, and each shows once per phone (`localStorage`, `shownPetMe`/`markPetMe`).
+  Only while the room is calm (not night, dozing, the litter gag, the chase or "full"). He runs on (the gag's `back`
+  entrance, `run` pose), sits with his paw up (`raised` + `wave`, happy) under "Pet me?" with one soft mrrp; a tap or a
+  stroke answers: "Prrr… thank you!", +1 bond the first time each day (corner log `pet-<day>`, kind `pet`, shared by
+  the household, so bond levels keep their pace), and for 10 minutes the rare moves (golden purr, zoomies: `RARE` in
+  `reactions.ts`) are 4× likelier (`lucky` prop on `Chester`). Ignored for 45 s, he curls up (`curl` pose, "*curls
+  up*") for 20 s and nothing is lost. Existing poses and animations only, no new art. Ideas: a push for it (push plan),
+  a tiny "+1 bond" pop-in.
 - [x] **Bond levels unlock outfits** (done 2026-11-08): Buddies a bell collar, Pals a bow tie, Best friends an ear
   flower, Partners in crime a party hat, Soulmates the crown, free (`BOND_LEVELS[].gift`, `owned(c, bond)`); the corner
   says which level gives what. Still open *(art)*: idle behaviours per level.
@@ -848,7 +880,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
   `hiddenUnlocks` in `rules.ts`).
 - [ ] **Glossary in the library** (S).
-- [ ] **Backup import** (S): export exists, import doesn't.
+- [x] **Backup import** (done 2026-11-25, `claude/features-backup-import`): see "Done recently".
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
@@ -892,10 +924,10 @@ Items marked *(art)* suit the art session.
 ### The original phases (from the design doc, https://claude.ai/artifact/FX5FoXUmccY9j51Gzy14o9)
 - **Phase 1, train with Chester:** done.
 - **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case,
-  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album,
+  "Pet me?" moments (built 2026-11-23), photo album,
   notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
-  Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
+  Left: check-ins and hidden skills, weekly recap, a glossary in the library, an App
   Store wrapper (Capacitor) if wanted.
 - The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
   The checklist above is grouped the same way.
@@ -916,6 +948,7 @@ src/
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
     corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels; seasonal items (`season` MM-DD from/to, `inSeason`)
+    petme.ts            "Pet me?" moments: today's 3 seeded times, which is due, the once-a-day bond id, shown-on-this-phone
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -1158,6 +1191,11 @@ npm run build      # what CI runs
   2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
   drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
   upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
+  2026-11-23 (later): `security_test.sql` goes after `push_test.sql`. Order that passed end to end: stubs, the four
+  oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
+  friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
+  `security_test` last. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
+  migrations, rls_test, people_test).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1453,7 +1491,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   servers. Checks: clean `npm ci`, Vitest (264, 3 new in `src/db/weights.test.tsx`), typecheck, build. No screenshots
   (small change to the Health weight card; covered by the UI test). Found on the way: a sync that started for one pet
   rebuilds that pet when it ends, even if another was opened meanwhile (`syncNow` keeps the cat it started with);
-  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats").
+  harmless today, but extra awaits in sync expose it (`sync.test.ts` "logs Fed for another of my cats"). Fixed
+  2026-11-23 (`claude/fix-sync-and-visit`).
 - 2026-11-18, navigation Option A + onboarding (Features worker, `claude/features-navigation`): no skills, plugins or
   new MCP servers. Checks: Vitest (267), typecheck, build; Playwright iPhone 13 shots (Home dark, cat tab light,
   onboarding light) from the Vite dev server with Supabase stubbed.
@@ -1485,6 +1524,17 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
 - 2026-11-21, after-the-visit part 2 (Features worker, `claude/features-after-visit-2`): no skills, plugins or new MCP
   servers. Checks: Vitest (281), typecheck, build; Playwright iPhone 13 shots with the OCR module routed to a stub that
   returns the fixture pages (so the review screen renders without real OCR).
+- 2026-11-23, late sync + Visit in two panes (Features worker, `claude/fix-sync-and-visit`): no skills, plugins or new
+  MCP servers (`lottiefiles-creator` connected, unused). **Sync race:** a sync that was still running when another pet
+  was shown (e.g. a pet just added with `saveCat`, which rebuilds outside the serial chain) rebuilt the pet it started
+  with at the end, and the queued follow-up sync then kept that pet. `syncNow` now checks the pet on screen before its
+  final rebuild: if it changed, it only clears "syncing", refreshes the pet list and queues a sync for the pet shown.
+  Test: `sync.test.ts` "a sync that finishes late never brings back the pet it started with" (holds `pullSets` half-way).
+  **Visit page** (`#/health/visit/<id>`): at 1100 px and up it reuses Health's `.healthcols`/`.healthcol` (left: details,
+  call/directions, notes, Book the next one, Edit/Delete; right: Given and Documents); phones and tablets keep the one
+  column in the same order. Test in `visit.test.tsx`. Checks: Vitest (283), typecheck, build; Playwright against the
+  Vite dev server (store seeded through `globalThis.__chesterStore`) at 390 and 1440 px:
+  `docs/screenshots/visit-panes/`.
 - 2026-11-22, design system phase 2 (Features worker, `claude/design-system-2`): no skills, plugins or new MCP servers
   (`lottiefiles-creator` connected, unused). A one-off Python codemod (not committed) swapped only literals equal to a
   token. Checks: Vitest (281), typecheck, build; Playwright against Vite dev servers of main (a git worktree) and the
@@ -1492,6 +1542,11 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
   animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
   changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.
+- 2026-11-23, design system tweaks (Features worker, `claude/design-system-tweaks`): no skills, plugins or new MCP
+  servers (`lottiefiles-creator` connected, unused). Checks: Vitest (281), typecheck, build; Playwright (pre-installed
+  Chromium) rendering an input and the two peach paw cards with the real `tokens.css` + `app.css` from main and from
+  the branch, at 390 px, light and dark (`docs/screenshots/design-tweaks/`); WCAG contrast of paw candidates on the
+  peach cards worked out in Python.
 - 2026-11-23, push notifications plan (night job, `claude/features-push-plan`): no skills, plugins or new MCP servers.
   Wrote `docs/plans/2026-11-23-push-notifications.md` and `supabase/migrations/20261123000000_push.sql`. Checks: a
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
@@ -1504,3 +1559,26 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   Checks: throwaway Postgres 16 with the migration twice and `delete_account_test.sql`; Vitest (288), typecheck, build;
   Playwright iPhone-size (390 × 844) shots, light and dark, against the Vite dev server with a seeded store and a stubbed
   preview: `docs/screenshots/delete-account/`.
+- 2026-11-23, booking part 2b (Features worker, `claude/features-booking-2b`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
+  (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
+  grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
+- 2026-11-25, backup import (Features worker, `claude/features-backup-import`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (Sheet, `.lgroup` rows, `.seg`, butter card, `.btn` / `.btn2`, Saved · Undo toast;
+  no new components or tokens). Checks: Vitest (291, new `src/lib/backup.test.tsx`), typecheck, build; Playwright
+  390 px light and dark against the Vite dev server (backup made in the page from a second `Store`, picked with
+  `setInputFiles`): `docs/screenshots/backup-import/`.
+- 2026-11-23, "Pet me?" moments (Features worker, `claude/features-pet-me`): no skills, plugins or new MCP servers
+  (`lottiefiles-creator` connected, unused: existing poses only). Also fixed the paw on Train's "Go easy" card, which a
+  long line beside it squeezed to 11 px wide: `Paw` now has `flex: none` (not `Icon`: the tab-bar snapshot pins its
+  markup). Checks: Vitest (287, new `src/engine/petme.test.ts`), typecheck, build; Playwright 390 px light and dark with
+  a fixed clock at the day's first moment, a cat seeded through `globalThis.__chesterStore`: asking, then petted (+1
+  bond): `docs/screenshots/pet-me/`.
+- 2026-11-23, push revoke fix (Features worker, `claude/fix-push-revoke`): no skills, plugins or new MCP servers.
+  `20261123000000_push.sql` now revokes EXECUTE on its three trigger functions from public, anon and authenticated
+  (triggers don't need it at fire time; cron doesn't call them), so `security_test.sql` passes. Checks: the full SQL
+  chain on a throwaway Postgres 16 (order above, later migrations twice, every `supabase/tests/*.sql`): passed;
+  Vitest (284), typecheck, build.
+  Then (PM ask) `supabase/migrations/20261125000000_week3_bundle.sql`: the fixed push file + PR #43's
+  `20261124000000_delete_account.sql`, one file for Josh's run. Chain passed twice: with the separate push file first,
+  and with only the combined file (each run twice); then push_test, PR #43's `delete_account_test.sql`, security_test.

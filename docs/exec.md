@@ -26,19 +26,20 @@ Weekly limit resets **Tue Nov 17, 3 PM Eastern**. % used comes from Josh's usage
 | 2026-11-14 2 PM | **82%** (Josh's usage page) | 18% | 10% | ~3 | **freeze** | — |
 | 2026-11-16 | **91%** (Josh; other use) | 9% | into reserve | ~1 | **full stop**, fixes only if urgent | — |
 | 2026-11-17 3 PM | 0% (new week; resets Tue Nov 24, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
+| 2026-11-24 3 PM | 0% (week 3; resets Tue Dec 1, 3 PM) | 100% | 10% | 7 | ~10% | ~5% |
 
 Rules: each block in the schedule names its size (S/M/L) and budget. When the day's cap is reached, no new work
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
-## Mon Nov 23 push (Josh: balance reset to full, resets again Tue; use it today, 2 workers max)
+## Mon Nov 23 push (Josh: balance reset to full, resets again Tue; use it today; **one worker per task, up to 4 at once**). Lesson: 4 workers hit the 5-hour limit in ~20 min; **max 2 in parallel from Nov 25**.
 | Order | Worker | Work | Size | Status |
 |---|---|---|---|---|
 | 1 | W1 | Booking 2b: several cats at once | M / 4% | running |
-| 2 | W1 | Josh's design tweaks (input radius, dark-mode paw, doc) | S / 1% | queued |
+| 2 | W3 | Josh's design tweaks (input radius, dark-mode paw, doc) | S / 1% | running |
 | 3 | W1 | Small fixes: sync race, Visit two-pane | S / 3% | queued |
-| 1 | W2 | Push notifications build, PRs A + B (ship after Josh's SQL + secrets) | M / 8% | running |
-| next | either | Delete my account + privacy policy page (needed before charging/App Store; any SQL → next week's run) | M / 5% | queued |
+| 1 | W2 | Push notifications build, PRs A + B (ship after Josh's SQL + secrets) | M / 8% | done: PR A #42 + PR B #47 (hidden until the SQL; steps for Josh in #47) |
+| 2 | W4 | Delete my account + privacy policy page (needed before charging/App Store; any SQL → next week's run) | M / 5% | running |
 | next | either | "Pet me?" moments (up to 3 a day, 9 AM–9 PM) *(art)* | M / 5% | queued |
 | next | either | Backup import (export exists) | S / 2% | queued |
 | next | either | Log real play ("Played 10 min" + toy) + water/appetite chips on the daily check | S / 3% | queued |
@@ -46,10 +47,10 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 ## Week 3 (from Tue Nov 24, 3 PM) — first items
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
-| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys). Never in the repo or chat. | — | Josh | waiting |
+| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql` + `20261124000000_delete_account.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | waiting |
 | Wed Nov 25, 3:40 AM | Push build: pulled forward to Mon Nov 23 (W2) | — | — | moved |
 
-| Later | Small fixes left over (sync glitch, Visit two-pane); Josh's 4 design-system calls | S | | queued |
+| Any time | **Josh:** visual OK on #40 (design tweaks) and #44 ("Pet me?"); pick a privacy contact email for #43 | — | Josh | waiting |
 
 ## Schedule, week 2 (Nov 17–24, Eastern)
 Paced at ~55% total (work ~42%, nightly UX review ~7%, pings and the Executive ~5%), leaving room for Josh's own

@@ -25,7 +25,7 @@ Roles to add later if needed: Docs.
 
 1. **Only act when Josh asks.** No schedule. If the manager thinks something should happen (a worker finished, a
    pull request is ready, a test failed), it tells Josh and **asks before starting any new session or run**.
-2. **At most 2 workers running at a time** (Josh is often near his weekly usage limit). Before starting one, check
+2. **At most 2 workers running at a time** (Nov 23 lesson: 4 at once used up the 5-hour window in ~20 minutes, so keep 2 even on fresh days) (Josh is often near his weekly usage limit). Before starting one, check
    the running ones with `list_sessions` / `get_session`.
 3. **One task per worker, fresh session per task.** Brief it fully in its first message (it starts with no memory):
    the task, the files involved, what "done" means, its branch name, and this manager's session id. When the task
