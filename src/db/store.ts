@@ -17,6 +17,7 @@ import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
 import { SupabaseRemote } from '../sync/supabase';
 import { makeBackup, type Backup } from '../lib/backup';
 import { MOVE_REWARD } from '../engine/play';
+import { PET_ME, petMeId } from '../engine/petme';
 import { inSeason, FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
 
 export type SyncState = 'off' | 'syncing' | 'ok' | 'offline';
@@ -224,6 +225,12 @@ export class Store {
       const day = localDay(Date.now()); if (playedToday(c, day)) return null;
       return { ...c, log: [...c.log, this.event('play', 'play-' + day, PLAY_REWARD.treats, PLAY_REWARD.bond, toy)] };
     });
+  }
+
+  /** Petting him in a "Pet me?" moment: a bond point, the first time each day. False if today's is already in. */
+  petMe(): Promise<boolean> {
+    const id = petMeId(localDay(Date.now()));
+    return this.corner((c) => (c.log.some((e) => e.id === id) ? null : { ...c, log: [...c.log, this.event('pet', id, 0, PET_ME.bond)] }));
   }
 
   /** A play move found for the first time (see PLAY_MOVES): a few treats, once per pet. False if already found. */
@@ -571,6 +578,8 @@ export class Store {
       if (meRow && !meRow.name && this.myName && !household!.members.some((m) => m.userId !== account.userId && m.name === this.myName)) { await r.setName(cat.id, this.myName).catch(() => {}); household = { ...household!, members: await r.members(cat.id) }; }
       else if (meRow?.name && meRow.name !== this.myName) this.myName = meRow.name;
       const vetsSync = shared?.cat.householdId ? await this.syncVets(r, shared.cat.householdId).catch(() => 'ok' as const) : 'ok';
+      // another pet was shown while this ran (e.g. one just added): don't bring this one back; that pet syncs next
+      if (this.snap.cat && this.snap.cat.id !== cat.id) { this.set({ sync: 'ok', pets: await this.petList() }); void this.sync(); return; }
       await this.rebuild((await this.db.cats.get(cat.id)) ?? cat, { household, sync: 'ok', careSync, vetsSync });
       void this.publishCard(r, cat.id);
       void this.checkFriends(r);
