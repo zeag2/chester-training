@@ -33,22 +33,21 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (314 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (320 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
 design system (`docs/design-system.md`, `src/styles/tokens.css`); security review + Forgot password; delete account +
 privacy page (`#/privacy`); backup restore; training suggests the last skill trained; "Contact us" form (`#/contact`) with an admin-only Messages inbox in Settings
-→ App (Josh is the admin). SQL: everything up to `20261126000000_contact_messages.sql` has been run.
+→ App (Josh is the admin); real play (length + toy), water and appetite on the daily check; the UX reviewer's small fixes (#18). SQL: everything up to `20261126000000_contact_messages.sql` has been run.
 
 **Open PRs, merge in this order**
 1. #42 push, server (send-push Edge Function + service worker), then 2. #47 push, app (Settings → Notifications).
    Both wait for Josh's one-time push setup (`docs/sharing-setup.md` step 16: Vault `push_cron_key`, 4 function
    secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
-3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
-4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
+(#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
-**Waiting on Josh** (one word each): push setup done? (then merge #42, #47) · ship #48? · ship #18? ·
+**Waiting on Josh** (one word each): push setup done? (then merge #42, #47) ·
 keep the daily 12:41 PM auto-start? (it reads the archived secretary's `docs/exec.md`; repoint it to this file or stop it).
 
 **Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
