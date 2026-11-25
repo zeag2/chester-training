@@ -583,7 +583,7 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
-   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   batch: `supabase/migrations/20261123000000_push.sql`, run as part of `20261125000000_week3_bundle.sql` (prefs, outbox, triggers, pg_cron; tested with
    `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
    service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
@@ -1515,3 +1515,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   (triggers don't need it at fire time; cron doesn't call them), so `security_test.sql` passes. Checks: the full SQL
   chain on a throwaway Postgres 16 (order above, later migrations twice, every `supabase/tests/*.sql`): passed;
   Vitest (284), typecheck, build.
+  Then (PM ask) `supabase/migrations/20261125000000_week3_bundle.sql`: the fixed push file + PR #43's
+  `20261124000000_delete_account.sql`, one file for Josh's run. Chain passed twice: with the separate push file first,
+  and with only the combined file (each run twice); then push_test, PR #43's `delete_account_test.sql`, security_test.
