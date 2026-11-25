@@ -27,6 +27,12 @@ shared with the people you live with, plus friends who can see each other's cats
 
 ## Pick up here (2026-11-25)
 
+**Session rules** (Josh, 2026-11-25; follow them):
+1. Workers: one job each. Archive a worker as soon as its PR merges; never give an old worker a second job.
+2. PM: start a fresh PM from this file at 300k tokens of context (200k if it's mostly answering questions, not building).
+3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
+4. Mid-task: finish the job first, even past the line.
+
 **Live on main** (307 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
