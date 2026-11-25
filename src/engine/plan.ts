@@ -5,7 +5,7 @@ import type { SetRecord, SkillDef, SkillProgress } from './types';
 export const MAX_IN_PROGRESS = 3;
 export const REVIEW_AFTER_DAYS = 7;
 
-export interface Suggestion { skill: SkillDef; reason: string; kind: 'start' | 'continue' | 'review' }
+export interface Suggestion { skill: SkillDef; reason: string; kind: 'start' | 'continue' | 'review' | 'last' }
 
 export function suggestNext(defs: SkillDef[], progress: Record<string, SkillProgress>, sets: SetRecord[], unlockedHidden: string[], today: string): Suggestion[] {
   const last = (id: string) => sets.filter((s) => s.skillId === id).reduce<string | null>((m, s) => (!m || s.day > m ? s.day : m), null);
@@ -27,4 +27,16 @@ export function suggestNext(defs: SkillDef[], progress: Record<string, SkillProg
     .filter((x) => x.gap >= REVIEW_AFTER_DAYS).sort((a, b) => b.gap - a.gap)[0];
   if (review) out.push({ skill: review.d, kind: 'review', reason: review.gap >= 99 ? 'Quick review so he keeps it' : `Review: last practiced ${review.gap} days ago` });
   return out;
+}
+
+/** What the training card offers: the skill trained last for this cat (Josh repeats what he's working on), else the
+    plan's first suggestion. A last skill that's since been locked or dropped from the catalogue falls back too. */
+export function recommendNext(defs: SkillDef[], progress: Record<string, SkillProgress>, sets: SetRecord[], unlockedHidden: string[], today: string): Suggestion | null {
+  const lastSet = sets.reduce<SetRecord | null>((m, s) => (!m || s.at > m.at || (s.at === m.at && s.id > m.id) ? s : m), null);
+  const d = lastSet && defs.find((x) => x.id === lastSet.skillId);
+  if (d && (progress[d.id]?.mastered || isUnlocked(d, progress, unlockedHidden))) {
+    const gap = daysBetween(lastSet!.day, today);
+    return { skill: d, kind: 'last', reason: gap <= 0 ? 'Trained earlier today' : gap === 1 ? 'Trained yesterday' : `Last trained ${gap} days ago` };
+  }
+  return suggestNext(defs, progress, sets, unlockedHidden, today)[0] ?? null;
 }

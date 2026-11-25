@@ -198,6 +198,15 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   or a mastered skill.
 - **Skill tree and library:** skills by branch, with steps, tips and sources. Hidden skills unlock by mastery
   (check-ins aren't built yet).
+- **The training card offers the last skill trained** (2026-11-25, Josh: the "Up next" pick was something he doesn't
+  do, and he had to go into training to pick his usual one). `recommendNext()` in `src/engine/plan.ts`: the skill of
+  this cat's newest set (by `at`), labelled "Same as last time · trained yesterday"; with no sets, or if that skill is
+  gone from the catalogue or locked, it falls back to `suggestNext()[0]` (the old "Up next"). There never was a stored
+  pin: the "pinned" task was that plan suggestion, which is now only the fallback. Used by Train's card (the cat tab),
+  Home's Training card and bubble, and the + sheet's "Training set". **Start** goes straight into the session;
+  **Change** (`.btn2`, on Train's card and Home's card) opens the skill tree, the existing picker (skill, then "Start a
+  session"). Tests: `src/engine/engine.test.ts` (recommendNext), `src/screens/train.test.tsx`. Screenshots:
+  `docs/screenshots/train-last/`.
 - **Rules** (`src/engine/rules.ts`, `rewards.ts`): a pass is at least 5 reps, at least 80% good, and not Stressed.
   Two passes in a row move up a step. At most 3 rewarded sets a day, 1 treat per good rep, and at most 30 treats a day.
 
@@ -1574,6 +1583,10 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   markup). Checks: Vitest (287, new `src/engine/petme.test.ts`), typecheck, build; Playwright 390 px light and dark with
   a fixed clock at the day's first moment, a cat seeded through `globalThis.__chesterStore`: asking, then petted (+1
   bond): `docs/screenshots/pet-me/`.
+- 2026-11-25, train the last skill (Features worker, `claude/features-train-last`): no skills, plugins or new MCP
+  servers. Existing `.btn`/`.btn2`/cards and tokens only. Checks: Vitest (293, new `src/screens/train.test.tsx` and
+  `recommendNext` cases), typecheck, build; Playwright 390 px light and dark of the cat tab's training card and Home's
+  Training card, a cat seeded through `import('/chester-training/src/db/store.ts')`: `docs/screenshots/train-last/`.
 - 2026-11-23, push revoke fix (Features worker, `claude/fix-push-revoke`): no skills, plugins or new MCP servers.
   `20261123000000_push.sql` now revokes EXECUTE on its three trigger functions from public, anon and authenticated
   (triggers don't need it at fire time; cron doesn't call them), so `security_test.sql` passes. Checks: the full SQL
