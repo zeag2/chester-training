@@ -42,7 +42,7 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
 4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
 
-**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? · privacy contact email ·
+**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? · "Contact us" form (agenda 10) replaces the privacy email ·
 keep the secretary/executive role? · keep the art director? · keep the daily 12:41 PM auto-start?
 
 **Sessions and roles**: keep the PM ("PalDex project manager (current)"), the UX reviewer (nightly review) and,
@@ -709,6 +709,12 @@ Items marked *(art)* suit the art session.
    Booked chip is teal with dark text in dark mode.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
+
+10. [ ] **"Contact us" form** (M, SQL; Josh, 2026-11-25; don't skip): an in-app form (signed in or not: name
+   optional, message, the app version), saved to the app's own Supabase database in a new `contact_messages` table
+   (insert-only for users, RLS; SQL goes in the next weekly bundle), and a place in Settings where Josh (the app
+   owner, by user id) reads, marks done and deletes the messages. The privacy page (`#/privacy`) links to this form
+   instead of a `PRIVACY_CONTACT` email address; there is no contact email.
 
 ### Done recently
 - [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
