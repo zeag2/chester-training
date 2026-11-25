@@ -1521,6 +1521,6 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   bond): `docs/screenshots/pet-me/`.
 - 2026-11-25, real play + water and appetite (Features worker, `claude/features-play-water`): no skills, plugins or new
   MCP servers. Followed `docs/design-system.md` (existing `.seg`, `.chipbtn`, `.btn`/`.btn2`, the inline sky panel of
-  What's off?, the Saved · Undo toast); added a note on the inline question panel to it. Checks: Vitest (290), typecheck,
+  What's off?, the Saved · Undo toast); added a note on the inline question panel to it. Checks: Vitest (295 after rebasing on main), typecheck,
   build; Playwright 390 px light and dark against the Vite dev server (a cat, checks and a playtime seeded through
   `globalThis.__chesterStore`): `docs/screenshots/play-water/`.
