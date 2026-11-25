@@ -32,7 +32,7 @@ Rules: each block in the schedule names its size (S/M/L) and budget. When the da
 starts until the next day. The 10% reserve is for fixes and Josh's own chats. Remember the UX auditor's nightly run
 (1:45 AM Eastern) also spends from the same limit. Update this table at the start and end of each block.
 
-## Mon Nov 23 push (Josh: balance reset to full, resets again Tue; use it today; **one worker per task, up to 4 at once**)
+## Mon Nov 23 push (Josh: balance reset to full, resets again Tue; use it today; **one worker per task, up to 4 at once**). Lesson: 4 workers hit the 5-hour limit in ~20 min; **max 2 in parallel from Nov 25**.
 | Order | Worker | Work | Size | Status |
 |---|---|---|---|---|
 | 1 | W1 | Booking 2b: several cats at once | M / 4% | running |
