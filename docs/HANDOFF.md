@@ -25,20 +25,30 @@ shared with the people you live with, plus friends who can see each other's cats
   2026-11-09: the table and all six functions exist and refuse signed-out callers). `20261115000000_vets.sql` has been
   run too (checked 2026-11-10: the table exists and refuses signed-out callers).
 
-## Pick up here
+## Pick up here (2026-11-25)
 
-1. **The cat redraw is live** (first pass, 2026-11-08, art session): every pose to the style guide, a cuter ball pose
-   from Josh's references, and limbs that grow out of the body. Details and ideas for a second pass: section 2,
-   item 2. Next: Josh looks at it on his phone; for the next art pass, attach the reference images again (a session
-   can't see old uploads).
-2. **Friends: visit and treat** is built and live (2026-11-08, branch `claude/friends-visit-treat`), and
-   `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
-   refuse signed-out callers). Next: try a treat between two real phones.
-3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
-4. **Friend requests** are live (2026-11-09) and their SQL has been run. Next: try a request between two real phones,
-   and check the per-browser Add to Home Screen steps on a real iPhone and Android phone.
-5. Then the rest of section 2.
+**Live on main** (307 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
+one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
+Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
+design system (`docs/design-system.md`, `src/styles/tokens.css`); security review + Forgot password; delete account +
+privacy page (`#/privacy`); backup restore; training suggests the last skill trained. SQL: everything up to
+`20261125000000_week3_bundle.sql` has been run.
 
+**Open PRs, merge in this order**
+1. #42 push, server (send-push Edge Function + service worker), then 2. #47 push, app (Settings → Notifications).
+   Both wait for Josh's one-time push setup (`docs/sharing-setup.md` step 16: Vault `push_cron_key`, 4 function
+   secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
+3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
+4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
+
+**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? · privacy contact email ·
+keep the secretary/executive role? · keep the art director? · keep the daily 12:41 PM auto-start?
+
+**Sessions and roles**: keep the PM ("PalDex project manager (current)"), the UX reviewer (nightly review) and,
+until the push keys are copied, "PalDex · worker · push notifications build" (its chat holds the keys; then
+archive it). Every other worker is archived. The secretary/executive and the art director are optional (Josh
+decides). Workers: one per task, at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
 
 ---
 
