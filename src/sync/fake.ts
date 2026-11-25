@@ -1,7 +1,7 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, DeletionPlan, Member, NewPhoto, PetCard, Photo, Remote } from './remote';
+import type { Account, ContactMessage, DeletionPlan, Member, NewContactMessage, NewPhoto, PetCard, Photo, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
 
@@ -42,6 +42,10 @@ export class FakeServer {
   hides = new Set<string>();
   /** Whether the delete-account SQL is run. */
   deletionTable = true;
+  /** Whether the contact SQL is run; the messages, oldest first; who owns the app. */
+  contactTable = true;
+  contact: (ContactMessage & { by?: string })[] = [];
+  admins = new Set<string>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -251,4 +255,23 @@ export class FakeRemote implements Remote {
   }
   async photoUrls(paths: string[]) { this.ph(); return Object.fromEntries(paths.map((p) => [p, 'blob:' + p])); }
   async myThanks() { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.thanked).map((t) => ({ catId: t.catId, catName: this.s.cats.get(t.catId)?.cat.name ?? '', day: t.day })); }
+
+  // "Contact us": anyone may send; only admins read, mark done and delete (silently nothing for others, like RLS)
+  private admin() { return !!this.me && this.s.admins.has(this.me.userId); }
+  async sendContact(m: NewContactMessage) {
+    this.up(); if (!this.s.contactTable) throw new Error('contact-missing');
+    const message = m.message.trim(); if (!message || message.length > 2000) throw new Error('bad message');
+    const mine = this.s.contact.filter((x) => x.by === this.me?.userId && Date.now() - Date.parse(x.at) < 3_600_000);
+    if (this.me && mine.length >= 5) throw new Error('contact-rate-limited');
+    this.s.contact.push({ id: this.s.contact.length + 1, at: new Date().toISOString(), by: this.me?.userId, signedIn: !!this.me, name: m.name?.trim() || undefined,
+      reach: m.reach?.trim() || undefined, message, appVersion: m.appVersion, done: false });
+  }
+  async contactReady() { this.up(); return this.s.contactTable; }
+  async isAppAdmin() { this.up(); return this.s.contactTable && this.admin(); }
+  async contactMessages() {
+    this.user(); if (!this.admin()) return [];
+    return [...this.s.contact].reverse().map(({ by: _by, ...x }) => ({ ...x })); // eslint-disable-line @typescript-eslint/no-unused-vars
+  }
+  async setContactDone(id: number, done: boolean) { this.user(); if (!this.admin()) return; const m = this.s.contact.find((x) => x.id === id); if (m) m.done = done; }
+  async deleteContact(id: number) { this.user(); if (!this.admin()) return; this.s.contact = this.s.contact.filter((x) => x.id !== id); }
 }

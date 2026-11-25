@@ -1,8 +1,6 @@
 import { Icon } from '../ui/icons';
-import { back } from '../ui/router';
+import { back, go } from '../ui/router';
 
-/** Who to write to about privacy. Empty until Josh picks an address; the Contact section shows once it's set. */
-export const PRIVACY_CONTACT = '';
 export const PRIVACY_UPDATED = '23 November 2026';
 
 const H = ({ children }: { children: React.ReactNode }) => <h2 style={{ marginTop: 'var(--sp-6)' }}>{children}</h2>;
@@ -66,7 +64,9 @@ export function Privacy() {
     <H>Deleting your account</H>
     <P>Settings → Household & account → Delete my account. It deletes, for good: your account and email, your friends and requests, the photos you posted, and any cat nobody else looks after, with everything stored for it. Cats you share stay with your household, with their history; entries you logged stay without your name. Then everything is removed from this phone too.</P>
 
-    {PRIVACY_CONTACT && <><H>Questions</H><P>Write to {PRIVACY_CONTACT}. If this page changes, the date at the top changes too.</P></>}
+    <H>Questions</H>
+    <P>Ask anything about your data, or ask us to delete something, with the Contact us form (no account needed). If this page changes, the date at the top changes too.</P>
+    <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={() => go('contact')}>Contact us</button>
     <div style={{ height: 'var(--sp-8)' }} />
   </div>;
 }
