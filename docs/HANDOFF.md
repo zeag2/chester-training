@@ -58,12 +58,11 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 
 **Running**: UI visual-match pass (Josh's go 2026-11-25: "visual match first"; branch `claude/features-ui-match`): the rest of the app brought in line with the new badge/icon look using the apple-design skill (now on main, PR #51), plus review items 2, 6, 7, 8, 15.
 
-**Waiting on Josh**: the push iPhone test; which UX-review items to build first; whether the push worker chat can be archived (it holds the keys).
+**Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
 **Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
 2026-11-25; the old PM `session_019xqnwe2xGc6E2Zfb29YqrL` is "(archive)"). Keep the UX reviewer (nightly review,
-1:45 AM) and, until Josh has copied the push keys from its chat, "PalDex · worker · push notifications build"
-(`session_019xqnwhi5L7q6CocwuxdBKK`; archive it after). The secretary/executive and the art director are archived
+1:45 AM) (the push worker was archived 2026-11-25). The secretary/executive and the art director are archived
 (Josh, 2026-11-25). Scheduled tasks: "PalDex daily ping to Josh (PM)" 8:45 AM (in the PM session; recreate it in the
 new PM if needed), "PalDex daytime block (12:41 PM)" (`trig_01HJD4cwMABd4DKMcjXHUqrK`, fires into the PM, reads this section; Josh kept it 2026-11-25. Recreate it in a new PM; the old exec.md one is retired), "PalDex UX review" 1:45 AM. Workers: one job each,
 at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
