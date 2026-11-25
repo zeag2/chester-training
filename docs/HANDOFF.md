@@ -48,8 +48,8 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
 4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
 
-**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? · "Contact us" form (agenda 10) replaces the privacy email ·
-keep the secretary/executive role? · keep the art director? · keep the daily 12:41 PM auto-start?
+**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? ·
+run the Contact us SQL + your admin line (PR for agenda 10)? · keep the secretary/executive role? · keep the art director? · keep the daily 12:41 PM auto-start?
 
 **Sessions and roles**: keep the PM ("PalDex project manager (current)"), the UX reviewer (nightly review) and,
 until the push keys are copied, "PalDex · worker · push notifications build" (its chat holds the keys; then
@@ -716,11 +716,23 @@ Items marked *(art)* suit the art session.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
 
-10. [ ] **"Contact us" form** (M, SQL; Josh, 2026-11-25; don't skip): an in-app form (signed in or not: name
-   optional, message, the app version), saved to the app's own Supabase database in a new `contact_messages` table
-   (insert-only for users, RLS; SQL goes in the next weekly bundle), and a place in Settings where Josh (the app
-   owner, by user id) reads, marks done and deletes the messages. The privacy page (`#/privacy`) links to this form
-   instead of a `PRIVACY_CONTACT` email address; there is no contact email.
+10. [x] **"Contact us" form** (M, SQL; Josh, 2026-11-25; built 2026-11-25, `claude/features-contact-us`; **SQL
+   waiting on Josh**: `supabase/migrations/20261126000000_contact_messages.sql`, then his one-line `app_admins` insert
+   with his own user id, commented in that file). `#/contact` (`src/screens/Contact.tsx`), signed in or out, with or
+   without a pet: Message, "Your name (optional)", "How to reach you (optional)"; the app version (`APP_VERSION` in
+   `src/lib/version.ts`, from `vite.config.ts`: package.json's version + the build commit) goes along automatically.
+   Ends on a mint "Saved. Thank you!" card. Linked from Privacy's new Questions section (`PRIVACY_CONTACT` is gone; no
+   email address anywhere) and from Settings → App → Contact us. Before the SQL is run, or with no shared copy, it
+   says "Not available yet" (a head select on `contact_messages` tells a missing table from a refused read). Server:
+   anon and authenticated may only INSERT the form's columns (column grants); `private.contact_guard()` (before
+   insert, definer) sets user_id/created_at/done, trims, and rate-limits (5 an hour per signed-in person, 30 an hour
+   across everyone signed out; error `contact-rate-limited`). Only rows in `app_admins` can read, mark done
+   (`done` is the only updatable column) and delete; each person sees only their own `app_admins` row, which is the
+   app's admin check (`isAppAdmin()`). Settings → App → **Messages** (`#/messages`, `src/screens/Messages.tsx`) shows
+   only for an admin: newest first, Mark done / Not done ("Saved · marked done · Undo"), Delete ("Deleted · Undo"; the
+   delete is sent when the note goes, or on leaving the screen). `security_test.sql` now allows exactly that one anon
+   column grant. Tests: `src/screens/contact.test.tsx`, `supabase/tests/contact_test.sql`. Screenshots:
+   `docs/screenshots/contact-us/`. New design-system entry: `textarea.in` (multi-line input).
 
 ### Done recently
 - [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
@@ -1035,6 +1047,8 @@ supabase/
     20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
     20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
     20261115000000_vets.sql              your vet: the household's vet contacts (vets), household-only RLS
+    …                                    (bundle, push, delete_account, week3_bundle: see "Pick up here")
+    20261126000000_contact_messages.sql  "Contact us": contact_messages (insert-only for everyone), app_admins (the owner)
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -1225,7 +1239,9 @@ npm run build      # what CI runs
   2026-11-23 (later): `security_test.sql` goes after `push_test.sql`. Order that passed end to end: stubs, the four
   oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
   friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
-  `security_test` last. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
+  `security_test` last. 2026-11-25 (Contact us): the same chain plus `20261126000000_contact_messages.sql` (twice) and
+  `contact_test.sql` (its own people V, W) before `security_test`: passed. User D goes into `auth.users` only (not
+  `cat_members`) before the households migration, or `household_test` counts 3 members. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
   migrations, rls_test, people_test).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
@@ -1302,8 +1318,8 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
-| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`). (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
-| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Not used yet. |
+| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
+| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account) and 2026-11-25 (Contact us). |
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
@@ -1330,6 +1346,14 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-25, "Contact us" form + Messages inbox (Features worker, `claude/features-contact-us`): **supabase** and
+  **supabase-postgres-best-practices** skills (RLS/grants checklist: column-level INSERT grants, `(select auth.uid())`
+  in policies, definer trigger in `private` with a pinned `search_path` and execute revoked, indexes for the inbox and
+  the rate limit). No plugins; MCP: GitHub (pull request) and `send_message` to the PM (`lottiefiles-creator`
+  connected, unused; the Supabase connector was not used, Josh runs the SQL). Checks: Vitest (new
+  `src/screens/contact.test.tsx`), typecheck, build; a throwaway Postgres 16 for the whole SQL chain with
+  `contact_test.sql` and `security_test.sql` last; Playwright at 390 px, light and dark, against the Vite dev server
+  (`VITE_SUPABASE_URL=` for "Not available yet", then a `FakeServer` remote swapped in through `globalThis.__chesterStore`).
 - 2026-11-11, desktop step 6, All documents preview + tooltips (Features worker): no skills, plugins or MCP servers
   invoked beyond the GitHub and session tools (`lottiefiles-creator` connected, unused). Checks: Vitest (243, new
   `src/screens/documents.test.tsx`), typecheck, build; Playwright against the Vite dev server with a cat and three

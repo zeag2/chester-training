@@ -6,7 +6,8 @@ import { rewardFor } from '../engine/rewards';
 import { localDay } from '../engine/day';
 import { bySetOrder, carryFrom, deriveEarned, deriveProgress, mergeWallet } from '../engine/derive';
 import type { Cat, Gift, Mood, ProgressEvent, SessionDraft, SetRecord, SkillProgress, Wallet } from '../engine/types';
-import type { Account, AddFriendResult, DeletionPlan, Friend, FriendPet, FriendRequest, Member, PetCard, Photo, ReceivedTreat, Remote } from '../sync/remote';
+import { APP_VERSION } from '../lib/version';
+import type { Account, AddFriendResult, ContactMessage, DeletionPlan, Friend, FriendPet, FriendRequest, Member, PetCard, Photo, ReceivedTreat, Remote } from '../sync/remote';
 import { streak, weekStats } from '../lib/stats';
 import { newer, type CareData, type CareItem, type CareKind, type DocReading } from '../engine/care';
 import { shrinkImage } from '../lib/images';
@@ -653,6 +654,18 @@ export class Store {
   }
 
   /** What deleting the account would do; null when signed out or until its SQL is run ("coming soon"). */
+  // ---- "Contact us": works signed in or out; the app owner's inbox ----
+  /** False when there's no shared copy, or its contact SQL isn't run yet. Offline counts as ready (sending says so). */
+  async contactReady(): Promise<boolean> { return this.remote ? this.remote.contactReady().catch(() => true) : false; }
+  sendContact(m: { name?: string; reach?: string; message: string }) {
+    if (!this.remote) throw new Error('contact-missing');
+    return this.remote.sendContact({ name: m.name?.trim().slice(0, 80) || undefined, reach: m.reach?.trim().slice(0, 200) || undefined, message: m.message.trim().slice(0, 2000), appVersion: APP_VERSION });
+  }
+  async isAppAdmin(): Promise<boolean> { return this.remote && this.snap.account ? this.remote.isAppAdmin().catch(() => false) : false; }
+  contactMessages(): Promise<ContactMessage[]> { return this.remote ? this.remote.contactMessages() : Promise.resolve([]); }
+  setContactDone(id: number, done: boolean) { return this.remote!.setContactDone(id, done); }
+  deleteContact(id: number) { return this.remote!.deleteContact(id); }
+
   async accountDeletion(): Promise<DeletionPlan | null> { return this.remote && this.snap.account ? this.remote.accountDeletion() : null; }
   /** Delete the account (server: files, then pets handed over or deleted, then the user), then everything on this
       phone, so the app starts again at Welcome. */

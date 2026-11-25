@@ -128,7 +128,7 @@ go-ahead and a screenshot pass:
 | Button, destructive confirm | `.btn.danger`: the primary button in `--rose` | only as the last step of something that can't be undone, inside its sheet ("Remove from household", "Delete my account"); the row that opens it is a danger row |
 | Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
 | Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
-| **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` and `textarea` use `.in` too |
+| **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` uses `.in` too. A `textarea.in` (several lines, e.g. the Contact us message) sizes by `rows`, with `--sp-3` padding top and bottom and `--lh-body` lines, and can be dragged taller. Optional fields say so in the label: "Your name (optional)" |
 | Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
 | **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards |
 | Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` | `Icon({ name, size = 22 })`, `Paw({ color, size })` (`flex: none`, so it never squeezes in a `.row`) |

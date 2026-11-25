@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, AddFriendResult, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewPhoto, PetCard, Photo, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, ContactMessage, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewPhoto, NewContactMessage, PetCard, Photo, ReceivedTreat, Remote } from './remote';
 
 const MISSING = /does not exist|schema cache|could not find|PGRST20[25]|42P01|bucket not found/i;
 
@@ -275,4 +275,29 @@ export class SupabaseRemote implements Remote {
     const d = check(await this.sb.storage.from('pet-photos').createSignedUrls(paths, 3600)) ?? [];
     return Object.fromEntries(d.flatMap((x) => (x.signedUrl && x.path ? [[x.path, x.signedUrl] as const] : [])));
   }
+
+  // ---- "Contact us" (insert-only for everyone; the owner reads them) ----
+  private isMissing(e: { message: string; code?: string }) { return MISSING.test(e.message) || MISSING.test(e.code ?? ''); }
+  async sendContact(m: NewContactMessage) {
+    // no .select(): senders can't read the table back
+    const r = await this.sb.from('contact_messages').insert({ name: m.name || null, reach: m.reach || null, message: m.message, app_version: m.appVersion });
+    if (r.error) throw new Error(this.isMissing(r.error) ? 'contact-missing' : /contact-rate-limited/.test(r.error.message) ? 'contact-rate-limited' : r.error.message);
+  }
+  async contactReady() {
+    // a select is refused for senders (no SELECT grant or rows), but only a missing table says "does not exist"
+    const r = await this.sb.from('contact_messages').select('id', { head: true }).limit(0);
+    return !r.error || !this.isMissing(r.error);
+  }
+  async isAppAdmin() {
+    const { data } = await this.sb.auth.getSession(); const uid = data.session?.user.id; if (!uid) return false;
+    const r = await this.sb.from('app_admins').select('user_id').eq('user_id', uid).maybeSingle();
+    return !r.error && !!r.data;
+  }
+  async contactMessages(): Promise<ContactMessage[]> {
+    const rows = check(await this.sb.from('contact_messages').select('id, created_at, user_id, name, reach, message, app_version, done').order('created_at', { ascending: false }).limit(500)) as Record<string, unknown>[];
+    return rows.map((x) => ({ id: x.id as number, at: x.created_at as string, signedIn: !!x.user_id, name: (x.name as string) || undefined, reach: (x.reach as string) || undefined,
+      message: x.message as string, appVersion: (x.app_version as string) || undefined, done: !!x.done }));
+  }
+  async setContactDone(id: number, done: boolean) { check(await this.sb.from('contact_messages').update({ done }).eq('id', id)); }
+  async deleteContact(id: number) { check(await this.sb.from('contact_messages').delete().eq('id', id)); }
 }

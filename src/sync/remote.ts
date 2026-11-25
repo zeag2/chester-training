@@ -117,4 +117,19 @@ export interface Remote {
   editCaption(photoId: string, caption: string): Promise<void>;
   /** The poster or the pet's household deletes the photo, then its file. Throws 'not-allowed' when nothing was deleted. */
   deletePhoto(photo: Pick<Photo, 'id' | 'path'>): Promise<void>;
+
+  /** "Contact us". Works signed in or out. Throws 'contact-missing' until its SQL is run, 'contact-rate-limited'
+      after too many in an hour. */
+  sendContact(m: NewContactMessage): Promise<void>;
+  /** False when the contact SQL hasn't been run yet (the form then says it isn't available). */
+  contactReady(): Promise<boolean>;
+  /** Whether the signed-in person owns the app (false signed out, or before the SQL is run). */
+  isAppAdmin(): Promise<boolean>;
+  /** The owner's inbox, newest first. */
+  contactMessages(): Promise<ContactMessage[]>;
+  setContactDone(id: number, done: boolean): Promise<void>;
+  deleteContact(id: number): Promise<void>;
 }
+
+export interface NewContactMessage { name?: string; reach?: string; message: string; appVersion: string }
+export interface ContactMessage { id: number; at: string; signedIn: boolean; name?: string; reach?: string; message: string; appVersion?: string; done: boolean }

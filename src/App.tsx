@@ -15,6 +15,8 @@ import { Feed } from './screens/Feed';
 import { ResetPassword, Together } from './screens/Together';
 import { Gallery } from './screens/Gallery';
 import { Privacy } from './screens/Privacy';
+import { Contact } from './screens/Contact';
+import { Messages } from './screens/Messages';
 import { Care } from './screens/Care';
 import { Corner } from './screens/Corner';
 import { Train } from './screens/Train';
@@ -63,6 +65,7 @@ export default function App() {
   if (import.meta.env.DEV && r0 === 'gallery') return <Gallery />;
   if (r0 === 'reset-password') return <ResetPassword />;
   if (r0 === 'privacy') return <Privacy />; // readable before there's a pet (Welcome, the account form)
+  if (r0 === 'contact') return <Contact />; // "Contact us", from Privacy too, so it works before there's a pet
   if (r0 === 'together' || r0 === 'join') return <Together key={r0} mode={r0 === 'join' ? 'join' : 'share'} />;
   if (r0 === 'add-pet') return <Onboarding adding key={pendingPets().map((p) => p.name).join()} />;
   if (r0 === 'another' && snap.cat) return <AnotherCat />;
@@ -91,6 +94,7 @@ export default function App() {
     case 'play': return <Play key={r1} toy={r1} />;
     // Settings (the gear on Home): your cats, household and account, the app. #/me lands here too
     case 'me': case 'settings': body = <Settings />; tab = 'settings'; break;
+    case 'messages': body = <Messages />; tab = 'settings'; break;
     // Friends: the photo feed on top, then friends' cats, requests and your code
     case 'friends': body = <Friends key={r1 ?? ''} code={r1} />; tab = 'friends'; break;
     case 'feed': body = <Feed key={r1 ?? ''} skill={r1} />; tab = 'friends'; break;

@@ -197,6 +197,9 @@ export function Settings() {
   const showInstall = useInstallHint();
   const [restore, setRestore] = useState<BackupRead | null>(null);
   const file = useRef<HTMLInputElement>(null);
+  // the "Contact us" inbox shows only for the app owner (a select that returns a row only for admins)
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { let on = true; setAdmin(false); if (account) void store.isAppAdmin().then((a) => { if (on) setAdmin(a); }); return () => { on = false; }; }, [account?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!cat) return null;
   const pickBackup = () => file.current?.click();
   const onBackup = async (f?: File) => { if (f) setRestore(readBackup(await f.text())); };
@@ -243,6 +246,8 @@ export function Settings() {
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
       <Row label="Privacy" sub="What PalDex keeps, and who sees it" onClick={() => go('privacy')} />
       <Row label="Restore from a backup" sub="Add a backup file’s pets and logs to this phone" onClick={pickBackup} />
+      <Row label="Contact us" sub="A question, an idea, or something not working" onClick={() => go('contact')} />
+      {admin && <Row label="Messages" sub="What people sent with Contact us" onClick={() => go('messages')} />}
     </Group>
     <input ref={file} type="file" accept="application/json,.json" hidden aria-hidden="true" data-testid="backup-file" onChange={(e) => { void onBackup(e.target.files?.[0]); e.target.value = ''; }} />
     {restore && <Restore key={restore.ok ? 'ok' + restore.summary.exported : restore.error} read={restore} onPick={pickBackup} onClose={() => setRestore(null)} />}
