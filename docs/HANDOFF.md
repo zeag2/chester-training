@@ -233,6 +233,19 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   preselected, so Save is one more tap; `likelySymptoms()` in `care.ts` preselects anything logged in the last 3 days
   and offers Eating less / Litter box change / Low energy next; "Other or details…" opens the full form). Each chosen
   chip is saved as its own symptom. Once done it shrinks to one line.
+  **Water and appetite** (2026-11-25, `claude/features-play-water`; no SQL): two optional one-of rows on the check,
+  **Water** Normal / More / Less and **Appetite** Normal / Picky / Didn't eat (`.seg`; tap the picked one again to
+  clear it), saved on the check entry (`data.water`, `data.appetite`; `WATER`, `APPETITE` in `care.ts`). The done line
+  adds them ("…all normal (8:20). Water: more · Appetite: picky."). Shown in the quick-log sheet and the desktop
+  Health log (`dailyDetail()`), and in the vet summary's Daily checks, per day over 30 days ("Water: more than usual on
+  2 days, less than usual on 1 day (of 4 days noted)"; `waterText`, `appetiteText` in `vetsummary.ts`, and in Share).
+- **Played logs real play** (2026-11-25, same branch): tapping Played opens an inline **Playtime** panel: How long
+  (5 / 10 / 15 min) and Toy (Feather wand, Laser dot, Cardboard box, Crinkle tunnel: the toys PalDex already has,
+  `PLAY_TOYS`), both optional and preselected from the last playtime (`lastPlay()`), so Save is one tap; Not now closes
+  it. Saved as `data.minutes`, `data.toy`; the toast reads **"Saved · 10 min · Laser dot · Undo"** (plus "Mochi too",
+  which logs the same playtime). The tile shows "1× today · 10 min"; "Played again" in the sheet opens the panel too.
+  `#/log/play` still logs a bare playtime. Tests: `src/ui/dailytaps.test.tsx`, `src/engine/playwater.test.ts`.
+  Screenshots: `docs/screenshots/play-water/`.
 - **Fixing a mistaken tap later** (2026-11-10, `src/ui/DailyLogSheet.tsx`, branch `claude/features-edit-logs`): a
   **done** tile (e.g. "Fed 2 of 2", "Scooped 8:15", "Played 1×") opens that kind's entries for today instead of
   logging again, with **Log another meal** / Scooped again / Played again at the bottom for a real extra one. Under the
@@ -764,8 +777,8 @@ Items marked *(art)* suit the art session.
     Not checked on a real iPhone. Ideas: a lying-in-the-box pose, a tail sticking out of the tunnel while he hides.
   - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
     there, or with that session paused.
-- [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
-  (indoor cats need it), never a guilt message.
+- [x] **Log real play** (S; done 2026-11-25, `claude/features-play-water`): Played asks how long and with what (see
+  section 1, Quick log). Still open: a gentle daily play goal (indoor cats need it), never a guilt message.
 
 - [x] **Add vet visits to the calendar** (done 2026-11-09): a vet visit can be dated in the future (an upcoming
   appointment, with an optional time); its form then offers **iPhone / Apple** (an `.ics` file) or **Google** (a link),
@@ -781,7 +794,8 @@ Items marked *(art)* suit the art session.
   months (`kittenPlan()` in `src/engine/kittenplan.ts`): core FVRCP series, rabies, FeLV, spay/neuter, one-year
   boosters, ticked off by matching logged doses by name (FVRCP/distemper, rabies, FeLV/leukemia) or `Cat.altered`; tap a
   row to log it. Worded as a guide; the vet sets the real schedule.
-- [ ] **Water and appetite notes** (S): optional chips on the daily check.
+- [x] **Water and appetite notes** (S; done 2026-11-25, `claude/features-play-water`): optional chips on the daily
+  check, in the Health log and the vet summary (see section 1, Quick log).
 
 ### Treats and corner
 - [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
@@ -1505,3 +1519,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   markup). Checks: Vitest (287, new `src/engine/petme.test.ts`), typecheck, build; Playwright 390 px light and dark with
   a fixed clock at the day's first moment, a cat seeded through `globalThis.__chesterStore`: asking, then petted (+1
   bond): `docs/screenshots/pet-me/`.
+- 2026-11-25, real play + water and appetite (Features worker, `claude/features-play-water`): no skills, plugins or new
+  MCP servers. Followed `docs/design-system.md` (existing `.seg`, `.chipbtn`, `.btn`/`.btn2`, the inline sky panel of
+  What's off?, the Saved · Undo toast); added a note on the inline question panel to it. Checks: Vitest (290), typecheck,
+  build; Playwright 390 px light and dark against the Vite dev server (a cat, checks and a playtime seeded through
+  `globalThis.__chesterStore`): `docs/screenshots/play-water/`.

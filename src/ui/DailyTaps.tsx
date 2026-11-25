@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
-import { APPETITE, dailyDetail, dailyToday, lastPlay, likelySymptoms, MEALS_PER_DAY, PLAY_MINUTES, PLAY_TOYS, playText, WATER, type Appetite, type CareData, type CareItem, type DailyWhat, type Water } from '../engine/care';
+import { APPETITE, dailyDetail, dailyToday, lastPlay, likelySymptoms, MEALS_PER_DAY, PLAY_MINUTES, PLAY_TOYS, WATER, type Appetite, type CareData, type CareItem, type DailyWhat, type Water } from '../engine/care';
 import { Icon, Paw } from './icons';
 import { go } from './router';
 import * as audio from '../lib/audio';
@@ -76,7 +76,8 @@ export function DailyTaps() {
   const savePlay = async () => {
     if (!playing) return;
     const extra = { ...(playing.minutes ? { minutes: playing.minutes } : {}), ...(playing.toy ? { toy: playing.toy } : {}) };
-    const it = await log('play', extra, ['Played', playText(extra)].filter(Boolean).join(' '));
+    // short, so it fits the toast beside Undo: "Saved · 10 min · Laser dot"
+    const it = await log('play', extra, dailyDetail({ what: 'play', ...extra }) || 'Playtime');
     if (it) setPlaying(null);
   };
   const check = async (ok: boolean) => { const it = await log('check', { ok, ...notes }); if (it) setNotes({}); return it; };

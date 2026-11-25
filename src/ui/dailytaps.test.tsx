@@ -61,7 +61,7 @@ describe('Quick log taps', () => {
     await tap('10 min'); await tap('Laser dot'); await tap('Save');
     const [p] = await live('play', id);
     expect(p.data).toMatchObject({ what: 'play', minutes: 10, toy: 'laser' });
-    expect(screen.getByRole('status').textContent).toContain('Saved · Played 10 min with the laser dot');
+    expect(screen.getByRole('status').textContent).toContain('Saved · 10 min · Laser dot');
     await tap('Undo');
     expect(await live('play', id)).toHaveLength(0);
     // an undone playtime isn't preselected next time; a saved one is (Save is then one tap)

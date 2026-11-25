@@ -163,11 +163,6 @@ export function lastPlay(items: CareItem[]): { minutes?: number; toy?: string } 
     .sort((a, b) => b.at - a.at)[0];
   return p ? { minutes: p.data.minutes, toy: p.data.toy && PLAY_TOYS[p.data.toy] ? p.data.toy : undefined } : {};
 }
-/** "10 min with the laser dot", "10 min", "with the box": a playtime's details ('' when none). */
-export function playText(d: { minutes?: number; toy?: string }): string {
-  const toy = d.toy ? PLAY_TOYS[d.toy] ?? d.toy : '';
-  return [d.minutes ? `${d.minutes} min` : '', toy ? `with the ${toy.toLowerCase()}` : ''].filter(Boolean).join(' ');
-}
 /** A quick log's details for the Health log: "10 min · Laser dot", "All normal · Water: more · Appetite: picky". */
 export function dailyDetail(d: CareData['daily']): string {
   const toy = d.toy ? PLAY_TOYS[d.toy] ?? d.toy : '';

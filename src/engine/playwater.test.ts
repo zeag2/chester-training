@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dailyDetail, lastPlay, playText, type CareItem } from './care';
+import { dailyDetail, lastPlay, type CareItem } from './care';
 import { appetiteText, summaryText, vetSummary, waterText } from './vetsummary';
 
 const now = new Date('2026-11-23T18:00:00').getTime();
@@ -10,9 +10,8 @@ const daily = (data: CareItem<'daily'>['data'], at: number, extra: Partial<CareI
 
 describe('real playtime', () => {
   it('describes a playtime and preselects the last one', () => {
-    expect(playText({ minutes: 10, toy: 'laser' })).toBe('10 min with the laser dot');
-    expect(playText({ toy: 'box' })).toBe('with the cardboard box');
-    expect(playText({})).toBe('');
+    expect(dailyDetail({ what: 'play', toy: 'box' })).toBe('Cardboard box');
+    expect(dailyDetail({ what: 'play' })).toBe('');
     expect(dailyDetail({ what: 'play', minutes: 15, toy: 'wand' })).toBe('15 min · Feather wand');
     const items = [daily({ what: 'play', minutes: 5, toy: 'box' }, now - 2 * day), daily({ what: 'play', minutes: 15, toy: 'wand' }, now - day),
       daily({ what: 'play' }, now - 1000), daily({ what: 'play', minutes: 10 }, now - 500, { deleted: true })];
