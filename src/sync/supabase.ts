@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, AddFriendResult, Friend, FriendPet, FriendRequest, Member, NewPhoto, PetCard, Photo, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, ContactMessage, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewPhoto, NewContactMessage, PetCard, Photo, ReceivedTreat, Remote } from './remote';
 
 const MISSING = /does not exist|schema cache|could not find|PGRST20[25]|42P01|bucket not found/i;
 
@@ -45,6 +45,23 @@ export class SupabaseRemote implements Remote {
   async setPassword(password: string) {
     const r = await this.sb.auth.updateUser({ password });
     if (r.error) throw new Error(/different from the old/i.test(r.error.message) ? 'same-password' : r.error.message);
+  }
+
+  async accountDeletion(): Promise<DeletionPlan | null> {
+    const r = await this.sb.rpc('account_deletion_preview');
+    if (r.error) { if (MISSING.test(r.error.message) || MISSING.test((r.error as { code?: string }).code ?? '')) return null; throw new Error(r.error.message); }
+    const d = r.data as Partial<DeletionPlan> | null;
+    return { deleted: d?.deleted ?? [], kept: d?.kept ?? [], files: d?.files ?? [] };
+  }
+  async deleteAccount(plan: DeletionPlan) {
+    // files first, while still a member (the storage delete policies need membership); SQL can't delete them
+    for (const bucket of new Set(plan.files.map((f) => f.bucket))) {
+      const paths = plan.files.filter((f) => f.bucket === bucket).map((f) => f.path);
+      for (let i = 0; i < paths.length; i += 100) { const r = await this.sb.storage.from(bucket).remove(paths.slice(i, i + 100)); if (r.error) throw new Error(r.error.message); }
+    }
+    check(await this.sb.rpc('delete_my_account'));
+    // the user is gone, so a global sign-out would fail: just forget the session on this phone
+    await this.sb.auth.signOut({ scope: 'local' }).catch(() => {});
   }
 
   // ---- households: people and pets together. Until the households SQL is run, each pet is shared on its own. ----
@@ -137,7 +154,7 @@ export class SupabaseRemote implements Remote {
     const out: SetRecord[] = []; const page = 1000;
     for (let from = 0; ; from += page) {
       const rows = check(await this.sb.from('sets').select('id, by_user, data').eq('cat_id', catId).order('at').order('id').range(from, from + page - 1)) ?? [];
-      for (const r of rows) out.push({ ...(r.data as SetRecord), id: r.id as string, catId, by: r.by_user as string });
+      for (const r of rows) out.push({ ...(r.data as SetRecord), id: r.id as string, catId, by: (r.by_user as string | null) ?? undefined });
       if (rows.length < page) return out;
     }
   }
@@ -258,4 +275,29 @@ export class SupabaseRemote implements Remote {
     const d = check(await this.sb.storage.from('pet-photos').createSignedUrls(paths, 3600)) ?? [];
     return Object.fromEntries(d.flatMap((x) => (x.signedUrl && x.path ? [[x.path, x.signedUrl] as const] : [])));
   }
+
+  // ---- "Contact us" (insert-only for everyone; the owner reads them) ----
+  private isMissing(e: { message: string; code?: string }) { return MISSING.test(e.message) || MISSING.test(e.code ?? ''); }
+  async sendContact(m: NewContactMessage) {
+    // no .select(): senders can't read the table back
+    const r = await this.sb.from('contact_messages').insert({ name: m.name || null, reach: m.reach || null, message: m.message, app_version: m.appVersion });
+    if (r.error) throw new Error(this.isMissing(r.error) ? 'contact-missing' : /contact-rate-limited/.test(r.error.message) ? 'contact-rate-limited' : r.error.message);
+  }
+  async contactReady() {
+    // a select is refused for senders (no SELECT grant or rows), but only a missing table says "does not exist"
+    const r = await this.sb.from('contact_messages').select('id', { head: true }).limit(0);
+    return !r.error || !this.isMissing(r.error);
+  }
+  async isAppAdmin() {
+    const { data } = await this.sb.auth.getSession(); const uid = data.session?.user.id; if (!uid) return false;
+    const r = await this.sb.from('app_admins').select('user_id').eq('user_id', uid).maybeSingle();
+    return !r.error && !!r.data;
+  }
+  async contactMessages(): Promise<ContactMessage[]> {
+    const rows = check(await this.sb.from('contact_messages').select('id, created_at, user_id, name, reach, message, app_version, done').order('created_at', { ascending: false }).limit(500)) as Record<string, unknown>[];
+    return rows.map((x) => ({ id: x.id as number, at: x.created_at as string, signedIn: !!x.user_id, name: (x.name as string) || undefined, reach: (x.reach as string) || undefined,
+      message: x.message as string, appVersion: (x.app_version as string) || undefined, done: !!x.done }));
+  }
+  async setContactDone(id: number, done: boolean) { check(await this.sb.from('contact_messages').update({ done }).eq('id', id)); }
+  async deleteContact(id: number) { check(await this.sb.from('contact_messages').delete().eq('id', id)); }
 }

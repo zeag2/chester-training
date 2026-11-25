@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../db/store';
-import { summaryText, vetSummary } from '../engine/vetsummary';
+import { appetiteText, summaryText, vetSummary, waterText } from '../engine/vetsummary';
 import { MED_LABEL, type MedWhat } from '../engine/care';
 import { fmtTime, telHref, yourVets } from '../engine/vets';
 import { ageText } from '../lib/stats';
@@ -49,7 +49,8 @@ export function VetSummary() {
       {sect('Weight', s.weights.length ? <>{line(`${w0.lb} lb`, fmt(w0.day))}{s.weights.length > 1 && line(`${wl.lb} lb → ${w0.lb} lb`, `since ${fmt(wl.day)}`)}</> : none('No weigh-ins logged yet.'))}
       {sect('Medicine and vaccines', s.doses.length ? s.doses.map((x) => line(`${x.name} (${MED_LABEL[x.what as MedWhat] ?? x.what})`, `given ${fmt(x.given)}${x.nextDue ? ` · next ${fmt(x.nextDue)}` : ''}`, x.name)) : none('None logged.'))}
       {sect('Symptoms (last 60 days)', s.symptoms.length ? s.symptoms.map((x, i) => line(x.what + (x.worried ? ' (we were worried)' : ''), fmt(x.day), i)) : none('None logged.'))}
-      {sect('Daily checks (last 30 days)', s.checks.days ? line(`${s.checks.days} days checked`, s.checks.off ? `${s.checks.off} with something off` : 'all normal') : none('No daily checks yet.'))}
+      {sect('Daily checks (last 30 days)', s.checks.days ? <>{line(`${s.checks.days} days checked`, s.checks.off ? `${s.checks.off} with something off` : 'all normal')}
+        {waterText(s.water) && line('Water', waterText(s.water))}{appetiteText(s.appetite) && line('Appetite', appetiteText(s.appetite))}</> : none('No daily checks yet.'))}
       {sect('Recent vet visits', s.visits.length ? s.visits.map((v) => <button key={v.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + v.id)}>
         <span className="sp"><span style={{ display: 'block' }}>{v.reason}{v.clinic ? ` · ${v.clinic}` : ''}</span>
           <span className="s" style={{ display: 'block' }}>{fmt(v.day)}{v.unconfirmed ? ' · booked, not marked done' : ''}{v.docs ? ` · ${v.docs} document${v.docs === 1 ? '' : 's'}` : ''}</span>

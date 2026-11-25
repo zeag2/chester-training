@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { SKILLS, SKILL_BY_ID } from './skills';
 import { localDay } from './day';
 import { isPass, isStruggling, applySet, clampSet, isUnlocked } from './rules';
-import { suggestNext } from './plan';
+import { recommendNext, suggestNext } from './plan';
 import { rewardFor, rollGift, DAILY_REWARDED_SETS, DAILY_TREAT_CAP } from './rewards';
 import type { SetRecord, SkillProgress } from './types';
 
@@ -109,6 +109,26 @@ describe('suggestNext', () => {
     const sets = [mk({ skillId: 'clicker', day: '2026-10-30' })];
     const out = suggestNext(SKILLS, prog, sets, [], '2026-11-07');
     expect(out.some((o) => o.skill.id === 'clicker' && /review/i.test(o.reason))).toBe(true);
+  });
+});
+
+describe('recommendNext (the training card)', () => {
+  const prog = { clicker: { skillId: 'clicker', step: 3, mastered: true }, name: { skillId: 'name', step: 1, mastered: false }, target: p0() };
+  it('offers the skill trained last, whatever the plan would pick', () => {
+    const sets = [mk({ skillId: 'target', at: 1, day: '2026-11-05' }), mk({ skillId: 'name', at: 2, day: '2026-11-06' })];
+    const r = recommendNext(SKILLS, prog, sets, [], '2026-11-07')!;
+    expect(r.skill.id).toBe('name'); expect(r.kind).toBe('last'); expect(r.reason).toBe('Trained yesterday');
+  });
+  it('goes by time, not list order', () => {
+    const sets = [mk({ skillId: 'name', at: 5, day: '2026-11-07' }), mk({ skillId: 'target', at: 2, day: '2026-11-07' })];
+    expect(recommendNext(SKILLS, prog, sets, [], '2026-11-07')!.skill.id).toBe('name');
+  });
+  it('falls back to the plan with no history, or when the last skill is unknown or locked', () => {
+    expect(recommendNext(SKILLS, {}, [], [], '2026-11-07')).toEqual(suggestNext(SKILLS, {}, [], [], '2026-11-07')[0]);
+    const gone = [mk({ skillId: 'no-such-skill' })];
+    expect(recommendNext(SKILLS, prog, gone, [], '2026-11-07')!.kind).not.toBe('last');
+    const locked = SKILLS.find((d) => d.hidden)!;
+    expect(recommendNext(SKILLS, prog, [mk({ skillId: locked.id })], [], '2026-11-07')!.kind).not.toBe('last');
   });
 });
 

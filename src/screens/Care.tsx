@@ -7,6 +7,7 @@ import { Sheet } from '../ui/Sheet';
 import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, medsDue, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedDue, type MedWhat, type Verdict,
+  dailyDetail,
 } from '../engine/care';
 import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
@@ -186,11 +187,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
 const QUICK: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Played', check: 'Daily check' };
 const QUICK_ICON: Record<DailyWhat, string> = { fed: 'leaf', scoop: 'box', play: 'yarn', check: 'check' };
 const clock = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-function quickDetail(i: CareItem<'daily'>): string {
-  const d = i.data;
-  const what = d.what === 'check' ? (d.ok === false ? 'Something off' : 'All normal') : d.what === 'play' && d.minutes ? `${d.minutes} min` : '';
-  return [what, d.notes].filter(Boolean).join(' · ');
-}
+const quickDetail = (i: CareItem<'daily'>) => dailyDetail(i.data);
 
 /** Desktop's Health log: one table across both columns (date · what · details · who, "who" once the household shares it), newest first, with the last 7 days'
     quick logs mixed in. A row opens what the list opens on phones: the visit page, the entry's form, or (quick logs)

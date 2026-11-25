@@ -18,6 +18,10 @@ export interface ReceivedTreat { from: string; fromName: string; day: string }
 export interface Photo { id: string; catId: string; path: string; caption: string; width?: number; height?: number; skill?: string; by: string; at: string; paws: number; pawed: boolean }
 export interface NewPhoto { catId: string; path: string; caption: string; width: number; height: number; skill?: string }
 
+/** What deleting the account would do: pets that go (nobody else has them), pets that stay with someone, and the
+    stored files the app removes first. */
+export interface DeletionPlan { deleted: { id: string; name: string }[]; kept: { id: string; name: string; keeper: string }[]; files: { bucket: string; path: string }[] }
+
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
 /** The shared copy of a cat. The app talks to Supabase through this; tests use an in-memory one. */
@@ -35,6 +39,10 @@ export interface Remote {
   startRecovery(accessToken: string, refreshToken: string): Promise<Account>;
   /** Change the signed-in account's password. */
   setPassword(password: string): Promise<void>;
+  /** What deleting the signed-in account would do; null until its SQL is run (the app then says "coming soon"). */
+  accountDeletion(): Promise<DeletionPlan | null>;
+  /** Remove the plan's files, delete the account on the server (pets handed over or deleted), then sign out here. */
+  deleteAccount(plan: DeletionPlan): Promise<void>;
 
   myCatIds(): Promise<string[]>;
   getCat(id: string): Promise<{ cat: Cat; inviteCode: string } | null>;
@@ -109,4 +117,19 @@ export interface Remote {
   editCaption(photoId: string, caption: string): Promise<void>;
   /** The poster or the pet's household deletes the photo, then its file. Throws 'not-allowed' when nothing was deleted. */
   deletePhoto(photo: Pick<Photo, 'id' | 'path'>): Promise<void>;
+
+  /** "Contact us". Works signed in or out. Throws 'contact-missing' until its SQL is run, 'contact-rate-limited'
+      after too many in an hour. */
+  sendContact(m: NewContactMessage): Promise<void>;
+  /** False when the contact SQL hasn't been run yet (the form then says it isn't available). */
+  contactReady(): Promise<boolean>;
+  /** Whether the signed-in person owns the app (false signed out, or before the SQL is run). */
+  isAppAdmin(): Promise<boolean>;
+  /** The owner's inbox, newest first. */
+  contactMessages(): Promise<ContactMessage[]>;
+  setContactDone(id: number, done: boolean): Promise<void>;
+  deleteContact(id: number): Promise<void>;
 }
+
+export interface NewContactMessage { name?: string; reach?: string; message: string; appVersion: string }
+export interface ContactMessage { id: number; at: string; signedIn: boolean; name?: string; reach?: string; message: string; appVersion?: string; done: boolean }

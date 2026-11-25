@@ -25,20 +25,39 @@ shared with the people you live with, plus friends who can see each other's cats
   2026-11-09: the table and all six functions exist and refuse signed-out callers). `20261115000000_vets.sql` has been
   run too (checked 2026-11-10: the table exists and refuses signed-out callers).
 
-## Pick up here
+## Pick up here (2026-11-25)
 
-1. **The cat redraw is live** (first pass, 2026-11-08, art session): every pose to the style guide, a cuter ball pose
-   from Josh's references, and limbs that grow out of the body. Details and ideas for a second pass: section 2,
-   item 2. Next: Josh looks at it on his phone; for the next art pass, attach the reference images again (a session
-   can't see old uploads).
-2. **Friends: visit and treat** is built and live (2026-11-08, branch `claude/friends-visit-treat`), and
-   `20261111000000_friend_treats.sql` has been run (checked against the live database: the three functions exist and
-   refuse signed-out callers). Next: try a treat between two real phones.
-3. **Test on a real iPhone** with someone new: name and icon on the Home Screen, both cats carried into setup.
-4. **Friend requests** are live (2026-11-09) and their SQL has been run. Next: try a request between two real phones,
-   and check the per-browser Add to Home Screen steps on a real iPhone and Android phone.
-5. Then the rest of section 2.
+**Session rules** (Josh, 2026-11-25; follow them):
+1. Workers: one job each. Archive a worker as soon as its PR merges; never give an old worker a second job.
+2. PM: start a fresh PM from this file at 300k tokens of context (200k if it's mostly answering questions, not building).
+3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
+4. Mid-task: finish the job first, even past the line.
 
+**Live on main** (314 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
+one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
+Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
+design system (`docs/design-system.md`, `src/styles/tokens.css`); security review + Forgot password; delete account +
+privacy page (`#/privacy`); backup restore; training suggests the last skill trained; "Contact us" form (`#/contact`) with an admin-only Messages inbox in Settings
+→ App (Josh is the admin). SQL: everything up to `20261126000000_contact_messages.sql` has been run.
+
+**Open PRs, merge in this order**
+1. #42 push, server (send-push Edge Function + service worker), then 2. #47 push, app (Settings → Notifications).
+   Both wait for Josh's one-time push setup (`docs/sharing-setup.md` step 16: Vault `push_cron_key`, 4 function
+   secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
+3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
+4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
+
+**Waiting on Josh** (one word each): push setup done? (then merge #42, #47) · ship #48? · ship #18? ·
+keep the daily 12:41 PM auto-start? (it reads the archived secretary's `docs/exec.md`; repoint it to this file or stop it).
+
+**Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
+2026-11-25; the old PM `session_019xqnwe2xGc6E2Zfb29YqrL` is "(archive)"). Keep the UX reviewer (nightly review,
+1:45 AM) and, until Josh has copied the push keys from its chat, "PalDex · worker · push notifications build"
+(`session_019xqnwhi5L7q6CocwuxdBKK`; archive it after). The secretary/executive and the art director are archived
+(Josh, 2026-11-25). Scheduled tasks: "PalDex daily ping to Josh (PM)" 8:45 AM (in the PM session; recreate it in the
+new PM if needed), "PalDex daytime block (12:41 PM)" (see above), "PalDex UX review" 1:45 AM. Workers: one job each,
+at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
 
 ---
 
@@ -58,6 +77,44 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   session one line adding `<FriendsStrip />` after the Today card).
 
 ## 1. What's built
+
+- **Delete my account + privacy page** (2026-11-23, PR from `claude/features-delete-account`). **SQL waiting:**
+  `supabase/migrations/20261124000000_delete_account.sql` (idempotent; for the next single SQL run). Until it's run,
+  Settings → Household & account → **Delete my account** opens a sheet that says "Coming soon" (the preview RPC is
+  missing, `accountDeletion()` returns null); nothing else changes.
+  - **Flow:** the sheet asks the server what would happen (`account_deletion_preview()`: pets **deleted** because
+    nobody else has them, pets **kept** and who keeps them, and the storage **files** to remove), shows it in plain
+    words, offers "Download a backup first", and needs **DELETE** typed (any case). Then `store.deleteAccount(plan)`:
+    the app removes the files through the Storage API while still a member (Supabase refuses deletes from
+    `storage.objects` in SQL, and the bucket policies need membership), calls `delete_my_account()`, forgets the
+    session locally (`signOut({ scope: 'local' })`: the user no longer exists), clears every table on the phone plus
+    its name / active pet / thanks keys, and lands on Welcome. If the server call fails, nothing on the phone is touched.
+  - **Server rules** (`delete_my_account()`, security definer, acts only on `auth.uid()`): each pet the person can reach
+    or set up goes to the longest-standing other member of its household (or, for a pre-household pet, of the pet);
+    `cats.created_by` is handed over first because it cascades on a user delete. A pet with nobody else is deleted
+    (cascades its care, sets, photos rows). A household is handed over the same way or deleted when empty. Then
+    `delete from auth.users`, which cascades memberships, friends, requests, treats, paws, hides, push. Training sets
+    on kept pets now survive as anonymous (`sets.by_user` → nullable, `on delete set null`, like care and vets);
+    `pullSets` maps a null `by_user` to no name. Their own photos rows go (cascade), their files are removed first.
+    Documents they added to a pet that stays are kept: they're the pet's health record.
+  - **Check after the SQL run** (Josh, or a session with the live database): that the `postgres` role may
+    `delete from auth.users` in a security-definer function on this project (the usual Supabase pattern; if refused,
+    the function errors and the whole delete rolls back, so nothing half-happens; the fallback is an Edge Function
+    with the service role calling `auth.admin.deleteUser`). Then try it end to end with a throwaway account.
+  - **Privacy page** `#/privacy` (`src/screens/Privacy.tsx`, reachable without a pet): what stays on the phone, what an
+    account stores (by kind), who sees what (household / friends / nobody else), the services (Supabase, Cloudflare,
+    Google Fonts, Open Pet Food Facts, the browser push service, calendar and maps links only when tapped), how long,
+    and how deleting works. Linked from Welcome ("How PalDex uses your data") and Settings → App → Privacy. Not linked
+    from the account form on purpose: leaving onboarding mid-form loses what was typed. **Keep it true:** the
+    `read-vet-doc` Edge Function sends documents to Anthropic, but nothing in the app calls it today; if it's wired up,
+    add it here in the same PR. **Josh:** pick a contact address and set `PRIVACY_CONTACT` (the "Questions" section
+    appears once it's set; it's empty so no personal address ships by accident), and read the "people who run PalDex"
+    sentence.
+  - Design system: new variant **`.btn.danger`** (rose primary, only for the last step of something that can't be
+    undone); the existing "Remove from household" button now uses it instead of an inline colour.
+  - Tests: `src/sync/delete.test.tsx` (handover + history kept + phone emptied, a lone pet deleted with its files,
+    coming soon and a failed delete, the Settings sheet, the privacy page and route). Policy test:
+    `supabase/tests/delete_account_test.sql`. Screenshots: `docs/screenshots/delete-account/`.
 
 - **Navigation (Option A) + short onboarding** (2026-11-18, PR from `claude/features-navigation`; plan
   `docs/plans/2026-11-14-navigation.md`, Josh's pick): tabs are **Home · Health · + · <cat's name, or "Cats" with
@@ -160,6 +217,15 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   or a mastered skill.
 - **Skill tree and library:** skills by branch, with steps, tips and sources. Hidden skills unlock by mastery
   (check-ins aren't built yet).
+- **The training card offers the last skill trained** (2026-11-25, Josh: the "Up next" pick was something he doesn't
+  do, and he had to go into training to pick his usual one). `recommendNext()` in `src/engine/plan.ts`: the skill of
+  this cat's newest set (by `at`), labelled "Same as last time · trained yesterday"; with no sets, or if that skill is
+  gone from the catalogue or locked, it falls back to `suggestNext()[0]` (the old "Up next"). There never was a stored
+  pin: the "pinned" task was that plan suggestion, which is now only the fallback. Used by Train's card (the cat tab),
+  Home's Training card and bubble, and the + sheet's "Training set". **Start** goes straight into the session;
+  **Change** (`.btn2`, on Train's card and Home's card) opens the skill tree, the existing picker (skill, then "Start a
+  session"). Tests: `src/engine/engine.test.ts` (recommendNext), `src/screens/train.test.tsx`. Screenshots:
+  `docs/screenshots/train-last/`.
 - **Rules** (`src/engine/rules.ts`, `rewards.ts`): a pass is at least 5 reps, at least 80% good, and not Stressed.
   Two passes in a row move up a step. At most 3 rewarded sets a day, 1 treat per good rep, and at most 30 treats a day.
 
@@ -233,6 +299,19 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   preselected, so Save is one more tap; `likelySymptoms()` in `care.ts` preselects anything logged in the last 3 days
   and offers Eating less / Litter box change / Low energy next; "Other or details…" opens the full form). Each chosen
   chip is saved as its own symptom. Once done it shrinks to one line.
+  **Water and appetite** (2026-11-25, `claude/features-play-water`; no SQL): two optional one-of rows on the check,
+  **Water** Normal / More / Less and **Appetite** Normal / Picky / Didn't eat (`.seg`; tap the picked one again to
+  clear it), saved on the check entry (`data.water`, `data.appetite`; `WATER`, `APPETITE` in `care.ts`). The done line
+  adds them ("…all normal (8:20). Water: more · Appetite: picky."). Shown in the quick-log sheet and the desktop
+  Health log (`dailyDetail()`), and in the vet summary's Daily checks, per day over 30 days ("Water: more than usual on
+  2 days, less than usual on 1 day (of 4 days noted)"; `waterText`, `appetiteText` in `vetsummary.ts`, and in Share).
+- **Played logs real play** (2026-11-25, same branch): tapping Played opens an inline **Playtime** panel: How long
+  (5 / 10 / 15 min) and Toy (Feather wand, Laser dot, Cardboard box, Crinkle tunnel: the toys PalDex already has,
+  `PLAY_TOYS`), both optional and preselected from the last playtime (`lastPlay()`), so Save is one tap; Not now closes
+  it. Saved as `data.minutes`, `data.toy`; the toast reads **"Saved · 10 min · Laser dot · Undo"** (plus "Mochi too",
+  which logs the same playtime). The tile shows "1× today · 10 min"; "Played again" in the sheet opens the panel too.
+  `#/log/play` still logs a bare playtime. Tests: `src/ui/dailytaps.test.tsx`, `src/engine/playwater.test.ts`.
+  Screenshots: `docs/screenshots/play-water/`.
 - **Fixing a mistaken tap later** (2026-11-10, `src/ui/DailyLogSheet.tsx`, branch `claude/features-edit-logs`): a
   **done** tile (e.g. "Fed 2 of 2", "Scooped 8:15", "Played 1×") opens that kind's entries for today instead of
   logging again, with **Log another meal** / Scooped again / Played again at the bottom for a real extra one. Under the
@@ -513,7 +592,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
-  Appearance), Your data (backup JSON including care).
+  Appearance), Your data (backup JSON including care; "Restore from a backup" reads it back in).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
   except mid-session or recap (`src/lib/updates.ts`). No more close-and-reopen.
 - Renamed to **PalDex** (home-screen name, title, manifest). The URL path stays `/chester-training/` so installs don't
@@ -533,7 +612,7 @@ Items marked *(art)* suit the art session.
 3. [x] **Playable toys, part 2: box and tunnel** (done 2026-11-10, branch `claude/features-box-tunnel`). See "Play" below.
 - [x] **Security review + Forgot password** (done 2026-11-12, PR from `claude/features-security`; SQL: part 1 of
    `supabase/migrations/20261116000000_bundle.sql`; Josh adds the redirect URL). Later, before charging or the App
-   Store: privacy policy and delete-my-account. Free tier has no backups: decide on Pro or a manual export.
+   Store: privacy policy and delete-my-account (built 2026-11-23, see section 1; its SQL waits for the next run). Free tier has no backups: decide on Pro or a manual export.
    - **Forgot password?** under Sign in → email → "Check your email". The email's link opens the app with the session
      in the hash; `src/lib/recovery.ts` takes it out of the address bar at startup and opens `#/reset-password`
      (`ResetPassword` in `src/screens/Together.tsx`): set a new password, or "Link didn't work" for a stale link. The
@@ -583,7 +662,7 @@ Items marked *(art)* suit the art session.
    Still not done: a Home card with the newest friend photo, an offline cache of the last page.
 5. [ ] **Push notifications** (L, SQL): worth it once the feed exists ("Erin posted Mochi", friend requests, treats,
    medicine due). **Planned 2026-11-23:** `docs/plans/2026-11-23-push-notifications.md`. SQL ready for next week's
-   batch: `supabase/migrations/20261123000000_push.sql` (prefs, outbox, triggers, pg_cron; tested with
+   batch: `supabase/migrations/20261123000000_push.sql`, run as part of `20261125000000_week3_bundle.sql` (prefs, outbox, triggers, pg_cron; tested with
    `supabase/tests/push_test.sql`), plus Josh's one-time Vault and function secrets. Build in two PRs: server +
    service worker, then the app (asks, Settings → Notifications).
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
@@ -653,15 +732,48 @@ Items marked *(art)* suit the art session.
 - For Josh alongside: try a friend request between two phones; check the per-browser Add to Home Screen steps on a
   real iPhone and Android phone.
 
+10. [x] **"Contact us" form** (M, SQL; Josh, 2026-11-25; built 2026-11-25, `claude/features-contact-us`; **SQL
+   waiting on Josh**: `supabase/migrations/20261126000000_contact_messages.sql`, then his one-line `app_admins` insert
+   with his own user id, commented in that file). `#/contact` (`src/screens/Contact.tsx`), signed in or out, with or
+   without a pet: Message, "Your name (optional)", "How to reach you (optional)"; the app version (`APP_VERSION` in
+   `src/lib/version.ts`, from `vite.config.ts`: package.json's version + the build commit) goes along automatically.
+   Ends on a mint "Saved. Thank you!" card. Linked from Privacy's new Questions section (`PRIVACY_CONTACT` is gone; no
+   email address anywhere) and from Settings → App → Contact us. Before the SQL is run, or with no shared copy, it
+   says "Not available yet" (a head select on `contact_messages` tells a missing table from a refused read). Server:
+   anon and authenticated may only INSERT the form's columns (column grants); `private.contact_guard()` (before
+   insert, definer) sets user_id/created_at/done, trims, and rate-limits (5 an hour per signed-in person, 30 an hour
+   across everyone signed out; error `contact-rate-limited`). Only rows in `app_admins` can read, mark done
+   (`done` is the only updatable column) and delete; each person sees only their own `app_admins` row, which is the
+   app's admin check (`isAppAdmin()`). Settings → App → **Messages** (`#/messages`, `src/screens/Messages.tsx`) shows
+   only for an admin: newest first, Mark done / Not done ("Saved · marked done · Undo"), Delete ("Deleted · Undo"; the
+   delete is sent when the note goes, or on leaving the screen). `security_test.sql` now allows exactly that one anon
+   column grant. Tests: `src/screens/contact.test.tsx`, `supabase/tests/contact_test.sql`. Screenshots:
+   `docs/screenshots/contact-us/`. New design-system entry: `textarea.in` (multi-line input).
+
 ### Done recently
+- [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
+  the JSON file, `readBackup` (`src/lib/backup.ts`) checks it (not JSON / not PalDex, older shape, newer `format`, no
+  pets: each a clear message with "Choose another file") and the sheet previews pets, days of logs (training days plus
+  health-entry days) and documents. **Merge** (default) adds pets, sets and health entries by id, never a second copy
+  (a health entry edited later in the backup wins); **Replace** asks in the sheet first. Then "Saved · … · Undo" (Undo
+  restores every table as it was). `store.importBackup` delays the sync 8 s so Undo doesn't race the upload; after
+  Replace, pets shared online come back on the next sync (said in the sheet). The export now writes `format: 1`
+  (files without it read as format 1) and goes through `store.backup()`. Vets aren't in the backup (they weren't in
+  the export either). Tests: `src/lib/backup.test.tsx`. Screenshots: `docs/screenshots/backup-import/`.
 - [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
   `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
   (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
   off-scale values left as they are and listed in the design doc ("Not yet on the scale"); the component inventory
   and rules added to the doc and to `CLAUDE.md`; `useSettle` (`src/ui/settle.ts`) on the Health log (phone list and
   desktop table). Pixels unchanged at 390 and 1440, light and dark (Pillow diff vs main, see section 7).
-  Next, each needing Josh's OK because it's visible: move `h1` 28 → 34 and `h2` 17 → 20, the 13/15/17/18 sizes and
-  the 6/10/14/18/22 gaps onto the scale; use `useSettle` in the quick-log sheet and the visit timeline.
+  Next: use `useSettle` in the quick-log sheet and the visit timeline.
+- [x] **Design system tweaks** (2026-11-23, `claude/design-system-tweaks`, Josh's answers on the phase 2 judgement
+  calls): the doc's heading scale is now the app's real sizes (`h1` 28, `h2` 17; new tokens `--fs-h1`, `--fs-h2`;
+  the unused `--fs-heading` 20 removed; 34 stays as `--fs-display` for big numbers), no visible change. The sizes
+  13/15/17/18 and gaps 6/10/14/18/22 stay and are recorded as allowed exceptions. Inputs (`.in`) use `--r-row` 14
+  (was 16). The coral paw on peach cards (Train, Recap) is `--paw-coral`: #c2563f light, a toned-down #c96f5a dark
+  (4.2:1 on the dark peach card; `--rose` would be 5.9:1 and too bright). Before/after at 390 px, light and dark:
+  `docs/screenshots/design-tweaks/`.
 - [x] **Fix a mistaken quick log after the Undo is gone** (Josh: "accidental feeding and missing the undo makes it
   permanent"): see section 1, Quick log. Pull request from `claude/features-edit-logs`.
 - [x] **Friends: strip on Home, visiting, free treats** (see section 1, Friends). SQL run.
@@ -758,8 +870,8 @@ Items marked *(art)* suit the art session.
     Not checked on a real iPhone. Ideas: a lying-in-the-box pose, a tail sticking out of the tunnel while he hides.
   - New poses (crouch, wiggle, pounce, chase, in-the-box) belong in `src/chester/*`, the art session's files: build it
     there, or with that session paused.
-- [ ] **Log real play** (S): "Played 10 min" one tap (with the toy used); counts toward a gentle daily play goal
-  (indoor cats need it), never a guilt message.
+- [x] **Log real play** (S; done 2026-11-25, `claude/features-play-water`): Played asks how long and with what (see
+  section 1, Quick log). Still open: a gentle daily play goal (indoor cats need it), never a guilt message.
 
 - [x] **Add vet visits to the calendar** (done 2026-11-09): a vet visit can be dated in the future (an upcoming
   appointment, with an optional time); its form then offers **iPhone / Apple** (an `.ics` file) or **Google** (a link),
@@ -775,7 +887,8 @@ Items marked *(art)* suit the art session.
   months (`kittenPlan()` in `src/engine/kittenplan.ts`): core FVRCP series, rabies, FeLV, spay/neuter, one-year
   boosters, ticked off by matching logged doses by name (FVRCP/distemper, rabies, FeLV/leukemia) or `Cat.altered`; tap a
   row to log it. Worded as a guide; the vet sets the real schedule.
-- [ ] **Water and appetite notes** (S): optional chips on the daily check.
+- [x] **Water and appetite notes** (S; done 2026-11-25, `claude/features-play-water`): optional chips on the daily
+  check, in the Health log and the vet summary (see section 1, Quick log).
 
 ### Treats and corner
 - [x] **Treat balance on Home**: already there (the corner card says "N treats to spend"). Could move higher.
@@ -789,8 +902,16 @@ Items marked *(art)* suit the art session.
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
   per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
-- [ ] **"Pet me?" moments** (M) *(art)*: up to 3 a day, 9 AM to 9 PM, Chester walks on and asks for pets; petting adds
-  bond and makes rare moves likelier, ignoring him costs nothing (he curls up).
+- [x] **"Pet me?" moments** (done 2026-11-23, `claude/features-pet-me`): `src/engine/petme.ts` + Home. Up to 3 a day,
+  9 AM to 9 PM, one at a seeded time in each third of the window (`petMeTimes(catId, day)`); opening the app late shows
+  only the latest one due, never a backlog, and each shows once per phone (`localStorage`, `shownPetMe`/`markPetMe`).
+  Only while the room is calm (not night, dozing, the litter gag, the chase or "full"). He runs on (the gag's `back`
+  entrance, `run` pose), sits with his paw up (`raised` + `wave`, happy) under "Pet me?" with one soft mrrp; a tap or a
+  stroke answers: "Prrr… thank you!", +1 bond the first time each day (corner log `pet-<day>`, kind `pet`, shared by
+  the household, so bond levels keep their pace), and for 10 minutes the rare moves (golden purr, zoomies: `RARE` in
+  `reactions.ts`) are 4× likelier (`lucky` prop on `Chester`). Ignored for 45 s, he curls up (`curl` pose, "*curls
+  up*") for 20 s and nothing is lost. Existing poses and animations only, no new art. Ideas: a push for it (push plan),
+  a tiny "+1 bond" pop-in.
 - [x] **Bond levels unlock outfits** (done 2026-11-08): Buddies a bell collar, Pals a bow tie, Best friends an ear
   flower, Partners in crime a party hat, Soulmates the crown, free (`BOND_LEVELS[].gift`, `owned(c, bond)`); the corner
   says which level gives what. Still open *(art)*: idle behaviours per level.
@@ -819,7 +940,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
   `hiddenUnlocks` in `rules.ts`).
 - [ ] **Glossary in the library** (S).
-- [ ] **Backup import** (S): export exists, import doesn't.
+- [x] **Backup import** (done 2026-11-25, `claude/features-backup-import`): see "Done recently".
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
@@ -863,10 +984,10 @@ Items marked *(art)* suit the art session.
 ### The original phases (from the design doc, https://claude.ai/artifact/FX5FoXUmccY9j51Gzy14o9)
 - **Phase 1, train with Chester:** done.
 - **Phase 2, Chester's world:** corner, bond, wardrobe and toys done. Left: badges and trophy case,
-  "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album,
+  "Pet me?" moments (built 2026-11-23), photo album,
   notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
-  Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
+  Left: check-ins and hidden skills, weekly recap, a glossary in the library, an App
   Store wrapper (Capacitor) if wanted.
 - The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
   The checklist above is grouped the same way.
@@ -887,6 +1008,7 @@ src/
     skills.ts           the skill catalogue (text written for a boy named Chester; see lib/pet.ts)
     rules.ts            pass/step-up/mastery/struggle, hidden-skill unlocks
     corner.ts           Chester's corner: shop, log merge, balance, daily gift, bond levels; seasonal items (`season` MM-DD from/to, `inSeason`)
+    petme.ts            "Pet me?" moments: today's 3 seeded times, which is due, the once-a-day bond id, shown-on-this-phone
     rewards.ts          treats, daily caps, gift rolls
     derive.ts           progress and treats REPLAYED from sets (the shared source of truth)
     plan.ts             what to train next
@@ -942,6 +1064,8 @@ supabase/
     20261113000000_treat_thanks.sql      thank-yous for friends' treats: thanked_at, thank_treat, my_thanks
     20261114000000_friend_requests.sql   friend requests: friend_requests, request_friend, answer/cancel, add_friend now asks
     20261115000000_vets.sql              your vet: the household's vet contacts (vets), household-only RLS
+    …                                    (bundle, push, delete_account, week3_bundle: see "Pick up here")
+    20261126000000_contact_messages.sql  "Contact us": contact_messages (insert-only for everyone), app_admins (the owner)
   tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
@@ -1121,9 +1245,21 @@ npm run build      # what CI runs
   2026-11-12: then vets, vets_test, the bundle (twice) and `security_test.sql` last. Since parts 2–3 of the bundle: `photos_test.sql`
   right after the bundle, before `security_test.sql`. `household_test` leaves `public._h`: drop it before `vets_test`. Roles are cluster-wide, so drop
   `anon`/`authenticated` before reloading the stubs into a fresh database.
+  2026-11-23 (delete account): stubs, every migration in order (push stubbed as below), `20261124000000_delete_account.sql`
+  twice, `photos_test.sql`, then `delete_account_test.sql` (its own people: Sam, Tia, Uma): passed. `security_test.sql`
+  then fails on **main's** push migration, not this one: `private.push_on_friend_request/_friend_treat/_pet_photo()`
+  are executable by anon in plain Postgres (they're trigger functions; the push file doesn't revoke them). Harmless
+  (trigger functions error when called directly) but worth a `revoke ... from public, anon, authenticated` in the push SQL.
   2026-11-23: then `20261123000000_push.sql` (twice) and `push_test.sql`. Plain Postgres has no `pg_cron`/`pg_net`:
   drop the file's `create extension` lines and stub `cron.schedule(name, schedule, command)` first (a table + an
   upsert function). Run `initdb`/`pg_ctl` as the `postgres` user with a short socket dir such as `/tmp/pgx`.
+  2026-11-23 (later): `security_test.sql` goes after `push_test.sql`. Order that passed end to end: stubs, the four
+  oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
+  friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
+  `security_test` last. 2026-11-25 (Contact us): the same chain plus `20261126000000_contact_messages.sql` (twice) and
+  `contact_test.sql` (its own people V, W) before `security_test`: passed. User D goes into `auth.users` only (not
+  `cat_members`) before the households migration, or `household_test` counts 3 members. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
+  migrations, rls_test, people_test).
 - **Animation checks** were done with Playwright screenshots/frames (Chromium is preinstalled in cloud sessions).
 - **Hosting:** GitHub Pages builds at `/chester-training/` (the default). Cloudflare Pages builds at the root with the
   environment variable `BASE_PATH=/`: build command `npm run build`, output folder `dist`, Node 22 (`.node-version`).
@@ -1199,8 +1335,8 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
-| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Not used yet. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
-| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Not used yet. |
+| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
+| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account) and 2026-11-25 (Contact us). |
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
@@ -1227,6 +1363,14 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-25, "Contact us" form + Messages inbox (Features worker, `claude/features-contact-us`): **supabase** and
+  **supabase-postgres-best-practices** skills (RLS/grants checklist: column-level INSERT grants, `(select auth.uid())`
+  in policies, definer trigger in `private` with a pinned `search_path` and execute revoked, indexes for the inbox and
+  the rate limit). No plugins; MCP: GitHub (pull request) and `send_message` to the PM (`lottiefiles-creator`
+  connected, unused; the Supabase connector was not used, Josh runs the SQL). Checks: Vitest (new
+  `src/screens/contact.test.tsx`), typecheck, build; a throwaway Postgres 16 for the whole SQL chain with
+  `contact_test.sql` and `security_test.sql` last; Playwright at 390 px, light and dark, against the Vite dev server
+  (`VITE_SUPABASE_URL=` for "Not available yet", then a `FakeServer` remote swapped in through `globalThis.__chesterStore`).
 - 2026-11-11, desktop step 6, All documents preview + tooltips (Features worker): no skills, plugins or MCP servers
   invoked beyond the GitHub and session tools (`lottiefiles-creator` connected, unused). Checks: Vitest (243, new
   `src/screens/documents.test.tsx`), typecheck, build; Playwright against the Vite dev server with a cat and three
@@ -1470,12 +1614,52 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   at 390 and 1440 px, light and dark, Pillow pixel diff main vs branch next to main vs main: same noise only (the
   animated cat, Corner's bond state). The diff caught one real change, dropping `system-ui` from the font stack
   changed the → glyph, so it stays. Settle frames (45 ms apart): `docs/screenshots/design-system-2/`.
+- 2026-11-23, design system tweaks (Features worker, `claude/design-system-tweaks`): no skills, plugins or new MCP
+  servers (`lottiefiles-creator` connected, unused). Checks: Vitest (281), typecheck, build; Playwright (pre-installed
+  Chromium) rendering an input and the two peach paw cards with the real `tokens.css` + `app.css` from main and from
+  the branch, at 390 px, light and dark (`docs/screenshots/design-tweaks/`); WCAG contrast of paw candidates on the
+  peach cards worked out in Python.
 - 2026-11-23, push notifications plan (night job, `claude/features-push-plan`): no skills, plugins or new MCP servers.
   Wrote `docs/plans/2026-11-23-push-notifications.md` and `supabase/migrations/20261123000000_push.sql`. Checks: a
   throwaway Postgres 16 (as the `postgres` user, socket in `/tmp/pgx`; the scratchpad path is too long for a socket),
   stubs, every migration in order, then the new file twice (its `create extension` lines dropped, `cron.schedule`
   stubbed), then `supabase/tests/push_test.sql`: passed.
+- 2026-11-23, delete my account + privacy page (Features worker, `claude/features-delete-account`): used the repo's
+  `supabase` and `supabase-postgres-best-practices` skills for the migration (security-definer functions in public only
+  as RPCs with `auth.uid()` checks and `search_path = ''`, helpers in `private` with no grants, storage deletes through
+  the Storage API, idempotent constraint swap). No plugins or new MCP servers (`lottiefiles-creator` connected, unused).
+  Checks: throwaway Postgres 16 with the migration twice and `delete_account_test.sql`; Vitest (288), typecheck, build;
+  Playwright iPhone-size (390 × 844) shots, light and dark, against the Vite dev server with a seeded store and a stubbed
+  preview: `docs/screenshots/delete-account/`.
 - 2026-11-23, booking part 2b (Features worker, `claude/features-booking-2b`): no skills, plugins or new MCP servers.
   Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
   (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
   grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
+- 2026-11-25, backup import (Features worker, `claude/features-backup-import`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (Sheet, `.lgroup` rows, `.seg`, butter card, `.btn` / `.btn2`, Saved · Undo toast;
+  no new components or tokens). Checks: Vitest (291, new `src/lib/backup.test.tsx`), typecheck, build; Playwright
+  390 px light and dark against the Vite dev server (backup made in the page from a second `Store`, picked with
+  `setInputFiles`): `docs/screenshots/backup-import/`.
+- 2026-11-23, "Pet me?" moments (Features worker, `claude/features-pet-me`): no skills, plugins or new MCP servers
+  (`lottiefiles-creator` connected, unused: existing poses only). Also fixed the paw on Train's "Go easy" card, which a
+  long line beside it squeezed to 11 px wide: `Paw` now has `flex: none` (not `Icon`: the tab-bar snapshot pins its
+  markup). Checks: Vitest (287, new `src/engine/petme.test.ts`), typecheck, build; Playwright 390 px light and dark with
+  a fixed clock at the day's first moment, a cat seeded through `globalThis.__chesterStore`: asking, then petted (+1
+  bond): `docs/screenshots/pet-me/`.
+- 2026-11-25, real play + water and appetite (Features worker, `claude/features-play-water`): no skills, plugins or new
+  MCP servers. Followed `docs/design-system.md` (existing `.seg`, `.chipbtn`, `.btn`/`.btn2`, the inline sky panel of
+  What's off?, the Saved · Undo toast); added a note on the inline question panel to it. Checks: Vitest (295 after rebasing on main), typecheck,
+  build; Playwright 390 px light and dark against the Vite dev server (a cat, checks and a playtime seeded through
+  `globalThis.__chesterStore`): `docs/screenshots/play-water/`.
+- 2026-11-25, train the last skill (Features worker, `claude/features-train-last`): no skills, plugins or new MCP
+  servers. Existing `.btn`/`.btn2`/cards and tokens only. Checks: Vitest (293, new `src/screens/train.test.tsx` and
+  `recommendNext` cases), typecheck, build; Playwright 390 px light and dark of the cat tab's training card and Home's
+  Training card, a cat seeded through `import('/chester-training/src/db/store.ts')`: `docs/screenshots/train-last/`.
+- 2026-11-23, push revoke fix (Features worker, `claude/fix-push-revoke`): no skills, plugins or new MCP servers.
+  `20261123000000_push.sql` now revokes EXECUTE on its three trigger functions from public, anon and authenticated
+  (triggers don't need it at fire time; cron doesn't call them), so `security_test.sql` passes. Checks: the full SQL
+  chain on a throwaway Postgres 16 (order above, later migrations twice, every `supabase/tests/*.sql`): passed;
+  Vitest (284), typecheck, build.
+  Then (PM ask) `supabase/migrations/20261125000000_week3_bundle.sql`: the fixed push file + PR #43's
+  `20261124000000_delete_account.sql`, one file for Josh's run. Chain passed twice: with the separate push file first,
+  and with only the combined file (each run twice); then push_test, PR #43's `delete_account_test.sql`, security_test.

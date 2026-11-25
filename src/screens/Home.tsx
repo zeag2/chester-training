@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
-import { suggestNext } from '../engine/plan';
+import { recommendNext } from '../engine/plan';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
 import { daysHome, today, ageText } from '../lib/stats';
@@ -23,6 +23,7 @@ import { NewestPhoto } from '../ui/NewestPhoto';
 import { usePetText } from '../lib/pet';
 import { CushionArt } from './Corner';
 import { useLayout, type Layout } from '../ui/layout';
+import { duePetMe, markPetMe, PET_ME, shownPetMe } from '../engine/petme';
 
 /** The cat scene's sizes. Two fixed sizes, never scaled with the window (docs/plans/2026-11-11-desktop-layout.md §5):
     phones and tablets keep today's 104 px cat; desktop (1100 px and up) draws the same SVG at 160 px, and everything
@@ -162,29 +163,58 @@ export function Home() {
     const iv = window.setInterval(() => { if (!document.hidden) setCuteN((n) => n + 1); }, 30_000 + Math.random() * 15_000);
     return () => window.clearInterval(iv);
   }, [calm, others.length]);
+  // "Pet me?" (src/engine/petme.ts): up to 3 a day he runs on, raises a paw and asks; a tap or a stroke answers,
+  // and if nobody does he curls up for a bit. Only while the room is calm, and only once per moment on this phone.
+  const [petMe, setPetMe] = useState<null | 'in' | 'ask' | 'curl'>(null);
+  const [luckyUntil, setLuckyUntil] = useState(0);
+  const petCalm = calm && !chasing && !full && !!cat;
+  useEffect(() => {
+    if (!petCalm || petMe || !cat) return;
+    const check = () => {
+      if (document.hidden) return;
+      const d = new Date(), day = today(), i = duePetMe(cat.id, day, d.getHours() * 60 + d.getMinutes(), shownPetMe(cat.id, day));
+      if (i === null) return;
+      markPetMe(cat.id, day, i); wake(); setPetMe('in');
+    };
+    check(); const iv = window.setInterval(check, 30_000);
+    return () => window.clearInterval(iv);
+  }, [petCalm, petMe, cat?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!petMe) return;
+    const t = window.setTimeout(() => {
+      if (petMe === 'in') { setPetMe('ask'); audio.meow('mrrp'); }
+      else if (petMe === 'ask') { setPetMe('curl'); setLine('*curls up*'); setShown('pet'); }
+      else { setPetMe(null); setLine(''); }
+    }, petMe === 'in' ? 1100 : petMe === 'ask' ? PET_ME.waitMs : PET_ME.curlMs);
+    return () => window.clearTimeout(t);
+  }, [petMe]);
+  useEffect(() => { if (gag || night) setPetMe(null); }, [gag, night]);
+  const answerPetMe = () => {
+    setPetMe(null); setLuckyUntil(Date.now() + PET_ME.luckyMs); setShown('pet'); setLine('Prrr… thank you!');
+    void store.petMe().then((got) => { if (got) setLine(`Prrr… thank you! +${PET_ME.bond} bond`); });
+  };
   const t = today();
   const todaySets = sets.filter((s) => s.day === t);
   const rewardedToday = todaySets.filter((s) => s.rewarded).length;
-  const plan = suggestNext(SKILLS, progress, sets, unlockedHidden, t);
-  const next = plan[0];
+  const next = recommendNext(SKILLS, progress, sets, unlockedHidden, t);
   if (!cat) return null;
   const done = rewardedToday >= DAILY_REWARDED_SETS;
   const lines = ['Pet me!', 'Hi! Scratches?', 'Mrrp.', 'Is it dinner time?', 'I was napping. Hi.'];
   const idleLine = cat.training === false ? `Hi! I'm ${cat.name}. ${lines[new Date().getMinutes() % lines.length]}`
-    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Next up: ${next.skill.name}. Ready?` : 'Pet me!';
+    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `${next.kind === 'last' ? 'More' : 'Next up:'} ${next.skill.name}. Ready?` : 'Pet me!';
 
   // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
   const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>
       {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={S.big ? Math.min(520, sceneRef.current?.clientWidth || 480) : Math.min(360, window.innerWidth - 40)} size={S.cat} gap={S.gap} onDone={() => setChasing(false)} />
       : <div className={`bedspot${bed ? ' onbed' : ''}`}>{bed && <div className="bed" aria-hidden="true"><CushionArt id={bed} width={S.bed} /></div>}
-      <div className={`gagwrap ${gag ?? ''}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
-      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' ? 'walk' : gag === 'back' ? 'run' : gag ? 'sit' : full ? 'full' : night ? 'sleep' : doze ? 'doze' : knead && !done ? (bed && knead === 'drape' ? 'loaf' : knead) : 'sit'} mood={gag === 'proud' || (nuzzle && calm && !knead) ? 'happy' : done || ph === 'night' ? 'sleepy' : 'curious'}
-        raised={!gag && !full && !done && !night && !doze && sets.length === 0 && cat.training !== false} anim={gag || full ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
-        width={S.cat} interactive label={cat.name} onPet={(l) => { if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div></div>}
+      <div className={`gagwrap ${gag ?? (petMe === 'in' ? 'back' : '')}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
+      <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose={gag === 'out' ? 'walk' : gag === 'back' || petMe === 'in' ? 'run' : gag || petMe === 'ask' ? 'sit' : petMe === 'curl' ? 'curl' : full ? 'full' : night ? 'sleep' : doze ? 'doze' : knead && !done ? (bed && knead === 'drape' ? 'loaf' : knead) : 'sit'} mood={gag === 'proud' || petMe === 'ask' || (nuzzle && calm && !knead) ? 'happy' : petMe === 'curl' ? 'sleepy' : done || ph === 'night' ? 'sleepy' : 'curious'}
+        raised={petMe === 'ask' || (!petMe && !gag && !full && !done && !night && !doze && sets.length === 0 && cat.training !== false)} anim={petMe === 'ask' ? 'wave' : gag || full || petMe ? '' : night ? 'night' : doze ? 'nap' : nuzzle && others.length > 0 && !knead ? 'nuzzle' : done ? 'nod' : sets.length === 0 ? 'wave' : ''}
+        width={S.cat} interactive label={cat.name} lucky={luckyUntil > Date.now()} onPet={(l) => { if (petMe === 'in' || petMe === 'ask') { answerPetMe(); return; } if (ph === 'night' && !awakeUntil) { setAwakeUntil(Date.now() + 120_000); setLine(['Mrrp…? It’s late.', '*yawns* Oh, hi.', 'Five more minutes…'][Math.floor(Math.random() * 3)]); } else setLine(l); setShown('pet'); }} react={meowN ? 'r15' : null} reactKey={meowN} /></span></div></div>}
       {!chasing && others.length > 0 && <div className={`homecats${nuzzle && calm && !knead ? ' nuzzling' : ''}`}>{others.map((o, i) => <button key={o.id} className="other" style={{ zIndex: 2 - i }} aria-label={`Show ${o.name}`} onClick={() => { audio.chirp(); void store.switchPet(o.id); }}>
         <Chester coat={o.coat} eyes={o.eyes} wear={o.wear} pose={fed.includes(o.id) ? 'full' : night ? 'sleep' : doze ? 'doze' : 'sit'} mood={night ? 'sleepy' : nuzzle && i === 0 ? 'happy' : 'curious'} anim={doze ? 'nap' : nuzzle && i === 0 && !knead ? 'nuzzleL' : ''} width={S.other} label={o.name} /></button>)}</div>}
       {!chasing && !gag && !night && <button className="yarnbtn" aria-label="Roll a toy" onClick={() => startChase()}><Icon name="yarn" size={20} /></button>}
-      {!chasing && <div style={{ marginBottom: S.bubbleLift }}><span key={doze ? 'z' : shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
+      {!chasing && <div style={{ marginBottom: S.bubbleLift }}><span key={doze ? 'z' : (petMe ?? '') + shown + line + meowLine + gagLine} className="bubble mint">{pt(doze ? 'Zzz… (tap to wake him)' : petMe === 'in' || petMe === 'ask' ? 'Pet me?' : shown === 'gag' && gagLine ? gagLine : shown === 'meow' ? meowLine : line || idleLine)}</span></div>}
     </div>;
   // the "hot button" to the cat's tab (tapping him still pets him); "Cats" when there are several, like the tab
   const catLink = <button className="chipbtn" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 10, alignSelf: 'flex-start' }}
@@ -199,8 +229,10 @@ export function Home() {
       <FriendsStrip onInvite={() => setInvite(true)} />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
-        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
-        {next && !done && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>}</a>}
+        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
+        {next && !done && <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', alignItems: 'stretch' }}>
+          <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} aria-label={`Start ${next.skill.name}`} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>
+          <button className="btn2" style={{ minHeight: 40, background: 'transparent' }} aria-label={`Change skill (now ${next.skill.name})`} onClick={(e) => { e.preventDefault(); go('tree'); }}>Change</button></div>}</a>}
       {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="var(--butter-strong)" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
