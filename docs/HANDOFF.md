@@ -47,21 +47,19 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
    secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
-**Build next (Josh's go recorded)**
-1. **Badge art + icons**: **built, PR open for Josh** (branch `claude/features-badge-art`, no SQL; details in the Phase 2
-   checklist entry and `docs/design-system.md` "Badges, shine and icons"). The brief, for reference: (M, Josh approved 2026-11-25 and said "start now"; no SQL). Art lives on the artifact
-   https://claude.ai/artifact/6e9huJ9Z23diCgKwxCHzds as files under `paldex-art/` (read with the Artifact tool, action
-   read + path; start with `paldex-art/HANDOFF.md`, `manifest.json`). 35 earned + 35 locked + 5 hidden badge SVGs,
-   27 Chester-style + 27 line icons, `shine/BadgeShine.tsx` + `shine/badge-shine.css`, `generate.mjs`. Josh's choices:
-   a different badge shape per skill branch (Foundation gold coin, Care rose shield, Manners teal hexagon, Adventure
-   sky diamond, Tricks orange rosette; ignore the manifest's "alts"); locked = faded grey with a lock; hidden = dashed
-   branch shape with "?"; Chester-style icons in the tab bar (and Settings), line icons for small inline uses; earned
-   badges shine when tapped, with a short hold (`SHINE_MS`) before the skill page opens; locked/hidden don't shine;
-   reduced motion = brief brighten only. Wire into `#/trophies` (`src/screens/Trophies.tsx` BadgeTile,
-   `src/engine/badges.ts`). Design system first: add the badge, shine and icon sets to `docs/design-system.md` and
-   tokens (branch colours as tokens, not literals). One worker, branch `claude/features-badge-art`, PR for Josh.
+(#52 badge art, tap shine and Chester-style icons merged 2026-11-25; no SQL. Not yet felt on a real iPhone.)
 
-**Running**: UX review worker (review only, ranked list to Josh, `session_019xqnwfDGvFp2G6M7EmbCmp`); badge art worker (`session_019xqnwgUq5RoHwxaU53uAQq`).
+**Build next: UX review 2026-11-25** (review-only worker, apple-design skill; needs Josh's go per item). Ranked:
+1 text follows iPhone Text Size (rem + system body size) L · 2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
+3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind) M · 4 Health segmented
+"Overview · Log · Documents", one black button per segment M · 5 one Skills screen "Tree · List" (Trophy case stays) M ·
+6 one screen-header component in the design system S–M · 7 skill tree locked rows full contrast, lock icon only S ·
+8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
+2-column tables S · 10 Book a visit: one "+ Add a vet" S · 11 Appearance setting (HIG says none; Josh's call) S ·
+12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
+"Chester ·" dot S · 15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
+
+**Running**: none.
 
 **Waiting on Josh** (one word each): push setup done? (then merge #42, #47).
 
