@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react';
-import { Icon } from './icons';
+import { ChesterIcon, Icon } from './icons';
 import { useLayout } from './layout';
 import { PetSwitcher } from './PetSwitcher';
 
@@ -8,6 +8,7 @@ import { PetSwitcher } from './PetSwitcher';
  * <the cat's name, or "Cats" with several> · Friends along the bottom; Settings is the gear on Home.
  * Tablet (760–1099 px): the same, as an 88 px rail on the left with the + at the top.
  * Desktop (1100 px and up): a 220 px side nav with a "Log" button at the top and the pet switcher under the tabs.
+ * Tab icons are the Chester-style set (ChesterIcon): full colour on the current tab, quiet on the others.
  * The + / Log opens the quick-log sheet. `dot` marks a tab with something new (e.g. a new friend).
  * While a rail or side nav is showing, <html data-nav="rail|side"> lets the CSS move the page over.
  */
@@ -19,21 +20,21 @@ export function TabBar({ active, onPlus, dot, catLabel = 'Cats' }: { active: str
     return () => { delete el.dataset.nav; };
   }, [layout]);
   const t = (id: string, label: string, icon: string) => <a href={'#/' + id} className={`tab ${active === id ? 'on' : ''}`} aria-current={active === id ? 'page' : undefined}>
-    <span style={{ position: 'relative', display: 'inline-flex' }}><Icon name={icon} size={24} />{dot === id && <i className="tabdot" aria-label="new" />}</span>{label}</a>;
+    <span style={{ position: 'relative', display: 'inline-flex' }}><ChesterIcon name={icon} />{dot === id && <i className="tabdot" aria-label="new" />}</span>{label}</a>;
   if (layout === 'tablet') return <nav className="tabs rail" aria-label="Main"><div className="tabs-in">
-    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
+    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
     {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}
   </div></nav>;
   if (layout === 'desktop') return <nav className="sidenav" aria-label="Main">
-    <a className="brand" href="#/home"><Icon name="paw" size={22} />PalDex</a>
+    <a className="brand" href="#/home"><ChesterIcon name="paw" />PalDex</a>
     <button className="btn navlog" onClick={onPlus}><Icon name="plus" size={20} />Log</button>
     <div className="navtabs">{t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}</div>
     <PetSwitcher inNav />
-    <a href="#/settings" className={`tab navsettings ${active === 'settings' ? 'on' : ''}`} aria-current={active === 'settings' ? 'page' : undefined}><Icon name="gear" size={22} />Settings</a>
+    <a href="#/settings" className={`tab navsettings ${active === 'settings' ? 'on' : ''}`} aria-current={active === 'settings' ? 'page' : undefined}><ChesterIcon name="settings" />Settings</a>
   </nav>;
   return <nav className="tabs" aria-label="Main"><div className="tabs-in">
     {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}
-    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus"><Icon name="plus" size={26} /></span></button>
+    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
     {t('chester', catLabel, 'paw')}
     {t('friends', 'Friends', 'user')}
   </div></nav>;

@@ -48,7 +48,8 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
 **Build next (Josh's go recorded)**
-1. **Badge art + icons** (M, Josh approved 2026-11-25 and said "start now"; worker started 2026-11-25 on `claude/features-badge-art`; no SQL). Art lives on the artifact
+1. **Badge art + icons**: **built, PR open for Josh** (branch `claude/features-badge-art`, no SQL; details in the Phase 2
+   checklist entry and `docs/design-system.md` "Badges, shine and icons"). The brief, for reference: (M, Josh approved 2026-11-25 and said "start now"; no SQL). Art lives on the artifact
    https://claude.ai/artifact/6e9huJ9Z23diCgKwxCHzds as files under `paldex-art/` (read with the Artifact tool, action
    read + path; start with `paldex-art/HANDOFF.md`, `manifest.json`). 35 earned + 35 locked + 5 hidden badge SVGs,
    27 Chester-style + 27 line icons, `shine/BadgeShine.tsx` + `shine/badge-shine.css`, `generate.mjs`. Josh's choices:
@@ -915,7 +916,17 @@ Items marked *(art)* suit the art session.
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
   per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
-- [ ] **Badge art, tap shine and Chester-style icons** (M, approved 2026-11-25): see "Build next" in Pick up here.
+- [x] **Badge art, tap shine and Chester-style icons** (2026-11-25, `claude/features-badge-art`, PR for Josh; Josh's
+  approved art from artifact 6e9huJ9Z23diCgKwxCHzds): each badge is real art in its branch's shape
+  (`src/assets/badges`: 35 earned, 35 locked = faded grey with a lock, 5 hidden = dashed branch shape with "?"). Hidden
+  skills now show on the shelves as mystery badges (no name, not tappable) until unlocked, so the count reads "6 of 35".
+  Earned badges shine on tap (`src/ui/BadgeShine.tsx`, `SHINE_MS` 520 = `--shine-ms`) and open the skill after the
+  shine; locked open at once; reduced motion = a 240 ms brighten. The closest-badge card shows its badge. Tab bar / rail /
+  side nav and Home's Settings gear use the Chester-style icons (`ChesterIcon`; the phone + is the gold Chester plus);
+  `Icon` now draws the approved line set app-wide (old names aliased; `plus`/`check` unchanged). Tokens: branch colours,
+  shine timing, icon fills. Tests: `src/engine/badges.test.ts`, `src/ui/badgeArt.test.tsx` (every skill id in skills.ts
+  has art, state → SVG, shine delay only for earned, SHINE_MS = token); the phone tab-bar snapshot updated. Screenshots:
+  `docs/screenshots/badge-art/` (390 px, light and dark: trophy case, Home + tab bar, a tap mid-shine).
 - [x] **"Pet me?" moments** (done 2026-11-23, `claude/features-pet-me`): `src/engine/petme.ts` + Home. Up to 3 a day,
   9 AM to 9 PM, one at a seeded time in each third of the window (`petMeTimes(catId, day)`); opening the app late shows
   only the latest one due, never a backlog, and each shows once per phone (`localStorage`, `shownPetMe`/`markPetMe`).
@@ -1512,6 +1523,12 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
 - 2026-11-10, QA of PR #10 (QA worker): merged `main` in (trivial import conflict in `DailyTaps.tsx`); no skills,
   plugins or MCP servers invoked. Checks: tests (204), typecheck, build; Playwright (iPhone 13, light and dark, dev
   store, two cats). Fixed: the sheet now replaces the Undo toast and closes on a cat switch (test added).
+- 2026-11-25, badge art + icons (Features worker, `claude/features-badge-art`): no skills or plugins invoked; no MCP
+  servers (`lottiefiles-creator` connected, unused). Tools: the **Artifact tool** (`read` with `paths`) to fetch the
+  approved art from artifact 6e9huJ9Z23diCgKwxCHzds (`paldex-art/`: 75 badge SVGs, 54 icon SVGs, the shine TSX/CSS;
+  reviewed by hand and scanned for scripts/links: none; `generate.mjs` not run); a one-off Node script in the session
+  scratchpad turned the icon SVGs into `src/ui/iconArt.ts`; Playwright (preinstalled Chromium) against the dev server,
+  store seeded via `__chesterStore`, for the screenshots.
 
 ### The team (project manager and workers)
 - Since 2026-11-10 work can go through a **project manager** session that starts short-lived **Features** and **QA**

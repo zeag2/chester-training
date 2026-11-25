@@ -41,6 +41,21 @@
   --sine:cubic-bezier(.45,0,.55,1);--back:cubic-bezier(.34,1.56,.64,1); /* --back: celebrations only */
   --dur-fast:120ms;--dur:220ms;--dur-slow:320ms;
   --settle-delay:40ms; /* the new row starts this long after its neighbours begin to move */
+  --shine-ms:520ms;       /* the badge tap shine; SHINE_MS in src/ui/BadgeShine.tsx must match (a test checks) */
+  --shine-flash-ms:240ms; /* reduced motion: the brief brighten instead */
+
+  /* ---- badge and icon art (the same in light and dark: illustration, like the cat) ---- */
+  /* one shape and colour per skill branch: base / light (inner face) / ink (accent) */
+  --branch-foundation:#efc44a;--branch-foundation-light:#fbe7a6;--branch-foundation-ink:#c9962a; /* gold coin */
+  --branch-care:#ef8f9a;--branch-care-light:#fcd8dd;--branch-care-ink:#d2493f;                   /* rose shield */
+  --branch-manners:#6cc3b5;--branch-manners-light:#d2efe9;--branch-manners-ink:#2a7a6f;          /* teal hexagon */
+  --branch-adventure:#7aa5dc;--branch-adventure-light:#d9e6f8;--branch-adventure-ink:#3f6fb0;    /* sky diamond */
+  --branch-tricks:#f3a65e;--branch-tricks-light:#fde2c4;--branch-tricks-ink:#d9772c;             /* orange rosette */
+  --icon-sky:#9fc0ea;--icon-grey:#d6d7dd; /* Chester-style icon fills that aren't a branch colour */
+  --art-outline:#1f2440;                  /* Chester-style icon outline (lighter in dark mode) */
+  --badge-tile:64px;                      /* a badge in the trophy case (the art is drawn for 56–96) */
+  --badge-outline:#1f2440;                /* the badges' own outline, for the shine's sparkles (both themes) */
+  --icon-idle:grayscale(1) opacity(.55);  /* a Chester-style tab icon that isn't the current tab */
 
   /* ---- device ---- */
   --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
@@ -53,7 +68,7 @@
   --peach:#33231d;--rose:#e58a74;--peach-ink:#f1bba6;
   --butter:#2d2918;--butter-ink:#e9d79a;
   --sky:#1c2333;--paw-coral:#c96f5a;
-  --tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}}
+  --tabs:rgba(20,21,19,.94);--yes-active:#24392f;--art-outline:#c9ccd8;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141513;--surface:#32332e;--ink:#f1f0ea;--ink-2:#d6d5ce;--muted:#a6a69e;--muted-2:#8f8f88;
   --line:#34352f;--grey:#1f201d;--on-ink:#141513;--faint:rgba(241,240,234,.2);
@@ -61,7 +76,7 @@
   --peach:#33231d;--rose:#e58a74;--peach-ink:#f1bba6;
   --butter:#2d2918;--butter-ink:#e9d79a;
   --sky:#1c2333;--paw-coral:#c96f5a;
-  --tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
+  --tabs:rgba(20,21,19,.94);--yes-active:#24392f;--art-outline:#c9ccd8;color-scheme:dark}
 
 /* ---- hover washes (only where there's a mouse) ---- */
 @media (hover:hover){:root{--hov:rgba(35,35,32,.06);--hov-ink:rgba(255,255,255,.14)}}

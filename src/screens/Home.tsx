@@ -5,7 +5,7 @@ import { recommendNext } from '../engine/plan';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
 import { daysHome, today, ageText } from '../lib/stats';
-import { Icon, Paw } from '../ui/icons';
+import { Icon, Paw, ChesterIcon } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { MedsDueCard, TodayCard } from './Care';
@@ -258,7 +258,7 @@ export function Home() {
       <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <div className="row"><h1 className="sp" style={{ marginTop: 'var(--sp-1)' }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
           {/* Settings lives here now (navigation Option A); the desktop side nav has it at the bottom */}
-          <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><Icon name="gear" /></button></div>
+          <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><ChesterIcon name="settings" /></button></div>
         {partners.length > 0 && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
         {account && !myName && <button className="chip" style={{ marginTop: 'var(--sp-2)', border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
