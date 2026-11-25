@@ -47,6 +47,19 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
    secrets, deploy `send-push` via the dashboard editor with Verify JWT off).
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
+**Build next (Josh's go recorded)**
+1. **Badge art + icons** (M, Josh approved 2026-11-25; no SQL). Art lives on the artifact
+   https://claude.ai/artifact/6e9huJ9Z23diCgKwxCHzds as files under `paldex-art/` (read with the Artifact tool, action
+   read + path; start with `paldex-art/HANDOFF.md`, `manifest.json`). 35 earned + 35 locked + 5 hidden badge SVGs,
+   27 Chester-style + 27 line icons, `shine/BadgeShine.tsx` + `shine/badge-shine.css`, `generate.mjs`. Josh's choices:
+   a different badge shape per skill branch (Foundation gold coin, Care rose shield, Manners teal hexagon, Adventure
+   sky diamond, Tricks orange rosette; ignore the manifest's "alts"); locked = faded grey with a lock; hidden = dashed
+   branch shape with "?"; Chester-style icons in the tab bar (and Settings), line icons for small inline uses; earned
+   badges shine when tapped, with a short hold (`SHINE_MS`) before the skill page opens; locked/hidden don't shine;
+   reduced motion = brief brighten only. Wire into `#/trophies` (`src/screens/Trophies.tsx` BadgeTile,
+   `src/engine/badges.ts`). Design system first: add the badge, shine and icon sets to `docs/design-system.md` and
+   tokens (branch colours as tokens, not literals). One worker, branch `claude/features-badge-art`, PR for Josh.
+
 **Waiting on Josh** (one word each): push setup done? (then merge #42, #47).
 
 **Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
@@ -900,6 +913,7 @@ Items marked *(art)* suit the art session.
 - [x] **Badges and trophy case** (done 2026-11-08): `#/trophies` (Train, More), `src/engine/badges.ts` derives a badge
   per skill from progress (no storage), shelves by branch, earned first with the date, the closest badge on top; the
   recap says a new badge is in the trophy case. Ideas: a badge pop-in on the recap, the trophy case on friends' Visit.
+- [ ] **Badge art, tap shine and Chester-style icons** (M, approved 2026-11-25): see "Build next" in Pick up here.
 - [x] **"Pet me?" moments** (done 2026-11-23, `claude/features-pet-me`): `src/engine/petme.ts` + Home. Up to 3 a day,
   9 AM to 9 PM, one at a seeded time in each third of the window (`petMeTimes(catId, day)`); opening the app late shows
   only the latest one due, never a backlog, and each shows once per phone (`localStorage`, `shownPetMe`/`markPetMe`).
