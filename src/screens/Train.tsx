@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { store, useStore } from '../db/store';
-import { suggestNext } from '../engine/plan';
+import { recommendNext } from '../engine/plan';
 import { isStruggling } from '../engine/rules';
 import { SKILLS } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
@@ -23,7 +23,7 @@ export function Train({ embedded = false }: { embedded?: boolean }) {
   const pt = usePetText();
   const t = today();
   const rewardedToday = sets.filter((s) => s.day === t && s.rewarded).length;
-  const next = suggestNext(SKILLS, progress, sets, unlockedHidden, t)[0];
+  const next = recommendNext(SKILLS, progress, sets, unlockedHidden, t);
   const ws = weekStats(sets); const si = streakInfo(sets); const st = si.days;
   const mastered = Object.values(progress).filter((p) => p.mastered).length;
   const learning = inProgress(progress, sets);
@@ -53,8 +53,9 @@ export function Train({ embedded = false }: { embedded?: boolean }) {
         <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Today's sets</b><span className="chip num">{Math.min(rewardedToday, DAILY_REWARDED_SETS)} of {DAILY_REWARDED_SETS}</span></div>
         <div className="row" style={{ gap: 10, marginTop: 10 }}>{Array.from({ length: DAILY_REWARDED_SETS }, (_, i) => <span key={i} className="pop" style={{ animationDelay: `${i * 90}ms`, display: 'inline-flex' }}><Paw size={34} color={i < rewardedToday ? 'var(--ink)' : 'var(--faint)'} /></span>)}</div>
         {next && !done && <div className="card white" style={{ marginTop: 14, padding: 14 }}>
-          <div className="row"><div className="ico peach"><Icon name={ICON_FOR[next.skill.branch]} /></div><div className="sp"><p className="s">{next.kind === 'review' ? 'Review' : next.kind === 'start' ? 'Up next · new skill' : 'Up next'}</p><b style={{ fontSize: 'var(--fs-body)' }}>{next.skill.name}</b><p className="s">Step {(progress[next.skill.id]?.step ?? 0) + 1}: {pt(next.skill.steps[progress[next.skill.id]?.step ?? 0])}</p></div></div>
-          <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
+          <div className="row"><div className="ico peach"><Icon name={ICON_FOR[next.skill.branch]} /></div><div className="sp"><p className="s">{next.kind === 'last' ? `Same as last time · ${next.reason.toLowerCase()}` : next.kind === 'review' ? 'Review' : next.kind === 'start' ? 'Up next · new skill' : 'Up next'}</p><b style={{ fontSize: 'var(--fs-body)' }}>{next.skill.name}</b><p className="s">{progress[next.skill.id]?.mastered ? 'Mastered · a review set' : `Step ${(progress[next.skill.id]?.step ?? 0) + 1}: ${pt(next.skill.steps[progress[next.skill.id]?.step ?? 0])}`}</p></div>
+            <button className="btn2" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('tree')}>Change</button></div>
+          <button className="btn" style={{ marginTop: 'var(--sp-3)' }} aria-label={`Start ${next.skill.name}, about 2 minutes`} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
         {done && <p className="s" style={{ marginTop: 10 }}>Daily goal done. {cat.name} is napping; rewards reset tomorrow.</p>}
       </div>
       {struggling && <div className="card peach row" style={{ alignItems: 'flex-start' }}><Paw color="var(--paw-coral)" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}><b>Go easy on {struggling.name.toLowerCase()}.</b> Two tough sets in a row. Make the step easier or go back one; better treats help too.</p></div>}

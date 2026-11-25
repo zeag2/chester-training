@@ -38,7 +38,7 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 | 1 | W1 | Booking 2b: several cats at once | M / 4% | running |
 | 2 | W3 | Josh's design tweaks (input radius, dark-mode paw, doc) | S / 1% | running |
 | 3 | W1 | Small fixes: sync race, Visit two-pane | S / 3% | queued |
-| 1 | W2 | Push notifications build, PRs A + B (ship after Josh's SQL + secrets) | M / 8% | PR A #42 green; PR B next |
+| 1 | W2 | Push notifications build, PRs A + B (ship after Josh's SQL + secrets) | M / 8% | done: PR A #42 + PR B #47 (hidden until the SQL; steps for Josh in #47) |
 | 2 | W4 | Delete my account + privacy policy page (needed before charging/App Store; any SQL → next week's run) | M / 5% | running |
 | next | either | "Pet me?" moments (up to 3 a day, 9 AM–9 PM) *(art)* | M / 5% | queued |
 | next | either | Backup import (export exists) | S / 2% | queued |
@@ -47,7 +47,7 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 ## Week 3 (from Tue Nov 24, 3 PM) — first items
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
-| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql` + `20261124000000_delete_account.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | waiting |
+| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql` + `20261124000000_delete_account.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | SQL run Wed Nov 25 (delete account live); push setup in progress |
 | Wed Nov 25, 3:40 AM | Push build: pulled forward to Mon Nov 23 (W2) | — | — | moved |
 
 | Any time | **Josh:** visual OK on #40 (design tweaks) and #44 ("Pet me?"); pick a privacy contact email for #43 | — | Josh | waiting |

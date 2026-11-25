@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
@@ -12,7 +12,10 @@ import { sendInvite } from './Together';
 import { Icon } from '../ui/icons';
 import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
+import type { DeletionPlan } from '../sync/remote';
 import { Sheet as SheetFrame } from '../ui/Sheet';
+import { showToast } from '../ui/Toast';
+import { readBackup, type BackupRead } from '../lib/backup';
 
 /* Settings, grouped like iPhone Settings: the pet, the people, the app, your data. */
 
@@ -84,7 +87,7 @@ function Person({ userId, onClose }: { userId: string; onClose: () => void }) {
     {m.sets !== undefined && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>{m.sets} training set{m.sets === 1 ? '' : 's'} logged</p>}
     {same && <div className="card butter" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}>Two people here are called {m.name}. That usually means someone made a second account. Check the emails and remove the one that isn’t used.</p></div>}
     {iOwn ? <>
-      <button className="btn" style={{ marginTop: 'var(--sp-4)', background: 'var(--rose)' }} onClick={async () => {
+      <button className="btn danger" style={{ marginTop: 'var(--sp-4)' }} onClick={async () => {
         if (!confirm(`Remove ${m.name || 'this person'}${m.email ? ` (${m.email})` : ''} from the household? They lose access to every pet in it. Sets they logged stay.`)) return;
         try { await store.removeMember(userId); onClose(); } catch (e) { setErr((e as Error).message === 'not-allowed' ? 'Only the person who set up the household can remove people.' : 'Couldn’t remove them. Is the latest setup step done in Supabase?'); }
       }}>Remove from household</button>
@@ -103,16 +106,105 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
   </Sheet>;
 }
 
+const names = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+/** Delete my account: what goes and what stays (from the server), a typed DELETE, then the app starts again. Until the
+    delete-account SQL is run it says it's coming soon. */
+function DeleteAccount({ onClose, onBackup }: { onClose: () => void; onBackup: () => void }) {
+  const { account } = useStore();
+  const [plan, setPlan] = useState<DeletionPlan | null | undefined>(undefined);
+  const [err, setErr] = useState('');
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = () => { setErr(''); store.accountDeletion().then(setPlan, () => setErr('Couldn’t reach PalDex. Check your connection and try again.')); };
+  useEffect(load, []);
+  const ready = typed.trim().toUpperCase() === 'DELETE';
+  const run = async () => {
+    if (!plan || !ready) return; setBusy(true); setErr('');
+    try { await store.deleteAccount(plan); onClose(); go('home'); }
+    catch { setBusy(false); setErr('Couldn’t delete your account. Nothing on this phone was removed. Check your connection and try again.'); }
+  };
+  return <Sheet title="Delete your account" onClose={onClose}>
+    {plan === null ? <>
+      <div className="card butter" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}><b>Coming soon.</b> Deleting your account from the app needs one more setup step on PalDex’s side. Until then you can sign out, and remove pets from your household in Settings.</p></div>
+      <button className="btn2" style={{ marginTop: 'var(--sp-4)', width: '100%' }} onClick={() => go('privacy')}>What PalDex stores</button>
+    </> : plan === undefined ? <p className="s" style={{ marginTop: 'var(--sp-3)' }} aria-live="polite">{err || 'Checking what would be deleted…'}</p>
+      : <>
+      <p className="m" style={{ marginTop: 'var(--sp-1)' }}>This deletes your account{account ? ` (${account.email})` : ''} for good. It can’t be undone.</p>
+      <div className="lgroup" style={{ marginTop: 'var(--sp-4)' }}>
+        <Row label="Deleted" sub={`Your account, friends and friend requests, the photos you posted${plan.deleted.length ? `, and ${names(plan.deleted.map((p) => p.name))} with all ${plan.deleted.length === 1 ? 'its' : 'their'} logs, documents and photos` : ''}.`} />
+        {plan.kept.length > 0 && <Row label="Stays" sub={`${plan.kept.map((k) => `${k.name} stays with ${k.keeper || 'your household'}`).join('; ')}, with ${plan.kept.length === 1 ? 'its' : 'their'} history. What you logged stays, without your name.`} />}
+        <Row label="This phone" sub="Everything PalDex keeps here is removed too." />
+      </div>
+      <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={onBackup}>Download a backup first</button>
+      <label className="field" htmlFor="del">Type DELETE to confirm</label>
+      <input id="del" className="in" value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} />
+      <button className="btn danger" style={{ marginTop: 'var(--sp-4)' }} disabled={!ready || busy} onClick={() => void run()}>{busy ? 'Deleting…' : 'Delete my account'}</button>
+    </>}
+    {err && plan !== undefined && <p className="s" role="alert" style={{ marginTop: 'var(--sp-3)', color: 'var(--rose)' }}>{err}</p>}
+    {err && plan === undefined && <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={load}>Try again</button>}
+  </Sheet>;
+}
+
+/** Restore from a backup: what's in the file, Merge (the default, adds what's missing) or Replace (asks first), then a
+    toast with Undo. A wrong or old file says so here instead. */
+export function Restore({ read, onPick, onClose }: { read: BackupRead; onPick: () => void; onClose: () => void }) {
+  const { account } = useStore();
+  const [mode, setMode] = useState<'merge' | 'replace'>('merge');
+  const [sure, setSure] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (!read.ok) return <Sheet title="Restore from a backup" onClose={onClose}>
+    <div className="card butter" role="alert" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}>{read.error}</p></div>
+    <button className="btn2" style={{ marginTop: 'var(--sp-4)', width: '100%' }} onClick={onPick}>Choose another file</button>
+  </Sheet>;
+  const { summary: sum } = read;
+  const when = sum.exported ? new Date(sum.exported) : null;
+  const run = async () => {
+    setBusy(true);
+    const { changed, undo } = await store.importBackup(read.backup, mode);
+    onClose();
+    showToast({ msg: mode === 'replace' ? 'Saved · replaced with the backup' : changed ? `Saved · ${changed} added from the backup` : 'Saved · nothing new in the backup',
+      action: { label: 'Undo', run: () => { void undo().then(() => showToast({ msg: 'Backup undone' })); } } });
+  };
+  return <Sheet title="Restore from a backup" onClose={onClose}>
+    {when && !isNaN(+when) && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Saved {when.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>}
+    <div className="lgroup" style={{ marginTop: 'var(--sp-3)' }}>
+      <Row label={sum.pets.length === 1 ? 'Pet' : 'Pets'} value={sum.pets.join(', ')} />
+      <Row label="Days of logs" value={<span className="num">{sum.days}</span>} />
+      <Row label="Documents" value={<span className="num">{sum.documents}</span>} />
+    </div>
+    {sum.documents > 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Documents come back as entries; their files open while they’re still stored online.</p>}
+    <span className="field">How to restore it</span>
+    <div className="seg" role="group" aria-label="How to restore it">{([['merge', 'Merge'], ['replace', 'Replace']] as const).map(([v, l]) =>
+      <button key={v} className={mode === v ? 'on' : ''} aria-pressed={mode === v} onClick={() => { setMode(v); setSure(false); }}>{l}</button>)}</div>
+    <p className="s" style={{ marginTop: 'var(--sp-2)' }}>{mode === 'merge' ? 'Adds what this phone doesn’t have yet. Nothing is doubled up, and nothing here is removed.'
+      : `Swaps this phone’s pets and logs for the backup’s.${account ? ' Pets shared online come back on the next sync.' : ''}`}</p>
+    {mode === 'replace' && sure ? <div className="card butter" style={{ marginTop: 'var(--sp-4)' }}>
+      <p className="s" style={{ color: 'var(--butter-ink)' }}>Replace everything on this phone with this backup? You can undo it right after.</p>
+      <button className="btn" style={{ marginTop: 'var(--sp-3)', background: 'var(--rose)' }} disabled={busy} onClick={run}>Replace everything</button>
+      <button className="btn2" style={{ marginTop: 'var(--sp-2)', width: '100%', background: 'transparent' }} onClick={() => setSure(false)}>Keep what’s here</button>
+    </div>
+      : <button className="btn sheetsave" style={{ marginTop: 'var(--sp-5)' }} disabled={busy} onClick={mode === 'merge' ? run : () => setSure(true)}>{mode === 'merge' ? 'Merge into this phone' : 'Replace…'}</button>}
+  </Sheet>;
+}
+
 export function Settings() {
   const { cat, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
   const [theme, setT] = useState<Theme>(getTheme());
-  const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
+  const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install' | 'delete'>('');
   const [person, setPerson] = useState('');
   const showInstall = useInstallHint();
+  const [restore, setRestore] = useState<BackupRead | null>(null);
+  const file = useRef<HTMLInputElement>(null);
+  // the "Contact us" inbox shows only for the app owner (a select that returns a row only for admins)
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { let on = true; setAdmin(false); if (account) void store.isAppAdmin().then((a) => { if (on) setAdmin(a); }); return () => { on = false; }; }, [account?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!cat) return null;
+  const pickBackup = () => file.current?.click();
+  const onBackup = async (f?: File) => { if (f) setRestore(readBackup(await f.text())); };
   const exportData = async () => {
-    const data = { app: 'PalDex', exported: new Date().toISOString(), cats: await store.db.cats.toArray(), sets: await store.db.sets.toArray(), care: await store.db.care.toArray(), wallet: await store.db.wallet.toArray() };
+    const data = await store.backup();
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `paldex-${cat.name.toLowerCase().replace(/\W+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`; a.click();
   };
@@ -140,6 +232,7 @@ export function Settings() {
       <Row label="Your name" value={me?.name || store.myName || 'Add'} onClick={() => setSheet('name')} />
       {sync === 'offline' && <Row label="Try syncing again" onClick={() => void store.sync()} />}
       <Row label="Sign out" danger onClick={() => { if (confirm(`Sign out? Your cats stay on this phone; sign back in to sync again.`)) void store.signOut(); }} />
+      <Row label="Delete my account" danger onClick={() => setSheet('delete')} />
     </Group> : <Group title="Household & account" foot="Sign in to share your cats with the people you live with, and to add friends.">
       <Row label="Create an account or sign in" onClick={() => go('together')} />
       <Row label="Join a household with a code" onClick={() => go('join')} />
@@ -151,9 +244,16 @@ export function Settings() {
         <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 'var(--sp-2)' }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
       {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
+      <Row label="Privacy" sub="What PalDex keeps, and who sees it" onClick={() => go('privacy')} />
+      <Row label="Restore from a backup" sub="Add a backup file’s pets and logs to this phone" onClick={pickBackup} />
+      <Row label="Contact us" sub="A question, an idea, or something not working" onClick={() => go('contact')} />
+      {admin && <Row label="Messages" sub="What people sent with Contact us" onClick={() => go('messages')} />}
     </Group>
+    <input ref={file} type="file" accept="application/json,.json" hidden aria-hidden="true" data-testid="backup-file" onChange={(e) => { void onBackup(e.target.files?.[0]); e.target.value = ''; }} />
+    {restore && <Restore key={restore.ok ? 'ok' + restore.summary.exported : restore.error} read={restore} onPick={pickBackup} onClose={() => setRestore(null)} />}
 
     {sheet === 'pet' && <EditPet cat={cat} onClose={() => setSheet('')} />}
+    {sheet === 'delete' && <DeleteAccount onClose={() => setSheet('')} onBackup={() => void exportData()} />}
     {sheet === 'name' && <EditMyName onClose={() => setSheet('')} />}
     {person && <Person userId={person} onClose={() => setPerson('')} />}
     {sheet === 'invite' && household && <Invite catName={cat.name} code={household.inviteCode} onClose={() => setSheet('')} />}

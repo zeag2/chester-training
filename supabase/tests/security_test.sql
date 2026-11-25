@@ -9,6 +9,11 @@ do $$ declare bad text; begin
   select string_agg(distinct table_name, ', ') into bad from information_schema.role_table_grants
     where table_schema = 'public' and grantee in ('anon', 'PUBLIC') and table_name not like '\_%';
   if bad is not null then raise exception 'anon can reach tables: %', bad; end if;
+  -- …except the one column-level grant on purpose: signed-out visitors may send a "Contact us" message (insert only)
+  select string_agg(distinct table_name || ' ' || privilege_type, ', ') into bad from information_schema.column_privileges
+    where table_schema = 'public' and grantee in ('anon', 'PUBLIC') and table_name not like '\_%'
+      and not (table_name = 'contact_messages' and privilege_type = 'INSERT');
+  if bad is not null then raise exception 'anon can reach columns: %', bad; end if;
   -- nor run any function in public or private
   select string_agg(p.oid::regprocedure::text, ', ') into bad from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and has_function_privilege('anon', p.oid, 'execute');

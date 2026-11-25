@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
-import { suggestNext } from '../engine/plan';
+import { recommendNext } from '../engine/plan';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
 import { daysHome, today, ageText } from '../lib/stats';
@@ -196,13 +196,12 @@ export function Home() {
   const t = today();
   const todaySets = sets.filter((s) => s.day === t);
   const rewardedToday = todaySets.filter((s) => s.rewarded).length;
-  const plan = suggestNext(SKILLS, progress, sets, unlockedHidden, t);
-  const next = plan[0];
+  const next = recommendNext(SKILLS, progress, sets, unlockedHidden, t);
   if (!cat) return null;
   const done = rewardedToday >= DAILY_REWARDED_SETS;
   const lines = ['Pet me!', 'Hi! Scratches?', 'Mrrp.', 'Is it dinner time?', 'I was napping. Hi.'];
   const idleLine = cat.training === false ? `Hi! I'm ${cat.name}. ${lines[new Date().getMinutes() % lines.length]}`
-    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `Next up: ${next.skill.name}. Ready?` : 'Pet me!';
+    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `${next.kind === 'last' ? 'More' : 'Next up:'} ${next.skill.name}. Ready?` : 'Pet me!';
 
   // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
   const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>
@@ -230,8 +229,10 @@ export function Home() {
       <FriendsStrip onInvite={() => setInvite(true)} />
       {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
         <div className="ico"><Icon name="target" /></div>
-        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · up next: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
-        {next && !done && <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>}</a>}
+        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
+        {next && !done && <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', alignItems: 'stretch' }}>
+          <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} aria-label={`Start ${next.skill.name}`} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>
+          <button className="btn2" style={{ minHeight: 40, background: 'transparent' }} aria-label={`Change skill (now ${next.skill.name})`} onClick={(e) => { e.preventDefault(); go('tree'); }}>Change</button></div>}</a>}
       {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="var(--butter-strong)" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}

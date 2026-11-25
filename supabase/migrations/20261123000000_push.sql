@@ -106,6 +106,8 @@ begin
   end;
   return null;
 end $$;
+-- only the trigger runs it (Postgres checks EXECUTE when the trigger is created, not when it fires)
+revoke all on function private.push_on_friend_request() from public, anon, authenticated;
 drop trigger if exists push_friend_request on public.friend_requests;
 create trigger push_friend_request after insert on public.friend_requests
   for each row execute function private.push_on_friend_request();
@@ -127,6 +129,8 @@ begin
   end;
   return null;
 end $$;
+-- only the trigger runs it (Postgres checks EXECUTE when the trigger is created, not when it fires)
+revoke all on function private.push_on_friend_treat() from public, anon, authenticated;
 drop trigger if exists push_friend_treat on public.friend_treats;
 create trigger push_friend_treat after insert on public.friend_treats
   for each row execute function private.push_on_friend_treat();
@@ -153,6 +157,8 @@ begin
   end;
   return null;
 end $$;
+-- only the trigger runs it (Postgres checks EXECUTE when the trigger is created, not when it fires)
+revoke all on function private.push_on_pet_photo() from public, anon, authenticated;
 drop trigger if exists push_pet_photo on public.pet_photos;
 create trigger push_pet_photo after insert on public.pet_photos
   for each row execute function private.push_on_pet_photo();
