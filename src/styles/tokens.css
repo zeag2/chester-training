@@ -9,16 +9,18 @@
   --peach:#fdede5;--rose:#c2563f;--peach-ink:#6e3424;
   --butter:#fbf3d8;--butter-ink:#5b4a1c;
   --sky:#e7effa;
+  --paw-coral:#c2563f; /* the coral paw on peach cards (Train, Recap) */
   --tabs:rgba(255,255,255,.96);--yes-active:#d6ece3;
   /* the same in light and dark */
   --butter-strong:#d4a23a; /* the gold treat paw */
   --paper:#ffffff;         /* documents and photos always sit on white paper */
   color-scheme:light;
 
-  /* ---- type: five sizes only (34 / 20 / 16 / 14 / 12) ---- */
+  /* ---- type: the scale (28 / 17 headings, 34 big numbers, 16 / 14 / 12); allowed in-between sizes are in the doc ---- */
   --font:Nunito,"Avenir Next",system-ui,sans-serif; /* system-ui stays: Nunito has no arrows (→), and the fallback for those must not change */
-  --fs-display:34px;--lh-display:38px;
-  --fs-heading:20px;--lh-heading:26px;
+  --fs-h1:28px;--lh-h1:1.15;          /* screen titles (h1) */
+  --fs-h2:17px;                       /* section heads (h2) */
+  --fs-display:34px;--lh-display:38px; /* big numbers and codes */
   --fs-title:16px;--lh-title:22px;
   --fs-body:16px;--lh-body:24px;
   --fs-small:14px;--lh-small:20px;
@@ -50,7 +52,7 @@
   --mint:#1c2c27;--teal:#6cc3b5;--teal-ink:#a3ddd1;
   --peach:#33231d;--rose:#e58a74;--peach-ink:#f1bba6;
   --butter:#2d2918;--butter-ink:#e9d79a;
-  --sky:#1c2333;
+  --sky:#1c2333;--paw-coral:#c96f5a;
   --tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141513;--surface:#32332e;--ink:#f1f0ea;--ink-2:#d6d5ce;--muted:#a6a69e;--muted-2:#8f8f88;
@@ -58,7 +60,7 @@
   --mint:#1c2c27;--teal:#6cc3b5;--teal-ink:#a3ddd1;
   --peach:#33231d;--rose:#e58a74;--peach-ink:#f1bba6;
   --butter:#2d2918;--butter-ink:#e9d79a;
-  --sky:#1c2333;
+  --sky:#1c2333;--paw-coral:#c96f5a;
   --tabs:rgba(20,21,19,.94);--yes-active:#24392f;color-scheme:dark}
 
 /* ---- hover washes (only where there's a mouse) ---- */

@@ -57,7 +57,7 @@ export function Train({ embedded = false }: { embedded?: boolean }) {
           <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
         {done && <p className="s" style={{ marginTop: 10 }}>Daily goal done. {cat.name} is napping; rewards reset tomorrow.</p>}
       </div>
-      {struggling && <div className="card peach row" style={{ alignItems: 'flex-start' }}><Paw color="#c2563f" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}><b>Go easy on {struggling.name.toLowerCase()}.</b> Two tough sets in a row. Make the step easier or go back one; better treats help too.</p></div>}
+      {struggling && <div className="card peach row" style={{ alignItems: 'flex-start' }}><Paw color="var(--paw-coral)" size={22} /><p className="s" style={{ color: 'var(--peach-ink)' }}><b>Go easy on {struggling.name.toLowerCase()}.</b> Two tough sets in a row. Make the step easier or go back one; better treats help too.</p></div>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 'var(--sp-3)' }}>
         <div className="card grey" style={{ margin: 0 }}><p className="s">This week</p><b className="num" style={{ fontSize: 26 }}>{c1}</b><p className="s">sets</p></div>
         <div className="card grey" style={{ margin: 0 }}><p className="s">Success</p><b className="num" style={{ fontSize: 26 }}>{ws.reps ? c2 + '%' : '–'}</b><p className="s">{ws.good} of {ws.reps} reps</p></div>
