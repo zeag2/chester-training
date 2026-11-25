@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { askForPush } from '../ui/PushAsk';
+import { DEFAULT_PREFS, hourText } from '../lib/push';
 import { store, useStore } from '../db/store';
 import { Chester } from '../chester/Chester';
 import { daysBetween, localDay } from '../engine/day';
@@ -284,6 +286,10 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
     if (saved) showToast({ msg: `Saved · ${label(kind, saved.data)}${shown ? ` for ${shown.name}` : ''}`, action: { label: 'Undo', run: () => void (item
       ? store.saveCare(kind, item.data as never, { id: item.id, at: item.at, catId: item.catId }) : store.deleteCare(saved.id)) } });
     audio.sparkle();
+    // a medicine that comes round again: offer a reminder on this phone (only if it's never been asked)
+    const md = saved?.kind === 'med' ? saved.data as CareData['med'] : undefined;
+    if (md && (md.course || md.nextDue)) void askForPush({ title: `Remind you at ${hourText(DEFAULT_PREFS.medHour)} when it’s due?`,
+      sub: `A note on this phone on the days ${shown?.name ?? 'your cat'} needs ${md.name}. Change the time in Settings.` });
   };
   const seg = <T extends string>(label: string, key: string, opts: [T, string][]) => <><span className="field">{label}</span>
     <div className="seg" role="group" aria-label={label}>{opts.map(([v, l]) => <button key={v} className={f[key] === v ? 'on' : ''} aria-pressed={f[key] === v} onClick={() => set(key, v)}>{l}</button>)}</div></>;

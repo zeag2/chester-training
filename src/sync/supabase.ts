@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, AddFriendResult, ContactMessage, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewPhoto, NewContactMessage, PetCard, Photo, ReceivedTreat, Remote } from './remote';
+import type { Account, AddFriendResult, ContactMessage, DeletionPlan, Friend, FriendPet, FriendRequest, Member, NewContactMessage, NewPhoto, PetCard, Photo, PushPrefs, PushSub, ReceivedTreat, Remote } from './remote';
 
 const MISSING = /does not exist|schema cache|could not find|PGRST20[25]|42P01|bucket not found/i;
 
@@ -276,6 +276,28 @@ export class SupabaseRemote implements Remote {
     return Object.fromEntries(d.flatMap((x) => (x.signedUrl && x.path ? [[x.path, x.signedUrl] as const] : [])));
   }
 
+  // ---- push notifications (public.push_prefs is new in 20261123000000_push.sql) ----
+  private pushErr(e: { message: string; code?: string } | null) {
+    if (e) throw new Error(MISSING.test(e.message + (e.code ?? '')) ? 'push-missing' : e.message);
+  }
+  async pushPrefs(): Promise<PushPrefs | null> {
+    type Row = { tz: string; friends: boolean; treats: boolean; photos: boolean; meds: boolean; med_hour: number; quiet_from: number; quiet_to: number };
+    const r = await this.sb.from('push_prefs').select('tz, friends, treats, photos, meds, med_hour, quiet_from, quiet_to').maybeSingle<Row>();
+    this.pushErr(r.error);
+    const d = r.data; if (!d) return null;
+    return { tz: d.tz, friends: d.friends, treats: d.treats, photos: d.photos, meds: d.meds, medHour: d.med_hour, quietFrom: d.quiet_from, quietTo: d.quiet_to };
+  }
+  async savePushPrefs(p: PushPrefs) {
+    const me = (await this.account())?.userId; if (!me) throw new Error('not signed in');
+    this.pushErr((await this.sb.from('push_prefs').upsert({ user_id: me, tz: p.tz, friends: p.friends, treats: p.treats, photos: p.photos, meds: p.meds,
+      med_hour: p.medHour, quiet_from: p.quietFrom, quiet_to: p.quietTo, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })).error);
+  }
+  async savePushSubscription(s: PushSub, userAgent: string) {
+    this.pushErr((await this.sb.rpc('save_push_subscription', { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth, user_agent: userAgent.slice(0, 300) })).error);
+  }
+  async removePushSubscription(endpoint: string) {
+    this.pushErr((await this.sb.from('push_subscriptions').delete().eq('endpoint', endpoint)).error);
+  }
   // ---- "Contact us" (insert-only for everyone; the owner reads them) ----
   private isMissing(e: { message: string; code?: string }) { return MISSING.test(e.message) || MISSING.test(e.code ?? ''); }
   async sendContact(m: NewContactMessage) {

@@ -1,3 +1,5 @@
+import { CHESTER, LINE } from './iconArt';
+
 const P: Record<string, string> = {
   home: 'M4 11 L12 4 L20 11 V20 H4 Z',
   tree: 'M6 12 m-2.5 0 a2.5 2.5 0 1 0 5 0 a2.5 2.5 0 1 0 -5 0 M18 6 m-2.5 0 a2.5 2.5 0 1 0 5 0 a2.5 2.5 0 1 0 -5 0 M18 18 m-2.5 0 a2.5 2.5 0 1 0 5 0 a2.5 2.5 0 1 0 -5 0 M8.3 11 L15.7 7 M8.3 13 L15.7 17',
@@ -30,9 +32,29 @@ const P: Record<string, string> = {
   sound: 'M4 10 H8 L13 6 V18 L8 14 H4 Z M16 9 C17.5 10.5 17.5 13.5 16 15', mute: 'M4 10 H8 L13 6 V18 L8 14 H4 Z M16 10 L20 14 M20 10 L16 14',
 };
 export const ICON_FOR: Record<string, string> = { Foundation: 'target', Care: 'hand', Manners: 'mat', Adventure: 'leaf', Tricks: 'star' };
+/* The approved line set (src/ui/iconArt.ts) replaces the hand-drawn paths above where it has the same icon. The old
+   names stay as aliases. `plus` and `check` keep the plain glyphs: the line set's are circled, and they sit inside
+   round buttons. The circled ones are `plus-circle` and `check-circle`. */
+const LINE_ALIAS: Record<string, string> = { heart: 'health', user: 'friends', gear: 'settings', cal: 'calendar', click: 'clicker', 'plus-circle': 'plus', 'check-circle': 'check' };
+const KEEP_OLD = new Set(['plus', 'check']);
+export const linePath = (name: string): string => (KEEP_OLD.has(name) ? P[name] : LINE[LINE_ALIAS[name] ?? name] ?? P[name] ?? P.star);
+
+/** A line icon (currentColor, for small inline uses: rows, buttons, chips). */
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
-  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' }}><path d={P[name] ?? P.star} /></svg>;
+  return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' }}><path d={linePath(name)} /></svg>;
 }
+
+/** The Chester-style icons with a name that differs from the line one. */
+const CHESTER_ALIAS: Record<string, string> = { heart: 'health', user: 'friends', gear: 'settings', cal: 'calendar' };
+/** A Chester-style icon (pastel fill + outline, `.cicon`): the tab bar / side nav and the way into Settings. */
+export function ChesterIcon({ name, size = 24 }: { name: string; size?: number }) {
+  const parts = CHESTER[CHESTER_ALIAS[name] ?? name] ?? CHESTER.star;
+  return <svg className="cicon" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+    {parts.map((p, i) => p.fill ? <path key={i} d={p.d} style={{ fill: p.fill, stroke: 'none' }} />
+      : <path key={i} d={p.d} style={{ fill: 'none', stroke: 'var(--art-outline)', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }} />)}
+  </svg>;
+}
+export const CHESTER_ICONS = Object.keys(CHESTER);
 export function Paw({ color = 'var(--ink)', size = 28 }: { color?: string; size?: number }) {
   // flex: none, or a long line beside it in a .row squeezes the paw thin (the "Go easy" card on Train)
   return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ flex: 'none' }}><ellipse cx="12" cy="15.5" rx="5" ry="4.2" style={{ fill: color }} /><ellipse cx="6" cy="10" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="10" cy="6.5" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="14" cy="6.5" rx="2" ry="2.6" style={{ fill: color }} /><ellipse cx="18" cy="10" rx="2" ry="2.6" style={{ fill: color }} /></svg>;
