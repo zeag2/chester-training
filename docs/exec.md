@@ -47,7 +47,7 @@ starts until the next day. The 10% reserve is for fixes and Josh's own chats. Re
 ## Week 3 (from Tue Nov 24, 3 PM) — first items
 | When | Work | Size / budget | Gate | Status |
 |---|---|---|---|---|
-| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql` + `20261124000000_delete_account.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | waiting |
+| Tue Nov 24, evening | **Josh, one-time:** the week's single SQL run (`20261123000000_push.sql` + `20261124000000_delete_account.sql`), Vault secret `push_cron_key`, Edge Function secrets (VAPID keys); deploy the `send-push` Edge Function with `--no-verify-jwt` (PR #42). Never put keys in the repo or chat. | — | Josh | SQL run Wed Nov 25 (delete account live); push setup in progress |
 | Wed Nov 25, 3:40 AM | Push build: pulled forward to Mon Nov 23 (W2) | — | — | moved |
 
 | Any time | **Josh:** visual OK on #40 (design tweaks) and #44 ("Pet me?"); pick a privacy contact email for #43 | — | Josh | waiting |
