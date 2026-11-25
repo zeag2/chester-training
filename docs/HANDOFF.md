@@ -601,6 +601,25 @@ Items marked *(art)* suit the art session.
    until the secrets and the SQL exist. Tests: `supabase/functions/send-push/core.test.ts` (drain with 201/410/500,
    claims, meds per time zone, the key check), `src/lib/pushsw.test.ts`; `supabase/tests/send-push-e2e/run.sh` (the
    real function end to end, see section 4).
+   **Part 2 built 2026-11-25** (PR from `claude/features-push-b`, on top of part 1; no SQL change): `src/lib/push.ts`
+   (`pushSupport`: yes / `ios-install` for an iPhone Safari tab / no; `pushState`; `enablePush` asks the browser as the
+   first thing inside the tap, then subscribes with `userVisibleOnly`, `save_push_subscription`, and saves default
+   `push_prefs` with the phone's time zone, keeping any the person already chose; `disablePush`; `refreshPush` on app
+   start re-saves a rotated endpoint and the time zone; `shouldAsk`). **Hidden until it all exists:** the build needs
+   `VAPID_PUBLIC_KEY` (committed in `src/sync/config.ts`, public by design; `VITE_VAPID_PUBLIC_KEY` overrides, empty
+   turns it off) and `pushReady` checks once per session that `push_prefs` answers; signed-out people never see it.
+   Asks (`src/ui/PushAsk.tsx`, `.card butter`, Turn on / Not now = 30 days): after sending a friend request ("Get a
+   note when Erin says yes?", inline under Add a friend) and after saving a medicine with Repeat or a next-due date
+   ("Remind you at 9 AM when it's due?", in a Sheet via `askForPush` → `<PushAskHost />` in App); never once the
+   browser has an answer. **Settings → Notifications** (its own group, before App): On this phone, then Friend
+   requests / Treats / Friends' photos / Medicine switches, "Medicine reminder at" (6 AM–10 PM), quiet hours as the
+   foot; "On iPhone, add PalDex to your Home Screen first" (opens the install steps); "Notifications are blocked".
+   Sign out turns this phone off first. Remote: `pushPrefs`, `savePushPrefs`, `savePushSubscription`,
+   `removePushSubscription` ('push-missing' before the SQL). Function deploy: `supabase/deploy/send-push.ts` is the
+   function as one file for the dashboard editor (`node scripts/send-push-one-file.mjs`; a test fails if it's stale).
+   Josh's steps: `docs/sharing-setup.md` step 16. Tests: `src/lib/push.test.ts`, `src/ui/pushask.test.tsx`
+   (browser faked by `src/lib/pushtest-env.ts`), `src/lib/sendpushfile.test.ts`. Screenshots: `docs/screenshots/push/`.
+   Next: Josh runs the SQL + secrets + deploy, merge both PRs, then the iPhone test in the plan.
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -931,6 +950,7 @@ src/
     theme.ts            light/dark/system
     updates.ts          service-worker update-in-place
     pushopen.ts         a tapped notification on an open PalDex: moves to the screen the service worker names
+    push.ts             push on this phone: support, permission, subscribe/unsubscribe, prefs, when to ask
     images.ts, stats.ts, install.ts
   ui/                   TabBar (bottom bar / rail / side nav), layout (useLayout breakpoints), icons, router, PetSwitcher, FriendsStrip (friends' cats on Home), settle (useSettle: a new row settles into place)
   styles/tokens.css     design tokens: colour (light + dark), type, space, radius, depth, motion, the settle keyframes
@@ -957,6 +977,7 @@ supabase/
   functions/send-push/  push sender (Edge Function, called by pg_cron): index.ts wires core.ts (logic, Vitest-tested)
                         to supabase-js and web-push. Deploy with --no-verify-jwt (the cron sends x-cron-key).
   functions/_shared/meds.ts  medsDue(): medicine due today, used by the app (src/engine/care.ts) and send-push
+  deploy/send-push.ts   GENERATED one-file copy of send-push for the dashboard editor (scripts/send-push-one-file.mjs)
 scripts/copy-ocr.mjs    copies Tesseract worker/engine/English data into public/ocr before dev/build (gitignored)
 public/                 icons, sfx samples; push-sw.js (push + notification tap, pulled into the generated
                         service worker by workbox importScripts); badge-96.png (Android's white notification badge)
@@ -1493,3 +1514,11 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   `openssl` for its certificate; Playwright Chromium + CDP `ServiceWorker.deliverPushMessage` to check the built
   service worker shows the notification; Playwright to render `public/badge-96.png` from `icon.svg`. Checks: Vitest
   (308), typecheck, build, `supabase/tests/send-push-e2e/run.sh` (17 checks passed).
+- 2026-11-25, push notifications part 2, the app (Features worker, `claude/features-push-b`): no skills, plugins or
+  new MCP servers. Followed `docs/design-system.md` (added the Ask card and the Settings switch group to its component
+  list first). Generated the production VAPID key pair (`web-push generate-vapid-keys`) and a cron key in the
+  session's scratch space; the public key is in `src/sync/config.ts`, the two secrets went to Josh in chat only.
+  Checks: Vitest (333), typecheck, build; `deno check` and `supabase/tests/send-push-e2e/run.sh` on the one-file copy
+  too (`SEND_PUSH_FILE=/supabase/deploy/send-push.ts`, all passed); Playwright iPhone 13 shots against the Vite dev
+  server with the store's remote swapped for `FakeServer` (imported through Vite) and push faked in an init script
+  (Notification, serviceWorker.ready): `docs/screenshots/push/`.

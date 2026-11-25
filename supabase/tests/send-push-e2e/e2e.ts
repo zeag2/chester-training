@@ -46,7 +46,7 @@ Deno.env.set('SUPABASE_URL', 'http://127.0.0.1:54321');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', Deno.readTextFileSync(DIR + 'service.jwt').trim());
 Deno.env.set('PUSH_CRON_KEY', KEY);
 Deno.env.set('VAPID_PUBLIC_KEY', vapid.publicKey); Deno.env.set('VAPID_PRIVATE_KEY', vapid.privateKey); Deno.env.set('VAPID_SUBJECT', 'mailto:test@example.com');
-await import(REPO + '/supabase/functions/send-push/index.ts'); // Deno.serve on :8000
+await import(REPO + (Deno.env.get('SEND_PUSH_FILE') ?? '/supabase/functions/send-push/index.ts')); // Deno.serve on :8000 (SEND_PUSH_FILE=/supabase/deploy/send-push.ts checks the one-file copy)
 const call = async (mode: unknown, key = KEY) => {
   const r = await fetch('http://127.0.0.1:8000/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-cron-key': key }, body: JSON.stringify({ mode }) });
   return { status: r.status, body: await r.json() };
