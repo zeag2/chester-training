@@ -56,7 +56,7 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
 "Chester ·" dot S · 15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
 
-**Running**: none.
+**Running**: UI visual-match pass (Josh's go 2026-11-25: "visual match first"; branch `claude/features-ui-match`): the rest of the app brought in line with the new badge/icon look using the apple-design skill (now on main, PR #51), plus review items 2, 6, 7, 8, 15.
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first; whether the push worker chat can be archived (it holds the keys).
 
