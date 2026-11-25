@@ -22,6 +22,9 @@ export interface NewPhoto { catId: string; path: string; caption: string; width:
 export interface PushPrefs { tz: string; friends: boolean; treats: boolean; photos: boolean; meds: boolean; medHour: number; quietFrom: number; quietTo: number }
 /** A phone's Web Push subscription (PushSubscription.toJSON()'s parts). */
 export interface PushSub { endpoint: string; p256dh: string; auth: string }
+/** What deleting the account would do: pets that go (nobody else has them), pets that stay with someone, and the
+    stored files the app removes first. */
+export interface DeletionPlan { deleted: { id: string; name: string }[]; kept: { id: string; name: string; keeper: string }[]; files: { bucket: string; path: string }[] }
 
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
@@ -40,6 +43,10 @@ export interface Remote {
   startRecovery(accessToken: string, refreshToken: string): Promise<Account>;
   /** Change the signed-in account's password. */
   setPassword(password: string): Promise<void>;
+  /** What deleting the signed-in account would do; null until its SQL is run (the app then says "coming soon"). */
+  accountDeletion(): Promise<DeletionPlan | null>;
+  /** Remove the plan's files, delete the account on the server (pets handed over or deleted), then sign out here. */
+  deleteAccount(plan: DeletionPlan): Promise<void>;
 
   myCatIds(): Promise<string[]>;
   getCat(id: string): Promise<{ cat: Cat; inviteCode: string } | null>;
@@ -124,4 +131,18 @@ export interface Remote {
   savePushSubscription(s: PushSub, userAgent: string): Promise<void>;
   /** This phone stops getting my notifications. */
   removePushSubscription(endpoint: string): Promise<void>;
+  /** "Contact us". Works signed in or out. Throws 'contact-missing' until its SQL is run, 'contact-rate-limited'
+      after too many in an hour. */
+  sendContact(m: NewContactMessage): Promise<void>;
+  /** False when the contact SQL hasn't been run yet (the form then says it isn't available). */
+  contactReady(): Promise<boolean>;
+  /** Whether the signed-in person owns the app (false signed out, or before the SQL is run). */
+  isAppAdmin(): Promise<boolean>;
+  /** The owner's inbox, newest first. */
+  contactMessages(): Promise<ContactMessage[]>;
+  setContactDone(id: number, done: boolean): Promise<void>;
+  deleteContact(id: number): Promise<void>;
 }
+
+export interface NewContactMessage { name?: string; reach?: string; message: string; appVersion: string }
+export interface ContactMessage { id: number; at: string; signedIn: boolean; name?: string; reach?: string; message: string; appVersion?: string; done: boolean }

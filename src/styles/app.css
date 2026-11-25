@@ -1,6 +1,7 @@
 @import "./tokens.css";
 /* tokens (colour, type, space, radius, motion) live in tokens.css; this file is component classes only */
 *{box-sizing:border-box}
+input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 /* iPhone: no double-tap zoom anywhere (pinch zoom still works). A double tap on a card or text zoomed the page, and
    then the fixed tab bar looked like it scrolled with it (2026-11-19, the cat tab). */
@@ -11,8 +12,8 @@ html{touch-action:manipulation}
 a{color:var(--teal)}
 a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}
 button{cursor:pointer}
-h1{font-size:28px;line-height:1.15;font-weight:800;margin:0;letter-spacing:-.01em}
-h2{font-size:17px;font-weight:800;margin:0}
+h1{font-size:var(--fs-h1);line-height:var(--lh-h1);font-weight:800;margin:0;letter-spacing:-.01em}
+h2{font-size:var(--fs-h2);font-weight:800;margin:0}
 p{margin:0}
 .m{color:var(--muted);font-size:var(--fs-small)}.s{font-size:13px;color:var(--muted)}
 .screen{max-width:480px;margin:0 auto;padding:calc(var(--sp-5) + var(--safe-t)) var(--sp-5) calc(110px + var(--safe-b));position:relative;min-height:100dvh}
@@ -23,6 +24,7 @@ p{margin:0}
 .btn{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 var(--sp-5);border-radius:var(--r-pill);background:var(--ink);color:var(--on-ink);font-weight:800;font-size:var(--fs-body);text-decoration:none;border:0;width:100%;transition:transform 160ms var(--ease-out)}
 .btn::after{content:"";position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:rgba(255,255,255,.35);transform:scale(0);opacity:0;transition:transform 450ms var(--ease-out),opacity 450ms var(--ease-out)}
 .btn:active::after{transform:scale(16);opacity:1;transition:transform 0s,opacity 0s}
+.btn.danger{background:var(--rose)}
 .btn:disabled{background:var(--grey);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}.btn:disabled::after{display:none}.btn:disabled:active{transform:none}
 .btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:var(--r-pill);background:var(--grey);color:var(--ink);font-weight:700;font-size:15px;text-decoration:none;border:0;transition:transform 160ms var(--ease-out)}
 .btn:active,.btn2:active,a.card:active,button.card:active,.item:active,.chipbtn:active{transform:scale(.97)}
@@ -37,7 +39,8 @@ a.card,button.card{transition:transform 160ms var(--ease-out);text-decoration:no
 .seg button{flex:1;min-height:44px;border-radius:var(--r-pill);font-size:var(--fs-small);font-weight:700;color:var(--muted);background:transparent;border:0}
 .seg button.on{background:var(--surface);color:var(--ink)}
 .field{display:block;font-size:13px;font-weight:700;margin:var(--sp-4) 0 6px}
-.in{height:52px;border-radius:16px;background:var(--grey);border:0;padding:0 14px;font-size:var(--fs-body);font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+.in{height:52px;border-radius:var(--r-row);background:var(--grey);border:0;padding:0 14px;font-size:var(--fs-body);font-family:inherit;width:100%;min-width:0;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resize:vertical;display:block}
 .item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font-family:inherit;transition:transform 160ms var(--ease-out)}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;gap:6px;min-height:52px}
@@ -181,6 +184,39 @@ button.lrow:active{background:var(--line)}
    right; the flip wrapper turns it round) */
 .chaseleap{transform-origin:50% 70%;animation:kchaseleap .5s cubic-bezier(.3,.6,.4,1) both}
 @keyframes kchaseleap{0%{transform:none}45%{transform:translate(16px,-30px) rotate(-22deg)}80%{transform:translate(28px,0) rotate(14deg)}100%{transform:translate(28px,0) rotate(0)}}
+/* ---- badges (docs/design-system.md, "Badges"): the picture and its tap shine (BadgeShine in src/ui/BadgeShine.tsx).
+   Everything runs inside --shine-ms so it's all seen before the skill page opens. ---- */
+.badgeshine{position:relative;display:inline-block;flex:none;width:var(--badge-size,var(--badge-tile));height:var(--badge-size,var(--badge-tile));transform-origin:50% 55%;-webkit-tap-highlight-color:transparent}
+.badgeshine>img{display:block;width:100%;height:100%}
+.badgeshine .glint{position:absolute;inset:0;pointer-events:none;opacity:0;
+  -webkit-mask:var(--badge-mask) center/contain no-repeat;mask:var(--badge-mask) center/contain no-repeat;
+  background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.95) 49%,rgba(255,255,255,.95) 52%,transparent 64%) no-repeat;
+  background-size:260% 100%;background-position:160% 0}
+.badgeshine .spark{position:absolute;width:24%;height:24%;pointer-events:none;opacity:0;transform:scale(0);fill:var(--paper);stroke:var(--badge-outline);stroke-width:1.4;stroke-linejoin:round}
+.badgeshine .spark.a{top:-4%;right:-2%}
+.badgeshine .spark.b{bottom:10%;left:-6%;width:16%;height:16%}
+.badgeshine.is-shining{animation:kbadgepop calc(var(--shine-ms) - 40ms) var(--ease-out)}
+.badgeshine.is-shining .glint{animation:kbadgeglint var(--shine-ms) var(--ease-in-out) both}
+.badgeshine.is-shining .spark.a{animation:kbadgespark calc(var(--shine-ms) - 120ms) 80ms var(--ease-out) both}
+.badgeshine.is-shining .spark.b{animation:kbadgespark calc(var(--shine-ms) - 160ms) 160ms var(--ease-out) both}
+@keyframes kbadgepop{0%{transform:none}35%{transform:scale(1.1) rotate(-4deg)}70%{transform:scale(.98) rotate(1deg)}100%{transform:none}}
+@keyframes kbadgeglint{0%{opacity:1;background-position:160% 0}100%{opacity:1;background-position:-60% 0}}
+@keyframes kbadgespark{0%{opacity:0;transform:scale(0) rotate(0)}45%{opacity:1;transform:scale(1) rotate(45deg)}100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+@keyframes kbadgeflash{50%{filter:brightness(1.18)}}
+@media (prefers-reduced-motion:reduce){
+  .badgeshine.is-shining{animation:kbadgeflash var(--shine-flash-ms) linear}
+  .badgeshine.is-shining .glint,.badgeshine.is-shining .spark{animation:none}}
+.badgetile{border:0;background:none;padding:0;color:inherit;font:inherit;display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);min-width:0}
+.badgetile .lbl{font-size:var(--fs-label);line-height:1.2;text-align:center}
+.badgetile.earned .lbl{font-weight:700;color:var(--ink)}
+
+/* ---- Chester-style icons (ChesterIcon in src/ui/icons.tsx): full colour on the current tab, quiet on the rest ---- */
+.cicon{flex:none;overflow:visible}
+.tab .cicon{filter:var(--icon-idle);transition:filter var(--dur) var(--ease-out),transform 200ms var(--ease-out)}
+.tab.on .cicon{filter:none}
+.plus.cplus{background:none;width:56px;height:56px}
+.plus.cplus .cicon{filter:none;width:48px;height:48px}
+.branchdot{display:inline-block;width:var(--sp-3);height:var(--sp-3);border-radius:50%;margin-right:var(--sp-2);vertical-align:0}
 /* ── Desktop Home: two columns and the bigger cat scene (docs/plans/2026-11-11-desktop-layout.md, step 4) ──
    Only at 1100 px and up: Home adds .homecols and .homescene.big then (homeScene() in src/screens/Home.tsx), so phones
    and tablets never match these. The cat is the same SVG at 160 px instead of 104 (×1.54); the px offsets around him
@@ -364,3 +400,4 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
 @media (min-width:760px){
   .screen.centred{max-width:640px;padding-left:var(--sp-8);padding-right:var(--sp-8)}
 }
+

@@ -1,4 +1,4 @@
-last-reviewed: 32c5bbafb2c9fb06eddddfb78aa140e1e7873276
+last-reviewed: 58201026cc2343b12fa259b20b25d94f0ada5edf
 
 # UX review log
 
@@ -18,6 +18,86 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-24: 836c4aa..955472b
+Main brought design-system phase 2 (tokens and the sweep of hard-coded values), the settle helper, booking several
+cats at once, and the two-pane visit page on desktop. Merged it into this PR: Care.tsx, VisitPage.tsx and app.css
+conflicted with this PR's fixes, and the merge keeps main's tokens with the fixes on top (weigh-in rows, 44 px Show
+all, review footer, "Vet visit" title, teal checkboxes). Checked Home, Health and Book a visit for two cats
+("Luna + Chester", one visit each, one calendar event) in light and dark mode. No new changes needed.
+
+### 2026-11-23: 532523b..836c4aa
+Checked after-the-visit part 2: reading the Hazel Dell chart and invoice fixtures (OCR stubbed) from a visit's page,
+and the grouped review (Weight, Given today, Reminders, Past vaccines with "already logged", For next time, Details),
+in light and dark mode.
+
+Fixed:
+- The review's checkboxes (and every other checkbox) were the browser's bright blue; they now use the app's teal
+  (`accent-color`).
+- The footer said "add with 'Log something' above", but the visit page has no Log something; now "you can add by
+  hand afterwards".
+- The signed-out note pointed to "Settings → Train together", which no longer exists after the navigation change;
+  now "Settings, from the gear on Home".
+
+### 2026-11-21: 6b8ce52..532523b
+Checked after-the-visit part 1 with two cats and a visit today: the log sheet's cat chip ("Chester · Weight"), the
+"Part of a visit?" chips (today's visit picked by default), the duplicate guard ("Already logged at 6:46 AM… Add
+another?") and the Saved · Undo toast; Health with a medicine course; the "Is Hazel Dell Vet your vet?" suggestion.
+Light and dark mode. No changes needed. The returning Home cat-tab button and holiday cosmetics belong to the
+feature and art sessions and weren't touched.
+
+### 2026-11-19: 5ef497e..4d125a7
+Checked the new navigation (Home · Health · + · Chester · Friends), the Settings gear on Home and the "Chester ›"
+button, the Chester tab, the Friends tab with Photos on top, Settings in 3 groups, and onboarding (Welcome, then
+About your cat), in light and dark mode.
+
+Fixed:
+- Home's Settings button was a circle with rays, which reads as a sun (brightness or theme), not settings. It's now a
+  standard gear outline.
+- Friends showed the heading "Friends' cats" twice: above the friend code and above the cat cards. The first one,
+  over the code and Add a friend, now says "Add friends".
+
+### 2026-11-18: d24d914..5ef497e
+Checked the photo feed's paws and ⋯ menu (Hide this photo, Remove friend), the editable weigh-in list on Health,
+and the "Share a photo of the new trick" button on the recap (read in code; it needs a mastered skill and sign-in),
+in light and dark mode.
+
+Fixed:
+- Health weigh-in rows sat edge to edge on the mint card with "Edit" touching the right edge and square corners. They
+  now have 14 px side padding and rounded corners, like the other rows on cards.
+- "Show all 5" weigh-ins was about 30 px tall; it's now a 44 px tap target.
+
+### 2026-11-14: ce884e9..d24d914
+Checked the new photo feed (Me → Photos, `#/feed`) signed in with a fake friend, two posted photos and captions,
+in light and dark mode. No changes needed: the Share card, photo cards (cat name, who, when, caption) and empty and
+loading text read well. Suggested a way into it from Home (see the PR).
+
+### 2026-11-13: 4236c33..ce884e9
+Checked the booked-visit page (Booked chip, Add to calendar, Reschedule, Cancel visit) and the Reschedule sheet, in
+light and dark mode. Forgot password and Reset password need Supabase sign-in, which the dev build here has switched
+off, so they were read in code only (copy is plain and friendly; Save is disabled until 6 characters).
+
+Fixed:
+- Reschedule sheet: the date and time boxes were unstyled browser inputs (small, monospace, square border). They now
+  use the app's input style (`.in`) like every other form.
+
+### 2026-11-12: 237f969..4236c33
+Checked desktop Health in two columns (the Health log as a table, drag-and-drop documents) and All documents in two
+panes with a preview, at 1280 px light and 1440 px dark, plus phone Health and Documents in light and dark mode.
+No changes needed: the columns, table and preview pane read well; the tooltips are on the icon-only buttons.
+
+### 2026-11-11: 32c5bba..237f969
+Checked at iPhone 15 size (light and dark) and 1280 px desktop, with a saved vet and emergency vet, a booked
+and two past visits, a dose, a weight and three documents: Health (Your vet card with no vet and with one, Visits,
+Book a visit sheet), the visit page, All documents, the Summary for the vet, Home's Quick log with the new floating
+Undo toast, the box hideout, and the desktop side menu and side-panel forms.
+
+Fixed:
+- Visit page: the top bar and the big heading both showed the visit's reason ("Checkup + rabies" twice). The top
+  bar now says "Vet visit".
+
+The rest read well. The floating Undo toast, the Your vet card (Call is one tap from Health) and booking with the
+calendar cover earlier suggestions. Earlier friends-card note (2026-11-10): one tile per friend, reviewed, no changes.
 
 ### 2026-11-09 (16:17 UTC): 686bdb6..32c5bba
 Checked with two cats (Chester and Luna): Quick log with "Luna too" / "All cats", the full-belly pose after Fed,

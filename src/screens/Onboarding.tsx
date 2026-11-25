@@ -46,8 +46,9 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
     <p className="m" style={{ marginTop: 'var(--sp-3)', fontSize: 'var(--fs-body)' }}>Weight, health, vet visits and food in one place, shared with the people you live with. And clicker training, if you want it.</p>
     {sharingConfigured() ? <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(1)}
       <button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={() => { setInvited(false); next(4); }}>Set up my cat</button>
-      <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setInvited(true); next(account ? 8 : 3); }}>Someone invited me</button></div>
-      : foot(1, 'Get started', () => next(4))}</div>);
+      <button className="btn2" style={{ marginTop: 10, width: '100%' }} onClick={() => { setInvited(true); next(account ? 8 : 3); }}>Someone invited me</button>
+      <button className="btn2" style={{ marginTop: 'var(--sp-1)', width: '100%', background: 'transparent', color: 'var(--muted)' }} onClick={() => go('privacy')}>How PalDex uses your data</button></div>
+      : <>{foot(1, 'Get started', () => next(4))}<button className="btn2" style={{ marginTop: 'var(--sp-1)', width: '100%', background: 'transparent', color: 'var(--muted)' }} onClick={() => go('privacy')}>How PalDex uses your data</button></>}</div>);
 
   if (step === 3) return wrap(<>{back(1, 'Your account')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     {invited && <StepLabel n={1} of={2} label="Your account" />}

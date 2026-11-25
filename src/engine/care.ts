@@ -11,6 +11,8 @@ export type Verdict = 'love' | 'ok' | 'no';
 export type FoodType = 'dry' | 'wet' | 'treat' | 'other';
 export type GroomWhat = 'brush' | 'nails' | 'bath' | 'teeth' | 'ears';
 export type MedWhat = 'vaccine' | 'flea' | 'worm' | 'medicine';
+export type Water = 'normal' | 'more' | 'less';
+export type Appetite = 'normal' | 'picky' | 'none';
 
 export interface CareData {
   food: { name: string; brand?: string; type: FoodType; verdict: Verdict; current: boolean; notes?: string; code?: string; ingredients?: string; image?: string };
@@ -20,7 +22,11 @@ export interface CareData {
     /** from the papers (after the visit): the invoice total, the vet's name, body condition (e.g. 4/9) */
     cost?: number; vetName?: string; bcs?: string;
     /** how many times the calendar event was changed (rescheduled or cancelled): the .ics SEQUENCE */
-    calSeq?: number };
+    calSeq?: number;
+    /** booked together with other cats (Book a visit, several cats): one visit per cat, all with the same `id`, and the
+        cats' names at booking time. They share one calendar event ("Vet: Chester + Luna", UID visit-<id>) and are
+        rescheduled and cancelled together. */
+    group?: { id: string; names: string[] } };
   symptom: { what: string; worried?: boolean; notes?: string; visitId?: string };
   /** `visitId`: the visit it was weighed at (from the visit page). */
   weight: { lb: number; doc?: string; visitId?: string };
@@ -29,7 +35,9 @@ export interface CareData {
   med: { name: string; what: MedWhat; nextDue?: string; notes?: string; doc?: string; visitId?: string; course?: { times: number; until: string } };
   /** A vet document stored in the shared bucket at `path` (<cat id>/<doc id>.<ext>). */
   /** `ok`: the daily check said all normal (false: something's off, see the symptom logged with it). */
-  daily: { what: DailyWhat; ok?: boolean; minutes?: number; notes?: string };
+  /** `minutes`, `toy` (a `PLAY_TOYS` id): real playtime, from Played on Home. `water`, `appetite`: optional chips on the
+      daily check. */
+  daily: { what: DailyWhat; ok?: boolean; minutes?: number; toy?: string; water?: Water; appetite?: Appetite; notes?: string };
   doc: { title: string; path: string; mime: string; bytes: number; docDate?: string; summary?: string; categories?: ('vet' | 'esa' | 'adoption' | 'other')[];
     /** The visit it came from, and what kind of paper it is (see `src/engine/docs.ts`). */
     visitId?: string; type?: 'vaccine' | 'invoice' | 'lab' | 'discharge' | 'other' };
@@ -143,6 +151,27 @@ export const RED_FLAGS = [
   'Can’t use his back legs, or cries out in pain.',
   'An injury that’s bleeding, or a fall or hit by something.',
 ];
+
+/** Played on Home: how long (quick chips) and with what (the toys PalDex already has, by the same names). */
+export const PLAY_MINUTES = [5, 10, 15];
+export const PLAY_TOYS: Record<string, string> = { wand: 'Feather wand', laser: 'Laser dot', box: 'Cardboard box', tunnel: 'Crinkle tunnel' };
+/** The daily check's optional chips. */
+export const WATER: Record<Water, string> = { normal: 'Normal', more: 'More', less: 'Less' };
+export const APPETITE: Record<Appetite, string> = { normal: 'Normal', picky: 'Picky', none: 'Didn’t eat' };
+/** The last playtime's length and toy, to preselect (most sessions are like the last one, so Save is one tap). */
+export function lastPlay(items: CareItem[]): { minutes?: number; toy?: string } {
+  const p = items.filter((i): i is CareItem<'daily'> => i.kind === 'daily' && !i.deleted && (i as CareItem<'daily'>).data.what === 'play' && !!((i as CareItem<'daily'>).data.minutes || (i as CareItem<'daily'>).data.toy))
+    .sort((a, b) => b.at - a.at)[0];
+  return p ? { minutes: p.data.minutes, toy: p.data.toy && PLAY_TOYS[p.data.toy] ? p.data.toy : undefined } : {};
+}
+/** A quick log's details for the Health log: "10 min · Laser dot", "All normal · Water: more · Appetite: picky". */
+export function dailyDetail(d: CareData['daily']): string {
+  const toy = d.toy ? PLAY_TOYS[d.toy] ?? d.toy : '';
+  const parts = d.what === 'check'
+    ? [d.ok === false ? 'Something off' : 'All normal', d.water && `Water: ${WATER[d.water].toLowerCase()}`, d.appetite && `Appetite: ${APPETITE[d.appetite].toLowerCase()}`]
+    : d.what === 'play' ? [d.minutes ? `${d.minutes} min` : '', toy] : [];
+  return [...parts, d.notes].filter(Boolean).join(' · ');
+}
 
 /** Meals a day unless the pet says otherwise. */
 export const MEALS_PER_DAY = 2;

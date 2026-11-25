@@ -1,5 +1,5 @@
 import { useStore } from '../db/store';
-import { suggestNext } from '../engine/plan';
+import { recommendNext } from '../engine/plan';
 import { SKILLS } from '../engine/skills';
 import { today } from '../lib/stats';
 import { Icon } from '../ui/icons';
@@ -18,7 +18,7 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
     ['vet', 'Vet visit', 'box'], ['med', 'Medicine or vaccine', 'check'], ['groom', 'Grooming', 'hand'],
   ];
   const training = cat.training !== false;
-  const next = training ? suggestNext(SKILLS, progress, sets, unlockedHidden, today())[0] : null;
+  const next = training ? recommendNext(SKILLS, progress, sets, unlockedHidden, today()) : null;
   return <Sheet label="Log something" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Log something for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
@@ -26,7 +26,7 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
         <Icon name={icon} size={22} /><span style={{ fontSize: 13, textAlign: 'center', lineHeight: 1.2 }}>{label}</span></button>)}
     </div>
     {training && <button className="card mint row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 'var(--sp-3)' }} onClick={() => pick('session/' + (next?.skill.id ?? 'clicker'))}>
-      <div className="ico"><Icon name="target" /></div><div className="sp"><b>Training set</b><p className="s">{next ? `Up next: ${next.skill.name}` : 'About 2 minutes'}</p></div></button>}
+      <div className="ico"><Icon name="target" /></div><div className="sp"><b>Training set</b><p className="s">{next ? `${next.kind === 'last' ? 'Again' : 'Up next'}: ${next.skill.name}` : 'About 2 minutes'}</p></div></button>}
     <button className="btn2" style={{ width: '100%', marginTop: 10, background: 'transparent' }} onClick={() => pick('health')}>Upload a vet document</button>
   </Sheet>;
 }

@@ -8,7 +8,7 @@ use) small. Every session on this team reads this file first, then `docs/HANDOFF
 | Session | Job | Lives |
 |---|---|---|
 | **Secretary & Executive** ("PalDex secretary & executive (current)", `session_019xqnwfFvQiZZLm3DhgHYmW`) | Above the project manager. Keeps the agenda order, the big picture, the 5-hour time blocks and a strict token budget, in `docs/exec.md`. No workers, PRs or code. | One long-lived session, used only when Josh or the PM messages it |
-| **Project manager** ("PalDex project manager (current)", `session_019xqnwe2xGc6E2Zfb29YqrL`) | Talks to Josh, picks tasks from the agenda (`docs/HANDOFF.md`, section 2, "Agenda"), starts and briefs workers, checks on them, reports back. Writes no app code itself. | One long-lived session, used only when Josh messages it |
+| **Project manager** ("PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ`) | Talks to Josh, picks tasks from the agenda (`docs/HANDOFF.md`, section 2, "Agenda"), starts and briefs workers, checks on them, reports back. Writes no app code itself. | One long-lived session, used only when Josh messages it |
 | **Art director** ("PalDex art director (current)", `session_019xqnwggt7rgfeAXJaezQTz`) | Cosmetics ideas and art direction: outfits, accessories, colours, scenes for the cats (`src/chester/*`, `docs/HANDOFF.md` §3a). Keeps an idea list in `docs/art.md` and briefs Art/Features tasks for the PM. Writes no app code, starts no sessions. | One long-lived session, used only when Josh or the PM messages it |
 | **Features** worker | Builds one agenda item: code, tests, the handoff update, and any SQL (written as an idempotent migration plus a policy test, pasted to Josh to run). | A fresh session per task, archived when the task is done |
 | **QA** worker | Checks one pull request: `npm test`, `npm run typecheck`, `npm run build`, the SQL tests if there's SQL, and a few iPhone-size screenshots of the touched screens (light and dark). Reports problems; fixes only small, obvious ones on the same branch. | A fresh session per pull request, archived when done |
@@ -25,7 +25,7 @@ Roles to add later if needed: Docs.
 
 1. **Only act when Josh asks.** No schedule. If the manager thinks something should happen (a worker finished, a
    pull request is ready, a test failed), it tells Josh and **asks before starting any new session or run**.
-2. **At most 2 workers running at a time** (Josh is often near his weekly usage limit). Before starting one, check
+2. **At most 2 workers running at a time** (Nov 23 lesson: 4 at once used up the 5-hour window in ~20 minutes, so keep 2 even on fresh days) (Josh is often near his weekly usage limit). Before starting one, check
    the running ones with `list_sessions` / `get_session`.
 3. **One task per worker, fresh session per task.** Brief it fully in its first message (it starts with no memory):
    the task, the files involved, what "done" means, its branch name, and this manager's session id. When the task

@@ -11,6 +11,7 @@ import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
 import { Icon } from './icons';
 import { Sheet } from './Sheet';
+import { Chester } from '../chester/Chester';
 
 /* The vet part of Health (docs/plans/2026-11-09-vet-redesign.md, steps 1 and 2): who your vet is with one-tap Call
    and Directions, the emergency vet and the warning signs together, and visits: next, last, and Book a visit with one
@@ -25,10 +26,16 @@ export function visitEvent(catName: string, v: CareItem<'vet'>, vet?: Vet): CalE
   const clinic = v.data.clinic || d?.clinic;
   const address = d?.address || v.data.address;
   const phone = d?.phone || v.data.phone;
-  return { title: `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined, uid: 'visit-' + v.id, seq: v.data.calSeq ?? 0, cancelled: v.data.status === 'cancelled',
+  // several cats booked together: one event for all of them, keyed by the group so a change to one updates it
+  const group = v.data.group && v.data.group.names.length > 1 ? v.data.group : null;
+  return { title: group ? `Vet: ${group.names.join(' + ')}` : `${catName}: vet (${v.data.reason})`, day: localDay(v.at), time: v.data.time || undefined,
+    uid: 'visit-' + (group ? group.id : v.id), seq: v.data.calSeq ?? 0, cancelled: v.data.status === 'cancelled',
     place: address || clinic || undefined,
-    notes: [address && clinic, phone && `Phone: ${phone}`, v.data.notes].filter(Boolean).join('\n') || undefined };
+    notes: [group && v.data.reason, address && clinic, phone && `Phone: ${phone}`, v.data.notes].filter(Boolean).join('\n') || undefined };
 }
+
+/** "Chester + Luna" for a visit booked together, else the cat's own name. */
+export const visitCats = (catName: string, v: CareItem<'vet'>) => (v.data.group && v.data.group.names.length > 1 ? v.data.group.names.join(' + ') : catName);
 
 function CallButton({ vet, label, primary }: { vet: Vet; label: string; primary?: boolean }) {
   const tel = telHref(vet.data.phone);
@@ -171,7 +178,10 @@ const trimmed = (c: Clinic) => ({ clinic: c.clinic.trim(), ...(c.phone.trim() ? 
     quick time, then which calendar: Apple or Google, asked each time with the last choice preselected. Saving closes
     the sheet and says so in a toast with Undo. One sheet, no dead ends. */
 export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: BookPreset }) {
-  const { cat, vets, care } = useStore();
+  const { cat, vets, care, pets } = useStore();
+  // which cats: the one shown, and any others coming along (one visit each, one calendar event)
+  const [forIds, setForIds] = useState<string[]>(() => (cat ? [cat.id] : []));
+  const [pickCat, setPickCat] = useState(false);
   const { primary, emergency } = yourVets(vets);
   const [vetId, setVetId] = useState(primary?.id ?? emergency?.id ?? '');
   // 'add': "+ Add vet", saved as the household vet with the visit; 'other': a one-off clinic, kept on the visit only
@@ -195,6 +205,10 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
   const typed = mode === 'add' ? nv : mode === 'other' ? ov : null;
   const call = typed ? { name: typed.clinic.trim(), tel: telHref(typed.phone) } : { name: saved?.data.clinic ?? '', tel: telHref(saved?.data.phone) };
   const why = reason === 'Other' ? custom.trim() : reason;
+  const going = pets.filter((p) => forIds.includes(p.id));
+  if (!going.length) going.push(cat);
+  const names = going.map((p) => p.name).join(' + ');
+  const toggleCat = (id: string) => setForIds((ids) => (ids.includes(id) ? (ids.length > 1 ? ids.filter((x) => x !== id) : ids) : [...ids, id]));
   // why Save can't be tapped yet, said under it (and read out with it)
   const blocker = typed && !typed.clinic.trim() ? 'Add the clinic’s name to save.' : !why ? 'Say what the visit is for to save.'
     : !day ? 'Pick a date to save.' : !cal ? 'Pick a calendar above (or Don’t add) to save.' : '';
@@ -215,16 +229,23 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
         if (vet) { setVetId(vet.id); setMode('saved'); }
       }
       const where = mode === 'other' ? trimmed(ov) : vet ? { clinic: vet.data.clinic } : {};
-      const data = { reason: why, ...where, ...(time ? { time } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}), ...(vet ? { vetId: vet.id } : {}), status: 'booked' as const };
-      const item = await store.saveCare('vet', data, { at: Date.parse(day + 'T12:00:00') }) as CareItem<'vet'> | null;
-      if (!item) throw new Error('The visit wasn’t saved');
+      const group = going.length > 1 ? { id: Math.random().toString(36).slice(2) + Date.now().toString(36), names: going.map((p) => p.name) } : undefined;
+      const data = { reason: why, ...where, ...(time ? { time } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}), ...(vet ? { vetId: vet.id } : {}), status: 'booked' as const, ...(group ? { group } : {}) };
+      // one visit per cat; if one fails, the ones already saved are taken back so it's all or nothing
+      const items: CareItem<'vet'>[] = [];
+      for (const p of going) {
+        const item = await store.saveCare('vet', data, { at: Date.parse(day + 'T12:00:00'), catId: p.id }) as CareItem<'vet'> | null;
+        if (!item) { for (const i of items) await store.deleteCare(i.id); throw new Error('The visit wasn’t saved'); }
+        items.push(item);
+      }
       rememberCalendar(cal);
       const added = cal !== 'none' && !googleOffline;
-      if (added) addToCalendar(visitEvent(cat.name, item, vet), cal, tab); else tab?.close();
+      if (added) addToCalendar(visitEvent(cat.name, items[0], vet), cal, tab); else tab?.close();
       audio.sparkle(); onClose();
+      const visitWord = items.length > 1 ? 'Visits' : 'Visit';
       showToast({
-        msg: `Booked ${fmtDay(day)}${time ? ', ' + fmtTime(time) : ''}${added ? ' · Added to calendar' : googleOffline ? ' · Add it to Google Calendar once you’re online' : ''}`,
-        action: { label: 'Undo', run: () => { void store.deleteCare(item.id); showToast({ msg: added ? 'Visit removed. Delete it from your calendar too.' : 'Visit removed.' }); } },
+        msg: `Booked ${fmtDay(day)}${time ? ', ' + fmtTime(time) : ''}${items.length > 1 ? ' · ' + names : ''}${added ? ' · Added to calendar' : googleOffline ? ' · Add it to Google Calendar once you’re online' : ''}`,
+        action: { label: 'Undo', run: () => { void Promise.all(items.map((i) => store.deleteCare(i.id))); showToast({ msg: added ? `${visitWord} removed. Delete it from your calendar too.` : `${visitWord} removed.` }); } },
       });
     } catch {
       tab?.close(); setBusy(false);
@@ -243,7 +264,17 @@ export function BookSheet({ onClose, preset }: { onClose: () => void; preset?: B
     {(v.data.vetName || v.data.address || v.data.phone) && <span className="s" style={{ display: 'block' }}>{[v.data.vetName, v.data.address || v.data.phone].filter(Boolean).join(' · ')}</span>}</button>;
   const calLabel = googleOffline || cal === 'none' ? 'Save visit' : cal === 'apple' ? 'Save and add to Apple Calendar' : cal === 'google' ? 'Save and add to Google Calendar' : 'Save and add to calendar';
   return <Sheet label="Book a visit" onClose={onClose}>
-    <div className="row"><b className="sp" style={{ fontSize: 18 }}>Book a visit for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
+    <div className="row" style={{ gap: 'var(--sp-2)' }}>
+      {/* the cats it's for, in the header like a new entry; with several pets, tap to bring others along */}
+      <button className="chipbtn bkcats" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 'var(--sp-2)', flex: 'none', maxWidth: '60%' }} disabled={pets.length < 2}
+        aria-label={`For ${names}${pets.length > 1 ? ', tap to add or remove cats' : ''}`} aria-expanded={pets.length > 1 ? pickCat : undefined} onClick={() => setPickCat(!pickCat)}>
+        <span aria-hidden="true" style={{ width: 26, height: 26, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center', flex: 'none' }}><Chester coat={going[0].coat} eyes={going[0].eyes} mood="happy" width={36} /></span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{names}</span></button>
+      <b className="sp" style={{ fontSize: 18 }}>· Book a visit</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>
+    {pickCat && pets.length > 1 && <div className="row chiprow" role="group" aria-label="Which cats" style={{ gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+      {pets.map((p) => { const on = going.some((g) => g.id === p.id);
+        return <button key={p.id} className={'chipbtn' + (on ? ' on' : '')} aria-pressed={on} onClick={() => toggleCat(p.id)}>{p.name}</button>; })}</div>}
+    {going.length > 1 && <p className="s" style={{ marginTop: 6 }}>One visit for each cat, one event in your calendar.</p>}
     {call.tel && <div className="row bkcall">
       <span className="sp s">Call the clinic, then record what they gave you.</span>
       <a className="btn2" href={call.tel} aria-label={`Call ${call.name || 'the clinic'}`} onClick={() => audio.chirp()}><Icon name="phone" size={18} />Call</a></div>}

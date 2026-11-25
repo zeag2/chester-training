@@ -23,8 +23,9 @@ no neon.
 ## Type
 | Role | Font | Weight | Size / line height | Use |
 |---|---|---|---|---|
-| Display | **Nunito** | 800 | 34 / 38, letter-spacing −0.5px | screen titles ("Chester's health") |
-| Heading | Nunito | 800 | 20 / 26 | section heads ("Visits", "Log something") |
+| Screen title (`h1`) | **Nunito** | 800 | 28 / 1.15, letter-spacing −0.01em | screen titles ("Chester's health") |
+| Section head (`h2`) | Nunito | 800 | 17 | section heads ("Visits", "Log something") |
+| Big number | Nunito | 800 | 34 / 38 | friend and invite codes, the Recap count, "Yes!" |
 | Title | Nunito | 700 | 16 / 22 | card and row titles |
 | Body | Nunito | 400 | 16 / 24 | sentences, form values |
 | Small | Nunito | 600 | 14 / 20 | sub-lines, chips |
@@ -33,7 +34,10 @@ no neon.
 
 - **One family:** Nunito (Google Fonts, 400/600/700/800, already loaded). It's rounded and friendly, readable at 14 px, and it
   suits the cat. The stack is `Nunito, "Avenir Next", sans-serif` (drop `system-ui`).
-- Hierarchy comes from **size and weight jumps** (34 → 20 → 16), not from colour or boxes. There are only five sizes: 34, 20, 16, 14, 12.
+- Hierarchy comes from **size and weight jumps** (28 → 17 → 16 → 14 → 12, with 34 for big numbers), not from colour or boxes.
+  These are the app's real sizes (Josh, 2026-11-23: the doc follows the app, the app doesn't move).
+- **Allowed in-between sizes** (Josh, 2026-11-23: they stay): 13 (`.s` sub-lines, field labels), 15 (`.btn2`, inline
+  sub-lines), 17 and 18 (card titles). Use them only where the same role already uses them; a new role takes a scale size.
 
 ## Colour tokens
 Keep today's values (they're tuned and tested for contrast); give them roles and names. **Light / Dark**:
@@ -53,14 +57,17 @@ Keep today's values (they're tuned and tested for contrast); give them roles and
 | `--peach` / `--rose` / `--peach-ink` | #fdede5 / #c2563f / #6e3424 | #33231d / #e58a74 / #f1bba6 | attention, warnings, delete |
 | `--butter` / `--butter-ink` | #fbf3d8 / #5b4a1c | #2d2918 / #e9d79a | treats, rewards, toasts |
 | `--sky` | #e7effa | #1c2333 | planning, vet, friends |
+| `--paw-coral` | #c2563f | #c96f5a | the coral paw on peach cards (Train, Recap); dark is toned down, quieter than `--rose` |
 
 Rules: a wash colour (`--mint`, `--peach`, `--butter`, `--sky`) is a **card background** with its `-ink` text; never two washes
 next to each other in one card. `--rose` is for destructive text and the emergency call only.
 
 ## Space, shape, depth
 - **Space scale** (px): 4, 8, 12, 16, 20, 24, 32. The screen gutter is 20 on a phone. Sections are 24 apart, cards 12, inside a card 8–12.
+- **Allowed in-between gaps** (Josh, 2026-11-23: they stay): 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section
+  heads, `10` between rows, 6 under a field label). Same rule: only where that spot already uses them.
 - **Radius:** 8 (small chips inside cards), 14 (rows, inputs, small tiles), 22 (cards), 26 (sheets), 999 (pills: buttons, chips).
-  That's 5 values. Today there are ~10; Phase 2 swapped the exact matches, the rest are listed under "Not yet on the scale".
+  That's 5 values. Inputs (`.in`) moved from 16 to `--r-row` 14 on 2026-11-23. The remaining off-scale radii are listed under "Not yet on the scale".
 - **Depth:** one card treatment, `.card.white` = a 1px `--line` hairline + `0 2px 10px rgba(35,35,32,.06)`. Wash cards have no edge.
   Sheets dim the page; nothing else casts a shadow.
 - **Tap targets:** at least 44 × 44. The primary button is 52 tall, secondary 48.
@@ -92,25 +99,25 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Group | Tokens |
 |---|---|
 | Colour (light + dark) | `--bg --surface --ink --ink-2 --muted --muted-2 --line --grey --on-ink --faint`, `--mint --teal --teal-ink`, `--peach --rose --peach-ink`, `--butter --butter-ink`, `--sky`, `--tabs --yes-active`; hover washes `--hov --hov-ink` (mouse only) |
+| Colour (light + dark, one job) | `--paw-coral` (the coral paw on peach cards) |
 | Colour (same in both themes) | `--butter-strong` #d4a23a (the gold treat paw), `--paper` #fff (documents and photos sit on white) |
-| Type | `--font`; `--fs-display` 34, `--fs-heading` 20, `--fs-title` 16, `--fs-body` 16, `--fs-small` 14, `--fs-label` 12, each with its `--lh-*` |
+| Type | `--font`; `--fs-h1` 28 (`--lh-h1` 1.15), `--fs-h2` 17, `--fs-display` 34 (big numbers), `--fs-title` 16, `--fs-body` 16, `--fs-small` 14, `--fs-label` 12, each with its `--lh-*` |
 | Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
-| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40 |
+| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine) |
+| Badge and icon art (same in both themes) | `--branch-<foundation\|care\|manners\|adventure\|tricks>` with `-light` and `-ink`; `--icon-sky --icon-grey` (Chester icon fills); `--art-outline` (Chester icon outline, light and dark); `--badge-outline`; `--badge-tile` 64; `--icon-idle` (a tab icon that isn't current) |
 
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
 token exactly. These are today's real values, off the scale; moving them is a visible change, so each needs its own
 go-ahead and a screenshot pass:
-- Type: `h1` is 28 (the doc says 34), `h2` 17 (doc: 20), `.s` 13, `.btn2` and many inline sub-lines 15, 17/18 for
-  card titles, 11 for tiny badges, 22–32 for big numbers.
-- Space: 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section heads, `10` between rows); the 110 px tab-bar clearance.
-- Radius: 16 (`.in` inputs; the doc says 14), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
+- Type: 11 for tiny badges, 22–32 for big numbers. (13, 15, 17, 18 are now allowed exceptions, see Type.)
+- Space: the 110 px tab-bar clearance. (6, 10, 14, 18, 22 are now allowed exceptions, see Space.)
+- Radius: 16 (`.hit`, `.bkvet`, `.bkcall`), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
 - Motion: press feedback is 160 ms (`.btn`, `.item`), between `--dur-fast` and `--dur`.
 - Colour: the cat's art and the toys (`src/chester/art.ts`, Corner, Hideout, Play, Chase, Yarn ball, the stars and
   hearts in `chester.css`) keep their own palette: it's illustration, not UI. Camera and photo overlays keep fixed white
-  and black (they sit on video, whatever the theme). The coral paw on peach cards (Train, Recap: `#c2563f`) doesn't
-  switch in dark; `var(--rose)` would brighten it, so it waits for a decision.
+  and black (they sit on video, whatever the theme). The coral paw on peach cards now uses `--paw-coral` (2026-11-23).
 - The font stack keeps `system-ui` before `sans-serif`: Nunito has no arrow (→), and dropping it changed that glyph.
 
 ## Components (use these; don't make new ones in a screen)
@@ -119,12 +126,13 @@ go-ahead and a screenshot pass:
 | **Button**, primary | `.btn` (`src/styles/app.css`) | `<button className="btn">`; 52 tall, ink pill, full width; `disabled` greys it |
 | Button, secondary | `.btn2` | 48 tall, grey pill, inline; add `style={{ width: '100%' }}` to fill |
 | Button, text / danger | `.btn2` with `background: transparent` (danger: `color: var(--rose)`); `.linkbtn` in the Health log | e.g. "Remove this vet" in `src/ui/VetCards.tsx` |
+| Button, destructive confirm | `.btn.danger`: the primary button in `--rose` | only as the last step of something that can't be undone, inside its sheet ("Remove from household", "Delete my account"); the row that opens it is a danger row |
 | Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
 | Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
-| **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` and `textarea` use `.in` too |
+| **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` uses `.in` too. A `textarea.in` (several lines, e.g. the Contact us message) sizes by `rows`, with `--sp-3` padding top and bottom and `--lh-body` lines, and can be dragged taller. Optional fields say so in the label: "Your name (optional)" |
 | Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
 | **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards |
-| Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` | `Icon({ name, size = 22 })`, `Paw({ color, size })` |
+| Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` (line set; `ChesterIcon` only in the nav, see "Badges, shine and icons") | `Icon({ name, size = 22 })`, `Paw({ color, size })` (`flex: none`, so it never squeezes in a `.row`) |
 | **Sheet / dialog** | `Sheet` from `src/ui/Sheet.tsx` | `label` (its accessible name), `onClose`, `children`; bottom sheet on phones, dialog or side sheet on desktop |
 | **Toast with Undo** | `showToast` / `hideToast` from `src/ui/Toast.tsx` (`<ToastHost />` is in App) | `{ msg, action?: { label, run }, ms? }` |
 | **List row** | `.item` (rows with a hairline), `.lgroup` + `.lrow` (grouped rows in a grey box, Settings) | `.ico` left, `.sp` middle, value right |
@@ -134,10 +142,37 @@ go-ahead and a screenshot pass:
 | Pet switcher | `PetSwitcher` from `src/ui/PetSwitcher.tsx` | `style?`, `inNav?` |
 | **Tooltip** | `TooltipHost` from `src/ui/Tooltip.tsx` (mounted once) | automatic on `.iconbtn[aria-label]` and `[data-tip]`, hover devices only |
 | Progress bar | `.bar` > `<i style={{ width }}>` | |
+| Inline question panel | `PANEL` + `Choice` in `src/ui/DailyTaps.tsx` (What's off?, Playtime, Daily check) | a `--sky` box inside the Quick log card: bold title, `.s` line, then `.seg` one-of rows (`Choice`: label above, tap the picked one again to clear) or `.chipbtn` chips, then `.btn2` + `.btn` side by side |
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
+| **Badge** | `BadgeTile` in `src/screens/Trophies.tsx` (`.badgetile`), `BadgeShine` from `src/ui/BadgeShine.tsx` | see "Badges, shine and icons" |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
 | **Ask card** (a yes/not-now question at the right moment) | `PushAsk` from `src/ui/PushAsk.tsx`: `.card butter`, a Title line, a `.s` sub-line, then "Turn on" (`.btn2` on `--surface`) and "Not now" (`.btn2` transparent) | `title`, `sub`; inline where the moment is (after a friend request), or `askForPush(…)` → `<PushAskHost />` (mounted once in App) shows it in a `Sheet` after a sheet has closed (after saving a repeating medicine). Same pattern as `AccountNudge`. |
 | Settings group with switches | `Group` + `Row` + `Switch` in `src/screens/Settings.tsx`; a value picker in a row is a `select.in` | Settings → Notifications: this phone, then one switch per kind, the medicine hour (`select`), quiet hours as text |
+
+## Badges, shine and icons (approved by Josh 2026-11-25; art from artifact 6e9huJ9Z23diCgKwxCHzds)
+- **Badges** (`src/assets/badges`, viewBox 100, drawn for 56–96 px; the trophy case uses `--badge-tile` 64). One shape
+  and colour per skill branch: **Foundation gold coin, Care rose shield, Manners teal hexagon, Adventure sky diamond,
+  Tricks orange rosette** (tokens `--branch-*`; the branch heads in the trophy case carry a dot in that colour, next to
+  the name). Three states, from `badgeArtKey()` in `src/engine/badges.ts`: `earned/<skill id>` (full colour),
+  `locked/<skill id>` (faded grey with a small lock; not earned yet), `hidden/<branch>` (the branch shape dashed with a
+  "?"; a hidden skill not unlocked yet, shown without its name, not tappable). The SVG files are illustration and keep
+  their own colours, like the cat. URLs: `badgeArtUrl(key)` from `src/ui/badgeArt.ts`. The art's other styles (medal,
+  sticker, "alts") were not chosen.
+- **Tap shine** (`BadgeShine` from `src/ui/BadgeShine.tsx`, CSS `.badgeshine` in `app.css`): `src`, `size?`,
+  `shine` (earned only), `pulse` (bump to play). A white glint sweeps across the badge, clipped to its shape (the file is
+  its own mask), a small pop and tilt, two sparkles, all within `--shine-ms` (520 ms, `SHINE_MS`), plus a short buzz.
+  An earned badge waits `SHINE_MS` before opening its skill page so the shine is seen; locked badges open at once and
+  never shine; hidden ones don't open (`tapDelay()`). **Reduced motion:** no movement, a `--shine-flash-ms` (240 ms)
+  brighten only, and the wait is 240 ms.
+- **Icons, two sets** (24 px grid, `src/ui/iconArt.ts`, generated from the art):
+  - **Chester-style** (`ChesterIcon({ name, size = 24 })`, class `.cicon`): pastel fill (tokens) + `--art-outline`.
+    Only for the tab bar / rail / side nav (Home, Health, +, the cat, Friends, the brand paw, Settings) and the way into
+    Settings (Home's gear). Full colour on the current tab, `--icon-idle` on the others. The phone + is the gold
+    Chester plus at 48 px (`.plus.cplus`), not the ink circle; the desktop "Log" button keeps `.btn` with a line +.
+  - **Line** (`Icon({ name })`, currentColor, stroke 1.9): everything small and inline. The approved line set now
+    draws `Icon`; old names are aliases (`heart`→health, `user`→friends, `gear`→settings, `cal`→calendar,
+    `click`→clicker). `plus` and `check` keep the plain glyphs (they sit inside round buttons); the circled ones are
+    `plus-circle` and `check-circle`. Names the set doesn't have (book, phone, pin, yarn, …) keep their old paths.
 
 ## Rules
 - **New screens use existing components and tokens only.** No literal colours, sizes, spacing or radii in new code.
@@ -170,3 +205,5 @@ What was planned, for the record:
    - **Accordion** for progressive or multiple disclosure, and on narrow screens (e.g. the "Is this an emergency?"
      signs, a visit's older notes).
    - **A table or side-by-side** when comparing values (the desktop Health log, weights over time, vaccine due dates).
+   - **Two panes** at 1100 px and up: `.healthcols` with two `.healthcol` children (`src/styles/app.css`), used by
+     Health and the Visit page. Phones and tablets keep one column; render the panes only when `useLayout()` is `desktop`.

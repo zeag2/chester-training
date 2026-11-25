@@ -9,6 +9,7 @@ import { Sheet } from '../ui/Sheet';
 import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, medsDue, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedDue, type MedWhat, type Verdict,
+  dailyDetail,
 } from '../engine/care';
 import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
@@ -126,10 +127,10 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
       {/* tap a weigh-in to change its value or date, or delete it */}
       <div style={{ marginTop: 'var(--sp-2)' }} role="group" aria-label="Weigh-ins">
-        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)' }} onClick={() => setEditing({ kind: 'weight', item: w })}
+        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)', padding: 'var(--sp-2) var(--sp-4)', marginTop: 'var(--sp-2)', borderRadius: 'var(--r-row)', borderBottom: 0 }} onClick={() => setEditing({ kind: 'weight', item: w })}
           aria-label={`Edit weight ${w.data.lb} lb on ${fmt(w.at)}`}>
           <div className="sp"><b className="num">{w.data.lb} lb</b><p className="s">{fmt(w.at)}</p></div><span className="s">Edit</span></button>)}
-        {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: 'var(--sp-2) 0', fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
+        {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: 'var(--sp-2) 0', minHeight: 44, fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
       </div>
       {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
   const foodSection = <>
@@ -188,11 +189,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
 const QUICK: Record<DailyWhat, string> = { fed: 'Fed', scoop: 'Scooped', play: 'Played', check: 'Daily check' };
 const QUICK_ICON: Record<DailyWhat, string> = { fed: 'leaf', scoop: 'box', play: 'yarn', check: 'check' };
 const clock = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-function quickDetail(i: CareItem<'daily'>): string {
-  const d = i.data;
-  const what = d.what === 'check' ? (d.ok === false ? 'Something off' : 'All normal') : d.what === 'play' && d.minutes ? `${d.minutes} min` : '';
-  return [what, d.notes].filter(Boolean).join(' · ');
-}
+const quickDetail = (i: CareItem<'daily'>) => dailyDetail(i.data);
 
 /** Desktop's Health log: one table across both columns (date · what · details · who, "who" once the household shares it), newest first, with the last 7 days'
     quick logs mixed in. A row opens what the list opens on phones: the visit page, the entry's form, or (quick logs)
@@ -521,7 +518,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
     if (signedIn) {
       try { d = await store.addDoc(file); d = (await store.saveCare('doc', { ...d.data, title: r.title, docDate: r.docDate ?? (visit ? localDay(visit.at) : undefined), summary: r.summary, categories: r.categories, type: guessDocType(`${r.title} ${r.summary}`), ...(visit ? { visitId: visit.id } : {}) }, { id: d.id, at: d.at })) as CareItem<'doc'> | null ?? d; setDoc(d); }
       catch (e) { setNote(/bucket|not found|404|row-level|policy/i.test(String((e as Error).message)) ? 'The file itself wasn’t saved: document storage isn’t set up in Supabase yet. Your log entries still save.' : 'The file itself wasn’t saved (' + (e as Error).message + '). Your log entries still save.'); }
-    } else setNote('Only the details are saved. Sign in (Settings → Train together) to keep the document itself.');
+    } else setNote('Only the details are saved. Sign in (Settings, from the gear on Home) to keep the document itself.');
     const at = (day: string | null) => (day ? noon(day) : r.docDate ? noon(r.docDate) : Date.now());
     const list: Pick[] = [];
     const careNow = store.get().care;
@@ -613,7 +610,7 @@ export function DocAdder({ signedIn, visit, compact, dropped }: { signedIn: bool
           <input type="checkbox" checked={p.on} style={{ width: 22, height: 22, flex: 'none' }} onChange={(e) => setPicks(picks.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
           <span><b style={{ fontSize: 'var(--fs-small)' }}>{p.label}</b>{p.detail && <span className="s" style={{ display: 'block' }}>{p.detail}</span>}</span></label>)}
       </div>)}
-      <p className="s" style={{ marginTop: 'var(--sp-3)' }}>Read on your phone, so check it against the paper. Anything it missed, add with “Log something” above.</p>
+      <p className="s" style={{ marginTop: 'var(--sp-3)' }}>Read on your phone, so check it against the paper. Anything it missed, you can add by hand afterwards.</p>
       <button className="btn" style={{ marginTop: 'var(--sp-3)' }} onClick={async () => {
         // the visit first (if the papers make one), so everything else links to it; then one Undo for the whole batch
         const chosen = picks.filter((p) => p.on).sort((x, y) => Number(!!y.visit) - Number(!!x.visit));
