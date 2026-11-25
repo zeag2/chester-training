@@ -19,6 +19,13 @@
       "skillPath": ".claude/skills/animejs/SKILL.md",
       "computedHash": "44f9ade0880f61041c326738b3fc39dc06887f9384fc8cf344c62503c8187f21"
     },
+    "apple-design": {
+      "source": "dickwu/apple-design-skill",
+      "commit": "91e15664896f6f27e75dcf1414d1226cb95fa167",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "a585f7b4611708c57e2074d436b8dcaaebdd9a0b5ac143646eb39c6fcf686c68"
+    },
     "ask-matt": {
       "source": "mattpocock/skills",
       "sourceType": "github",
