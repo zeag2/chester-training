@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
@@ -13,6 +13,8 @@ import { Icon } from '../ui/icons';
 import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
 import { Sheet as SheetFrame } from '../ui/Sheet';
+import { defaultPrefs, disablePush, enablePush, hourText, pushReady, pushState, quietText, type PushState } from '../lib/push';
+import type { PushPrefs } from '../sync/remote';
 
 /* Settings, grouped like iPhone Settings: the pet, the people, the app, your data. */
 
@@ -103,6 +105,60 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
   </Sheet>;
 }
 
+/** Settings → Notifications (push plan): this phone on or off, which kinds, the medicine hour. Hidden until the push
+    SQL is run (and for signed-out people: there's no account to send to). */
+const KINDS: [keyof Pick<PushPrefs, 'friends' | 'treats' | 'photos' | 'meds'>, string, string][] = [
+  ['friends', 'Friend requests', 'Someone wants to be friends'],
+  ['treats', 'Treats', 'A friend gives your cat a treat'],
+  ['photos', 'Friends’ photos', 'A friend posts a photo of their cat'],
+  ['meds', 'Medicine', 'On the days a medicine is due'],
+];
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6 AM – 10 PM
+
+function Notifications({ onInstall }: { onInstall: () => void }) {
+  const { account } = useStore();
+  const [ready, setReady] = useState(false);
+  const [state, setState] = useState<PushState | null>(null);
+  const [prefs, setPrefs] = useState<PushPrefs | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    let live = true;
+    void pushReady(store.remote, account?.userId).then(async (ok) => {
+      if (!live || !ok) return;
+      const [st, p] = await Promise.all([pushState(), store.remote!.pushPrefs().catch(() => null)]);
+      if (live) { setReady(true); setState(st); setPrefs(p ?? defaultPrefs()); }
+    });
+    return () => { live = false; };
+  }, [account?.userId]);
+  if (!ready || !state || !prefs || state === 'no') return null;
+
+  const phone = async (on: boolean) => {
+    if (busy || !store.remote) return; setBusy(true); setErr('');
+    if (on) {
+      const r = await enablePush(store.remote); // asks the browser first thing, inside this tap
+      if (r === 'blocked') setState('blocked'); else if (r === 'on') setState('on'); else setErr('Couldn’t turn them on. Try again in a moment.');
+      if (r === 'on') setPrefs((await store.remote.pushPrefs().catch(() => null)) ?? prefs);
+    } else { await disablePush(store.remote); setState('off'); }
+    setBusy(false);
+  };
+  const change = async (next: PushPrefs) => {
+    const before = prefs; setPrefs(next); setErr('');
+    try { await store.remote!.savePushPrefs(next); } catch { setPrefs(before); setErr('Couldn’t save that. Check your connection and try again.'); }
+  };
+  const on = state === 'on';
+  return <Group title="Notifications" foot={on ? `${quietText(prefs)}: nothing but medicine reminders arrives then.` : state === 'off' ? 'Only for the things you pick. You can turn them off here any time.' : undefined}>
+    {state === 'ios-install' && <Row label="On iPhone, add PalDex to your Home Screen first" sub="Notifications work from the Home Screen app, not a Safari tab" onClick={onInstall} />}
+    {state === 'blocked' && <Row label="Notifications are blocked" sub="They’re blocked for PalDex in your phone’s settings. Allow them there, then come back." />}
+    {(state === 'on' || state === 'off') && <Row label="On this phone" sub={on ? undefined : 'Off'}><Switch on={on} label="Notifications on this phone" onChange={(v) => void phone(v)} /></Row>}
+    {on && KINDS.map(([k, label, sub]) => <Row key={k} label={label} sub={sub}><Switch on={prefs[k]} label={label} onChange={(v) => void change({ ...prefs, [k]: v })} /></Row>)}
+    {on && prefs.meds && <div className="lrow"><label className="sp" htmlFor="medhour" style={{ fontWeight: 600 }}>Medicine reminder at</label>
+      <select id="medhour" className="in" style={{ width: 'auto', marginTop: 0 }} value={prefs.medHour} onChange={(e) => void change({ ...prefs, medHour: Number(e.target.value) })}>
+        {HOURS.map((h) => <option key={h} value={h}>{hourText(h)}</option>)}</select></div>}
+    {err && <div className="lrow"><span className="s" role="alert" style={{ color: 'var(--rose)' }}>{err}</span></div>}
+  </Group>;
+}
+
 export function Settings() {
   const { cat, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
@@ -144,6 +200,8 @@ export function Settings() {
       <Row label="Create an account or sign in" onClick={() => go('together')} />
       <Row label="Join a household with a code" onClick={() => go('join')} />
     </Group>)}
+
+    {sharingConfigured() && account && <Notifications onInstall={() => setSheet('install')} />}
 
     <Group title="App" foot={account ? 'Your data is saved on this phone and online.' : 'Your data is saved on this phone only. Download a backup now and then.'}>
       <Row label="Sound"><Switch on={!muted} label="Sound" onChange={(on) => { setMuted(!on); localStorage.setItem('chester-muted', on ? '0' : '1'); setM(!on); if (on) chirp(); }} /></Row>

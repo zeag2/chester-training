@@ -14,6 +14,7 @@ import { photoPath, shrinkPhoto } from '../lib/photos';
 import type { CareRow, VetRow } from './db';
 import type { Vet, VetData } from '../engine/vets';
 import { SUPABASE_KEY, SUPABASE_URL, sharingConfigured } from '../sync/config';
+import { disablePush, refreshPush } from '../lib/push';
 import { SupabaseRemote } from '../sync/supabase';
 import { MOVE_REWARD } from '../engine/play';
 import { inSeason, FRIEND_BONUS, FRIEND_TREAT, CARE_STREAK, PLAY_REWARD, careReward, careStreakDue, type CareReward, ITEM_BY_ID, newTreats, treatId, dailyGiftTreats, giftClaimed, mergeCorner, playedToday, unrewardedFriends, withCorner, type Corner, type CornerEvent } from '../engine/corner';
@@ -128,7 +129,7 @@ export class Store {
     const account = this.remote ? await this.remote.account().catch(() => null) : null;
     for (const c of await this.db.cats.toArray()) await this.dedupeWeights(c.id);
     await this.rebuild(cat, { ready: true, account, sync: account ? 'syncing' : 'off' });
-    if (account) void this.sync();
+    if (account) { void this.sync(); void refreshPush(this.remote); }
   }
 
   async saveCat(c: Omit<Cat, 'id' | 'createdAt'> & Partial<Pick<Cat, 'id' | 'createdAt' | 'carry'>>) {
@@ -634,7 +635,10 @@ export class Store {
     else this.set({});
   }
 
-  async signOut() { await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
+  async signOut() {
+    // first, while still signed in: this phone stops getting this person's notifications
+    await disablePush(this.remote).catch(() => {});
+    await this.remote?.signOut(); this.set({ account: null, household: null, sync: 'off', friends: null, friendNews: null, treatNews: null, requests: [] }); this.friendsCheckedAt = 0; this.treatsCheckedAt.clear(); }
 
   private async forget(catId: string) {
     await this.db.transaction('rw', [this.db.cats, this.db.sets, this.db.wallet, this.db.drafts, this.db.progress, this.db.care], async () => {

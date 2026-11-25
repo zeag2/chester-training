@@ -18,6 +18,11 @@ export interface ReceivedTreat { from: string; fromName: string; day: string }
 export interface Photo { id: string; catId: string; path: string; caption: string; width?: number; height?: number; skill?: string; by: string; at: string; paws: number; pawed: boolean }
 export interface NewPhoto { catId: string; path: string; caption: string; width: number; height: number; skill?: string }
 
+/** Which notifications someone wants (public.push_prefs). Hours are 0–23 in `tz`. */
+export interface PushPrefs { tz: string; friends: boolean; treats: boolean; photos: boolean; meds: boolean; medHour: number; quietFrom: number; quietTo: number }
+/** A phone's Web Push subscription (PushSubscription.toJSON()'s parts). */
+export interface PushSub { endpoint: string; p256dh: string; auth: string }
+
 export interface Member { userId: string; name: string; email?: string; sets?: number; owner?: boolean }
 
 /** The shared copy of a cat. The app talks to Supabase through this; tests use an in-memory one. */
@@ -109,4 +114,14 @@ export interface Remote {
   editCaption(photoId: string, caption: string): Promise<void>;
   /** The poster or the pet's household deletes the photo, then its file. Throws 'not-allowed' when nothing was deleted. */
   deletePhoto(photo: Pick<Photo, 'id' | 'path'>): Promise<void>;
+
+  /** Push notifications. These throw 'push-missing' until the push SQL is run. */
+  /** My notification settings; null when I haven't saved any yet (the defaults apply). */
+  pushPrefs(): Promise<PushPrefs | null>;
+  /** Save (create or change) my notification settings. */
+  savePushPrefs(p: PushPrefs): Promise<void>;
+  /** This phone gets my notifications (moves it from whoever had it before). */
+  savePushSubscription(s: PushSub, userAgent: string): Promise<void>;
+  /** This phone stops getting my notifications. */
+  removePushSubscription(endpoint: string): Promise<void>;
 }

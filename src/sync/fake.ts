@@ -1,7 +1,7 @@
 import type { Cat, SetRecord } from '../engine/types';
 import type { CareItem, DocReading } from '../engine/care';
 import type { Vet } from '../engine/vets';
-import type { Account, Member, NewPhoto, PetCard, Photo, Remote } from './remote';
+import type { Account, Member, NewPhoto, PetCard, Photo, PushPrefs, PushSub, Remote } from './remote';
 
 interface House { id: string; code: string; owner: string; members: Member[] }
 
@@ -40,6 +40,10 @@ export class FakeServer {
   /** paws and hides, keyed `photo|user` */
   paws = new Set<string>();
   hides = new Set<string>();
+  /** Whether the push SQL is run; prefs by user, subscriptions by endpoint (the latest user wins, as on the server). */
+  pushTable = true;
+  pushPrefs = new Map<string, PushPrefs>();
+  pushSubs = new Map<string, PushSub & { userId: string; userAgent: string }>();
   private n = 0;
   device(): FakeRemote { return new FakeRemote(this); }
   next(p: string) { return p + ++this.n; }
@@ -213,4 +217,9 @@ export class FakeRemote implements Remote {
   }
   async photoUrls(paths: string[]) { this.ph(); return Object.fromEntries(paths.map((p) => [p, 'blob:' + p])); }
   async myThanks() { const u = this.tr(); return [...this.s.treats.values()].filter((t) => t.from === u.userId && t.thanked).map((t) => ({ catId: t.catId, catName: this.s.cats.get(t.catId)?.cat.name ?? '', day: t.day })); }
+  private pu() { const u = this.user(); if (!this.s.pushTable) throw new Error('push-missing'); return u; }
+  async pushPrefs() { const u = this.pu(); return this.s.pushPrefs.get(u.userId) ?? null; }
+  async savePushPrefs(p: PushPrefs) { const u = this.pu(); this.s.pushPrefs.set(u.userId, { ...p }); }
+  async savePushSubscription(sub: PushSub, userAgent: string) { const u = this.user(); this.s.pushSubs.set(sub.endpoint, { ...sub, userId: u.userId, userAgent }); }
+  async removePushSubscription(endpoint: string) { const u = this.user(); if (this.s.pushSubs.get(endpoint)?.userId === u.userId) this.s.pushSubs.delete(endpoint); }
 }

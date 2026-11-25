@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PushAsk, useCanAsk } from '../ui/PushAsk';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { bondLevel } from '../engine/corner';
@@ -39,6 +40,8 @@ export function InvitePanel({ prefill = '' }: { prefill?: string }) {
   const [code, setCode] = useState(prefill || pendingFriend());
   const [msg, setMsg] = useState(prefill || pendingFriend() ? 'A friend invited you. Tap Add to send them a friend request.' : '');
   const [busy, setBusy] = useState(false);
+  const [asked, setAsked] = useState(''); // who a request just went to: offer notifications for their answer
+  const canAsk = useCanAsk();
   if (!friends || friends.missing) return null;
   const mine = friends.code;
   const add = async () => {
@@ -50,7 +53,7 @@ export function InvitePanel({ prefill = '' }: { prefill?: string }) {
         const who = res.name || 'them';
         if (res.status === 'friends') { audio.sparkle(); setMsg(`You’re friends${res.name ? ` with ${res.name}` : ''}!${cat ? ` +${FRIEND_BONUS.treats} treats for ${cat.name}.` : ''}`); }
         else if (res.status === 'already') setMsg(`You’re already friends with ${res.name || 'them'}.`);
-        else { audio.chirp(); setMsg(`Request sent. You’ll be friends once ${who} accepts.`); }
+        else { audio.chirp(); setMsg(`Request sent. You’ll be friends once ${who} accepts.`); setAsked(res.name || 'they'); }
         setCode(''); setPendingFriend('');
       }
     } catch { setMsg('Can’t reach PalDex right now. Try again in a moment.'); }
@@ -78,6 +81,8 @@ export function InvitePanel({ prefill = '' }: { prefill?: string }) {
       </div>
       {msg && <p className="s" style={{ marginTop: 'var(--sp-2)' }} role="status">{msg}</p>}
     </div>
+    {asked && canAsk && <PushAsk title={asked === 'they' ? 'Get a note when they say yes?' : `Get a note when ${asked} says yes?`}
+      sub={`And when friends give ${cat?.name ?? 'your cat'} a treat or post a photo. Change which in Settings.`} onDone={() => setAsked('')} />}
   </>;
 }
 
