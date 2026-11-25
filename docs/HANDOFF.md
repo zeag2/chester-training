@@ -33,13 +33,13 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (307 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (314 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
 design system (`docs/design-system.md`, `src/styles/tokens.css`); security review + Forgot password; delete account +
-privacy page (`#/privacy`); backup restore; training suggests the last skill trained. SQL: everything up to
-`20261125000000_week3_bundle.sql` has been run.
+privacy page (`#/privacy`); backup restore; training suggests the last skill trained; "Contact us" form (`#/contact`) with an admin-only Messages inbox in Settings
+→ App (Josh is the admin). SQL: everything up to `20261126000000_contact_messages.sql` has been run.
 
 **Open PRs, merge in this order**
 1. #42 push, server (send-push Edge Function + service worker), then 2. #47 push, app (Settings → Notifications).
@@ -48,13 +48,16 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 3. #48 log real play (length + toy), water and appetite on the daily check: waits for Josh's OK.
 4. #18 the UX reviewer's small fixes: needs a rebase on main, then a check.
 
-**Waiting on Josh** (one word each): push setup done? · ship #48? · ship #18? ·
-run the Contact us SQL + your admin line (PR for agenda 10)? · keep the secretary/executive role? · keep the art director? · keep the daily 12:41 PM auto-start?
+**Waiting on Josh** (one word each): push setup done? (then merge #42, #47) · ship #48? · ship #18? ·
+keep the daily 12:41 PM auto-start? (it reads the archived secretary's `docs/exec.md`; repoint it to this file or stop it).
 
-**Sessions and roles**: keep the PM ("PalDex project manager (current)"), the UX reviewer (nightly review) and,
-until the push keys are copied, "PalDex · worker · push notifications build" (its chat holds the keys; then
-archive it). Every other worker is archived. The secretary/executive and the art director are optional (Josh
-decides). Workers: one per task, at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
+**Sessions and roles**: PM = "PalDex project manager (current)", `session_019xqnwe551shJEBVFCnscDJ` (from
+2026-11-25; the old PM `session_019xqnwe2xGc6E2Zfb29YqrL` is "(archive)"). Keep the UX reviewer (nightly review,
+1:45 AM) and, until Josh has copied the push keys from its chat, "PalDex · worker · push notifications build"
+(`session_019xqnwhi5L7q6CocwuxdBKK`; archive it after). The secretary/executive and the art director are archived
+(Josh, 2026-11-25). Scheduled tasks: "PalDex daily ping to Josh (PM)" 8:45 AM (in the PM session; recreate it in the
+new PM if needed), "PalDex daytime block (12:41 PM)" (see above), "PalDex UX review" 1:45 AM. Workers: one job each,
+at most 2 at a time (4 at once used up the 5-hour limit in about 20 minutes on Nov 23).
 
 ---
 
