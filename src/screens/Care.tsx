@@ -124,7 +124,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
       <p className="s" style={{ marginTop: 6 }}>{ws.length} weigh-in{ws.length === 1 ? '' : 's'} · last {fmt(ws[ws.length - 1].at)}</p>
       {/* tap a weigh-in to change its value or date, or delete it */}
       <div style={{ marginTop: 'var(--sp-2)' }} role="group" aria-label="Weigh-ins">
-        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)', padding: 'var(--sp-2) 14px', marginTop: 6, borderRadius: 14, borderBottom: 0 }} onClick={() => setEditing({ kind: 'weight', item: w })}
+        {[...ws].reverse().slice(0, allWeights ? undefined : 3).map((w) => <button key={w.id} className="item" style={{ background: 'var(--surface)', padding: 'var(--sp-2) var(--sp-4)', marginTop: 'var(--sp-2)', borderRadius: 'var(--r-row)', borderBottom: 0 }} onClick={() => setEditing({ kind: 'weight', item: w })}
           aria-label={`Edit weight ${w.data.lb} lb on ${fmt(w.at)}`}>
           <div className="sp"><b className="num">{w.data.lb} lb</b><p className="s">{fmt(w.at)}</p></div><span className="s">Edit</span></button>)}
         {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: 'var(--sp-2) 0', minHeight: 44, fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
