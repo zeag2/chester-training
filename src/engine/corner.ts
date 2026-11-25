@@ -31,7 +31,7 @@ export const SHOP: ShopItem[] = [
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 
-export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat' | 'care' | 'streak' | 'move';
+export type CornerKind = 'buy' | 'gift' | 'play' | 'friend' | 'treat' | 'care' | 'streak' | 'move' | 'pet';
 export interface CornerEvent {
   /** Buys get a random id; the daily gift is `gift-<day>`, play is `play-<day>`, a friend bonus is `friend-<their id>`
       a friend's free treat is `treat-<their id>-<their day>` and a care entry's treats are `care-<care item id>`, a play move found is `move-<toy>-<move>`, so two phones can't both claim one, and a friend
