@@ -513,7 +513,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
 ### App
 - **Dark mode:** Settings, then Appearance (Match phone / Light / Dark). Colours are tokens in `src/styles/tokens.css`.
 - **Settings:** grouped like iPhone Settings: pet card with an Edit sheet, Pets, Household, App (Sound switch,
-  Appearance), Your data (backup JSON including care).
+  Appearance), Your data (backup JSON including care; "Restore from a backup" reads it back in).
 - **Updates itself:** checks for a new version whenever the app returns to the front and applies it straight away,
   except mid-session or recap (`src/lib/updates.ts`). No more close-and-reopen.
 - Renamed to **PalDex** (home-screen name, title, manifest). The URL path stays `/chester-training/` so installs don't
@@ -654,6 +654,15 @@ Items marked *(art)* suit the art session.
   real iPhone and Android phone.
 
 ### Done recently
+- [x] **Backup import** (2026-11-25, `claude/features-backup-import`): Settings → App → "Restore from a backup" picks
+  the JSON file, `readBackup` (`src/lib/backup.ts`) checks it (not JSON / not PalDex, older shape, newer `format`, no
+  pets: each a clear message with "Choose another file") and the sheet previews pets, days of logs (training days plus
+  health-entry days) and documents. **Merge** (default) adds pets, sets and health entries by id, never a second copy
+  (a health entry edited later in the backup wins); **Replace** asks in the sheet first. Then "Saved · … · Undo" (Undo
+  restores every table as it was). `store.importBackup` delays the sync 8 s so Undo doesn't race the upload; after
+  Replace, pets shared online come back on the next sync (said in the sheet). The export now writes `format: 1`
+  (files without it read as format 1) and goes through `store.backup()`. Vets aren't in the backup (they weren't in
+  the export either). Tests: `src/lib/backup.test.tsx`. Screenshots: `docs/screenshots/backup-import/`.
 - [x] **Design system phase 2** (2026-11-22, `claude/design-system-2`): `src/styles/tokens.css` (every token in
   `docs/design-system.md`); about 450 exact-match literals in `app.css`, `chester.css` and inline styles swapped for tokens
   (font sizes, spacing, radii, durations, the card and float shadows, the gold paw `--butter-strong`, `--paper`);
@@ -819,7 +828,7 @@ Items marked *(art)* suit the art session.
 - [ ] **Check-ins** (M): five quick questions every few weeks that unlock hidden skills (`wallet.checkinKeys`,
   `hiddenUnlocks` in `rules.ts`).
 - [ ] **Glossary in the library** (S).
-- [ ] **Backup import** (S): export exists, import doesn't.
+- [x] **Backup import** (done 2026-11-25, `claude/features-backup-import`): see "Done recently".
 - [ ] **App Store wrapper** (L): Capacitor, only if wanted; adds haptics.
 
 ### Health
@@ -866,7 +875,7 @@ Items marked *(art)* suit the art session.
   "Pet me?" moments (Chester walks on and asks for pets up to 3 times a day, 9 am to 9 pm; not built), photo album,
   notifications, and the corner leftovers (nap tokens, bond levels unlocking idle behaviours and outfits, mastery-only items such as a cozy box from Carrier comfort).
 - **Phase 3, grow and open up:** accounts and sync done (households, friends), library done, backup export done.
-  Left: check-ins and hidden skills, weekly recap, a glossary in the library, backup import, an App
+  Left: check-ins and hidden skills, weekly recap, a glossary in the library, an App
   Store wrapper (Capacitor) if wanted.
 - The design says each phase starts once the one before feels right in daily use, so finish Phase 2 first.
   The checklist above is grouped the same way.
@@ -1467,3 +1476,8 @@ claude mcp add -s project lottiefiles-creator -- npx -y @lottiefiles/creator-mcp
   Followed `docs/design-system.md` (existing chipbtn, the entry sheet's cat chip, Saved · Undo toast). Checks: Vitest
   (284, new `src/ui/booking2b.test.tsx`), typecheck, build; Playwright 390 px light and dark of the two-cat sheet and a
   grouped visit page (two cats seeded through `globalThis.__chesterStore`): `docs/screenshots/booking-2b/`.
+- 2026-11-25, backup import (Features worker, `claude/features-backup-import`): no skills, plugins or new MCP servers.
+  Followed `docs/design-system.md` (Sheet, `.lgroup` rows, `.seg`, butter card, `.btn` / `.btn2`, Saved · Undo toast;
+  no new components or tokens). Checks: Vitest (291, new `src/lib/backup.test.tsx`), typecheck, build; Playwright
+  390 px light and dark against the Vite dev server (backup made in the page from a second `Store`, picked with
+  `setInputFiles`): `docs/screenshots/backup-import/`.
