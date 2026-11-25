@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { isMuted, setMuted, chirp } from '../lib/audio';
@@ -13,6 +13,8 @@ import { Icon } from '../ui/icons';
 import { back, go } from '../ui/router';
 import type { Cat } from '../engine/types';
 import { Sheet as SheetFrame } from '../ui/Sheet';
+import { showToast } from '../ui/Toast';
+import { readBackup, type BackupRead } from '../lib/backup';
 
 /* Settings, grouped like iPhone Settings: the pet, the people, the app, your data. */
 
@@ -103,6 +105,48 @@ function Invite({ catName, code, onClose }: { catName: string; code: string; onC
   </Sheet>;
 }
 
+/** Restore from a backup: what's in the file, Merge (the default, adds what's missing) or Replace (asks first), then a
+    toast with Undo. A wrong or old file says so here instead. */
+export function Restore({ read, onPick, onClose }: { read: BackupRead; onPick: () => void; onClose: () => void }) {
+  const { account } = useStore();
+  const [mode, setMode] = useState<'merge' | 'replace'>('merge');
+  const [sure, setSure] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (!read.ok) return <Sheet title="Restore from a backup" onClose={onClose}>
+    <div className="card butter" role="alert" style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ color: 'var(--butter-ink)' }}>{read.error}</p></div>
+    <button className="btn2" style={{ marginTop: 'var(--sp-4)', width: '100%' }} onClick={onPick}>Choose another file</button>
+  </Sheet>;
+  const { summary: sum } = read;
+  const when = sum.exported ? new Date(sum.exported) : null;
+  const run = async () => {
+    setBusy(true);
+    const { changed, undo } = await store.importBackup(read.backup, mode);
+    onClose();
+    showToast({ msg: mode === 'replace' ? 'Saved · replaced with the backup' : changed ? `Saved · ${changed} added from the backup` : 'Saved · nothing new in the backup',
+      action: { label: 'Undo', run: () => { void undo().then(() => showToast({ msg: 'Backup undone' })); } } });
+  };
+  return <Sheet title="Restore from a backup" onClose={onClose}>
+    {when && !isNaN(+when) && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Saved {when.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>}
+    <div className="lgroup" style={{ marginTop: 'var(--sp-3)' }}>
+      <Row label={sum.pets.length === 1 ? 'Pet' : 'Pets'} value={sum.pets.join(', ')} />
+      <Row label="Days of logs" value={<span className="num">{sum.days}</span>} />
+      <Row label="Documents" value={<span className="num">{sum.documents}</span>} />
+    </div>
+    {sum.documents > 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Documents come back as entries; their files open while they’re still stored online.</p>}
+    <span className="field">How to restore it</span>
+    <div className="seg" role="group" aria-label="How to restore it">{([['merge', 'Merge'], ['replace', 'Replace']] as const).map(([v, l]) =>
+      <button key={v} className={mode === v ? 'on' : ''} aria-pressed={mode === v} onClick={() => { setMode(v); setSure(false); }}>{l}</button>)}</div>
+    <p className="s" style={{ marginTop: 'var(--sp-2)' }}>{mode === 'merge' ? 'Adds what this phone doesn’t have yet. Nothing is doubled up, and nothing here is removed.'
+      : `Swaps this phone’s pets and logs for the backup’s.${account ? ' Pets shared online come back on the next sync.' : ''}`}</p>
+    {mode === 'replace' && sure ? <div className="card butter" style={{ marginTop: 'var(--sp-4)' }}>
+      <p className="s" style={{ color: 'var(--butter-ink)' }}>Replace everything on this phone with this backup? You can undo it right after.</p>
+      <button className="btn" style={{ marginTop: 'var(--sp-3)', background: 'var(--rose)' }} disabled={busy} onClick={run}>Replace everything</button>
+      <button className="btn2" style={{ marginTop: 'var(--sp-2)', width: '100%', background: 'transparent' }} onClick={() => setSure(false)}>Keep what’s here</button>
+    </div>
+      : <button className="btn sheetsave" style={{ marginTop: 'var(--sp-5)' }} disabled={busy} onClick={mode === 'merge' ? run : () => setSure(true)}>{mode === 'merge' ? 'Merge into this phone' : 'Replace…'}</button>}
+  </Sheet>;
+}
+
 export function Settings() {
   const { cat, account, household, sync, care, pets } = useStore();
   const [muted, setM] = useState(isMuted());
@@ -110,9 +154,13 @@ export function Settings() {
   const [sheet, setSheet] = useState<'' | 'pet' | 'name' | 'invite' | 'install'>('');
   const [person, setPerson] = useState('');
   const showInstall = useInstallHint();
+  const [restore, setRestore] = useState<BackupRead | null>(null);
+  const file = useRef<HTMLInputElement>(null);
   if (!cat) return null;
+  const pickBackup = () => file.current?.click();
+  const onBackup = async (f?: File) => { if (f) setRestore(readBackup(await f.text())); };
   const exportData = async () => {
-    const data = { app: 'PalDex', exported: new Date().toISOString(), cats: await store.db.cats.toArray(), sets: await store.db.sets.toArray(), care: await store.db.care.toArray(), wallet: await store.db.wallet.toArray() };
+    const data = await store.backup();
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `paldex-${cat.name.toLowerCase().replace(/\W+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`; a.click();
   };
@@ -151,7 +199,10 @@ export function Settings() {
         <div className="seg" role="group" aria-label="Appearance" style={{ marginTop: 'var(--sp-2)' }}>{(['system', 'light', 'dark'] as Theme[]).map((t) => <button key={t} className={theme === t ? 'on' : ''} aria-pressed={theme === t} onClick={() => { setTheme(t); setT(t); }}>{t === 'system' ? 'Match phone' : t === 'light' ? 'Light' : 'Dark'}</button>)}</div></div>
       {showInstall && <Row label={`Add ${titleFor(pets.map((p) => p.name))} to your Home Screen`} onClick={() => setSheet('install')} />}
       <Row label="Download a backup" sub="Health log, training and treats, as a file" onClick={exportData} />
+      <Row label="Restore from a backup" sub="Add a backup file’s pets and logs to this phone" onClick={pickBackup} />
     </Group>
+    <input ref={file} type="file" accept="application/json,.json" hidden aria-hidden="true" data-testid="backup-file" onChange={(e) => { void onBackup(e.target.files?.[0]); e.target.value = ''; }} />
+    {restore && <Restore key={restore.ok ? 'ok' + restore.summary.exported : restore.error} read={restore} onPick={pickBackup} onClose={() => setRestore(null)} />}
 
     {sheet === 'pet' && <EditPet cat={cat} onClose={() => setSheet('')} />}
     {sheet === 'name' && <EditMyName onClose={() => setSheet('')} />}
