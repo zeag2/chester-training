@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { store, useStore } from '../db/store';
 import { localDay } from '../engine/day';
-import type { CareItem, DailyWhat } from '../engine/care';
+import { dailyDetail, type CareItem, type DailyWhat } from '../engine/care';
 import { atTimeOfDay, dailyLogDays, hhmm } from '../engine/dailylog';
 import { Icon } from './icons';
 import * as audio from '../lib/audio';
@@ -13,6 +13,8 @@ const ICON: Record<DailyWhat, string> = { fed: 'leaf', scoop: 'box', play: 'yarn
 const AGAIN: Record<DailyWhat, string> = { fed: 'Log another meal', scoop: 'Scooped again', play: 'Played again', check: 'Check again' };
 const THIS: Record<DailyWhat, string> = { fed: 'this meal', scoop: 'this scoop', play: 'this playtime', check: 'this check' };
 const label = (i: CareItem<'daily'>) => i.data.what !== 'check' ? LABEL[i.data.what] : i.data.ok === false ? 'Something off' : 'All normal';
+/** Under the label: the playtime's length and toy, the check's water and appetite (the label already says ok or off). */
+const detail = (i: CareItem<'daily'>) => dailyDetail(i.data).replace(/^(All normal|Something off)( · )?/, '');
 /** For screen readers and tests: "fed at 7:40 AM", "daily check at 8:20 AM". */
 const named = (i: CareItem<'daily'>) => `${LABEL[i.data.what].toLowerCase()} at ${time(i.at)}`;
 function dayName(day: string, now: number): string {
@@ -53,7 +55,7 @@ export function DailyLogSheet({ what, days = 1, onAgain, onClose }: { what?: Dai
               <button className="btn2" style={{ padding: '0 var(--sp-3)', background: 'var(--grey)' }} onClick={() => setAsking(null)}>Keep</button>
               <button className="btn2" style={{ padding: '0 var(--sp-3)', background: 'var(--rose)', color: 'var(--bg)' }} onClick={() => void remove(i)}>Delete</button></>
             : <><div className="ico grey"><Icon name={ICON[i.data.what]} /></div>
-              <div className="sp" style={{ minWidth: 0 }}><b>{label(i)}</b>{who(i) && <p className="s">by {who(i)}</p>}</div>
+              <div className="sp" style={{ minWidth: 0 }}><b>{label(i)}</b>{(detail(i) || who(i)) && <p className="s">{[detail(i), who(i) && `by ${who(i)}`].filter(Boolean).join(' · ')}</p>}</div>
               <input type="time" className="in" aria-label={`Change the time of ${named(i)}`} defaultValue={hhmm(i.at)} key={i.at}
                 style={{ width: 'auto', flex: 'none', height: 44, marginTop: 0, padding: '0 var(--sp-2)' }} onChange={(e) => setTime(i, e.target.value)} />
               <button className="iconbtn" style={{ color: 'var(--rose)' }} aria-label={`Delete ${named(i)}`} onClick={() => setAsking(i.id)}><TrashIcon /></button></>}
