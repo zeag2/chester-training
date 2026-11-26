@@ -2,6 +2,7 @@
 
 The design doc for PalDex. New screens and changes follow it; anything it doesn't cover gets added here first.
 Phase 1 named the direction and the tokens. Phase 2 (done) moved the code onto them: tokens, components and rules are below.
+Updated 2026-11-26 for the badge art (Josh): the art layer, branch colours, art sizes and their rules.
 
 ## Constraints (Josh)
 - **One named aesthetic direction, committed.** Never "modern and clean".
@@ -13,12 +14,24 @@ Phase 1 named the direction and the tokens. Phase 2 (done) moved the code onto t
 
 ## Direction: **warm-minimal, "kitchen-table notebook"**
 A warm, quiet notebook kept by the food bin. Soft paper and ink, a few pastel washes the colour of cat-care
-things (butter, mint, peach, sky), one rounded friendly sans, big confident headings, generous space. The cat is the
-only illustration. Colour marks *kind* (mint = done or healthy, peach = attention, butter = treats and rewards, sky =
-planning and vet), never decoration, and never the only signal (always with an icon or words).
+things (butter, mint, peach, sky), one rounded friendly sans, big confident headings, generous space. Colour marks
+*kind* (mint = done or healthy, peach = attention, butter = treats and rewards, sky = planning and vet), never
+decoration, and never the only signal (always with an icon or words).
 
-What it is not: no gradients, no glass, no drop shadows beyond the one soft card shadow, no outlines around everything,
-no neon.
+**Two layers** (since the badge art, 2026-11-25):
+- **The UI layer** (screens, cards, rows, buttons, line icons): paper and ink, flat washes, no outlines, everything
+  above. This is most of every screen.
+- **The art layer** (the cat, the badges, the Chester-style icons): one illustration family, the "sticker" look.
+  Pastel fills with a dark navy outline (`--art-outline` / `--badge-outline` #1f2440, lighter in dark mode), soft
+  rounded shapes, a light highlight on top. This is where the app's character lives, and the only place outlines and
+  the branch colours appear. Art sits *on* the UI layer (on `--bg`, a white card or a wash) and is never stretched,
+  recoloured or redrawn in a screen.
+- Keep the art scarce so it stays special: the cat, the trophy case and skill moments (badges), and the nav (Chester
+  icons). Everywhere else uses the line icons. A screen never has more than one big piece of art (the cat or a badge
+  at 56 px and up); small badges in a row (the trophy shelf) count as one.
+
+What it is not: no gradients, no glass, no drop shadows beyond the one soft card shadow, no outlines around UI
+(outlines belong to the art layer only), no neon.
 
 ## Type
 | Role | Font | Weight | Size / line height | Use |
@@ -62,6 +75,28 @@ Keep today's values (they're tuned and tested for contrast); give them roles and
 Rules: a wash colour (`--mint`, `--peach`, `--butter`, `--sky`) is a **card background** with its `-ink` text; never two washes
 next to each other in one card. `--rose` is for destructive text and the emergency call only.
 
+### Branch colours (skill branches; the badge art)
+A second colour family with one job: **which skill branch** something belongs to. Same values in light and dark (the
+art carries its own outline, so it reads on both).
+
+| Branch | Shape | `--branch-*` (fill) | `-light` (highlight) | `-ink` (accent) |
+|---|---|---|---|---|
+| Foundation | gold coin | #efc44a | #fbe7a6 | #c9962a |
+| Care | rose shield | #ef8f9a | #fcd8dd | #d2493f |
+| Manners | teal hexagon | #6cc3b5 | #d2efe9 | #2a7a6f |
+| Adventure | sky diamond | #7aa5dc | #d9e6f8 | #3f6fb0 |
+| Tricks | orange rosette | #f3a65e | #fde2c4 | #d9772c |
+
+- **Where they may appear:** in the badge art itself, and as a small branch marker in UI next to the branch name (the
+  dot by a shelf head in the trophy case; the same dot may mark a branch in the skill tree, Library and a skill page).
+  Always with the branch name or shape beside it, never colour alone.
+- **Where they may not:** as card backgrounds, text colour, buttons or progress bars (those stay on the kind washes and
+  `--ink`). Branch colours never stand in for a kind (a Care badge is rose, but "attention" is still `--peach`).
+- The same shape always means the same branch: a coin is Foundation everywhere, so don't reuse the five shapes for
+  anything else (chips, avatars, empty states).
+- New branch → pick its shape and colours in the art first (the art artifact's `generate.mjs`), then add the tokens
+  here and in `tokens.css`.
+
 ## Space, shape, depth
 - **Space scale** (px): 4, 8, 12, 16, 20, 24, 32. The screen gutter is 20 on a phone. Sections are 24 apart, cards 12, inside a card 8–12.
 - **Allowed in-between gaps** (Josh, 2026-11-23: they stay): 6, 10, 14, 18, 22 (e.g. `marginTop: 22` above section
@@ -71,6 +106,10 @@ next to each other in one card. `--rose` is for destructive text and the emergen
 - **Depth:** one card treatment, `.card.white` = a 1px `--line` hairline + `0 2px 10px rgba(35,35,32,.06)`. Wash cards have no edge.
   Sheets dim the page; nothing else casts a shadow.
 - **Tap targets:** at least 44 × 44. The primary button is 52 tall, secondary 48.
+- **Art sizes** (the art layer has its own steps, so badges and icons don't drift): Chester icons 24 (tab bar, rail,
+  side nav), 48 (the phone's gold +); badges 64 (`--badge-tile`, the trophy shelf), 96 (one badge on its own: a skill
+  page, a "new badge" moment). Badges are drawn for 56–96, so never smaller than 56 (use the line `badge` icon in a
+  row instead). Line icons 16 (inside a link), 18 (row chevron), 22 (icon tiles), 24.
 
 ## Motion
 | Token | Value | Use |
@@ -111,7 +150,7 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
 token exactly. These are today's real values, off the scale; moving them is a visible change, so each needs its own
 go-ahead and a screenshot pass:
-- Type: 11 for tiny badges, 22–32 for big numbers. (13, 15, 17, 18 are now allowed exceptions, see Type.)
+- Type: 11 for tiny count badges (the little number pills, not the badge art), 22–32 for big numbers. (13, 15, 17, 18 are now allowed exceptions, see Type.)
 - Space: the 110 px tab-bar clearance. (6, 10, 14, 18, 22 are now allowed exceptions, see Space.)
 - Radius: 16 (`.hit`, `.bkvet`, `.bkcall`), 18 (`.lgroup`, the toast), 9, 10, 12, 20, 28, 32.
 - Motion: press feedback is 160 ms (`.btn`, `.item`), between `--dur-fast` and `--dur`.
@@ -184,6 +223,12 @@ go-ahead and a screenshot pass:
     signs, a visit's older notes).
   - **A table or side-by-side** when comparing values (the desktop Health log, weights over time, vaccine due dates).
 - New list rows that appear while you watch use `useSettle`; `.pop` is for celebrations only.
+- **Art layer** (badges, Chester icons, the cat): use the files as drawn; no CSS filters, recolours or outlines added in
+  a screen (the only exceptions: `--icon-idle` on a tab that isn't current, and the shine). Branch colours only as the
+  "Branch colours" section allows. New art (a new badge, icon or branch) is made in the art artifact first and added
+  to this doc before any screen uses it.
+- **Earned vs. not:** only an earned badge is full colour and shines. Locked is grey with a lock, hidden is the dashed
+  "?" shape; neither shines, and neither is faded text in UI (rows stay full contrast with a lock icon).
 
 ## Phase 2 (done 2026-11-22, `claude/design-system-2`)
 What was planned, for the record:
