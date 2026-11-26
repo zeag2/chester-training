@@ -5,6 +5,7 @@ import { SKILLS } from '../engine/skills';
 import { badgeArtUrl } from '../ui/badgeArt';
 import { BadgeShine, prefersReducedMotion, SHINE_FLASH_MS, SHINE_MS } from '../ui/BadgeShine';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { go } from '../ui/router';
 
 const day = (at?: number) => (at ? new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '');
@@ -47,7 +48,7 @@ export function Trophies() {
   const all = shelves.flatMap((s) => s.badges); const earned = all.filter((b) => b.earned).length;
   const hidden = all.filter((b) => b.state === 'hidden').length;
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('chester')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>Trophy case</b></div>
+    <ScreenHeader onBack={() => go('chester')} title="Trophy case" />
     <div className="stag">
       <p className="m">{earned ? `${cat.name} has ${earned} of ${all.length} badges. One for every skill mastered.` : `Master a skill and ${cat.name}’s first badge goes here.`}{hidden ? ` The ${hidden} marked “?” are hidden skills that unlock along the way.` : ''}</p>
       {next && <a href={'#/skill/' + next.skill.id} className="card butter row" style={{ color: 'inherit', textDecoration: 'none', gap: 'var(--sp-3)' }}>

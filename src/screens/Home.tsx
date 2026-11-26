@@ -221,19 +221,20 @@ export function Home() {
     onClick={() => go('chester')} aria-label={pets.length > 1 ? 'Open the Cats tab' : `Open ${cat.name}’s tab`}>
     <span aria-hidden="true" style={{ width: 28, height: 28, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" width={38} /></span>
-    {pets.length > 1 ? 'Cats' : cat.name} <span aria-hidden="true">›</span></button>;
+    {pets.length > 1 ? 'Cats' : cat.name}<Icon name="chevron" size={16} /></button>;
   const moved = movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
       <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 'var(--sp-1)' }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
       <a className="btn" style={{ marginTop: 'var(--sp-3)' }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
   const rest = <>
       <FriendsStrip onInvite={() => setInvite(true)} />
-      {cat.training !== false && <a href="#/train" className="card mint row" style={{ color: 'inherit', textDecoration: 'none' }}>
-        <div className="ico"><Icon name="target" /></div>
-        <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
-        {next && !done && <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', alignItems: 'stretch' }}>
-          <button className="btn2" style={{ minHeight: 40, background: 'var(--surface)' }} aria-label={`Start ${next.skill.name}`} onClick={(e) => { e.preventDefault(); go('session/' + next.skill.id); }}>Start</button>
-          <button className="btn2" style={{ minHeight: 40, background: 'transparent' }} aria-label={`Change skill (now ${next.skill.name})`} onClick={(e) => { e.preventDefault(); go('tree'); }}>Change</button></div>}</a>}
-      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><Paw color="var(--butter-strong)" size={24} /><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
+      {/* the card is the button (it starts the next skill), with one "Change skill" chip (UX review 2026-11-25, item 8) */}
+      {cat.training !== false && <div className="card mint cardlink traincard">
+        <a href={next && !done ? '#/session/' + next.skill.id : '#/train'} className="row">
+          <div className="ico"><Icon name="target" /></div>
+          <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
+          {next && !done && <span className="chip">Start</span>}</a>
+        {next && !done && <button className="chipbtn" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('tree')}>Change skill</button>}</div>}
+      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><div className="ico"><Paw color="var(--butter-strong)" size={24} /></div><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
       {friendNews && <div className="card butter pop" role="status">
@@ -261,7 +262,7 @@ export function Home() {
           <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><ChesterIcon name="settings" /></button></div>
         {partners.length > 0 && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
-        {account && !myName && <button className="chip" style={{ marginTop: 'var(--sp-2)', border: 0, minHeight: 32 }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
+        {account && !myName && <button className="chipbtn" style={{ marginTop: 'var(--sp-2)', alignSelf: 'flex-start' }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
       {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
         : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}

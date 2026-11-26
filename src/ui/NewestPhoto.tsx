@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Icon } from './icons';
 import { store, useStore } from '../db/store';
 import { timeAgo } from '../lib/photos';
 import type { Photo } from '../sync/remote';
@@ -32,6 +33,6 @@ export function NewestPhoto() {
   return <button className="card white" style={{ width: '100%', border: 0, padding: 0, overflow: 'hidden', textAlign: 'left', color: 'inherit', display: 'block' }}
     onClick={() => go('friends')} aria-label={`New photo of ${pet}. See all photos`}>
     <img src={got.url} alt={p.caption || `Photo of ${pet}`} style={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', background: 'var(--grey)' }} />
-    <div className="row" style={{ padding: '10px 14px' }}><div className="sp"><b>{pet}</b><p className="s">{[who, timeAgo(p.at), p.caption].filter(Boolean).join(' · ')}</p></div><span className="s" style={{ fontWeight: 800 }}>See all ›</span></div>
+    <div className="row" style={{ padding: '10px 14px' }}><div className="sp"><b>{pet}</b><p className="s">{[who, timeAgo(p.at), p.caption].filter(Boolean).join(' · ')}</p></div><span className="s row" style={{ fontWeight: 800, gap: 2, color: 'var(--ink)' }}>See all<Icon name="chevron" size={16} /></span></div>
   </button>;
 }

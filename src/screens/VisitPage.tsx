@@ -6,6 +6,7 @@ import { visitLinks } from '../engine/docs';
 import { bookingDay, fmtTime, isBooked, mapsHref, nextVaccines, telHref, yourVets } from '../engine/vets';
 import type { CalEvent } from '../lib/calendar';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back as goBack } from '../ui/router';
 import { useLayout } from '../ui/layout';
 import { DocRow } from '../ui/DocRow';
@@ -33,8 +34,7 @@ export function VisitPage({ id }: { id: string }) {
   const big = useLayout() === 'desktop';
   const visit = care.find((c): c is CareItem<'vet'> => c.id === id && c.kind === 'vet');
   if (!cat) return null;
-  const back = <div className="top"><button className="iconbtn" aria-label="Back to Health" onClick={() => goBack('health')}><Icon name="back" /></button>
-    <b className="sp" style={{ fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Vet visit</b></div>;
+  const back = <ScreenHeader onBack={() => goBack('health')} backLabel="Back to Health" title="Vet visit" heading={!!visit} />;
   if (!visit) return <div className="screen">{back}<p className="m" style={{ marginTop: 'var(--sp-4)' }}>This visit was deleted, or hasn’t reached this phone yet.</p>
     <button className="btn2" style={{ marginTop: 'var(--sp-3)' }} onClick={() => goBack('health')}>Back to Health</button></div>;
 

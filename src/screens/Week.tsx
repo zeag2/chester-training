@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useStore } from '../db/store';
 import { weekSummary } from '../engine/week';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { go } from '../ui/router';
 
 const short = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -17,7 +18,7 @@ export function Week() {
   const delta = w.weight?.before != null ? Math.round((w.weight.now - w.weight.before) * 10) / 10 : null;
   const row = (label: string, value: string, note?: string) => <div className="row" style={{ marginTop: 10, alignItems: 'baseline' }}><span className="sp">{label}</span><b className="num">{value}</b>{note && <span className="s" style={{ marginLeft: 6 }}>{note}</span>}</div>;
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('home')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>{cat.name}’s week</b></div>
+    <ScreenHeader onBack={() => go('home')} title={`${cat.name}’s week`} />
     <div className="stag">
       <p className="m">{short(w.from)} to {short(w.to)}</p>
       <div className="card mint"><b>Everyday</b>

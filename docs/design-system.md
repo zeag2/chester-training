@@ -42,7 +42,7 @@ What it is not: no gradients, no glass, no drop shadows beyond the one soft card
 | Title | Nunito | 700 | 16 / 22 | card and row titles |
 | Body | Nunito | 400 | 16 / 24 | sentences, form values |
 | Small | Nunito | 600 | 14 / 20 | sub-lines, chips |
-| Label | Nunito | 800 | 12 / 16, uppercase, +0.6px tracking | "YOUR VET", "NEXT" |
+| Label | Nunito | 800 | 12 / 16, uppercase, +0.6px tracking | "YOUR VET", "NEXT"; class `.label` (and `.lhead` for Settings group heads) |
 | Numbers | Nunito, `font-variant-numeric: tabular-nums` | 700 | as context | weights, counts, times |
 
 - **One family:** Nunito (Google Fonts, 400/600/700/800, already loaded). It's rounded and friendly, readable at 14 px, and it
@@ -164,17 +164,20 @@ go-ahead and a screenshot pass:
 |---|---|---|
 | **Button**, primary | `.btn` (`src/styles/app.css`) | `<button className="btn">`; 52 tall, ink pill, full width; `disabled` greys it |
 | Button, secondary | `.btn2` | 48 tall, grey pill, inline; add `style={{ width: '100%' }}` to fill |
-| Button, text / danger | `.btn2` with `background: transparent` (danger: `color: var(--rose)`); `.linkbtn` in the Health log | e.g. "Remove this vet" in `src/ui/VetCards.tsx` |
+| Button, text / danger | `.btn2.plain`: transparent, 44 tall, 14 px bold, a little side padding (danger: `color: var(--rose)`). For "This week", "All documents", "Quick logs, last 7 days", Cancel in a form; a link onward ends with `<Icon name="chevron" size={16} />` | e.g. "Remove this vet" in `src/ui/VetCards.tsx` |
 | Button, destructive confirm | `.btn.danger`: the primary button in `--rose` | only as the last step of something that can't be undone, inside its sheet ("Remove from household", "Delete my account"); the row that opens it is a danger row |
 | Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
 | Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
 | **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` uses `.in` too. A `textarea.in` (several lines, e.g. the Contact us message) sizes by `rows`, with `--sp-3` padding top and bottom and `--lh-body` lines, and can be dragged taller. Optional fields say so in the label: "Your name (optional)" |
 | Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
-| **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards |
+| **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards. No extra outline on top (the Health vet card's 2 px border went 2026-11-25) |
+| **Card link** (a card that is the button, plus one chip) | `.card.cardlink` > `a.row` + `button.chipbtn` (`src/styles/app.css`) | The `<a>` stretches over the whole card (`::after`), so the card is the tap target and presses like `a.card`; the one `.chipbtn` sits above it, lined up under the title. A `.chip` inside the link says the action ("Start"). The Home Training card: tap to start the next skill, "Change skill" chip to pick another |
 | Icon tile | `.ico` (+ a wash class) with `<Icon name>` from `src/ui/icons.tsx` (line set; `ChesterIcon` only in the nav, see "Badges, shine and icons") | `Icon({ name, size = 22 })`, `Paw({ color, size })` (`flex: none`, so it never squeezes in a `.row`) |
-| **Sheet / dialog** | `Sheet` from `src/ui/Sheet.tsx` | `label` (its accessible name), `onClose`, `children`; bottom sheet on phones, dialog or side sheet on desktop |
+| **Screen header** | `ScreenHeader` from `src/ui/ScreenHeader.tsx` (`.top` + `.toptitle`) | `title`, `onBack`, `backLabel?` ("Back"), `back?` (`'close'` for an X), `trailing?` (an `.iconbtn`, a `.btn2` (44 tall here) or a `.chip`), `heading?` (default true: the title is the page's `<h1>`). Every screen that isn't a tab opens with it: back, the name at 17 (`--fs-h2`, one line, ellipsis), the action on the right. **The 28 px `<h1>` is only for the top-level tabs** (Home, Health, Chester, Friends), which have no back row. One exception: a page about one thing (a visit, the cat on For the vet, a skill, the session recap, a setup step's question) puts that thing as its h1 under the header and passes `heading={false}`, so there's one h1 |
+| **Sheet / dialog** | `Sheet` from `src/ui/Sheet.tsx` | `label` (its accessible name), `onClose`, `children`; bottom sheet on phones, dialog or side sheet on desktop. Its first row is the sheet header: the title in bold 18 (`.sp`) and a Close `.iconbtn` with the close icon on the right |
 | **Toast with Undo** | `showToast` / `hideToast` from `src/ui/Toast.tsx` (`<ToastHost />` is in App) | `{ msg, action?: { label, run }, ms? }` |
-| **List row** | `.item` (rows with a hairline), `.lgroup` + `.lrow` (grouped rows in a grey box, Settings) | `.ico` left, `.sp` middle, value right |
+| **List row** | `.item` (rows with a hairline), `.lgroup` + `.lrow` (grouped rows in a grey box, Settings) | `.ico` left, `.sp` middle, value right; a row that opens something ends with `<span className="chev"><Icon name="chevron" size={18} /></span>` (never a typed "›") |
+| **Locked row** (a skill not unlocked yet) | the tree's `Node` and the Library rows | Full contrast like any row; the lock icon in the icon tile says it, with a `.visually-hidden` "Locked" for VoiceOver. No "Locked" pill, no dashed edge, no greyed text |
 | Document row | `DocRow` from `src/ui/DocRow.tsx` | `doc`, `visit?`, `onMore`, `onSelect?`, `selected?` |
 | **Table** | `.logtable` (desktop Health log, `HealthLogTable` in `src/screens/Care.tsx`) | `log`, `quick`, `who`, `onOpen`, `onQuickLogs` |
 | **Tab bar / side nav** | `TabBar` from `src/ui/TabBar.tsx` | `active`, `onPlus`, `dot?`, `catLabel?`; the same bar becomes the side nav from 760 px |
@@ -185,6 +188,7 @@ go-ahead and a screenshot pass:
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
 | **Badge** | `BadgeTile` in `src/screens/Trophies.tsx` (`.badgetile`), `BadgeShine` from `src/ui/BadgeShine.tsx` | see "Badges, shine and icons" |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
+| Visually hidden | `.visually-hidden` | text for VoiceOver only ("Locked" beside a lock icon) |
 | **Ask card** (a yes/not-now question at the right moment) | `PushAsk` from `src/ui/PushAsk.tsx`: `.card butter`, a Title line, a `.s` sub-line, then "Turn on" (`.btn2` on `--surface`) and "Not now" (`.btn2` transparent) | `title`, `sub`; inline where the moment is (after a friend request), or `askForPush(…)` → `<PushAskHost />` (mounted once in App) shows it in a `Sheet` after a sheet has closed (after saving a repeating medicine). Same pattern as `AccountNudge`. |
 | Settings group with switches | `Group` + `Row` + `Switch` in `src/screens/Settings.tsx`; a value picker in a row is a `select.in` | Settings → Notifications: this phone, then one switch per kind, the medicine hour (`select`), quiet hours as text |
 
@@ -212,6 +216,10 @@ go-ahead and a screenshot pass:
     draws `Icon`; old names are aliases (`heart`→health, `user`→friends, `gear`→settings, `cal`→calendar,
     `click`→clicker). `plus` and `check` keep the plain glyphs (they sit inside round buttons); the circled ones are
     `plus-circle` and `check-circle`. Names the set doesn't have (book, phone, pin, yarn, …) keep their old paths.
+    `chevron` (added 2026-11-25, the mirror of `back`) ends every row or link that opens something; no typed "›".
+    Icon tiles (`.ico`) and icon buttons draw at stroke 1.9, like the set.
+  - **Tab bar labels** (UX review 2026-11-25, item 2): 12 px (`--fs-label`), `--muted` when not current (5.4:1 light,
+    7.5:1 dark; it was `--muted-2` at 11 px, 3.47:1), `--ink` on the current tab.
 
 ## Rules
 - **New screens use existing components and tokens only.** No literal colours, sizes, spacing or radii in new code.

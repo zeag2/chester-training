@@ -4,6 +4,7 @@ import { store, useStore, type LogResult } from '../db/store';
 import { SKILL_BY_ID } from '../engine/skills';
 import type { Mood } from '../engine/types';
 import { Icon, Paw } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { usePetText } from '../lib/pet';
@@ -37,7 +38,7 @@ export function Recap({ skillId }: { skillId: string }) {
     if (r) { audio.sparkle(); audio.buzz([10, 40, 20]); setResult(r); } else { await store.clearDraft(); go('home'); }
   };
   return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
-    <div className="top"><button className="iconbtn" aria-label="Back to the session" onClick={() => go('session/' + skillId)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>How did it go?</b></div>
+    <ScreenHeader onBack={() => go('session/' + skillId)} backLabel="Back to the session" title="How did it go?" heading={false} />
     <div className="row" style={{ alignItems: 'flex-end' }}><Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} pose="loaf" width={96} interactive label={cat.name} /><div style={{ marginBottom: 'var(--sp-5)' }}><span className="bubble mint">{reps === 0 ? 'No reps yet. That’s okay!' : `${good} of ${reps}, nice!`}</span></div></div>
     <h1 style={{ marginTop: 6 }}>{def.name}</h1>
     <Stepper label="Tries" value={reps} set={(n) => { setReps(n); if (good > n) setGood(n); }} />

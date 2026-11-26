@@ -3,6 +3,7 @@ import { Chester } from '../chester/Chester';
 import { COATS, EYES } from '../chester/art';
 import { store, useStore } from '../db/store';
 import { Icon, Paw } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { ageText } from '../lib/stats';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
@@ -36,7 +37,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
   // three screens before the app: welcome, name + look, training (or welcome, account, invite code)
   const total = 3;
   const dots = (at: number) => { return <div className="dots" aria-label={`Step ${at} of ${total}`}>{Array.from({ length: total }, (_, i) => <i key={i} className={i + 1 === at ? 'on' : ''} />)}</div>; };
-  const back = (n: number, label: string) => <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => setStep(n)}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{label}</b></div>;
+  const back = (n: number, label: string) => <ScreenHeader onBack={() => setStep(n)} title={label} heading={false} />;
   const foot = (n: number, label: string, onClick: () => void, disabled = false) => <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(n)}<button className="btn" style={{ marginTop: 'var(--sp-5)' }} onClick={onClick} disabled={disabled}>{label}</button></div>;
   const wrap = (children: React.ReactNode) => <div className="screen centred" style={{ display: 'flex', flexDirection: 'column', paddingBottom: 'calc(28px + var(--safe-b))' }}>{children}</div>;
 
@@ -61,7 +62,7 @@ export function Onboarding({ adding = false }: { adding?: boolean }) {
     <CodeForm name={myName} onDone={() => { setPendingPets([]); go('home'); }} />
     <div style={{ marginTop: 'auto', paddingTop: 'var(--sp-6)' }}>{dots(3)}</div></div></>);
 
-  if (step === 4) return wrap(<>{adding ? <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => go('settings')}><Icon name="back" /></button><b style={{ fontSize: 17 }}>Add another pet</b></div> : back(1, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+  if (step === 4) return wrap(<>{adding ? <ScreenHeader onBack={() => go('settings')} title="Add another pet" heading={false} /> : back(1, 'About your cat')}<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
     <h1>{adding && waiting.length && name ? `Now, ${name}` : 'Tell us about your cat'}</h1><p className="m" style={{ marginTop: 6 }}>{waiting.length > 1 ? `${titleFor(waiting)}: one at a time. You can change this later.` : 'You can change this later.'}</p>
     <label className="field" htmlFor="nm">Name</label><input id="nm" className="in" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" placeholder="Your cat’s name" />
     <span className="field">Boy or girl?</span>

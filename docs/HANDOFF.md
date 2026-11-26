@@ -41,22 +41,23 @@ design system (`docs/design-system.md`, `src/styles/tokens.css`); security revie
 privacy page (`#/privacy`); backup restore; training suggests the last skill trained; "Contact us" form (`#/contact`) with an admin-only Messages inbox in Settings
 → App (Josh is the admin); real play (length + toy), water and appetite on the daily check; the UX reviewer's small fixes (#18). SQL: everything up to `20261126000000_contact_messages.sql` has been run.
 
-**Open PRs**: none. #42 + #47 (push notifications) merged 2026-11-25 after Josh said the push setup is done. Next for Josh: the iPhone test (PR #47 step 7: Settings → Notifications → On this phone, then a friend request, a treat, a photo and a medicine reminder from a second account).
+**Open PRs**: the UI visual-match pass (`claude/features-ui-match`, no SQL; see section 1, "UI visual match"). #42 + #47 (push notifications) merged 2026-11-25 after Josh said the push setup is done. Next for Josh: the iPhone test (PR #47 step 7: Settings → Notifications → On this phone, then a friend request, a treat, a photo and a medicine reminder from a second account).
 (#48 play/water and #18 UX reviewer fixes merged 2026-11-25; no SQL.)
 
 (#52 badge art, tap shine and Chester-style icons merged 2026-11-25; no SQL. Not yet felt on a real iPhone.)
 
 **Build next: UX review 2026-11-25** (review-only worker, apple-design skill; needs Josh's go per item). Ranked:
-1 text follows iPhone Text Size (rem + system body size) L · 2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
+1 text follows iPhone Text Size (rem + system body size) L · ✓2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
 3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind) M · 4 Health segmented
 "Overview · Log · Documents", one black button per segment M · 5 one Skills screen "Tree · List" (Trophy case stays) M ·
-6 one screen-header component in the design system S–M · 7 skill tree locked rows full contrast, lock icon only S ·
-8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
+✓6 one screen-header component in the design system S–M · ✓7 skill tree locked rows full contrast, lock icon only S ·
+✓8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
 2-column tables S · 10 Book a visit: one "+ Add a vet" S · 11 Appearance setting (HIG says none; Josh's call) S ·
 12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
-"Chester ·" dot S · 15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
+"Chester ·" dot S · ✓15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
+(✓ = in the UI visual-match PR, `claude/features-ui-match`, waiting for Josh.)
 
-**Running**: UI visual-match pass (Josh's go 2026-11-25: "visual match first"; branch `claude/features-ui-match`): the rest of the app brought in line with the new badge/icon look using the apple-design skill (now on main, PR #51), plus review items 2, 6, 7, 8, 15.
+**Running**: nothing. The UI visual-match pass is a PR waiting for Josh (items 2, 6, 7, 8, 15 ticked above).
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
@@ -86,6 +87,30 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ## 1. What's built
 
+- **UI visual match** (2026-11-25, PR from `claude/features-ui-match`, no SQL; apple-design skill). The rest of the app
+  brought in line with the badge art and line icons (#52), plus UX review items 2, 6, 7, 8, 15. Behaviour, data and SQL
+  unchanged. Screenshots (before/after, 390 px, light and dark): `docs/screenshots/ui-match/`.
+  - **One screen header** (`ScreenHeader`, `src/ui/ScreenHeader.tsx`, in `docs/design-system.md`): back, the name at
+    17 px (one line), an optional trailing action. On every screen that isn't a tab: Settings, Privacy, Contact us,
+    Messages, the skill tree and Library (they had no Back before: it goes back, else to the Chester tab), Trophy case,
+    the corner and its play screens, the week, documents, For the vet, a vet visit, a friend's cat, the photo feed,
+    a skill, the recap, onboarding and the account steps. The 28 px h1 is only on Home, Health, Chester and Friends; a
+    page about one thing (a visit, For the vet, a skill, a setup question) keeps that thing as its h1 under the header.
+  - **Tab bar** labels 12 px in `--muted` (5.4:1; were 11 px `--muted-2`, 3.47:1).
+  - **Skill tree and Library:** locked rows at full contrast with the lock icon only (no "Locked" pill, no dashed edge;
+    VoiceOver still hears "Locked"). Library's rainbow icon tiles are grey (colour marks kind, not position).
+  - **Home Training card is the button** (`.cardlink`): tap it to start the next skill (or open Training when the day's
+    sets are done), with a "Change skill" chip (opens the tree). "Roll a toy" 44 px (was 36), "This week" and "Add your
+    name" 44 px, Share on For the vet 44 px, the vet card's Edit and the booking form's Cancel 44 px.
+  - **Health:** the vet card lost its 2 px outline (the card treatment only); "YOUR VET" / "VISITS" / "VET" and the
+    Settings group heads use one `.label` style (12 px). The corner cards on Home and Chester put the paw in an icon tile
+    like Training.
+  - **Icons:** every typed "›" is the line `chevron` icon (Settings rows, Quick logs, All documents, For the vet rows,
+    the cat chip on Home, the newest photo); text links are one `.btn2.plain` style. Icon tiles and icon buttons draw at
+    the line set's stroke (1.9).
+  - **Left for later** (not in this PR): Session's header (close + timer; item 13), sheets keep their 18 px title + X
+    (already one pattern, now in the doc), off-scale sizes in Onboarding (32), Install (30), Recap (26/30), Train (26),
+    Session (22), 11 px badges (item 12), Dynamic Type (item 1), and items 3, 4, 5, 11.
 - **Delete my account + privacy page** (2026-11-23, PR from `claude/features-delete-account`). **SQL waiting:**
   `supabase/migrations/20261124000000_delete_account.sql` (idempotent; for the next single SQL run). Until it's run,
   Settings → Household & account → **Delete my account** opens a sheet that says "Coming soon" (the preview RPC is
@@ -1411,7 +1436,7 @@ here in the same commit (see `CLAUDE.md`).
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
-| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. Not used yet. |
+| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). |
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
