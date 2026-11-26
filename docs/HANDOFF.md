@@ -33,7 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (383 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (387 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
