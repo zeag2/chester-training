@@ -8,6 +8,7 @@ import { go } from './router';
 import * as audio from '../lib/audio';
 import { DailyLogSheet } from './DailyLogSheet';
 import { hideToast } from './Toast';
+import { Accordion } from './Accordion';
 
 const time = (at: number) => new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 /** Tell Home a cat was just fed, so it shows him round and content for a moment. */
@@ -111,7 +112,7 @@ export function DailyTaps() {
     { what: 'scoop', label: 'Scooped', icon: 'box', done: scoop.length > 0, sub: scoop.length ? `${time(scoop[0].at)}${who(scoop[0]) === 'you' ? '' : ` by ${who(scoop[0])}`}` : 'Not yet today' },
     { what: 'play', label: 'Played', icon: 'yarn', done: play.length > 0, sub: play.length ? `${play.length}× today${playMin ? ` · ${playMin} min` : ''}` : 'Not yet today' },
   ];
-  return <div className="card white">
+  return <div className="card white" data-home="quicklog">
     <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Quick log</b>
       <a href="#/week" className="btn2 plain" style={{ color: 'var(--teal)', marginRight: 'calc(-1 * var(--sp-2))' }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 10 }}>
@@ -157,18 +158,20 @@ export function DailyTaps() {
         </div>
       </div>
       : done ? (done.data.ok === false && !symptomToday
-        ? <button className="s row" onClick={() => reopen(done.id)} style={{ marginTop: 10, gap: 6, width: '100%', minHeight: 44, border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit' }}>
+        ? <button className="s row" data-home="dailycheck" onClick={() => reopen(done.id)} style={{ marginTop: 10, gap: 6, width: '100%', minHeight: 44, border: 0, background: 'none', padding: 0, textAlign: 'left', color: 'inherit', font: 'inherit' }}>
           <Icon name="check" size={16} /><span className="sp">Today’s check: something was off ({time(done.at)}).</span><b style={{ color: 'var(--teal)' }}>What was it?</b></button>
-        : <p className="s row" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{done.data.ok === false ? `Today’s check: something was off (${time(done.at)}).` : `Today’s check: all normal (${time(done.at)}${who(done) === 'you' ? '' : `, ${who(done)}`}).`}{doneNotes && ` ${doneNotes}.`}</p>)
-      : <div style={PANEL}>
-        <b style={PANEL_TITLE}>Daily check</b>
-        <p className="s" style={{ marginTop: 2 }}>Is {cat.name} eating, using the litter box and acting like {cat.sex === 'f' ? 'herself' : 'himself'}?</p>
-        <Choice label="Water (optional)" options={Object.entries(WATER) as [Water, string][]} value={notes.water} onPick={(water) => setNotes({ ...notes, water })} />
-        <Choice label="Appetite (optional)" options={Object.entries(APPETITE) as [Appetite, string][]} value={notes.appetite} onPick={(appetite) => setNotes({ ...notes, appetite })} />
-        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
+        : <p className="s row" data-home="dailycheck" style={{ marginTop: 10, gap: 6 }}><Icon name="check" size={16} />{done.data.ok === false ? `Today’s check: something was off (${time(done.at)}).` : `Today’s check: all normal (${time(done.at)}${who(done) === 'you' ? '' : `, ${who(done)}`}).`}{doneNotes && ` ${doneNotes}.`}</p>)
+      : <div style={PANEL} data-home="dailycheck" role="group" aria-label="Daily check">
+        {/* one row: the question and its two answers; Water and Appetite wait in an accordion (Home step 1) */}
+        <p className="s"><b style={{ color: 'var(--ink)' }}>Daily check</b> · Is {cat.name} eating, using the litter box and acting like {cat.sex === 'f' ? 'herself' : 'himself'}?</p>
+        <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-2)' }}>
           <button className="btn2" style={PANEL_BTN} disabled={!!busy} onClick={() => void check(true)}>All normal</button>
           <button className="btn2" style={PANEL_BTN} disabled={!!busy} onClick={() => void somethingOff()}>Something’s off</button>
         </div>
+        <Accordion title={`Water and appetite (optional)${notes.water || notes.appetite ? ` · ${[notes.water && WATER[notes.water], notes.appetite && APPETITE[notes.appetite]].filter(Boolean).join(', ')}` : ''}`}>
+          <Choice label="Water" options={Object.entries(WATER) as [Water, string][]} value={notes.water} onPick={(water) => setNotes({ ...notes, water })} />
+          <Choice label="Appetite" options={Object.entries(APPETITE) as [Appetite, string][]} value={notes.appetite} onPick={(appetite) => setNotes({ ...notes, appetite })} />
+        </Accordion>
       </div>}
     {undo && !off && createPortal(<div className="toast pop undo" role="status">
       <Paw color="var(--butter-strong)" size={18} /><span className="msg sp">{undo.label

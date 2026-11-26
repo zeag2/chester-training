@@ -66,9 +66,8 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .toast.wrap .msg{white-space:normal;line-height:1.25;padding:var(--sp-1) 0}
 .toast .btn2{min-height:44px;padding:0 var(--sp-3);white-space:nowrap;flex:none;background:var(--surface)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:var(--fs-label);font-weight:700;color:var(--muted);text-decoration:none;min-width:64px;min-height:48px;justify-content:center;background:none;border:0}
-.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform 200ms var(--ease-out)}
-.tab:active svg{transform:translateY(-3px) scale(1.12)}
-.tab.on{color:var(--ink)}.tab.on svg{animation:ktabin 450ms var(--ease-out)}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--ink)} /* a tab's icon moves only when you pick it (icon motion, tokens.css) */
 .plus{width:56px;height:56px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;margin-top:-10px;border:0;transition:transform 160ms var(--ease-out)}
 .plus:active{transform:scale(.92)}.plus svg{stroke:var(--on-ink);width:26px;height:26px;stroke-width:2.6;fill:none}
 .dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:9px;background:var(--line);transition:width 300ms var(--ease-out)}.dots i.on{width:22px;background:var(--ink)}
@@ -86,7 +85,6 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .visually-hidden{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @keyframes kfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes krise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes ktabin{0%{transform:scale(.9)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 @keyframes kbeam{from{transform:translateX(-30px) rotate(28deg)}to{transform:translateX(40px) rotate(24deg)}}
 @keyframes kmote{0%{transform:translate(0,0);opacity:0}15%{opacity:.9}85%{opacity:.6}100%{transform:translate(30px,-160px);opacity:0}}
 @keyframes ktwinkle{0%,100%{opacity:.2}50%{opacity:1}}
@@ -153,6 +151,18 @@ textarea.in{height:auto;padding:var(--sp-3) 14px;line-height:var(--lh-body);resi
 .lrow + .lrow{border-top:1px solid var(--line)}
 button.lrow:active{background:var(--line)}
 .chev{color:var(--muted);flex:none;display:inline-flex;margin-left:2px}
+/* Accordion (src/ui/Accordion.tsx): opens and closes in --dur; reduced motion: no height animation, a --dur-fast fade */
+.acc{margin-top:var(--sp-2)}
+.acchead{display:flex;align-items:center;gap:var(--sp-2);width:100%;min-height:44px;padding:0;border:0;background:none;font:inherit;font-size:var(--fs-small);font-weight:700;color:inherit;text-align:left}
+.accchev{display:inline-flex;color:var(--muted);transition:transform var(--dur) var(--ease-out)}
+.acc.open .accchev{transform:rotate(90deg)}
+.accbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur) var(--ease-out),visibility 0s linear var(--dur);visibility:hidden}
+.acc.open .accbody{grid-template-rows:1fr;visibility:visible;transition:grid-template-rows var(--dur) var(--ease-out),visibility 0s}
+.accinner{min-height:0;overflow:hidden}
+@keyframes kaccfade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .accchev,.accbody,.acc.open .accbody{transition:none}
+  .acc.open .accinner{animation:kaccfade var(--dur-fast) linear}}
 .switch{position:relative;width:52px;height:32px;border-radius:var(--r-pill);border:0;background:var(--line);flex:none;transition:background 200ms var(--ease-out)}
 .switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--dur) var(--ease-out)}
 .switch.on{background:var(--teal)}
@@ -228,7 +238,7 @@ button.lrow:active{background:var(--line)}
 
 /* ---- Chester-style icons (ChesterIcon in src/ui/icons.tsx): full colour on the current tab, quiet on the rest ---- */
 .cicon{flex:none;overflow:visible}
-.tab .cicon{filter:var(--icon-idle);transition:filter var(--dur) var(--ease-out),transform 200ms var(--ease-out)}
+.tab .cicon{filter:var(--icon-idle);transition:filter var(--dur) var(--ease-out)}
 .tab.on .cicon{filter:none}
 .plus.cplus{background:none;width:56px;height:56px}
 .plus.cplus .cicon{filter:none;width:48px;height:48px}
