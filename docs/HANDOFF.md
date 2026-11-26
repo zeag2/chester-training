@@ -57,7 +57,16 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 "Chester ·" dot S · ✓15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
 (✓ = in the UI visual-match PR, `claude/features-ui-match`, waiting for Josh.)
 
-**Running**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, `session_019xqnwhPpyPRHH3tkeMAqEf`); cozy Home proposal worker (`session_019xqnwezp5ABv7MikLCnHE6`, proposal only). #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Build next: cozy Home plan (proposal 2026-11-26, Josh picks each step)**
+1. Home restructure (UX 3; running now as Home step 1 + icon motion). 2. Health "Overview · Log · Documents" and
+Skills "Tree · List" segmented controls (UX 4, 5) M. 3. Art director's room kit (wall, floor, window × 4 times of day,
+rug, bowl, lamp, lights), then Chester's room on Home: light follows the time of day, logs appear in the room (bowl
+after Fed, litter box after Scooped, last toy on the rug), mood follows care, tap reactions near objects. L, new art.
+4. Corner tabs (Outfits · Toys · Cushions · Room), room themes, his spot, "Edit Home" cards, outfit try-on carousel M.
+5. Seasonal room items + window birds M–L. Carousels only for Home's photo strip and the try-on; accordions for older
+log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
+
+**Running**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, `session_019xqnwhPpyPRHH3tkeMAqEf`). #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
