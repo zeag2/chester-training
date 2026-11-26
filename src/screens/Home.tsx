@@ -201,7 +201,7 @@ export function Home() {
   const done = rewardedToday >= DAILY_REWARDED_SETS;
   const lines = ['Pet me!', 'Hi! Scratches?', 'Mrrp.', 'Is it dinner time?', 'I was napping. Hi.'];
   const idleLine = cat.training === false ? `Hi! I'm ${cat.name}. ${lines[new Date().getMinutes() % lines.length]}`
-    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `${next.kind === 'last' ? 'More' : 'Next up:'} ${next.skill.name}. Ready?` : 'Pet me!';
+    : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `${next.kind === 'last' ? 'Another round:' : 'Next up:'} ${next.skill.name}. Ready?` : 'Pet me!';
 
   // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
   const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>

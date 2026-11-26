@@ -1,4 +1,4 @@
-last-reviewed: 58201026cc2343b12fa259b20b25d94f0ada5edf
+last-reviewed: fdd308923573d38eb6860903129ce6750f1830d3
 
 # UX review log
 
@@ -18,6 +18,15 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-26: 5820102..fdd3089
+Checked Home (Quick log with water and appetite chips on the daily check, the Training card's Start / Change), the
+Chester tab, the trophy case with the new badge art, Settings (App group with Privacy, Restore and Contact us),
+Messages and Privacy, in light and dark mode. Push asks need a signed-in browser with push and weren't shown here.
+
+Fixed:
+- Home bubble: after a set, it said "More Charge the clicker. Ready?". The repeat case now reads "Another round:
+  Charge the clicker. Ready?" (the "Next up:" case is unchanged).
 
 ### 2026-11-24: 836c4aa..955472b
 Main brought design-system phase 2 (tokens and the sweep of hard-coded values), the settle helper, booking several
