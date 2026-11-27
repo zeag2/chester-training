@@ -146,7 +146,8 @@ export function VisitsCard({ onOpen }: { onOpen: (v: CareItem<'vet'>) => void })
           <span className="s" style={{ display: 'block' }}>{[last.data.clinic, nDocs(last) ? `${nDocs(last)} document${nDocs(last) === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || 'Tap to see notes'}</span></button>
           : <span className="sp s">No visits logged yet</span>}
       </div>
-      <button className="btn" style={{ marginTop: 'var(--sp-3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} onClick={() => { audio.chirp(); setBook(true); }}><Icon name="plus" size={18} />Book a visit</button>
+      {/* secondary: the vet card above has Health's one primary button (UX review item 4) */}
+      <button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-2)' }} onClick={() => { audio.chirp(); setBook(true); }}><Icon name="plus" size={18} />Book a visit</button>
     </div>
     {book && <BookSheet onClose={() => setBook(false)} />}
     {calFor && <CalendarSheet event={calFor} onClose={() => setCalFor(null)} />}

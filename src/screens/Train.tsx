@@ -54,7 +54,7 @@ export function Train({ embedded = false }: { embedded?: boolean }) {
         <div className="row" style={{ gap: 10, marginTop: 10 }}>{Array.from({ length: DAILY_REWARDED_SETS }, (_, i) => <span key={i} className="pop" style={{ animationDelay: `${i * 90}ms`, display: 'inline-flex' }}><Paw size={34} color={i < rewardedToday ? 'var(--ink)' : 'var(--faint)'} /></span>)}</div>
         {next && !done && <div className="card white" style={{ marginTop: 14, padding: 14 }}>
           <div className="row"><div className="ico peach"><Icon name={ICON_FOR[next.skill.branch]} /></div><div className="sp"><p className="s">{next.kind === 'last' ? `Same as last time · ${next.reason.toLowerCase()}` : next.kind === 'review' ? 'Review' : next.kind === 'start' ? 'Up next · new skill' : 'Up next'}</p><b style={{ fontSize: 'var(--fs-body)' }}>{next.skill.name}</b><p className="s">{progress[next.skill.id]?.mastered ? 'Mastered · a review set' : `Step ${(progress[next.skill.id]?.step ?? 0) + 1}: ${pt(next.skill.steps[progress[next.skill.id]?.step ?? 0])}`}</p></div>
-            <button className="btn2" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('tree')}>Change</button></div>
+            <button className="btn2" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('skills/tree')}>Change</button></div>
           <button className="btn" style={{ marginTop: 'var(--sp-3)' }} aria-label={`Start ${next.skill.name}, about 2 minutes`} onClick={() => go('session/' + next.skill.id)}>Start · about 2 min</button></div>}
         {done && <p className="s" style={{ marginTop: 10 }}>Daily goal done. {cat.name} is napping; rewards reset tomorrow.</p>}
       </div>
@@ -73,12 +73,12 @@ export function Train({ embedded = false }: { embedded?: boolean }) {
             <div style={{ width: '100%', maxWidth: 30, height: 90, display: 'flex', alignItems: 'flex-end' }}><div className="pop" style={{ width: '100%', height: r.rate == null ? 4 : Math.max(6, r.rate * 0.9), background: r.rate == null ? 'var(--line)' : r.rate >= 80 ? 'var(--ink)' : '#9ccbbf', borderRadius: 'var(--r-chip)', transformOrigin: 'bottom', animationDelay: `${i * 50}ms` }} /></div>
             <span className="s" style={{ fontSize: 11 }}>{new Date(r.day + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'narrow' })}</span></div>)}
         </div><p className="s" style={{ marginTop: 10 }}>Dark bars passed. New steps always start out harder.</p></div>}
-      {learning.length > 0 && <><div className="row" style={{ marginTop: 22 }}><h2 className="sp">Learning now</h2><a href="#/tree" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>See tree</a></div>
+      {learning.length > 0 && <><div className="row" style={{ marginTop: 22 }}><h2 className="sp">Learning now</h2><a href="#/skills/tree" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>See tree</a></div>
         {learning.map((d, i) => { const p = progress[d.id] ?? { step: 0 }; return <a key={d.id} href={'#/skill/' + d.id} className={`card ${['sky', 'peach', 'butter'][i % 3]}`}>
           <div className="row"><div className="ico"><Icon name={ICON_FOR[d.branch]} /></div><div className="sp"><b style={{ fontSize: 'var(--fs-body)' }}>{d.name}</b><p className="s">Step {p.step + 1} of {d.steps.length}</p></div></div>
           <div className="bar" style={{ marginTop: 'var(--sp-3)' }}><i style={{ width: `${Math.max(6, (p.step / d.steps.length) * 100)}%` }} /></div></a>; })}</>}
       <h2 style={{ marginTop: 22 }}>More</h2>
-      {([['tree', 'Skill tree', 'tree', 'Every skill by branch, and what unlocks next'], ['library', 'Library', 'book', 'How each skill works, with tips and sources'], ['trophies', 'Trophy case', 'star', 'A badge for every skill mastered'],
+      {([['skills', 'Skills', 'tree', 'Every skill: the tree by branch, or a list to search'], ['trophies', 'Trophy case', 'star', 'A badge for every skill mastered'],
         ['corner', `${cat.name}’s corner`, 'star', wallet ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions` : 'Outfits, toys and cushions']] as const).filter(([to]) => !embedded || to !== 'corner').map(([to, title, icon, sub]) =>
         <button key={to} className="card grey row" style={{ width: '100%', border: 0, textAlign: 'left', color: 'inherit', marginTop: 'var(--sp-2)' }} onClick={() => go(to)}>
           <div className="ico"><Icon name={icon} /></div><div className="sp"><b>{title}</b><p className="s">{sub}</p></div></button>)}

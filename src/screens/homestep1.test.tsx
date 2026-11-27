@@ -134,7 +134,7 @@ describe('the + button is the one full log list', () => {
     expect(location.hash).toBe('#/health/log/med');
   });
   it('Health’s Log something uses the same names', () => {
-    render(<Care />);
+    render(<Care view="log" />);
     expect(screen.getByRole('button', { name: LOG_NAMES.med })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Medicine' })).toBeNull();
   });
@@ -146,7 +146,7 @@ describe('the last weight moved to Health’s top', () => {
       await store.saveCare('weight', { lb: 8.4 }, { at: Date.now() - 20 * 864e5 });
       await store.saveCare('weight', { lb: 8.9 }, { at: Date.now() - 2 * 864e5 });
     });
-    const { container } = render(<Care />);
+    const { container } = render(<Care view="overview" />);
     const chip = container.querySelector('[data-health="lastweight"]')!;
     expect(chip.textContent).toContain('Last weight · 8.9 lb (+0.5)');
     const h2 = container.querySelector('h2');

@@ -22,7 +22,7 @@ export function SkillPage({ id }: { id: string }) {
   const p = progress[id]; const step = p?.step ?? 0; const open = isUnlocked(d, progress, unlockedHidden);
   const atStep = sets.filter((s) => s.skillId === id && s.step === step && !s.review).slice(-2);
   return <div className="screen">
-    <ScreenHeader onBack={() => back('library')} title={d.branch} heading={false} />
+    <ScreenHeader onBack={() => back('skills')} title={d.branch} heading={false} />
     <div className="card sky" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', padding: 18 }}>
       <div className="ico" style={{ width: 64, height: 64, borderRadius: 20 }}><Icon name={ICON_FOR[d.branch]} size={32} /></div>
       <div><h1>{d.name}</h1><p className="s">{p?.mastered ? 'Mastered' : open ? `Step ${step + 1} of ${d.steps.length}` : 'Locked'}</p></div></div>

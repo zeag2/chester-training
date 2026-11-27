@@ -231,7 +231,7 @@ export function Home() {
           <div className="ico"><Icon name="target" /></div>
           <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
           {next && !done && <span className="chip">Start</span>}</a>
-        {next && !done && <button className="chipbtn" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('tree')}>Change skill</button>}</div>}
+        {next && !done && <button className="chipbtn" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('skills/tree')}>Change skill</button>}</div>}
       {wallet && <a href="#/corner" data-home="corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><div className="ico"><Paw color="var(--butter-strong)" size={24} /></div><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}

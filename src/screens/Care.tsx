@@ -32,6 +32,8 @@ import { showToast } from '../ui/Toast';
 import { DropNote, isDocFile, useDocDrop, type Dropped } from '../ui/DocDrop';
 import { dailyLogDays } from '../engine/dailylog';
 import { useSettle } from '../ui/settle';
+import { Accordion } from '../ui/Accordion';
+import { Segmented, rememberedView, rememberView, segPanelId, segTabId, showViewInAddress } from '../ui/Segmented';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
@@ -53,7 +55,19 @@ function summary(i: CareItem): string {
 /** `day`: the date a new entry starts on (e.g. the visit's day, when logging a dose from the visit page). */
 export type Editing = { kind: CareKind; item?: CareItem; preset?: Partial<CareData[CareKind]>; day?: string } | null;
 
-export function Care({ open }: { open?: CareKind } = {}) {
+export type HealthView = 'overview' | 'log' | 'documents';
+export const HEALTH_VIEWS = [['overview', 'Overview'], ['log', 'Log'], ['documents', 'Documents']] as const;
+const VIEW_KEY = 'paldex-health-view';
+/** Which view a log form belongs to: documents on Documents, food on Overview (Food and treats), the rest on Log. */
+export const viewForKind = (k: CareKind): HealthView => (k === 'doc' ? 'documents' : k === 'food' ? 'overview' : 'log');
+
+/** Health (`#/health`, `#/health/<overview|log|documents>`, `#/health/log/<kind>` opens a form). `view`: from the
+    address; without one, the view picked earlier this session, else Overview. */
+export function Care({ open, view: viewProp }: { open?: CareKind; view?: HealthView } = {}) {
+  const [view, setView] = useState<HealthView>(() => viewProp ?? (open ? viewForKind(open) : rememberedView(VIEW_KEY, HEALTH_VIEWS.map(([v]) => v), 'overview')));
+  useEffect(() => { rememberView(VIEW_KEY, view); }, [view]);
+  const pick = (v: HealthView) => { setView(v); showViewInAddress('health/' + v); };
+  const [foodOpen, setFoodOpen] = useState(false);
   const { cat, care, careSync, account, household, vets } = useStore();
   const pt = usePetText();
   // opened from the + sheet: go straight to that log form
@@ -74,7 +88,7 @@ export function Care({ open }: { open?: CareKind } = {}) {
   const big = useLayout() === 'desktop';
   // a document dropped anywhere on Health goes to the "Add a document" reader, as if picked
   const [dropped, setDropped] = useState<Dropped>();
-  const drop = useDocDrop(setDropped);
+  const drop = useDocDrop((d) => { setDropped(d); setView('documents'); });
   // desktop's log table also lists the quick logs (Fed, Scooped, Played, daily checks) from the last 7 days
   const quick = useMemo(() => (big ? dailyLogDays(care, 7).flatMap((g) => g.items) : []), [big, care]);
   const shared = !!household && household.members.length > 1;
@@ -134,14 +148,27 @@ export function Care({ open }: { open?: CareKind } = {}) {
         {ws.length > 3 && <button className="s" style={{ background: 'none', border: 0, padding: 'var(--sp-2) 0', minHeight: 44, fontWeight: 800, color: 'var(--ink)' }} onClick={() => setAllWeights(!allWeights)}>{allWeights ? 'Show fewer' : `Show all ${ws.length}`}</button>}
       </div>
       {(() => { const g = typicalKittenWeight(cat.birthday); return g && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Typical at about {g.months} months: roughly {g.low}–{g.high} lb. A rough guide only; ask your vet.</p>; })()}</div>;
-  const foodSection = <>
-    <h2 style={{ marginTop: 22 }}>Food and treats</h2>
+  const foodList = <>
     {foods.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>{pt('Add the food and treats you use, and whether he loves them. Handy at the store and for the vet.')}</p>}
     {(['love', 'ok', 'no'] as Verdict[]).map((v) => { const list = foods.filter((f) => f.data.verdict === v); if (!list.length) return null;
       return <div key={v} style={{ marginTop: 'var(--sp-3)' }}><p className="s" style={{ fontWeight: 800 }}>{VERDICT_LABEL[v]}</p>
-        {list.map((f) => <button key={f.id} className="item" onClick={() => setEditing({ kind: 'food', item: f })}>
+        {list.map((f) => <button key={f.id} className="item" onClick={() => { setFoodOpen(false); setEditing({ kind: 'food', item: f }); }}>
           <div className="sp"><b>{f.data.name}</b><p className="s">{[f.data.brand, f.data.type === 'treat' ? 'Treat' : f.data.type === 'wet' ? 'Wet food' : f.data.type === 'dry' ? 'Dry food' : 'Other', f.data.notes].filter(Boolean).join(' · ')}</p></div>
           {f.data.current && <span className="chip" style={{ background: 'var(--mint)' }}>Using now</span>}</button>)}</div>; })}
+  </>;
+  // Food and treats on Overview: one row (what's saved, what's in use now) that opens the list in a sheet
+  const usingNow = foods.filter((f) => f.data.current).map((f) => f.data.name);
+  const foodRow = <>
+    <h2 style={{ marginTop: 22 }}>Food and treats</h2>
+    <button className="item" data-health="food" onClick={() => setFoodOpen(true)}>
+      <div className="ico grey"><Icon name="leaf" /></div>
+      <div className="sp"><b>{foods.length ? `${foods.length} saved` : 'None saved yet'}</b><p className="s">{usingNow.length ? 'Using now: ' + usingNow.join(', ') : 'What he loves, what he won’t eat'}</p></div>
+      <span className="chev"><Icon name="chevron" size={18} /></span></button>
+    {foodOpen && <Sheet label="Food and treats" onClose={() => setFoodOpen(false)}>
+      <div className="row"><b className="sp">Food and treats</b><button className="iconbtn" aria-label="Close" onClick={() => setFoodOpen(false)}><Icon name="close" size={20} /></button></div>
+      {foodList}
+      <button className="btn sheetsave" style={{ marginTop: 'var(--sp-5)' }} onClick={() => { setFoodOpen(false); setEditing({ kind: 'food' }); }}>Add {LOG_NAMES.food.toLowerCase()}</button>
+    </Sheet>}
   </>;
   const documents = <>
     <div className="row" style={{ marginTop: 22 }}><h2 className="sp" style={{ margin: 0 }}>Documents</h2>
@@ -149,39 +176,47 @@ export function Care({ open }: { open?: CareKind } = {}) {
     {docs.slice(0, 3).map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })} />)}
     <DocAdder signedIn={!!account} compact={docs.length > 0} dropped={dropped} />
   </>;
-
-  return <div className={big ? 'screen wide' : 'screen'} {...drop.bind}>
-    <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
-    <PetSwitcher />
-    <CareTreatNote />
-    <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
-    {/* the last weight, at the top (moved here from Home's Today card, Home step 1) */}
-    {ws.length > 0 && (() => { const last = ws[ws.length - 1], prev = ws[ws.length - 2]; const d = prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : 0;
-      return <p className="row" data-health="lastweight" style={{ marginTop: 'var(--sp-2)', gap: 'var(--sp-2)' }}><span className="chip num">Last weight · {last.data.lb} lb{d ? ` (${d > 0 ? '+' : ''}${d})` : ''}</span><span className="s">{fmt(last.at)}</span></p>; })()}
-    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 'var(--sp-1)', color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
-
-    {/* desktop (1100 px and up): two columns, then the log as a table across both (docs/plans/2026-11-11-desktop-layout.md, step 5) */}
-    {big ? <>
-      <div className="healthcols">
-        <div className="healthcol">{vetTop}{comingUp}{logSomething}{kitten}</div>
-        <div className="healthcol">{documents}{weightCard}{foodSection}</div>
-      </div>
-      <HealthLogTable log={log} quick={quick} who={whoOf} onOpen={openEntry} onQuickLogs={() => setQuickLogs(true)} />
-      {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
-    </> : <>{vetTop}{comingUp}{logSomething}{kitten}{weightCard}{foodSection}{documents}
+  // the last weight, at the top of Overview (moved from Home's Today card in Home step 1)
+  const lastWeight = ws.length > 0 && (() => { const last = ws[ws.length - 1], prev = ws[ws.length - 2]; const d = prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : 0;
+    return <p className="row" data-health="lastweight" style={{ marginTop: 'var(--sp-3)', gap: 'var(--sp-2)' }}><span className="chip num">Last weight · {last.data.lb} lb{d ? ` (${d > 0 ? '+' : ''}${d})` : ''}</span><span className="s">{fmt(last.at)}</span></p>; })();
+  // the phone list: the last 7 days in view, older days folded into the Accordion
+  const today = localDay(Date.now());
+  const recent = log.filter((i) => daysBetween(localDay(i.at), today) < 7), older = log.filter((i) => daysBetween(localDay(i.at), today) >= 7);
+  const logRow = (i: CareItem) => <button key={i.id} data-settle-key={i.id} className="item" onClick={() => openEntry(i)}>
+      <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
+      <div className="sp"><b>{i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
+      <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>;
+  const phoneLog = <>
     <h2 style={{ marginTop: 22 }}>Health log</h2>
     {/* the one-tap logs from Home aren't listed one by one here; this opens them (last 7 days) to delete or retime */}
     <button className="item" onClick={() => setQuickLogs(true)}>
       <div className="ico grey"><Paw size={22} /></div>
       <div className="sp"><b>Quick logs</b><p className="s">Fed, scooped, played and daily checks from the last 7 days. Tap to fix a mistake.</p></div>
       <span className="chev"><Icon name="chevron" size={18} /></span></button>
-    {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
     {log.length === 0 && <p className="s" style={{ marginTop: 'var(--sp-2)' }}>Weigh-ins, symptoms, grooming, vet visits and medicine show up here, newest first. A timeline like this is gold at the vet.</p>}
-    <div ref={logRef}>{log.map((i) => <button key={i.id} data-settle-key={i.id} className="item" onClick={() => (i.kind === 'vet' ? go('health/visit/' + i.id) : setEditing({ kind: i.kind, item: i }))}>
-      <div className="ico grey"><Icon name={ICON[i.kind]} /></div>
-      <div className="sp"><b>{i.kind === 'vet' && isBooked(i) ? 'Vet visit (booked)' : TITLE[i.kind as Exclude<CareKind, 'food'>]}</b><p className="s">{summary(i)}</p></div>
-      <span className="s" style={{ textAlign: 'right' }}>{fmt(i.at)}{nameOf(i.by) && <><br />{nameOf(i.by)}</>}</span></button>)}</div>
-    </>}
+    <div ref={logRef}>{recent.map(logRow)}</div>
+    {older.length > 0 && <Accordion title={`Older than a week (${older.length})`}>{older.map(logRow)}</Accordion>}
+  </>;
+
+  const views = { overview: big
+      ? <div className="healthcols"><div className="healthcol">{lastWeight}{vetTop}</div><div className="healthcol">{comingUp}{kitten}{foodRow}</div></div>
+      : <>{lastWeight}{vetTop}{comingUp}{kitten}{foodRow}</>,
+    log: big
+      ? <><div className="healthcols"><div className="healthcol">{logSomething}</div><div className="healthcol">{weightCard}</div></div>
+        <HealthLogTable log={log} quick={quick} who={whoOf} onOpen={openEntry} onQuickLogs={() => setQuickLogs(true)} /></>
+      : <>{logSomething}{weightCard}{phoneLog}</>,
+    documents };
+
+  return <div className={big ? 'screen wide' : 'screen'} {...drop.bind}>
+    <h1 style={{ marginTop: 18 }}>{cat.name}’s health</h1>
+    <PetSwitcher />
+    <CareTreatNote />
+    <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
+    {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 'var(--sp-1)', color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
+    {/* three views of Health (UX review 2026-11-25, item 4): one primary button each at most */}
+    <Segmented label="Health" idBase="health" options={HEALTH_VIEWS} value={view} onChange={pick} style={{ marginTop: 'var(--sp-4)' }} />
+    <div role="tabpanel" id={segPanelId('health')} aria-labelledby={segTabId('health', view)} data-view={view}>{views[view]}</div>
+    {quickLogs && <DailyLogSheet days={7} onClose={() => setQuickLogs(false)} />}
 
     {drop.dragging && <DropNote />}
     {editing && <CareSheet key={editing.item?.id ?? editing.kind} editing={editing} onClose={() => setEditing(null)} />}

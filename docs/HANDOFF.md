@@ -48,19 +48,18 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 
 **Build next: UX review 2026-11-25** (review-only worker, apple-design skill; needs Josh's go per item). Ranked:
 1 text follows iPhone Text Size (rem + system body size) L · ✓2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
-✓3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind; in the Home step 1 PR) M · 4 Health segmented
-"Overview · Log · Documents", one black button per segment M · 5 one Skills screen "Tree · List" (Trophy case stays) M ·
+✓3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind; in the Home step 1 PR) M · ✓4 Health segmented "Overview · Log · Documents", one black button per segment M · ✓5 one Skills screen "Tree · List" (Trophy case stays) M ·
 ✓6 one screen-header component in the design system S–M · ✓7 skill tree locked rows full contrast, lock icon only S ·
 ✓8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
 2-column tables S · 10 Book a visit: one "+ Add a vet" S · 11 Appearance setting (HIG says none; Josh's call) S ·
 12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
 "Chester ·" dot S · ✓15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
-(✓ = done: 2, 6, 7, 8, 15 in #53; 3 in the Home step 1 PR.) Next after Josh's look at Home step 1: the cozy Home
+(✓ = done: 2, 6, 7, 8, 15 in #53; 3 in the Home step 1 PR; 4 and 5 in the PR from `claude/features-health-skills-tabs`.) Next after Josh's look at Home step 1: the cozy Home
 proposal's later steps (room art for the stage), then item 4 (Health segmented) or 1 (Text Size).
 
 **Build next: cozy Home plan (proposal 2026-11-26, Josh picks each step)**
 1. Home restructure (UX 3; open as the Home step 1 + icon motion PR, waiting for Josh). 2. Health "Overview · Log · Documents" and
-Skills "Tree · List" segmented controls (UX 4, 5) M. 3. Art director's room kit (wall, floor, window × 4 times of day,
+Skills "Tree · List" segmented controls (UX 4, 5) M (open as a PR from `claude/features-health-skills-tabs`, 2026-11-27, waiting for Josh). 3. Art director's room kit (wall, floor, window × 4 times of day,
 rug, bowl, lamp, lights), then Chester's room on Home: light follows the time of day, logs appear in the room (bowl
 after Fed, litter box after Scooped, last toy on the rug), mood follows care, tap reactions near objects. L, new art.
 4. Corner tabs (Outfits · Toys · Cushions · Room), room themes, his spot, "Edit Home" cards, outfit try-on carousel M.
@@ -97,6 +96,24 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   session one line adding `<FriendsStrip />` after the Today card).
 
 ## 1. What's built
+
+- **Health and Skills segmented controls** (2026-11-27, cozy Home plan step 2 = UX review items 4 and 5; PR from
+  `claude/features-health-skills-tabs`, no SQL; apple-design skill). New design-system component `Segmented`
+  (`src/ui/Segmented.tsx`, CSS `.seg.slide` + `.segthumb`; tablist/tab/tabpanel, arrow keys; the white thumb slides
+  over `--dur` / `--ease-out`, jumps with reduced motion), added to `docs/design-system.md` (Components + Motion) first.
+  **Health** (`src/screens/Care.tsx`): "Overview · Log · Documents" under the title. Overview = last weight, vet card,
+  visits, Summary for the vet, Coming up, kitten vaccines, Food and treats as one row (opens the list in a sheet;
+  "Add food or treat" there). Log = Log something, the Weight card, Quick logs and the log list (last 7 days; older in
+  an `Accordion` "Older than a week (n)"); desktop keeps the table. Documents = newest 3, All documents, Add a
+  document. One primary button per view ("Book a visit" became `.btn2`). The view is remembered for the session
+  (`sessionStorage` `paldex-health-view`) and shown in the address (`#/health/overview|log|documents`, replaceState);
+  `#/health/log/<kind>` opens the form on Log (doc → Documents, food → Overview); a dropped file switches to Documents.
+  The + list's "Vet document" goes to `#/health/documents`, "Looked off?" to `#/health/log`. **Skills**
+  (`src/screens/Skills.tsx`, `#/skills`, `#/skills/tree|list`): "Tree · List" (TreeView from `Tree.tsx`, SkillList
+  with search and branch chips from `Library.tsx`), remembered per session (`paldex-skills-view`); `#/tree` and
+  `#/library` redirect. Chester → More: one "Skills" row + Trophy case + corner. "Change skill" opens
+  `#/skills/tree`; a skill page's Back falls back to `#/skills`. Tests: `src/screens/segments.test.tsx` (+ updated
+  health, weights, homestep1, train). Screenshots: `docs/screenshots/health-skills-tabs/`.
 
 - **Home step 1 + icon motion** (2026-11-26, PR from `claude/features-home-step1`, no SQL; apple-design skill). Josh's
   "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons". Home now runs top
@@ -1467,7 +1484,7 @@ here in the same commit (see `CLAUDE.md`).
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
-| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). **Used 2026-11-26** for Home step 1 + icon motion (`claude/features-home-step1`): SKILL.md plus `motion.md` (feedback motion brief and precise, avoid motion on very frequent interactions, make motion optional → small transform-only moves and a reduced-motion opacity fallback) and `disclosure-controls.md` (a labelled disclosure that points right when closed and down when open → the Accordion). |
+| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). **Used 2026-11-26** for Home step 1 + icon motion (`claude/features-home-step1`): SKILL.md plus `motion.md` (feedback motion brief and precise, avoid motion on very frequent interactions, make motion optional → small transform-only moves and a reduced-motion opacity fallback) and `disclosure-controls.md` (a labelled disclosure that points right when closed and down when open → the Accordion). **Used 2026-11-27** for the Health and Skills segmented controls (`claude/features-health-skills-tabs`): `segmented-controls.md` (equal segments, noun labels, ≤5 on iPhone, switching related subviews) and `layout.md`. |
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
@@ -1491,6 +1508,12 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-27, Health and Skills segmented controls (Features worker, `claude/features-health-skills-tabs`):
+  **apple-design** skill (`segmented-controls.md`: equal-width segments, noun labels, text only, at most ~5 on
+  iPhone, for switching closely related subviews; `layout.md`). No plugins installed or removed; MCP: GitHub (pull
+  request) and `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest (415), typecheck,
+  build; Playwright (preinstalled Chromium) against the Vite dev server, store seeded through
+  `globalThis.__chesterStore`, 390 px light and dark, before and after.
 - 2026-11-26, Home step 1 + icon motion (Features worker, `claude/features-home-step1`): **apple-design** skill
   (`motion.md`, `disclosure-controls.md`). No plugins installed or removed; MCP: GitHub (pull request) and
   `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest, typecheck, build; Playwright
