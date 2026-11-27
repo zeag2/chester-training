@@ -38,22 +38,23 @@ Chester's shared copy lives in a free Supabase project. One-time setup, about 10
 14. **Friend requests.** Run `supabase/migrations/20261114000000_friend_requests.sql` (after step 10). Until then,
     entering a code makes you friends straight away, as before.
 16. **Push notifications** (plan `docs/plans/2026-11-23-push-notifications.md`). Until all of this is done the app
-    hides notifications completely. The two secret values (the cron key and the VAPID private key) come from Claude in
-    chat, once; never put them in the repo, a PR or the app.
+    hides notifications completely. All four keys live in Vault (made 2026-11-26): `push_cron_key`,
+    `push_vapid_public`, `push_vapid_private`, `push_vapid_subject`. Nobody types a key anywhere: the send-push
+    function reads them from Vault itself. Never put the cron key or the private key in the repo, a PR, chat or the app.
     1. SQL Editor: run `supabase/migrations/20261123000000_push.sql` (it turns on `pg_net` and `pg_cron` itself).
-    2. SQL Editor, one line, with the cron key in the quotes:
-       `select vault.create_secret('<cron key>', 'push_cron_key');`
-       (or Integrations → Vault → Add new secret, name `push_cron_key`).
-    3. Edge Functions → Secrets → add four:
-       `PUSH_CRON_KEY` = the same cron key · `VAPID_PUBLIC_KEY` = the public key in `src/sync/config.ts`
-       (`BEhGzXYF…`) · `VAPID_PRIVATE_KEY` = the private key · `VAPID_SUBJECT` = `mailto:` + your email.
-    4. Edge Functions → Deploy a new function → Via editor. Name it exactly `send-push`, replace the code with all of
+    2. SQL Editor: run `supabase/migrations/20261127000000_push_vault.sql` (`public.push_secrets()`: the four Vault
+       values, callable only by the service role, i.e. the function itself; never by the app or signed-out visitors).
+    3. Edge Functions → Deploy a new function → Via editor. Name it exactly `send-push`, replace the code with all of
        `supabase/deploy/send-push.ts`, and deploy. Then open it → Details (or Settings) → turn **off** "Verify JWT"
        ("Enforce JWT verification") and save: the cron calls it with its own key, not a sign-in.
        (With the Supabase CLI instead: `supabase functions deploy send-push --no-verify-jwt`.)
-    5. Check: Integrations → Cron shows `paldex-push-drain`, `paldex-push-meds` and `paldex-push-tidy`. Turn
+       No Edge Function secrets are needed. (An Edge Function secret `PUSH_CRON_KEY`, `VAPID_PUBLIC_KEY`,
+       `VAPID_PRIVATE_KEY` or `VAPID_SUBJECT` would win over Vault if one were ever set; leave them unset.)
+    4. Check: Integrations → Cron shows `paldex-push-drain`, `paldex-push-meds` and `paldex-push-tidy`. Turn
        notifications on in Settings → Notifications (iPhone: from the Home Screen app), have a second account send you
        a friend request, and it arrives within a minute; the function's Logs show each call.
+    - Changing a key later: update the Vault secret, then redeploy `send-push` (each running copy keeps the keys it
+      read). A new VAPID pair also goes into `src/sync/config.ts` (public half); phones move to it on their next start.
 
 Then put them in `src/sync/config.ts` (or give them to Claude), and the "Train together" card appears in Settings.
 

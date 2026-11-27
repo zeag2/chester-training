@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { drain, handle, hourIn, medsNotice, outcomeOf, payloadFor, queueMeds, sameKey, topicFor, MAX_TRIES,
+import { drain, handle, hourIn, keyLoader, medsNotice, outcomeOf, payloadFor, queueMeds, sameKey, topicFor, MAX_TRIES,
   type DrainDeps, type MedsDeps, type OutboxRow, type Subscription } from './core.ts';
 import type { MedEntry } from '../_shared/meds.ts';
 
@@ -94,7 +94,7 @@ describe('payload and headers', () => {
 
 describe('the request', () => {
   const key = 'k'.repeat(32);
-  const deps = { cronKey: key, drain: vi.fn(async () => ({ claimed: 0, sent: 0, retry: 0, dropped: 0, gone: 0 })), meds: vi.fn(async () => ({ people: 0, queued: 0 })) };
+  const deps = { cronKey: async () => key as string | undefined, drain: vi.fn(async () => ({ claimed: 0, sent: 0, retry: 0, dropped: 0, gone: 0 })), meds: vi.fn(async () => ({ people: 0, queued: 0 })) };
   const req = (body: unknown, headers: Record<string, string> = { 'x-cron-key': key }, method = 'POST') =>
     new Request('https://x/functions/v1/send-push', { method, headers, body: method === 'POST' ? JSON.stringify(body) : undefined });
 
@@ -102,7 +102,7 @@ describe('the request', () => {
     expect((await handle(req({ mode: 'drain' }, {}), deps)).status).toBe(403);
     expect((await handle(req({ mode: 'drain' }, { 'x-cron-key': 'k'.repeat(31) }), deps)).status).toBe(403);
     expect(deps.drain).not.toHaveBeenCalled();
-    expect((await handle(req({ mode: 'drain' }), { ...deps, cronKey: undefined })).status).toBe(503);
+    expect((await handle(req({ mode: 'drain' }), { ...deps, cronKey: async () => undefined })).status).toBe(503);
     expect((await handle(req(null, {}, 'GET'), deps)).status).toBe(405);
   });
   it('runs the mode asked for', async () => {
@@ -110,6 +110,15 @@ describe('the request', () => {
     expect(deps.drain).toHaveBeenCalledTimes(1);
     expect(await (await handle(req({ mode: 'meds' }), deps)).json()).toEqual({ people: 0, queued: 0 });
     expect((await handle(req({ mode: 'spam' }), deps)).status).toBe(400);
+  });
+  it('checks the key from Vault the same way (a wrong or short key is refused; none: not set up)', async () => {
+    const vault = vi.fn(async () => ({ cronKey: key }));
+    const keys = keyLoader(() => ({}), vault);
+    const d = { ...deps, cronKey: async () => (await keys()).cronKey };
+    expect((await handle(req({ mode: 'drain' }, { 'x-cron-key': 'nope'.repeat(8) }), d)).status).toBe(403);
+    expect((await handle(req({ mode: 'meds' }), d)).status).toBe(200);
+    const none = keyLoader(() => ({}), async () => null);
+    expect((await handle(req({ mode: 'drain' }), { ...deps, cronKey: async () => (await none()).cronKey })).status).toBe(503);
   });
   it('compares keys in constant time, and correctly', () => {
     expect(sameKey('abc', 'abc')).toBe(true);
@@ -190,5 +199,56 @@ describe('medicine notifications', () => {
     const f = fakeMeds([{ user_id: 'josh' }], {}); const pets = vi.spyOn(f.d, 'petsOf');
     expect(await queueMeds(f.d, ny(3))).toEqual({ people: 0, queued: 0 });
     expect(pets).not.toHaveBeenCalled();
+  });
+});
+
+describe('keys: env first, then Vault', () => {
+  const all = { cronKey: 'c'.repeat(32), publicKey: 'pub', privateKey: 'priv', subject: 'https://paldex.example/' };
+
+  it('all four in env: Vault is never asked', async () => {
+    const vault = vi.fn(async () => ({ cronKey: 'other' }));
+    expect(await keyLoader(() => all, vault)()).toEqual(all);
+    expect(vault).not.toHaveBeenCalled();
+  });
+  it('none in env: all four from Vault, read once per instance', async () => {
+    const vault = vi.fn(async () => all);
+    const keys = keyLoader(() => ({ cronKey: '', publicKey: '', privateKey: '', subject: '' }), vault);
+    expect(await keys()).toEqual(all);
+    expect(await keys()).toEqual(all);
+    expect(vault).toHaveBeenCalledTimes(1);
+  });
+  it('env wins per key; only the gaps come from Vault', async () => {
+    const keys = keyLoader(() => ({ cronKey: 'e'.repeat(32), publicKey: '' }), async () => ({ ...all, cronKey: 'v'.repeat(32) }));
+    expect(await keys()).toEqual({ ...all, cronKey: 'e'.repeat(32) });
+  });
+  it('requests at the same moment share one Vault read', async () => {
+    const vault = vi.fn(async () => all);
+    const keys = keyLoader(() => ({}), vault);
+    await Promise.all([keys(), keys(), keys()]);
+    expect(vault).toHaveBeenCalledTimes(1);
+  });
+  it('a missing secret in Vault: empty, and asked again next time (added later, no redeploy)', async () => {
+    const vault = vi.fn().mockResolvedValueOnce({ ...all, privateKey: null }).mockResolvedValue(all);
+    const keys = keyLoader(() => ({}), vault);
+    expect((await keys()).privateKey).toBe('');
+    expect(await keys()).toEqual(all);
+    expect(await keys()).toEqual(all);
+    expect(vault).toHaveBeenCalledTimes(2);
+  });
+  it('Vault read fails: logged, keys empty (never throws), tried again next time', async () => {
+    const log = vi.fn();
+    const vault = vi.fn().mockRejectedValueOnce(new Error('permission denied')).mockResolvedValue(all);
+    const keys = keyLoader(() => ({}), vault, log);
+    expect(await keys()).toEqual({ cronKey: '', publicKey: '', privateKey: '', subject: '' });
+    expect(log).toHaveBeenCalledWith('keys from Vault: permission denied');
+    expect(await keys()).toEqual(all);
+  });
+  it('a key removed from env later is filled from Vault', async () => {
+    const env: Record<string, string> = { ...all };
+    const vault = vi.fn(async () => ({ ...all, privateKey: 'vault-priv' }));
+    const keys = keyLoader(() => env, vault);
+    expect((await keys()).privateKey).toBe('priv');
+    delete env.privateKey;
+    expect((await keys()).privateKey).toBe('vault-priv');
   });
 });
