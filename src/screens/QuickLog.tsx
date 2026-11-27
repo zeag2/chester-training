@@ -29,7 +29,7 @@ export function QuickLog({ onClose }: { onClose: () => void }) {
     ]],
     ['Food', [{ key: 'food', label: LOG_NAMES.food, icon: 'leaf', path: 'health/log/food' }]],
     ...(training ? [['Training', [{ key: 'train', label: LOG_NAMES.train, icon: 'target', sub: next ? `${next.kind === 'last' ? 'Again' : 'Up next'}: ${next.skill.name}` : 'About 2 minutes', path: 'session/' + (next?.skill.id ?? 'clicker') }]] as [string, Row[]]] : []),
-    ['Documents', [{ key: 'doc', label: LOG_NAMES.doc, icon: 'book', sub: 'Snap the papers or pick a PDF', path: 'health' }]],
+    ['Documents', [{ key: 'doc', label: LOG_NAMES.doc, icon: 'book', sub: 'Snap the papers or pick a PDF', path: 'health/documents' }]],
   ];
   return <Sheet label="Log something" onClose={onClose}>
     <div className="row"><b className="sp" style={{ fontSize: 18 }}>Log something for {cat.name}</b><button className="iconbtn" aria-label="Close" onClick={onClose}><Icon name="close" /></button></div>

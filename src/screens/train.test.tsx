@@ -6,7 +6,7 @@ import { Train } from './Train';
 afterEach(() => { cleanup(); location.hash = ''; });
 
 describe('Training card: the last skill trained, with Change', () => {
-  it('falls back to the plan on day one, then offers the last skill; Start goes straight in, Change opens the tree', async () => {
+  it('falls back to the plan on day one, then offers the last skill; Start goes straight in, Change opens the skill tree', async () => {
     await store.load();
     await store.saveCat({ name: 'Chester', birthday: '2026-04', homeDate: '2026-11-01', breed: 'American Shorthair', coat: 'black', eyes: 'gold', rewards: ['treats'], outfit: '' });
     const { rerender } = render(<Train embedded />);
@@ -18,6 +18,6 @@ describe('Training card: the last skill trained, with Change', () => {
     fireEvent.click(screen.getByRole('button', { name: /Start Charge the clicker/ }));
     expect(location.hash).toBe('#/session/clicker');
     fireEvent.click(screen.getByRole('button', { name: 'Change skill (now Charge the clicker)' }));
-    expect(location.hash).toBe('#/tree');
+    expect(location.hash).toBe('#/skills/tree');
   });
 });

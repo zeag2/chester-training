@@ -2,7 +2,7 @@
 
 The design doc for PalDex. New screens and changes follow it; anything it doesn't cover gets added here first.
 Phase 1 named the direction and the tokens. Phase 2 (done) moved the code onto them: tokens, components and rules are below.
-Updated 2026-11-26 for the badge art (Josh): the art layer, branch colours, art sizes and their rules.
+Updated 2026-11-26 for the badge art (Josh): the art layer, branch colours, art sizes and their rules. 2026-11-27: the segmented control (`Segmented`, with its slide).
 
 ## Constraints (Josh)
 - **One named aesthetic direction, committed.** Never "modern and clean".
@@ -137,6 +137,11 @@ pointing right (closed) to down (open) over the same time. Closed content is `vi
 is out of the tab order and VoiceOver. **Reduced motion:** no height animation; the body appears or goes at once and
 its content fades in over `--dur-fast`; the chevron flips without turning.
 
+**Segmented control** (2026-11-27, the `Segmented` component): the white thumb slides from the old segment to the
+new one over **220 ms** (`--dur`, `--ease-out`; a `transform: translateX` on `.segthumb`, so no layout work), and the
+labels' colour changes over the same time. The view underneath swaps at once (no cross-fade). **Reduced motion:** the
+thumb jumps (no slide).
+
 **Icon motion** (2026-11-26, Josh: "make it feel more human"). Small, warm moves on an icon, played **only by the
 person's own action** (a tap, a press, a hover), **never on first load, never looping**, each at most `--dur`. They
 move the icon's `<svg>` as a whole (transform only): the art itself is never redrawn, filtered or recoloured. HIG
@@ -172,7 +177,7 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
-| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine); icon motion `--imo-turn` 30deg, `--imo-lift` −3px, `--imo-nod` 8deg, `--imo-nudge` 3px (classes `.imo-*`, see "Icon motion") |
+| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine); the segmented control's thumb uses `--dur` + `--ease-out` (`.segthumb`); icon motion `--imo-turn` 30deg, `--imo-lift` −3px, `--imo-nod` 8deg, `--imo-nudge` 3px (classes `.imo-*`, see "Icon motion") |
 | Badge and icon art (same in both themes) | `--branch-<foundation\|care\|manners\|adventure\|tricks>` with `-light` and `-ink`; `--icon-sky --icon-grey` (Chester icon fills); `--art-outline` (Chester icon outline, light and dark); `--badge-outline`; `--badge-tile` 64; `--icon-idle` (a tab icon that isn't current) |
 
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
@@ -196,6 +201,7 @@ go-ahead and a screenshot pass:
 | Button, destructive confirm | `.btn.danger`: the primary button in `--rose` | only as the last step of something that can't be undone, inside its sheet ("Remove from household", "Delete my account"); the row that opens it is a danger row |
 | Icon button | `.iconbtn` | 44 × 44, needs `aria-label` (it becomes the desktop tooltip) |
 | Chip / chip button | `.chip` (label) · `.chipbtn` (+ `.on` when picked) · `.seg` (segmented: buttons inside, `.on`) | chipbtn 44 tall |
+| **Segmented control** (switch between views) | `Segmented` from `src/ui/Segmented.tsx`; CSS `.seg.slide` + `.segthumb` in `app.css` | `label` (its accessible name), `options` (`[value, label][]`, 2–5 short words), `value`, `onChange`. For **exclusive, equal views of one screen** (HIG `segmented-controls.md`): Health "Overview · Log · Documents", Skills "Tree · List". Full width under the screen title, `role="tablist"` with one `role="tab"` per segment (`aria-selected`, Left/Right arrows move between them); the view under it is its `role="tabpanel"`. A white thumb (`--surface`) marks the chosen segment and **slides** to the new one (see Motion). The screen remembers the chosen view for the session (`sessionStorage`), and its address says the view (`#/health/log`, `#/skills/list`), so links land on it. **One primary (`.btn`) button per view at most**; the rest are `.btn2`. Picking one value in a form (Boy / Girl, Merge / Replace, the daily check's choices) stays the plain `.seg` with `aria-pressed`, no slide |
 | **Input** | `<label className="field">` + `<input className="in">` | 52 tall, grey fill; `select` uses `.in` too. A `textarea.in` (several lines, e.g. the Contact us message) sizes by `rows`, with `--sp-3` padding top and bottom and `--lh-body` lines, and can be dragged taller. Optional fields say so in the label: "Your name (optional)" |
 | Switch | `.switch` (`role="switch"`, `aria-checked`) | Settings |
 | **Card** | `.card` + `white` (hairline + `--shadow-card`) or a wash (`mint` `peach` `butter` `sky` `grey`) | `a.card` / `button.card` for tappable cards. No extra outline on top (the Health vet card's 2 px border went 2026-11-25) |
@@ -209,7 +215,7 @@ go-ahead and a screenshot pass:
 | Document row | `DocRow` from `src/ui/DocRow.tsx` | `doc`, `visit?`, `onMore`, `onSelect?`, `selected?` |
 | **Table** | `.logtable` (desktop Health log, `HealthLogTable` in `src/screens/Care.tsx`) | `log`, `quick`, `who`, `onOpen`, `onQuickLogs` |
 | **Tab bar / side nav** | `TabBar` from `src/ui/TabBar.tsx` | `active`, `onPlus`, `dot?`, `catLabel?`; the same bar becomes the side nav from 760 px |
-| **Accordion** (progressive disclosure, see Rules) | `Accordion` from `src/ui/Accordion.tsx`; CSS `.acc` in `app.css` | `title` (what it discloses, e.g. "Water and appetite (optional)"), `children`, `defaultOpen?`; or controlled with `open` + `onToggle`. The header is a 44 px tall button (`aria-expanded`, `aria-controls`) with the title at `--fs-small` bold and a `chevron` that points right when closed, down when open (HIG `disclosure-controls.md`). Opens and closes in `--dur` (see Motion). No card of its own: it sits inside a card or panel. First use: the daily check's Water and Appetite on Home |
+| **Accordion** (progressive disclosure, see Rules) | `Accordion` from `src/ui/Accordion.tsx`; CSS `.acc` in `app.css` | `title` (what it discloses, e.g. "Water and appetite (optional)"), `children`, `defaultOpen?`; or controlled with `open` + `onToggle`. The header is a 44 px tall button (`aria-expanded`, `aria-controls`) with the title at `--fs-small` bold and a `chevron` that points right when closed, down when open (HIG `disclosure-controls.md`). Opens and closes in `--dur` (see Motion). No card of its own: it sits inside a card or panel. First use: the daily check's Water and Appetite on Home; also Health → Log's "Older than a week (n)" |
 | **Notice** (one dismissible note on Home) | `HomeNotice` from `src/ui/HomeNotice.tsx` | `.card sky`, a bold title, a `.s` line, one action (`.btn` or `.btn2` on `--surface`) and a Close `.iconbtn`. Shows one note at a time, most important first: "PalDex has a new home", then "Your Home Screen icon still shows the old cats". Closing remembers it on this phone |
 | **+ log list** | `QuickLog` from `src/screens/QuickLog.tsx` | the one full list of everything you can log, as grouped rows (`.lgroup` + `.lrow`, a label above each group): Health, Food, Training, Documents. One name per kind, used everywhere: Weight, Symptom, Medicine or vaccine, Vet visit, Grooming, Food or treat, Training set, Vet document (`LOG_NAMES` in `src/engine/care.ts`) |
 | Pet switcher | `PetSwitcher` from `src/ui/PetSwitcher.tsx` | `style?`, `inNav?` |
@@ -258,6 +264,7 @@ go-ahead and a screenshot pass:
 - **No second button style.** If a button needs to look different, it's a new variant here or it's wrong.
 - **Tabs vs. accordion:**
   - **Tabs** for exclusive, equal views the user switches between, up to about 5–7 (e.g. Outfits / Toys / Cushions).
+    Inside one screen these are the `Segmented` control (Health, Skills); the tab bar is only for the app's top level.
   - **Accordion** for progressive or multiple disclosure, and on narrow screens (e.g. the "Is this an emergency?"
     signs, a visit's older notes).
   - **A table or side-by-side** when comparing values (the desktop Health log, weights over time, vaccine due dates).

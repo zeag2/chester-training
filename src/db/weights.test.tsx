@@ -63,7 +63,7 @@ describe('weigh-ins', () => {
     await store.saveCare('weight', { lb: 6.1 }, { at: noon('2026-11-01') });
     await store.saveCare('weight', { lb: 6.98 }, { at: noon('2026-11-14') });
     await store.settled();
-    render(<><Care /><ToastHost /></>);
+    render(<><Care view="log" /><ToastHost /></>);
     fireEvent.click(await screen.findByRole('button', { name: /Edit weight 6\.98 lb/ }));
     expect(await screen.findByText('· Edit Weight')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
