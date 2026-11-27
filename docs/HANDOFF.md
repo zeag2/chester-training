@@ -58,8 +58,17 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 (✓ = done: 2, 6, 7, 8, 15 in #53; 3 in the Home step 1 PR.) Next after Josh's look at Home step 1: the cozy Home
 proposal's later steps (room art for the stage), then item 4 (Health segmented) or 1 (Text Size).
 
-**Open PR**: Home step 1 + icon motion (`claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Running**: cozy Home proposal worker (`session_019xqnwezp5ABv7MikLCnHE6`, proposal only). #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Build next: cozy Home plan (proposal 2026-11-26, Josh picks each step)**
+1. Home restructure (UX 3; open as the Home step 1 + icon motion PR, waiting for Josh). 2. Health "Overview · Log · Documents" and
+Skills "Tree · List" segmented controls (UX 4, 5) M. 3. Art director's room kit (wall, floor, window × 4 times of day,
+rug, bowl, lamp, lights), then Chester's room on Home: light follows the time of day, logs appear in the room (bowl
+after Fed, litter box after Scooped, last toy on the rug), mood follows care, tap reactions near objects. L, new art.
+4. Corner tabs (Outfits · Toys · Cushions · Room), room themes, his spot, "Edit Home" cards, outfit try-on carousel M.
+5. Seasonal room items + window birds M–L. Carousels only for Home's photo strip and the try-on; accordions for older
+log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
+
+**Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
+**Running**: nothing. #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
