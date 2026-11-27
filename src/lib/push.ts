@@ -48,6 +48,26 @@ async function registration(): Promise<ServiceWorkerRegistration | null> {
   // the app registers it on start (src/lib/updates.ts); don't hang forever if that failed
   return Promise.race([navigator.serviceWorker.ready, new Promise<null>((r) => setTimeout(() => r(null), 10_000))]);
 }
+const sameBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((x, i) => x === b[i]);
+/** Made with another VAPID key (the key changed on 2026-11-26): such a subscription can't get our pushes. A browser
+    that doesn't say which key it used (`options` missing) is left alone. */
+const otherKey = (s: PushSubscription, key: Uint8Array) => {
+  const k = s.options?.applicationServerKey;
+  return !!k && !sameBytes(new Uint8Array(k), key);
+};
+/** This phone's subscription for our current key: an existing one made with an old key is dropped (here and on the
+    server) and replaced by a new one. */
+async function subscription(reg: ServiceWorkerRegistration, remote: Remote): Promise<PushSubscription> {
+  const key = keyBytes(VAPID_PUBLIC_KEY);
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && otherKey(sub, key)) {
+    const { endpoint } = parts(sub);
+    await sub.unsubscribe().catch(() => false);
+    await remote.removePushSubscription(endpoint).catch(() => {});
+    sub = null;
+  }
+  return sub ?? reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+}
 async function currentSub(): Promise<PushSubscription | null> {
   const reg = await registration(); return reg ? reg.pushManager.getSubscription() : null;
 }
@@ -88,8 +108,7 @@ export async function enablePush(remote: Remote): Promise<EnableResult> {
   let sub: PushSubscription | null = null;
   try {
     const reg = await registration(); if (!reg) return 'error';
-    sub = await reg.pushManager.getSubscription()
-      ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_PUBLIC_KEY) });
+    sub = await subscription(reg, remote);
     await remote.savePushSubscription(parts(sub), navigator.userAgent);
     const prefs = await remote.pushPrefs();
     if (!prefs) await remote.savePushPrefs(defaultPrefs());
@@ -112,15 +131,14 @@ export async function disablePush(remote: Remote | null): Promise<void> {
   await remote?.removePushSubscription(endpoint).catch(() => {});
 }
 
-/** On app start, signed in: keep this phone's subscription saved (endpoints rotate; it also refreshes last_seen) and
-    the time zone current (travel). Quiet: never asks, never throws. */
+/** On app start, signed in: keep this phone's subscription saved (endpoints rotate; it also refreshes last_seen),
+    on the current key (a subscription made with an old key is replaced) and the time zone current (travel). Quiet: never asks, never throws. */
 export async function refreshPush(remote: Remote | null): Promise<void> {
   try {
     if (!remote || ls.get(FLAG) !== 'on' || pushSupport() !== 'yes') return;
     if (Notification.permission !== 'granted') { if (Notification.permission === 'denied') ls.set(FLAG, null); return; }
     const reg = await registration(); if (!reg) return;
-    const sub = await reg.pushManager.getSubscription()
-      ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_PUBLIC_KEY) });
+    const sub = await subscription(reg, remote); // a phone still on the old key moves to the new one here
     await remote.savePushSubscription(parts(sub), navigator.userAgent);
     const prefs = await remote.pushPrefs();
     if (prefs && prefs.tz !== myTimeZone()) await remote.savePushPrefs({ ...prefs, tz: myTimeZone() });

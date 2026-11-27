@@ -20,6 +20,7 @@ alter default privileges in schema public grant all on functions to service_role
 SQL
 $P -f $REPO/supabase/tests/stub_auth.sql
 $P -f $REPO/supabase/tests/stub_storage.sql
+$P -f $REPO/supabase/tests/stub_vault.sql
 $P -c "grant anon, authenticated, service_role to authenticator; grant usage on schema public to service_role;"
 # no pg_cron / pg_net here: stand-ins that record what would be scheduled
 $P <<'SQL'
@@ -28,7 +29,7 @@ create function cron.schedule(n text, s text, c text) returns bigint language sq
   $$ insert into cron.job values (n, s, c) on conflict (jobname) do update set schedule = excluded.schedule, command = excluded.command; select 1::bigint $$;
 SQL
 for f in $(ls $REPO/supabase/migrations/*.sql | sort); do
-  if [[ $f == *push.sql ]]; then grep -v '^create extension' $f > /tmp/push_noext.sql; f=/tmp/push_noext.sql; fi
+  if grep -q "^create extension if not exists pg_\(net\|cron\)" $f; then grep -v "^create extension if not exists pg_\(net\|cron\)" $f > /tmp/noext.sql; f=/tmp/noext.sql; fi
   $P -f $f
 done
 echo "db ready"

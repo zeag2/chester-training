@@ -117,6 +117,17 @@ Deno.env.delete('VAPID_PRIVATE_KEY');
 await psql(`insert into public.push_outbox (user_id, kind, title, url, tag) values ('${JOSH}', 'friends', 'Later', '#/friends', 'l1')`);
 ok((await call('drain')).status === 500 && await psql(`select tries from public.push_outbox where tag = 'l1'`) === '0', 'without VAPID secrets: an error and no try lost');
 
+// no Edge Function secrets at all: the four keys come from Vault through public.push_secrets() (service role)
+for (const k of ['PUSH_CRON_KEY', 'VAPID_PUBLIC_KEY', 'VAPID_SUBJECT']) Deno.env.delete(k);
+await psql(`insert into vault.secrets values ('push_cron_key', '${KEY}'), ('push_vapid_public', '${vapid.publicKey}'),
+  ('push_vapid_private', '${vapid.privateKey}'), ('push_vapid_subject', 'https://paldex.example/') on conflict (name) do update set secret = excluded.secret`);
+ok((await call('drain', 'wrong-' + KEY)).status === 403, 'Vault keys: a wrong cron key is still refused');
+const fromVault = await call('drain');
+ok(fromVault.status === 200 && fromVault.body.sent === 1 && got.at(-1)?.payload.title === 'Later', 'Vault keys: the waiting row is sent and decrypted');
+ok(got.at(-1)?.headers.authorization?.includes(`k=${vapid.publicKey}`) === true, 'Vault keys: signed with the Vault VAPID key');
+await psql(`delete from vault.secrets`);
+ok((await call('meds')).status === 200, 'Vault keys: kept for this instance (Vault emptied, still works)');
+
 await push.shutdown(); await proxy.shutdown();
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 Deno.exit(fails ? 1 : 0);
