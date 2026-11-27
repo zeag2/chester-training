@@ -1,4 +1,4 @@
-last-reviewed: fdd308923573d38eb6860903129ce6750f1830d3
+last-reviewed: 12fd2f52d0819c8ed55f2789ad4cfbfc7a0c1355
 
 # UX review log
 
@@ -18,6 +18,11 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-27: fdd3089..12fd2f5
+Main brought the UI visual-match pass (one ScreenHeader for non-tab screens, chevron icons). Merged cleanly; the
+visit page keeps "Vet visit" through ScreenHeader. Checked Chester's week, For the vet, the skill tree and Home in
+light and dark mode. No changes needed.
 
 ### 2026-11-26: 5820102..fdd3089
 Checked Home (Quick log with water and appetite chips on the daily check, the Training card's Start / Change), the
