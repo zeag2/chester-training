@@ -24,7 +24,10 @@ export const EYES: Record<string, { name: string; ring: string; ring2?: string }
 };
 
 export type Mood = 'curious' | 'happy' | 'sleepy' | 'open';
-export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full' | 'sploot' | 'crouch' | 'leap' | 'reach';
+export type Pose = 'sit' | 'doze' | 'walk' | 'ball' | 'sleep' | 'drape' | 'loaf' | 'knead' | 'fly' | 'run' | 'curl' | 'full' | 'sploot' | 'crouch' | 'leap' | 'reach' | 'scratch';
+/** Sit-pose front legs: one tube each (the default), split at the elbow (`flex`: `.upL/.loL`, `.upR/.loR`, for the
+    prop scenes' kneading and swats), or split with the right paw drawn over the head (`swat`). */
+export type SitLegs = 'tube' | 'flex' | 'swat';
 
 /* Style (docs/plans/2026-11-08-cat-art-style.md): one thin, even outline; flat fills with one soft shadow shape;
    a small head on a long body; very simple faces; the tail does the acting. */
@@ -161,7 +164,7 @@ function openLimb(c: Coat, x1: number, y1: number, x2: number, y2: number, w: nu
 /** Sitting, facing you: a little chibi (the only pose allowed to be), small head on a pear-shaped body with haunches,
     front paws together and the long tail wrapped round them. `doze` bows the head and closes the eyes. */
 const SIT_HEAD = { size: 0.84, lift: -12 };
-function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w = '', doze = false): string {
+function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w = '', doze = false, legs: SitLegs = 'tube'): string {
   const BODY = 'M84 118 C74 130 70 144 67 155 C53 160 46 172 49 183 C51 189 58 190 66 190 L134 190 C142 190 149 189 151 183 C154 172 147 160 133 155 C130 144 126 130 116 118 Z';
   let bp = '';
   if (c.stripe) bp += `<path d="M56 166 Q64 166 68 174 M144 166 Q136 166 132 174 M78 132 Q86 134 86 140 M122 132 Q114 134 114 140" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
@@ -170,8 +173,9 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w 
   bp += `<ellipse cx="100" cy="146" rx="15" ry="22" fill="${c.white ? '#fbfaf7' : c.light}"/>`;
   // haunch lines: the folded back legs either side of the front paws
   const haunch = `<path d="M68 157 C80 160 84 174 81 189 M132 157 C120 160 116 174 119 189" fill="none" ${SW(c, LW * 0.8)} opacity=".75"/>`;
-  const leg = (x: number) => { const e = `M${x - 7} 140 V182 C${x - 8.5} 188 ${x - 5} 190.5 ${x} 190.5 C${x + 5} 190.5 ${x + 8.5} 188 ${x + 7} 182 V140`;
+  const tube = (x: number) => { const e = `M${x - 7} 140 V182 C${x - 8.5} 188 ${x - 5} 190.5 ${x} 190.5 C${x + 5} 190.5 ${x + 8.5} 188 ${x + 7} 182 V140`;
     return `<path d="${e} Z" fill="${pawFill(c)}"/><path d="${e}" fill="none" ${SW(c)}/><path d="M${x - 2.5} 186 V189 M${x + 2.5} 186 V189" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/>`; };
+  const leg = (x: number) => (legs === 'tube' ? tube(x) : flexLeg(c, x, x < 100 ? 'L' : 'R'));
   const right = raised
     ? `<g class="pawR raised" style="transform:rotate(-160deg)">${openLimb(c, 116, 144, 116, 182, 16, pawFill(c))}<ellipse cx="116" cy="179" rx="4.5" ry="4" fill="${pad}"/><circle cx="111.5" cy="185.5" r="2" fill="${pad}"/><circle cx="116" cy="187.5" r="2" fill="${pad}"/><circle cx="120.5" cy="185.5" r="2" fill="${pad}"/></g>`
     : `<g class="pawR"><g class="r-legR">${leg(108)}</g></g>`;
@@ -182,10 +186,52 @@ function sit(c: Coat, eyes: string, mood: Mood, uid: string, raised: boolean, w 
     + `<g class="r-shadow">${shadow(100, 56)}</g>`
     + `<g class="r-all"><g class="all">`
     + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#bc${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/>${haunch}<g class="pawL"><g class="r-legL">${leg(92)}</g></g></g>`
-    + (raised ? '' : right)
+    + (raised || legs === 'swat' ? '' : right)
     + tail
     + `<g transform="translate(0 ${SIT_HEAD.lift})${bow}"><g class="r-head"><g class="head">${head(c, eyes, doze ? 'sleepy' : mood, uid, w, { size: k })}</g></g></g>`
-    + (raised ? right : '')
+    + (raised || legs === 'swat' ? right : '')
+    + `</g></g>`;
+}
+
+/** A sit-pose front leg split at the elbow, so a paw bends and follows through: the upper part (`.up<L|R>`) turns
+    about the shoulder (x, 142), the lower part (`.lo<L|R>`, with the paw) about the elbow (x, 166). Same outline and
+    paw as the one-tube leg. From the props art kit (2026-11-27). */
+function flexLeg(c: Coat, x: number, side: 'L' | 'R'): string {
+  const f = pawFill(c);
+  const up = `M${x - 7} 140 V166 A7 7 0 0 0 ${x + 7} 166 V140`;
+  const lo = `M${x - 7} 160 V182 C${x - 8.5} 188 ${x - 5} 190.5 ${x} 190.5 C${x + 5} 190.5 ${x + 8.5} 188 ${x + 7} 182 V160`;
+  const loEdge = `M${x - 7} 165 V182 C${x - 8.5} 188 ${x - 5} 190.5 ${x} 190.5 C${x + 5} 190.5 ${x + 8.5} 188 ${x + 7} 182 V165`;
+  return `<g class="up${side}"><path d="${up} Z" fill="${f}"/><path d="${up}" fill="none" ${SW(c)}/>`
+    + `<g class="lo${side}"><path d="${lo} Z" fill="${f}"/><path d="${loEdge}" fill="none" ${SW(c)}/>`
+    + `<path d="M${x - 2.5} 186 V189 M${x + 2.5} 186 V189" stroke="${c.line}" stroke-width="1.6" stroke-linecap="round"/></g></g>`;
+}
+
+/** Stood up on his back legs, both front paws up on the scratching post (to his right): the Sisal tower's Big stretch
+    and Scratch scratch. Faces right. From the props art kit (2026-11-27). Classes: `.all`, `.bodyg`, `.rakeA` / `.rakeB`
+    (near and far front leg, about the shoulder) with `.foreA` / `.foreB` (the forearm, about the elbow), `.claws`,
+    `.tailS` (a fixed tube tail, not the rig's), `.head`. No `.rtail`, so the rig only breathes it. */
+function scratch(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
+  const pf = pawFill(c);
+  const BODY = 'M56 186 C44 162 50 130 74 110 C92 95 112 86 128 92 C142 98 142 118 132 134 C122 150 114 166 112 182 C111 190 100 191 86 191 C70 191 59 191 56 186 Z';
+  let bp = `<path d="M30 140 C50 150 64 176 92 196 L20 200 Z" fill="${c.shade}"/>`
+    + `<ellipse cx="128" cy="122" rx="11" ry="20" transform="rotate(28 128 122)" fill="${c.white ? '#fbfaf7' : c.light}"/>`;
+  if (c.stripe) bp += `<path d="M74 114 Q86 116 88 126 M62 132 Q74 134 76 144 M56 152 Q68 154 70 164" stroke="${c.stripe}" stroke-width="${stripeW}" fill="none" stroke-linecap="round"/>`;
+  if (c.patches) bp += `<path d="M60 120 C80 108 100 112 98 132 C86 142 66 140 60 120 Z" fill="${c.patches[1]}"/><path d="M54 160 C66 152 82 160 80 176 C70 184 56 180 54 160 Z" fill="${c.patches[0]}"/>`;
+  const TAIL = 'M64 180 C44 184 28 176 26 160 C24 146 34 138 44 142';
+  const tail = `<g class="tailS"><path d="${TAIL}" fill="none" stroke="${c.line}" stroke-width="15" stroke-linecap="round"/><path d="${TAIL}" fill="none" stroke="${c.point ?? c.base}" stroke-width="9" stroke-linecap="round"/></g>`;
+  const claws = (x: number, y: number, a: number) => `<g class="claws" transform="rotate(${a} ${x} ${y})"><path d="M${x - 5} ${y - 7} l3 -5 M${x} ${y - 9} l1 -6 M${x + 5} ${y - 7} l-1 -5" stroke="${c.line}" stroke-width="1.8" stroke-linecap="round"/></g>`;
+  const s = 0.74;
+  return `<defs><clipPath id="su${uid}"><path d="${BODY}"/></clipPath></defs>`
+    + `<ellipse class="shadow" cx="94" cy="190" rx="44" ry="6" fill="rgba(29,35,64,.12)"/>`
+    + `<g class="r-all"><g class="all">`
+    + tail
+    + `<ellipse cx="104" cy="188" rx="12" ry="5" fill="${c.shade}" ${SW(c)}/>`
+    + `<g class="rakeB">${openLimb(c, 120, 106, 142, 80, 15, c.shade)}<g class="foreB">${openLimb(c, 142, 80, 160, 60, 14, c.shade)}</g></g>`
+    + `<g class="bodyg"><path d="${BODY}" fill="${c.base}"/><g clip-path="url(#su${uid})">${bp}</g><path d="${BODY}" fill="none" ${SW(c)}/>`
+    + `<path d="M62 152 C82 150 96 164 94 186" fill="none" ${SW(c, LW * 0.8)} opacity=".75"/></g>`
+    + `<ellipse cx="88" cy="188" rx="15" ry="5.5" fill="${pf}" ${SW(c)}/>`
+    + `<g style="transform:translate(44px,-6px) scale(${s});transform-origin:0 0"><g class="r-head"><g class="head">${head(c, eyes, mood, uid, w, { size: 0.8, outer: s, turn: 0.55 })}</g></g></g>`
+    + `<g class="rakeA">${openLimb(c, 124, 118, 146, 96, 16, pf)}<g class="foreA">${openLimb(c, 146, 96, 165, 82, 15, pf)}${claws(170, 79, 54)}</g></g>`
     + `</g></g>`;
 }
 
@@ -494,12 +540,13 @@ function reach(c: Coat, eyes: string, mood: Mood, uid: string, w = ''): string {
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
-export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string }): string {
+export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?: Mood; raised?: boolean; uid: string; anim?: string; width?: number; label?: string; extra?: string; wear?: string; legs?: SitLegs }): string {
   const w = o.wear ?? '';
   const c = COATS[o.coat ?? 'black'] ?? COATS.black;
   const pose = o.pose ?? 'sit';
   const mood = o.mood ?? 'curious';
   const body = pose === 'fly' ? fly(c, o.eyes ?? 'gold', mood, o.uid, w)
+    : pose === 'scratch' ? scratch(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'run' ? run(c, o.eyes ?? 'gold', mood, o.uid, w)
     : pose === 'curl' ? curl(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'full' ? full(c, o.eyes ?? 'gold', o.uid, w)
@@ -512,6 +559,6 @@ export function chesterSVG(o: { pose?: Pose; coat?: string; eyes?: string; mood?
     : pose === 'sleep' ? sleep(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'drape' ? drape(c, o.eyes ?? 'gold', o.uid, w)
     : pose === 'loaf' || pose === 'knead' ? loaf(c, o.eyes ?? 'gold', mood, o.uid, pose === 'knead', w)
-    : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised && pose === 'sit', w, pose === 'doze');
+    : sit(c, o.eyes ?? 'gold', mood, o.uid, !!o.raised && pose === 'sit', w, pose === 'doze', pose === 'sit' ? o.legs : 'tube');
   return `<svg class="kc pose-${pose} ${o.anim ?? ''}" viewBox="-14 -34 232 232" width="${o.width ?? 160}" role="img" aria-label="${esc(o.label ?? c.name + ' kitten')}" style="overflow:visible">${body}${o.extra ?? ''}</svg>`;
 }

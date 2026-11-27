@@ -5,6 +5,8 @@ import { useStore } from '../db/store';
 import { newBrain, POUNCE_S, pounceOffset, step, type AnyToy, type Brain, type Mode, type PlayEvent, type Target, type Toy } from '../engine/play';
 import * as audio from '../lib/audio';
 import { Hideout } from './Hideout';
+import { PropPlay } from './PropPlay';
+import { isPropToy, PROP_TOYS } from '../engine/props';
 import { PlayShell, usePlayTalk } from './PlayShell';
 
 const TITLE: Record<Toy, string> = { laser: 'Laser dot', wand: 'Feather wand' };
@@ -14,11 +16,13 @@ const LINES: Partial<Record<Mode, string[]>> = {
   swat: ['Swat! Swat!', 'Mine!'], walk: ['Coming!', 'I see you…'], chase: ['ZOOMIES!', 'Gotta go fast!', 'Come back here!'],
 };
 /** Toys with their own game here: the free wand, and the others once bought. */
-export const PLAYABLE: AnyToy[] = ['laser', 'wand', 'box', 'tunnel'];
+export const PLAYABLE: AnyToy[] = ['laser', 'wand', 'box', 'tunnel', ...PROP_TOYS];
 
-/** Playing with a toy: the box and tunnel are hiding games (`Hideout.tsx`); the laser and wand are chasing games. */
+/** Playing with a toy: the box and tunnel are hiding games (`Hideout.tsx`), the props are scene games (`PropPlay.tsx`);
+    the laser and wand are chasing games. */
 export function Play({ toy: raw }: { toy?: string }) {
   if (raw === 'box' || raw === 'tunnel') return <Hideout toy={raw} />;
+  if (isPropToy(raw)) return <PropPlay prop={raw} />;
   return <ChaseToy toy={raw === 'wand' ? 'wand' : 'laser'} />;
 }
 

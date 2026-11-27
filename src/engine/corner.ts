@@ -28,6 +28,11 @@ export const SHOP: ShopItem[] = [
   { id: 'mint', kind: 'cushion', name: 'Mint cushion', price: 15, blurb: 'Soft and round' },
   { id: 'heart', kind: 'cushion', name: 'Heart cushion', price: 25, blurb: 'Extra loved' },
   { id: 'cloud', kind: 'cushion', name: 'Cloud bed', price: 40, blurb: 'Fluffiest nap spot' },
+  // the props (art kit 2026-11-27; their games are src/engine/props.ts + src/screens/PropPlay.tsx)
+  { id: 'donut', kind: 'cushion', name: 'Sprinkle donut', price: 30, blurb: 'Frosted, sprinkled, nap-ready' },
+  { id: 'post', kind: 'toy', name: 'Sisal tower', price: 32, blurb: 'Stretch, scratch, survey' },
+  { id: 'perch', kind: 'toy', name: 'Sunny window', price: 48, blurb: 'Bird TV, all day' },
+  { id: 'kicker', kind: 'toy', name: 'Catnip pickle', price: 16, blurb: 'Smells amazing. Kicks great.' },
 ];
 export const ITEM_BY_ID: Record<string, ShopItem> = Object.fromEntries(SHOP.map((i) => [i.id, i]));
 

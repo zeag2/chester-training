@@ -327,6 +327,12 @@ button.visitrow{background:none;padding:0}
 .boxjolt{animation:kboxjolt .4s var(--ease-out, ease-out)}
 @keyframes kboxjolt{0%{transform:none}25%{transform:rotate(-2.5deg) scaleY(.97)}55%{transform:rotate(2deg)}80%{transform:rotate(-.8deg)}100%{transform:none}}
 @media (prefers-reduced-motion: reduce){.boxjolt{animation:none}}
+/* Prop play stage (src/screens/PropPlay.tsx; design doc "Props"): the scene fills it; sky above his floor line, the
+   butter floor below (like the toy stages). --floor-at is set per scene from its viewBox. */
+.propstage{position:relative;aspect-ratio:6/5;margin-top:var(--sp-2);border-radius:var(--r-card);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;
+  background:linear-gradient(var(--sky) 0 var(--floor-at,94%),var(--butter) var(--floor-at,94%));--floor:var(--art-floor)}
+.propstage:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.propscene,.propscene>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 
 /* Book a visit: the household vet as a selectable card, "+ Add vet", and the inline vet form (VetCards.tsx) */
 .bkvet{display:block;width:100%;text-align:left;border:2px solid transparent;border-radius:16px;background:var(--grey);color:var(--ink);padding:10px 14px;font:inherit;min-height:52px;transition:transform 160ms var(--ease-out)}
@@ -432,4 +438,5 @@ html[data-nav="side"] .toast{left:232px;bottom:calc(20px + var(--safe-b))}
 @media (min-width:760px){
   .screen.centred{max-width:640px;padding-left:var(--sp-8);padding-right:var(--sp-8)}
 }
+
 

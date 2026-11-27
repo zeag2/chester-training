@@ -42,7 +42,7 @@ describe('art safety', () => {
 });
 
 describe('art', () => {
-  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly', 'run', 'curl', 'full', 'sploot', 'crouch', 'leap', 'reach'] as const;
+  const poses = ['sit', 'doze', 'walk', 'ball', 'sleep', 'drape', 'loaf', 'knead', 'fly', 'run', 'curl', 'full', 'sploot', 'crouch', 'leap', 'reach', 'scratch'] as const;
   it('every pose draws in every coat with the parts the rig and CSS use', async () => {
     const { COATS } = await import('./art');
     for (const pose of poses) for (const coat of Object.keys(COATS)) {
@@ -55,7 +55,21 @@ describe('art', () => {
       if (pose === 'sit' || pose === 'doze' || pose === 'drape' || pose === 'sleep' || pose === 'full' || pose === 'sploot') expect(svg).toContain('class="r-all"');
       if (pose === 'run') for (const l of ['legFL', 'legFR', 'legBL', 'legBR']) expect(svg).toContain(`class="${l}"`);
       if (pose === 'full') { expect(svg).toContain('class="pawPat"'); expect(svg).toContain('class="puff"'); }
+      if (pose === 'scratch') for (const k of ['rakeA', 'rakeB', 'foreA', 'foreB', 'claws', 'tailS', 'bodyg', 'all']) expect(svg).toContain(`class="${k}"`);
     }
+  });
+  it('the sit pose can split its front legs at the elbow, and draw the swatting paw over the head', () => {
+    const tube = chesterSVG({ pose: 'sit', uid: 'x' });
+    expect(tube).not.toContain('class="upL"');
+    for (const legs of ['flex', 'swat'] as const) {
+      const svg = chesterSVG({ pose: 'sit', uid: 'x', legs });
+      for (const k of ['upL', 'loL', 'upR', 'loR', 'pawL', 'pawR', 'r-legL', 'r-legR']) expect(svg).toContain(`class="${k}"`);
+    }
+    const swat = chesterSVG({ pose: 'sit', uid: 'x', legs: 'swat' });
+    expect(swat.indexOf('class="pawR"')).toBeGreaterThan(swat.indexOf('class="head"'));
+    expect(tube.indexOf('class="pawR"')).toBeLessThan(tube.indexOf('class="head"'));
+    // only the sit pose takes it
+    expect(chesterSVG({ pose: 'doze', uid: 'x', legs: 'flex' })).not.toContain('class="upL"');
   });
   it('the sitting tail wraps round the front paws', () => {
     const svg = chesterSVG({ pose: 'sit', uid: 'x' });
