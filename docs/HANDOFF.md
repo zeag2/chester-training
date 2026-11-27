@@ -33,7 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (403 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (426 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
@@ -67,9 +67,9 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Queued: four new props** (Josh: "Yes, queue props", 2026-11-27, relayed; start only after #56 merges, with Josh's OK in the PM chat). One PR, not merged: Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20); the scratching moves need a new stand-up pose `scratchUp()` in `src/chester/art.ts`. Moves were checked only as still frames, so expect timing tweaks. Art (HANDOFF.md, PROPS.md, donut/post/perch/kicker SVGs, 48 px icons, scenes.json/.css, src/build.ts, poses.ts, props.ts, scenes.ts) is in the art channel's `paldex-art/props/`; a worker needs it as an artifact link or relayed.
+**Running: four new props** (Josh: "Yes, queue props", started 2026-11-27 with his OK; branch `claude/features-props`, `session_019xqnwiAtsEWh5QyhQ5yBfe`; art on artifact STmR6cBuuEYyFGrYTkXtVi). One PR, not merged: Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20); the scratching moves need a new stand-up pose `scratchUp()` in `src/chester/art.ts`. Moves were checked only as still frames, so expect timing tweaks. Art (HANDOFF.md, PROPS.md, donut/post/perch/kicker SVGs, 48 px icons, scenes.json/.css, src/build.ts, poses.ts, props.ts, scenes.ts) is in the art channel's `paldex-art/props/`; a worker needs it as an artifact link or relayed.
 
-**Running**: Health + Skills tabs, cozy Home step 2 (Josh's go 2026-11-27; branch `claude/features-health-skills-tabs`, `session_019xqnwhV5jYbCMM7UaDrtFd`). #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: the props worker (above). #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
