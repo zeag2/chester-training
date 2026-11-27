@@ -33,7 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (387 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (403 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
@@ -68,7 +68,7 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Running**: nothing. #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: push keys from Vault (Josh's go 2026-11-26/27; branch `claude/features-push-vault`, `session_019xqnwfBqLqpfPbvGcgbxsL`; its SQL comes to Josh before anything runs). #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
