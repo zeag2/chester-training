@@ -3,6 +3,7 @@ import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { sharingConfigured } from '../sync/config';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back, go } from '../ui/router';
 import * as audio from '../lib/audio';
 import { resetRedirect, takePendingRecovery } from '../lib/recovery';
@@ -41,7 +42,7 @@ export function useRun() {
 }
 export const ErrLine = ({ err }: { err: string }) => (err ? <p role="alert" className="s" style={{ marginTop: 'var(--sp-3)', color: '#b4412b', fontWeight: 700 }}>{err}</p> : null);
 export const StepLabel = ({ n, of, label }: { n: number; of: number; label: string }) =>
-  <p className="s" style={{ marginTop: 18, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Step {n} of {of} · {label}</p>;
+  <p className="label" style={{ marginTop: 18 }}>Step {n} of {of} · {label}</p>;
 
 /**
  * Create an account or sign in. `share` uploads this phone's cat (or brings back the cat this account already has).
@@ -203,6 +204,7 @@ export function ResetPassword() {
   </div>;
 }
 
+/** The back row on the setup steps: their question is the h1 under it, so this row's name isn't a heading. */
 export function Top({ onBack, title }: { onBack: () => void; title: string }) {
-  return <div className="top"><button className="iconbtn" aria-label="Back" onClick={onBack}><Icon name="back" /></button><b style={{ fontSize: 17 }}>{title}</b></div>;
+  return <ScreenHeader onBack={onBack} title={title} heading={false} />;
 }

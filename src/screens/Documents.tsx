@@ -4,6 +4,7 @@ import type { CareItem } from '../engine/care';
 import { useLayout } from '../ui/layout';
 import { DOC_FILTERS, findDocs, visitOfDoc, type DocFilter } from '../engine/docs';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back as goBack, go } from '../ui/router';
 import { DocRow, docSub, openDoc } from '../ui/DocRow';
 import { CareSheet, DocAdder, type Editing } from './Care';
@@ -31,9 +32,8 @@ export function Documents() {
   const rows = list.map((d) => <DocRow key={d.id} doc={d} visit={visitOfDoc(care, d)} onMore={() => setEditing({ kind: 'doc', item: d })}
     onSelect={big ? () => setSelId(d.id) : undefined} selected={sel?.id === d.id} />);
   return <div className={big ? 'screen wide' : 'screen'} {...drop.bind}>
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => goBack('health')}><Icon name="back" /></button>
-      <b className="sp" style={{ fontSize: 17 }}>{cat.name}’s documents</b>
-      <button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--bg)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => { setAdding(!adding); setDropped(undefined); }}><Icon name="plus" /></button></div>
+    <ScreenHeader onBack={() => goBack('health')} title={`${cat.name}’s documents`}
+      trailing={<button className="iconbtn" style={{ background: adding ? 'var(--ink)' : 'var(--grey)', color: adding ? 'var(--on-ink)' : undefined }} aria-label="Add a document" aria-pressed={adding} onClick={() => { setAdding(!adding); setDropped(undefined); }}><Icon name="plus" /></button>} />
     {(adding || all.length === 0) && <DocAdder signedIn={!!account} dropped={dropped} />}
     {all.length > 0 && <>
       <div className="row" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)', background: 'var(--grey)', borderRadius: 'var(--r-row)', padding: '0 var(--sp-3)' }}>

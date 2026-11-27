@@ -113,7 +113,7 @@ export function DailyTaps() {
   ];
   return <div className="card white">
     <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Quick log</b>
-      <a href="#/week" className="s" style={{ color: 'var(--teal)', fontWeight: 700 }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
+      <a href="#/week" className="btn2 plain" style={{ color: 'var(--teal)', marginRight: 'calc(-1 * var(--sp-2))' }}>{[0, 1].includes(new Date().getDay()) ? `${cat.name}’s week is in` : 'This week'}</a></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 10 }}>
       {tiles.map((t) => <button key={t.what} className="chipbtn" disabled={busy === t.what} onClick={() => (t.done ? openEntries(t.what) : t.what === 'play' ? openPlay() : void log(t.what))}
         aria-label={`${t.label}. ${t.sub}${t.done ? '. Tap to see or fix today’s entries' : ''}`}

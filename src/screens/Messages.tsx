@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { store, useStore } from '../db/store';
 import type { ContactMessage } from '../sync/remote';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back } from '../ui/router';
 import { hideToast, showToast } from '../ui/Toast';
 
@@ -49,7 +50,7 @@ export function Messages() {
 
   const open = list?.filter((m) => !m.done).length ?? 0;
   return <div className="screen">
-    <div className="row" style={{ marginTop: 10 }}><button className="iconbtn" aria-label="Back" onClick={() => back('settings')}><Icon name="back" /></button><h1 className="sp">Messages</h1></div>
+    <ScreenHeader onBack={() => back('settings')} title="Messages" />
     {admin === false ? <p className="m" style={{ marginTop: 'var(--sp-3)' }}>Only PalDex’s owner can read the messages.</p>
       : admin === null || (list === null && !err) ? <p className="s" style={{ marginTop: 'var(--sp-3)' }} aria-live="polite">Loading…</p>
       : err ? <><p className="s" role="alert" style={{ marginTop: 'var(--sp-3)', color: 'var(--rose)' }}>{err}</p><button className="btn2" style={{ marginTop: 'var(--sp-3)', width: '100%' }} onClick={load}>Try again</button></>

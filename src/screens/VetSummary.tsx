@@ -5,6 +5,7 @@ import { MED_LABEL, type MedWhat } from '../engine/care';
 import { fmtTime, telHref, yourVets } from '../engine/vets';
 import { ageText } from '../lib/stats';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back, go } from '../ui/router';
 import { openDoc } from '../ui/DocRow';
 
@@ -34,14 +35,14 @@ export function VetSummary() {
     } catch (e) { if ((e as Error).name !== 'AbortError') setShared('Couldn’t share from this browser.'); }
   };
   return <div className="screen">
-    <div className="top"><button className="iconbtn" aria-label="Back" onClick={() => back('health')}><Icon name="back" /></button><b className="sp" style={{ fontSize: 17 }}>For the vet</b>
-      <button className="btn2" style={{ minHeight: 40, background: 'var(--grey)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => void share()}>Share</button></div>
+    <ScreenHeader onBack={() => back('health')} title="For the vet" heading={false}
+      trailing={<button className="btn2" onClick={() => void share()}>Share</button>} />
     {shared && <p className="s" role="status" style={{ textAlign: 'right' }}>{shared}</p>}
     <div className="stag">
       <h1 style={{ marginTop: 'var(--sp-1)' }}>{cat.name}</h1>
       <p className="m">{about}</p>
       {primary && <div className="card sky" style={{ marginTop: 10 }}>
-        <span className="s" style={{ fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase' }}>Vet</span>
+        <span className="label">Vet</span>
         <b style={{ display: 'block' }}>{primary.data.clinic}</b>
         <p className="s">{[primary.data.vetName, primary.data.phone].filter(Boolean).join(' · ')}</p>
         {telHref(primary.data.phone) && <a className="btn2" href={telHref(primary.data.phone)!} style={{ marginTop: 'var(--sp-2)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: 'inherit', background: 'var(--surface)' }}><Icon name="phone" size={16} />Call</a>}
@@ -54,12 +55,12 @@ export function VetSummary() {
       {sect('Recent vet visits', s.visits.length ? s.visits.map((v) => <button key={v.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + v.id)}>
         <span className="sp"><span style={{ display: 'block' }}>{v.reason}{v.clinic ? ` · ${v.clinic}` : ''}</span>
           <span className="s" style={{ display: 'block' }}>{fmt(v.day)}{v.unconfirmed ? ' · booked, not marked done' : ''}{v.docs ? ` · ${v.docs} document${v.docs === 1 ? '' : 's'}` : ''}</span>
-          {v.notes && <span className="s" style={{ display: 'block', color: 'var(--ink)' }}>{v.notes}</span>}</span><span aria-hidden="true" className="s">›</span></button>) : none('None logged.'))}
-      {s.next && sect('Next visit', <button style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + s.next!.id)}><span className="sp">{s.next.reason}<span className="s" style={{ display: 'block' }}>{fmt(s.next.day)}{s.next.time ? ` · ${fmtTime(s.next.time)}` : ''}{s.next.clinic ? ` · ${s.next.clinic}` : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
+          {v.notes && <span className="s" style={{ display: 'block', color: 'var(--ink)' }}>{v.notes}</span>}</span><span className="chev"><Icon name="chevron" size={18} /></span></button>) : none('None logged.'))}
+      {s.next && sect('Next visit', <button style={{ ...rowBtn, marginTop: 6 }} onClick={() => go('health/visit/' + s.next!.id)}><span className="sp">{s.next.reason}<span className="s" style={{ display: 'block' }}>{fmt(s.next.day)}{s.next.time ? ` · ${fmtTime(s.next.time)}` : ''}{s.next.clinic ? ` · ${s.next.clinic}` : ''}</span></span><span className="chev"><Icon name="chevron" size={18} /></span></button>)}
       {s.foods.length > 0 && sect('Eating now', <p className="s" style={{ marginTop: 6 }}>{s.foods.join(', ')}</p>)}
       {s.docs.length > 0 && sect('Documents', <>{s.docs.map((d) => <button key={d.id} style={{ ...rowBtn, marginTop: 6 }} onClick={() => void openDoc(d.path)}>
-        <Icon name="book" size={18} /><span className="sp">{d.title}<span className="s" style={{ display: 'block' }}>{fmt(d.day)}{d.vaccine ? ' · vaccines' : ''}</span></span><span aria-hidden="true" className="s">›</span></button>)}
-        <a href="#/health/docs" className="s" style={{ display: 'block', marginTop: 'var(--sp-2)', fontWeight: 800, color: 'var(--ink)' }}>All documents ›</a></>)}
+        <Icon name="book" size={18} /><span className="sp">{d.title}<span className="s" style={{ display: 'block' }}>{fmt(d.day)}{d.vaccine ? ' · vaccines' : ''}</span></span><span className="chev"><Icon name="chevron" size={18} /></span></button>)}
+        <a href="#/health/docs" className="btn2 plain" style={{ marginTop: 'var(--sp-1)', marginLeft: 'calc(-1 * var(--sp-2))' }}>All documents<Icon name="chevron" size={16} /></a></>)}
       <p className="s" style={{ textAlign: 'center', marginTop: 14 }}>From {cat.name}’s PalDex log. Turn your phone around to show it, or Share to send it.</p>
     </div>
   </div>;

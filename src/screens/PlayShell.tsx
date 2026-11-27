@@ -6,6 +6,7 @@ import { MOVE_REWARD, movesFound, PLAY_MOVES, type AnyToy } from '../engine/play
 import { usePetText } from '../lib/pet';
 import * as audio from '../lib/audio';
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { go } from '../ui/router';
 
 /** What every toy game shares: the toast and speech line, the first-play-of-the-day reward and the "new move" moments. */
@@ -37,9 +38,8 @@ export function PlayShell({ toy, title, toast, line, children }: { toy: AnyToy; 
   const have = movesFound(cat.corner?.log, toy);
   const next = PLAY_MOVES[toy].find((m) => !have.includes(m.id));
   return <div className="screen" style={{ paddingBottom: 'calc(28px + var(--safe-b))' }}>
-    <div className="top"><button className="iconbtn" aria-label="Back to the corner" onClick={() => go('corner')}><Icon name="back" /></button>
-      <b className="sp" style={{ fontSize: 17 }}>{title} with {cat.name}</b>
-      <span className="chip num" style={{ background: 'var(--mint)', minHeight: 32 }} aria-label={`${have.length} of ${PLAY_MOVES[toy].length} moves found`}>{have.length}/{PLAY_MOVES[toy].length}</span></div>
+    <ScreenHeader onBack={() => go('corner')} backLabel="Back to the corner" title={`${title} with ${cat.name}`}
+      trailing={<span className="chip num" style={{ background: 'var(--mint)' }} aria-label={`${have.length} of ${PLAY_MOVES[toy].length} moves found`}>{have.length}/{PLAY_MOVES[toy].length}</span>} />
     <div style={{ minHeight: 46, display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
       {(toast || line) && <span key={toast + line} className={`bubble ${toast ? 'butter' : 'mint'}`} role="status" style={toast ? { background: 'var(--butter)', color: 'var(--butter-ink)' } : undefined}>{toast || line}</span>}</div>
     {children}

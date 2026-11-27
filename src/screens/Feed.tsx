@@ -5,11 +5,12 @@ import type { Photo } from '../sync/remote';
 import { sharingConfigured } from '../sync/config';
 import { go } from '../ui/router';
 import { Icon, Paw } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { Sheet } from '../ui/Sheet';
 import { showToast } from '../ui/Toast';
 import { SKILL_BY_ID } from '../engine/skills';
 import * as audio from '../lib/audio';
-import { ErrLine, Top, errText, useRun } from './Together';
+import { ErrLine, errText, useRun } from './Together';
 
 const PAGE = 20;
 /** The photo's shape, but no taller than 4:5, so a caption is always in view. */
@@ -54,7 +55,7 @@ export function Feed({ skill, embedded = false }: { skill?: string; embedded?: b
 
   // on the Friends tab (embedded) it's a section with a heading, not a page with a back button
   return <div className={embedded ? undefined : 'screen'}>
-    {embedded ? <h2 style={{ marginTop: 18 }}>Photos</h2> : <Top onBack={() => go('friends')} title="Photos" />}
+    {embedded ? <h2 style={{ marginTop: 18 }}>Photos</h2> : <ScreenHeader onBack={() => go('friends')} title="Photos" heading={signedIn} />}
     {!signedIn ? <>
       <h1 style={{ marginTop: 6 }}>Photos with friends</h1>
       <p className="m" style={{ marginTop: 6 }}>Sign in to post photos of your cats and see your friends’ cats.</p>

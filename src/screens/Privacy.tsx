@@ -1,4 +1,5 @@
 import { Icon } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back, go } from '../ui/router';
 
 export const PRIVACY_UPDATED = '23 November 2026';
@@ -12,7 +13,7 @@ const L = ({ items, ink }: { items: React.ReactNode[]; ink?: string }) => <ul cl
    somewhere new, this page changes in the same pull request. */
 export function Privacy() {
   return <div className="screen">
-    <div className="row" style={{ marginTop: 'var(--sp-3)' }}><button className="iconbtn" aria-label="Back" onClick={() => back('home')}><Icon name="back" /></button><h1 className="sp">Privacy</h1></div>
+    <ScreenHeader onBack={() => back('home')} title="Privacy" />
     <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Last updated {PRIVACY_UPDATED}</p>
 
     <div className="card mint" style={{ marginTop: 'var(--sp-4)' }}>

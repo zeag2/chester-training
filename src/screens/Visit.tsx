@@ -7,6 +7,7 @@ import { SKILL_BY_ID } from '../engine/skills';
 import { ageText } from '../lib/stats';
 import * as audio from '../lib/audio';
 import { Icon, Paw } from '../ui/icons';
+import { ScreenHeader } from '../ui/ScreenHeader';
 import { back as goBack } from '../ui/router';
 
 const back = () => goBack('home');
@@ -21,8 +22,7 @@ export function Visit({ catId }: { catId: string }) {
   const [react, setReact] = useState<{ id: ReactionId; n: number } | null>(null);
   useEffect(() => { if (account) store.loadFriends().catch(() => {}).finally(() => setLoading(false)); else setLoading(false); }, [account]);
   const pet = friends?.pets.find((p) => p.catId === catId);
-  const top = <div className="top"><button className="iconbtn" aria-label="Back" onClick={back}><Icon name="back" /></button>
-    <b className="sp" style={{ fontSize: 17 }}>{pet ? `Visiting ${pet.card.name}` : 'Visit'}</b></div>;
+  const top = <ScreenHeader onBack={back} title={pet ? `Visiting ${pet.card.name}` : 'Visit'} />;
   if (!pet) return <div className="screen">{top}
     {loading ? <p className="s" style={{ marginTop: 'var(--sp-4)' }} aria-busy="true">Loading…</p>
       : <div className="card grey"><b>This cat isn’t on your friends list</b><p className="s" style={{ marginTop: 'var(--sp-1)' }}>Friends’ cats show up once you’ve swapped friend codes.</p>
