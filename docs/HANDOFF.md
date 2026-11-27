@@ -33,7 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (426 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (437 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
@@ -69,7 +69,7 @@ log days, the kitten vaccine list, visit details. New components go into docs/de
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
 **Four new props: built, PR open for Josh** (`claude/features-props`, no SQL; Josh's "Yes, queue props", 2026-11-27; art on artifact STmR6cBuuEYyFGrYTkXtVi). Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20), the new `scratch` pose and elbow-jointed sit legs in `src/chester/art.ts`; each move is found by a gesture on the prop's stage (`#/play/<prop>`). See section 1, "Props", and §3a. Timing tuned in a browser; screenshots in `docs/screenshots/props/`. Not yet felt on a real iPhone.
 
-**Running**: nothing (the props PR is waiting for Josh). #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: nothing. #57 four new props (20 moves) merged 2026-11-27 (no SQL); Josh still to feel them on a real iPhone. #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
