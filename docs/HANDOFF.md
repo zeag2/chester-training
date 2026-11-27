@@ -68,7 +68,7 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Running**: push keys from Vault (Josh's go 2026-11-26/27; branch `claude/features-push-vault`, `session_019xqnwfBqLqpfPbvGcgbxsL`; its SQL comes to Josh before anything runs). #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: push keys from Vault (Josh's go 2026-11-26/27; branch `claude/features-push-vault`, `session_019xqnwfBqLqpfPbvGcgbxsL`; its SQL comes to Josh before anything runs); Health + Skills tabs, cozy Home step 2 (Josh's go 2026-11-27; branch `claude/features-health-skills-tabs`, `session_019xqnwhV5jYbCMM7UaDrtFd`). #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
