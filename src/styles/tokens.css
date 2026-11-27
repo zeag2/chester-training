@@ -43,6 +43,8 @@
   --settle-delay:40ms; /* the new row starts this long after its neighbours begin to move */
   --shine-ms:520ms;       /* the badge tap shine; SHINE_MS in src/ui/BadgeShine.tsx must match (a test checks) */
   --shine-flash-ms:240ms; /* reduced motion: the brief brighten instead */
+  /* icon motion (design doc, Motion › Icon motion): small moves played by the person's own tap, press or hover */
+  --imo-turn:30deg;--imo-lift:-3px;--imo-nod:8deg;--imo-nudge:3px;
 
   /* ---- badge and icon art (the same in light and dark: illustration, like the cat) ---- */
   /* one shape and colour per skill branch: base / light (inner face) / ink (accent) */
@@ -88,3 +90,23 @@
 @keyframes ksettlefade{from{opacity:0}to{opacity:1}}
 .settle{animation:ksettle var(--dur) var(--ease-out) var(--settle-delay) both}
 @media (prefers-reduced-motion:reduce){.settle{animation:ksettlefade var(--dur-fast) linear both}}
+
+/* ---- icon motion: on an icon's svg, added by playIconMotion (src/ui/iconMotion.ts) on a tap, removed on animationend.
+   Never on load, never looping, at most --dur. Transforms only: the art itself is never filtered or recoloured. ---- */
+@keyframes kimoturn{50%{transform:rotate(var(--imo-turn))}}
+@keyframes kimobounce{45%{transform:translateY(var(--imo-lift)) scale(1.06)}}
+@keyframes kimonod{40%{transform:rotate(var(--imo-nod))}75%{transform:rotate(calc(var(--imo-nod) * -.25))}}
+@keyframes kimopop{35%{transform:scale(.9)}70%{transform:scale(1.05)}}
+@keyframes kimofade{50%{opacity:.6}}
+.imo-turn{animation:kimoturn var(--dur) var(--ease-out)}
+.imo-bounce{animation:kimobounce var(--dur) var(--ease-out)}
+.imo-nod{animation:kimonod var(--dur) var(--ease-out);transform-origin:50% 85%}
+.imo-pop{animation:kimopop var(--dur) var(--ease-out)}
+/* hover (a mouse) and press moves: the gear turns while hovered; a row's chevron nudges toward where it leads */
+.imo-hover-turn svg{transition:transform var(--dur) var(--ease-out)}
+@media (hover:hover){.imo-hover-turn:hover svg{transform:rotate(var(--imo-turn))}}
+.chev svg{transition:transform var(--dur-fast) var(--ease-out)}
+:active > .chev svg{transform:translateX(var(--imo-nudge))}
+@media (prefers-reduced-motion:reduce){
+  .imo-turn,.imo-bounce,.imo-nod,.imo-pop{animation:kimofade var(--dur-fast) linear}
+  .imo-hover-turn svg,.chev svg{transition:none;transform:none!important}}

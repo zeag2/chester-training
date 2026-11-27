@@ -10,6 +10,7 @@ import {
   dueText, entryTime, GROOM, lastOf, MED_LABEL, medsDue, nextDueLike, recentMeds, RED_FLAGS, reminders, SYMPTOMS, VERDICT_LABEL, typicalKittenWeight, weights,
   type CareData, type CareItem, type CareKind, type DailyWhat, type FoodType, type GroomWhat, type MedDue, type MedWhat, type Verdict,
   dailyDetail,
+  LOG_NAMES,
 } from '../engine/care';
 import { Icon, Paw } from '../ui/icons';
 import { kittenPlan } from '../engine/kittenplan';
@@ -34,7 +35,7 @@ import { useSettle } from '../ui/settle';
 
 const noon = (day: string) => Date.parse(day + 'T12:00:00');
 const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(ms).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
-const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: 'Weight', symptom: 'Symptom', groom: 'Grooming', vet: 'Vet visit', med: 'Medicine or vaccine', doc: 'Document', daily: 'Daily' };
+const TITLE: Record<Exclude<CareKind, 'food'>, string> = { weight: LOG_NAMES.weight, symptom: LOG_NAMES.symptom, groom: LOG_NAMES.groom, vet: LOG_NAMES.vet, med: LOG_NAMES.med, doc: 'Document', daily: 'Daily' };
 const ICON: Record<CareKind, string> = { food: 'leaf', weight: 'target', symptom: 'ear', groom: 'hand', vet: 'box', med: 'check', doc: 'book', daily: 'paw' };
 
 function summary(i: CareItem): string {
@@ -106,8 +107,8 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <h2 style={{ marginTop: 22 }}>Log something</h2>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'var(--sp-2)', marginTop: 10 }}>
       {(['weight', 'symptom', 'groom', 'vet', 'med'] as const).map((k) => <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)', whiteSpace: 'normal', lineHeight: 1.15 }} onClick={() => { audio.chirp(); setEditing({ kind: k }); }}>
-        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{k === 'med' ? 'Medicine' : TITLE[k]}</span></button>)}
-      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)' }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>Food or treat</span></button>
+        <Icon name={ICON[k]} size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{TITLE[k]}</span></button>)}
+      <button className="chipbtn" style={{ height: 'auto', minHeight: 64, borderRadius: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)' }} onClick={() => { audio.chirp(); setEditing({ kind: 'food' }); }}><Icon name="leaf" size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{LOG_NAMES.food}</span></button>
     </div>
   </>;
   const kitten = plan && <><h2 style={{ marginTop: 22 }}>{pt('Kitten vaccines and checkups')}</h2>
@@ -154,6 +155,9 @@ export function Care({ open }: { open?: CareKind } = {}) {
     <PetSwitcher />
     <CareTreatNote />
     <p className="m" style={{ marginTop: 'var(--sp-1)' }}>{pt('Food he likes, his health log and what’s coming up')}{household && household.members.length > 1 ? ', shared with your household' : ''}.</p>
+    {/* the last weight, at the top (moved here from Home's Today card, Home step 1) */}
+    {ws.length > 0 && (() => { const last = ws[ws.length - 1], prev = ws[ws.length - 2]; const d = prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : 0;
+      return <p className="row" data-health="lastweight" style={{ marginTop: 'var(--sp-2)', gap: 'var(--sp-2)' }}><span className="chip num">Last weight · {last.data.lb} lb{d ? ` (${d > 0 ? '+' : ''}${d})` : ''}</span><span className="s">{fmt(last.at)}</span></p>; })()}
     {account && careSync === 'missing' && <div className="card butter"><b>One setup step left</b><p className="s" style={{ marginTop: 'var(--sp-1)', color: 'var(--butter-ink)' }}>Care is saved on this phone. To share it, run the care setup in Supabase (docs/sharing-setup.md, step 5).</p></div>}
 
     {/* desktop (1100 px and up): two columns, then the log as a table across both (docs/plans/2026-11-11-desktop-layout.md, step 5) */}
@@ -376,27 +380,19 @@ export function CareSheet({ editing, onClose }: { editing: NonNullable<Editing>;
     </Sheet>;
 }
 
-/** Home: today at a glance. What's due (up to three), the last weight, and one-tap logging. */
-export function TodayCard() {
+/** Home's "Due now" (Home step 1): medicine to give today and the next booked vet visit, only when there is one of
+    them; otherwise nothing at all. (The longer "Coming up" list lives on Health.) */
+export function DueNow() {
   const { cat, care } = useStore();
-  const due = useMemo(() => reminders(care).slice(0, 3), [care]);
-  const ws = useMemo(() => weights(care), [care]);
-  if (!cat) return null;
-  const last = ws[ws.length - 1];
-  const prev = ws[ws.length - 2];
-  const delta = last && prev ? Math.round((last.data.lb - prev.data.lb) * 10) / 10 : null;
-  return <div className="card sky">
-    <div className="row"><b className="sp" style={{ fontSize: 'var(--fs-body)' }}>Today</b>
-      {last && <a href="#/health" className="chip num" style={{ textDecoration: 'none' }}>{last.data.lb} lb{delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}</a>}</div>
-    {due.length ? due.map((r) => <a key={r.id} href="#/health" className="row" style={{ marginTop: 10, color: 'inherit', textDecoration: 'none', gap: 10 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: r.daysLeft < 0 ? 'var(--rose)' : r.daysLeft <= 3 ? 'var(--butter-strong)' : 'var(--teal)' }} />
-        <span className="sp" style={{ fontSize: 15 }}>{r.title}</span><span className="s">{dueText(r.daysLeft)}</span></a>)
-      : <p className="s" style={{ marginTop: 6 }}>{care.length ? 'All caught up. Nothing due.' : `Start ${cat.name}’s health log: a weigh-in is a great first entry.`}</p>}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 'var(--sp-3)' }}>
-      {([['weight', 'Weight', 'target'], ['symptom', 'Symptom', 'ear'], ['food', 'Food', 'leaf'], ['vet', 'Vet', 'box']] as const).map(([k, label, icon]) =>
-        <button key={k} className="chipbtn" style={{ height: 'auto', minHeight: 58, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-1)', background: 'var(--surface)' }} onClick={() => { audio.chirp(); go('health/log/' + k); }}>
-          <Icon name={icon} size={20} /><span style={{ fontSize: 'var(--fs-label)' }}>{label}</span></button>)}
-    </div>
+  const visit = useMemo(() => reminders(care).filter((r) => r.kind === 'visit').sort((x, y) => x.daysLeft - y.daysLeft)[0], [care]);
+  const meds = useMemo(() => medsDue(care), [care]);
+  if (!cat || (!visit && !meds.length)) return null;
+  return <div data-home="duenow">
+    <MedsDueCard />
+    {visit && <a href={'#/health/visit/' + visit.id.slice(6)} className="card sky row" style={{ color: 'inherit', textDecoration: 'none' }} aria-label={`Next vet visit: ${visit.title.replace(/^Vet: /, '')}, ${dueText(visit.daysLeft)}`}>
+      <div className="ico"><Icon name="box" /></div>
+      <div className="sp"><b>Next vet visit</b><p className="s">{visit.title.replace(/^Vet: /, '')} · {visit.detail}</p></div>
+      <span className="chip">{dueText(visit.daysLeft)}</span><span className="chev"><Icon name="chevron" size={18} /></span></a>}
   </div>;
 }
 

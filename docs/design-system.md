@@ -131,6 +131,34 @@ art carries its own outline, so it reads on both).
 - Never on first page load (only on items added while you watch).
 - Replaces today's `.pop` (500 ms, which feels like a pop) for list items. `.pop` stays only for celebrations.
 
+**Accordion open / close** (2026-11-26, the `Accordion` component): the body's height animates open and closed over
+**220 ms** (`--dur`, `--ease-out`; CSS `grid-template-rows: 0fr → 1fr`, so no measuring), the chevron turns from
+pointing right (closed) to down (open) over the same time. Closed content is `visibility: hidden` once closed, so it
+is out of the tab order and VoiceOver. **Reduced motion:** no height animation; the body appears or goes at once and
+its content fades in over `--dur-fast`; the chevron flips without turning.
+
+**Icon motion** (2026-11-26, Josh: "make it feel more human"). Small, warm moves on an icon, played **only by the
+person's own action** (a tap, a press, a hover), **never on first load, never looping**, each at most `--dur`. They
+move the icon's `<svg>` as a whole (transform only): the art itself is never redrawn, filtered or recoloured. HIG
+`motion.md` › Providing feedback: brief and precise, and avoid motion on interactions that happen very often, so the
+moves are a few pixels or degrees.
+
+| Class (on the icon's `svg`) | Move | Where | Trigger |
+|---|---|---|---|
+| `.imo-turn` | turns `--imo-turn` (30°) and back | the Settings gear (Home, side nav) | tap (`playIconMotion`), and on hover with a mouse |
+| `.imo-bounce` | lifts `--imo-lift` (3 px), grows 6 %, settles | Home, Health and Friends tab icons | selecting a tab that wasn't current |
+| `.imo-nod` | dips its head: tilts `--imo-nod` (8°) forward and back | the cat (paw) tab, the brand paw | selecting the tab / tapping the brand |
+| `.imo-pop` | soft pop: 0.9 → 1.05 → 1 | the + (gold Chester plus, the desktop Log button's +) | press |
+| `.imo-nudge` | moves `--imo-nudge` (3 px) toward where it leads | a row's chevron (`.chev`) | while the row is pressed (CSS `:active`) |
+
+- JS-played moves use `playIconMotion(el, kind)` / `iconPress(kind)` from `src/ui/iconMotion.ts`: it adds the class,
+  and removes it on `animationend`, so the same tap can play it again. Hover and press moves are CSS transitions.
+- Tokens: `--imo-turn 30deg`, `--imo-lift -3px`, `--imo-nod 8deg`, `--imo-nudge 3px`; durations are `--dur` (and
+  `--dur-fast` for the chevron), curve `--ease-out`.
+- **Reduced motion:** no movement at all; a played move becomes a `--dur-fast` dip in opacity (1 → .6 → 1), and the
+  hover / press moves do nothing.
+- The old `.tab.on svg` "ktabin" scale (450 ms, played on every load) is gone: a tab now moves only when you pick it.
+
 ## Tokens in code (`src/styles/tokens.css`)
 Every token above lives in `src/styles/tokens.css`, which `app.css` imports first; `app.css` and `chester.css` hold only
 component classes. Use them as `var(--name)` in CSS and in inline styles (`style={{ fontSize: 'var(--fs-small)' }}`).
@@ -144,7 +172,7 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Space | `--sp-1` 4, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-8` 32 |
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
-| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine) |
+| Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine); icon motion `--imo-turn` 30deg, `--imo-lift` −3px, `--imo-nod` 8deg, `--imo-nudge` 3px (classes `.imo-*`, see "Icon motion") |
 | Badge and icon art (same in both themes) | `--branch-<foundation\|care\|manners\|adventure\|tricks>` with `-light` and `-ink`; `--icon-sky --icon-grey` (Chester icon fills); `--art-outline` (Chester icon outline, light and dark); `--badge-outline`; `--badge-tile` 64; `--icon-idle` (a tab icon that isn't current) |
 
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
@@ -181,6 +209,9 @@ go-ahead and a screenshot pass:
 | Document row | `DocRow` from `src/ui/DocRow.tsx` | `doc`, `visit?`, `onMore`, `onSelect?`, `selected?` |
 | **Table** | `.logtable` (desktop Health log, `HealthLogTable` in `src/screens/Care.tsx`) | `log`, `quick`, `who`, `onOpen`, `onQuickLogs` |
 | **Tab bar / side nav** | `TabBar` from `src/ui/TabBar.tsx` | `active`, `onPlus`, `dot?`, `catLabel?`; the same bar becomes the side nav from 760 px |
+| **Accordion** (progressive disclosure, see Rules) | `Accordion` from `src/ui/Accordion.tsx`; CSS `.acc` in `app.css` | `title` (what it discloses, e.g. "Water and appetite (optional)"), `children`, `defaultOpen?`; or controlled with `open` + `onToggle`. The header is a 44 px tall button (`aria-expanded`, `aria-controls`) with the title at `--fs-small` bold and a `chevron` that points right when closed, down when open (HIG `disclosure-controls.md`). Opens and closes in `--dur` (see Motion). No card of its own: it sits inside a card or panel. First use: the daily check's Water and Appetite on Home |
+| **Notice** (one dismissible note on Home) | `HomeNotice` from `src/ui/HomeNotice.tsx` | `.card sky`, a bold title, a `.s` line, one action (`.btn` or `.btn2` on `--surface`) and a Close `.iconbtn`. Shows one note at a time, most important first: "PalDex has a new home", then "Your Home Screen icon still shows the old cats". Closing remembers it on this phone |
+| **+ log list** | `QuickLog` from `src/screens/QuickLog.tsx` | the one full list of everything you can log, as grouped rows (`.lgroup` + `.lrow`, a label above each group): Health, Food, Training, Documents. One name per kind, used everywhere: Weight, Symptom, Medicine or vaccine, Vet visit, Grooming, Food or treat, Training set, Vet document (`LOG_NAMES` in `src/engine/care.ts`) |
 | Pet switcher | `PetSwitcher` from `src/ui/PetSwitcher.tsx` | `style?`, `inNav?` |
 | **Tooltip** | `TooltipHost` from `src/ui/Tooltip.tsx` (mounted once) | automatic on `.iconbtn[aria-label]` and `[data-tip]`, hover devices only |
 | Progress bar | `.bar` > `<i style={{ width }}>` | |

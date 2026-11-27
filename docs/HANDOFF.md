@@ -48,17 +48,18 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 
 **Build next: UX review 2026-11-25** (review-only worker, apple-design skill; needs Josh's go per item). Ranked:
 1 text follows iPhone Text Size (rem + system body size) L · ✓2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
-3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind) M · 4 Health segmented
+✓3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind; in the Home step 1 PR) M · 4 Health segmented
 "Overview · Log · Documents", one black button per segment M · 5 one Skills screen "Tree · List" (Trophy case stays) M ·
 ✓6 one screen-header component in the design system S–M · ✓7 skill tree locked rows full contrast, lock icon only S ·
 ✓8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
 2-column tables S · 10 Book a visit: one "+ Add a vet" S · 11 Appearance setting (HIG says none; Josh's call) S ·
 12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
 "Chester ·" dot S · ✓15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
-(✓ = in the UI visual-match PR, `claude/features-ui-match`, waiting for Josh.)
+(✓ = done: 2, 6, 7, 8, 15 in #53; 3 in the Home step 1 PR.) Next after Josh's look at Home step 1: the cozy Home
+proposal's later steps (room art for the stage), then item 4 (Health segmented) or 1 (Text Size).
 
 **Build next: cozy Home plan (proposal 2026-11-26, Josh picks each step)**
-1. Home restructure (UX 3; running now as Home step 1 + icon motion). 2. Health "Overview · Log · Documents" and
+1. Home restructure (UX 3; open as the Home step 1 + icon motion PR, waiting for Josh). 2. Health "Overview · Log · Documents" and
 Skills "Tree · List" segmented controls (UX 4, 5) M. 3. Art director's room kit (wall, floor, window × 4 times of day,
 rug, bowl, lamp, lights), then Chester's room on Home: light follows the time of day, logs appear in the room (bowl
 after Fed, litter box after Scooped, last toy on the rug), mood follows care, tap reactions near objects. L, new art.
@@ -66,7 +67,8 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 5. Seasonal room items + window birds M–L. Carousels only for Home's photo strip and the try-on; accordions for older
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
-**Running**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, `session_019xqnwhPpyPRHH3tkeMAqEf`). #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
+**Running**: nothing. #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
@@ -96,6 +98,26 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ## 1. What's built
 
+- **Home step 1 + icon motion** (2026-11-26, PR from `claude/features-home-step1`, no SQL; apple-design skill). Josh's
+  "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons". Home now runs top
+  down from simple to complex: greeting + date; Chester's stage (same cat, room art later); Quick log (Fed · Scooped ·
+  Played); the daily check as one row ("All normal" / "Something's off") with Water and Appetite in an **Accordion**
+  (done = one line); one dismissible **notice** (`src/ui/HomeNotice.tsx`: the "new home" card and the Home Screen icon
+  note merged; HomeIconNote.tsx is gone; closing the "new home" note is remembered as `paldex-moved-notice`); **Due
+  now** (`DueNow` in `src/screens/Care.tsx`: meds due + the next booked vet visit, nothing when neither); the account
+  nudge; Training, then the corner; friends' news, the Friends strip and the newest photo last. The Today card is gone:
+  its Weight / Symptom / Food / Vet buttons are in the **+ list** (`QuickLog`, now grouped rows Health · Food ·
+  Training · Documents, UX review item 3; one name per kind, `LOG_NAMES` in `src/engine/care.ts`, also used by
+  Health's "Log something"), its last weight is a chip at the top of Health, and its other reminders stay on Health's
+  "Coming up". The age footer went. Desktop keeps two columns (stage + everyday care left; training, corner, friends
+  right). **New in the design system first:** `Accordion` (`src/ui/Accordion.tsx`, 220 ms grid-row open/close,
+  reduced motion = instant + `--dur-fast` fade) and **Icon motion** (`src/ui/iconMotion.ts`, `.imo-*` in
+  `tokens.css`): the gear turns (tap, and hover with a mouse), tab icons bounce when picked (the cat's tab nods, the
+  brand paw nods), the + pops, row chevrons nudge while pressed; never on load, never looping, ≤ `--dur`, reduced
+  motion = a `--dur-fast` opacity dip. The old load-time `ktabin` tab scale is gone. Tests:
+  `src/screens/homestep1.test.tsx` (16) + the daily-check test opens the accordion (403 tests). Screenshots (before /
+  after, 390 px, light and dark, Home and the + sheet): `docs/screenshots/home-step1/`. Not yet felt on a real iPhone
+  (the motions especially).
 - **UI visual match** (2026-11-25, PR from `claude/features-ui-match`, no SQL; apple-design skill). The rest of the app
   brought in line with the badge art and line icons (#52), plus UX review items 2, 6, 7, 8, 15. Behaviour, data and SQL
   unchanged. Screenshots (before/after, 390 px, light and dark): `docs/screenshots/ui-match/`.
@@ -239,7 +261,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   untouched (Pillow diff of five phone screens vs main: identical but for the cat's wave). No tooltips yet (brief §4,
   icon-only buttons). Screenshots: `docs/plans/img/2026-11-11-polish-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
-  change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
+  change, quick-log buttons: `TodayCard` in `Care.tsx`; replaced 2026-11-26 by `DueNow`, the + list and Health's last-weight chip, see Home step 1 above), a small Training card only for cats with training on, the
   corner, friends.
 - **Health** (`#/health`, the old Care page): `#/health/log/<kind>` opens a log form straight away.
 - **+** (`QuickLog.tsx`): weight, symptom, food, vet, medicine, grooming, a document, and a training set (if on).
@@ -614,7 +636,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
   ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
   An icon already on a Home Screen keeps its old name (long-press to rename, or remove and add it again).
-- **"Your Home Screen icon still shows the old cats"** (2026-11-10, `src/ui/HomeIconNote.tsx`, on Home): in the
+- **"Your Home Screen icon still shows the old cats"** (2026-11-10, `src/ui/HomeIconNote.tsx`, on Home; since 2026-11-26 part of `src/ui/HomeNotice.tsx`): in the
   installed iPhone app only (standalone and iOS; never in Safari tabs or on Android, which updates from the manifest),
   the app remembers the cats it first ran with (`rememberHomeLook`, `paldex-homescreen-look`: all the names and the
   first two cats' coat and eyes). When those change, Home shows the note once per change (Close or Got it stores
@@ -1445,7 +1467,7 @@ here in the same commit (see `CLAUDE.md`).
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
-| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). |
+| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). **Used 2026-11-26** for Home step 1 + icon motion (`claude/features-home-step1`): SKILL.md plus `motion.md` (feedback motion brief and precise, avoid motion on very frequent interactions, make motion optional → small transform-only moves and a reduced-motion opacity fallback) and `disclosure-controls.md` (a labelled disclosure that points right when closed and down when open → the Accordion). |
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
@@ -1469,6 +1491,11 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-26, Home step 1 + icon motion (Features worker, `claude/features-home-step1`): **apple-design** skill
+  (`motion.md`, `disclosure-controls.md`). No plugins installed or removed; MCP: GitHub (pull request) and
+  `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest, typecheck, build; Playwright
+  (preinstalled Chromium) against the Vite dev server with a cat, two weigh-ins, a medicine due today, a booked visit
+  and a Fed seeded through `globalThis.__chesterStore`, at 390 px light and dark, before and after.
 - 2026-11-25, "Contact us" form + Messages inbox (Features worker, `claude/features-contact-us`): **supabase** and
   **supabase-postgres-best-practices** skills (RLS/grants checklist: column-level INSERT grants, `(select auth.uid())`
   in policies, definer trigger in `private` with a pinned `search_path` and execute revoked, indexes for the inbox and
