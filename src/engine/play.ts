@@ -5,9 +5,11 @@
    A real cat watches a fast toy, walks over to a slow one, crouches and wiggles, then pounces; a laser dot up the wall
    gets stared at (and chattered at); a feather dangling low gets swatted, one swishing past overhead gets leapt at. */
 
+import { PROP_MOVES, PROP_TOYS, type PropToy } from './props';
+
 export type Toy = 'laser' | 'wand';
-/** Every toy with its own game: the chasing toys here, the hiding toys (box, tunnel) in `hideout.ts`. */
-export type AnyToy = Toy | 'box' | 'tunnel';
+/** Every toy with its own game: the chasing toys here, the hiding toys (box, tunnel) in `hideout.ts`, the props in `props.ts`. */
+export type AnyToy = Toy | 'box' | 'tunnel' | PropToy;
 export interface Target { x: number; h: number }
 export type Mode = 'sit' | 'watch' | 'stare' | 'walk' | 'chase' | 'stalk' | 'pounce' | 'land' | 'swat' | 'happy';
 
@@ -41,6 +43,8 @@ export type PlayEvent = { kind: 'move'; move: string } | { kind: 'catch' } | { k
 
 /** The moves to discover with each toy, in the order you're likely to find them, with a hint for the next one. */
 export const PLAY_MOVES: Record<AnyToy, { id: string; name: string; hint: string }[]> = {
+  // the four props (src/engine/props.ts has their triggers and timings)
+  ...(Object.fromEntries(PROP_TOYS.map((p) => [p, PROP_MOVES[p].map(({ id, name, hint }) => ({ id, name, hint }))])) as Record<PropToy, { id: string; name: string; hint: string }[]>),
   laser: [
     { id: 'wiggle', name: 'Butt wiggle', hint: 'Hold the dot still near him.' },
     { id: 'zoomies', name: 'Zoomies', hint: 'Whip the dot back and forth across the floor.' },

@@ -67,9 +67,9 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Running: four new props** (Josh: "Yes, queue props", started 2026-11-27 with his OK; branch `claude/features-props`, `session_019xqnwiAtsEWh5QyhQ5yBfe`; art on artifact STmR6cBuuEYyFGrYTkXtVi). One PR, not merged: Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20); the scratching moves need a new stand-up pose `scratchUp()` in `src/chester/art.ts`. Moves were checked only as still frames, so expect timing tweaks. Art (HANDOFF.md, PROPS.md, donut/post/perch/kicker SVGs, 48 px icons, scenes.json/.css, src/build.ts, poses.ts, props.ts, scenes.ts) is in the art channel's `paldex-art/props/`; a worker needs it as an artifact link or relayed.
+**Four new props: built, PR open for Josh** (`claude/features-props`, no SQL; Josh's "Yes, queue props", 2026-11-27; art on artifact STmR6cBuuEYyFGrYTkXtVi). Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20), the new `scratch` pose and elbow-jointed sit legs in `src/chester/art.ts`; each move is found by a gesture on the prop's stage (`#/play/<prop>`). See section 1, "Props", and §3a. Timing tuned in a browser; screenshots in `docs/screenshots/props/`. Not yet felt on a real iPhone.
 
-**Running**: the props worker (above). #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: nothing (the props PR is waiting for Josh). #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
@@ -575,8 +575,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   - **Storage:** files go in the private `pet-docs` bucket, readable by household members only.
 
 ### Chester's corner (`#/corner`, under Train, from Home's yellow card, or "Spend treats" after a set)
-- **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 3 toys (box, laser dot,
-  crinkle tunnel) and 3 cushions (mint, heart, cloud). Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
+- **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 6 toys (box, laser dot,
+  crinkle tunnel, Sisal tower, Sunny window, Catnip pickle) and 4 cushions (mint, heart, cloud, Sprinkle donut).
+  Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
 - **Outfits show everywhere** Chester appears for that pet (Home, session, recap, settings, skill pages). They're
   drawn in head coordinates in `outfit()` in `src/chester/art.ts`, so they follow every pose, the rig and petting.
   Tap a worn outfit or cushion again to take it off.
@@ -597,6 +598,34 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Buys, gifts and plays are an append-only log merged by id on sync (two phones never lose each other's buys; the
   gift and play ids are per day, so they can't be claimed twice). The outfit and cushion choice carry their own
   `styledAt`, so an unrelated edit on another phone never undoes them. Balance = treats from sets + the log.
+
+### Props (2026-11-27, `claude/features-props`; art kit from the art channel, artifact STmR6cBuuEYyFGrYTkXtVi)
+- **Four props, five moves each**, bought in the corner: **Sprinkle donut** (a cushion, 30: he sits on it on Home like
+  the other beds, and it's in the Play row too), **Sisal tower** (32), **Sunny window** (48), **Catnip pickle** (16).
+  Tapping one in the Play row opens `#/play/<prop>` (`src/screens/PropPlay.tsx` inside `PlayShell`: "Moves found",
+  +3 treats per new move, the first play each day pays like the other toys). No SQL (moves and buys are corner log events).
+- **The game**: a stage with him resting by the prop; a gesture plays a move, then he rests again. Rules and timings
+  are pure in `src/engine/props.ts` (`PROP_MOVES`, `pickPropMove`, `classify`; tested in `props.test.ts`):
+
+  | Prop | tap | three quick taps | hold (0.6 s) | wiggle (drag back and forth) | flick (quick swipe) | leave him 6 s |
+  |---|---|---|---|---|---|---|
+  | Donut | Biscuit baker; **Wake-up yawn** while he naps | | Slow blink | | | Round and round, then **Donut hole** (nap) |
+  | Tower | Big stretch; **Proud strut** right after a scratch | Scratch scratch | | | Pom-pom bat | Top of the tower |
+  | Window | Bird TV; **Ek-ek-ek** while he watches it | | Paw on the glass | Rainy day doze | | Sunbeam loaf |
+  | Pickle | Sniff test | | Roly-poly | Bunny kicks | Catnip zoomies | **Blissed out** after the zoomies |
+
+  A move playing isn't restarted, and a new one waits 0.8 s before it can cut in (three quick taps still turn a stretch
+  into a scratch). Up to 3 idle moves in a row (1 with reduced motion), then he just rests. Enter or Space on the
+  focused stage is a tap. The hints in "Moves found" are these gestures (the kit's "sunny morning" / "rainy day" ideas
+  became gestures; real weather or time of day could drive them later).
+- **Timing tweaks** after playing them in Chromium (the kit had only checked still frames; all marked "app tune" in
+  `props.css`): Paw on the glass's paw hung down (the press keyframes now turn about the raised paw's −160°); the catnip
+  puff (Sniff test) and the drifting hearts (Blissed out) lost their positions (a CSS `transform` replaced the SVG
+  attribute; now `translate`/`rotate`/`scale` properties); Proud strut started off screen (now starts a step left of
+  where he rests); `--fall` was missing (added as a token). Each move plays whole loops of its scene (`ms` in
+  `PROP_MOVES`: e.g. kneading 4 × 1.1 s, scratching 4 × 0.9 s, the jump once at 7 s).
+- **Known cuts** (left as drawn): between resting and some moves he jumps a little (Ek-ek-ek sits further right; Top
+  of the tower zooms the view out to fit the jump arc).
 
 ### Chester himself (the character)
 _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): section 3a._
@@ -1254,7 +1283,12 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   shadow, spun as a whole about (100, 122)), `full` (front-facing, round belly after a meal: `.pawPat`, `.puff`),
   `sploot` (front-on, flat on the floor, legs out, tail up: the roll), and the **play poses**, side on facing right:
   `crouch` (stalk: shoulders low, `.rump` up and wiggling, `.pawLift`), `leap` (stretched pounce, front paws forward;
-  the play screen tilts it along the arc), `reach` (rearing up on the back legs, `.swipe` paw high, mouth open). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
+  the play screen tilts it along the arc), `reach` (rearing up on the back legs, `.swipe` paw high, mouth open); and `scratch` (2026-11-27, the props kit: stood up
+  on his back legs, front paws up on the Sisal tower to his right; `.rakeA/.rakeB` front legs about the shoulder with
+  `.foreA/.foreB` forearms about the elbow, `.claws`, a fixed tube tail `.tailS`, no rig tail). The sit pose takes
+  `legs: 'flex' | 'swat'` (props kit): each front leg split at the elbow (`.upL/.loL`, `.upR/.loR` inside the usual
+  `.pawL/.r-legL` groups; upper turns about (x, 142), lower about (x, 166)); `swat` also draws the right paw over the head.
+  Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
 - **Head:** `head(c, eyes, mood, uid, wear, { size, outer, turn })`, scaled by `HEAD_SIZE.scale` (0.88) × the pose's
   own size about the neck. `turn` swings the face toward the side (walk). `mood`: `curious` (round eyes), `happy`
   (^ ^), `sleepy`, `open` (mouth open).
@@ -1359,6 +1393,13 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   a paw up); `swat` → `reach`; `watch` → `crouch` (laser) or `sit` (wand); `stare`/`sit`/`happy` → `sit` (`react="r13"`
   on a catch). Mouth open (`mood="open"`) in the air and while swatting. Dev builds expose the brain as
   `globalThis.__playBrain` for checks.
+
+- **Prop scenes** (`src/chester/propScenes.ts`, `props.css`, `src/screens/PropPlay.tsx`): no `<Chester>` component and
+  no rig. Each scene is one SVG string: the prop's back layer, Chester in a nested `<svg viewBox="-14 -34 232 232">` (so
+  `props.css` transform-origins are plain Chester numbers) filled by `slotSVG()` from `chesterSVG()` (his coat, eyes and
+  outfit), the prop's front layer, effects. Animated by `.sc-<scene id>` rules in `props.css`, which reuse
+  `chester.css`'s anims (`nap`, `slowblink`, `yawn`, `zoom`…). An element with its own SVG `transform` attribute must
+  be animated with the `translate`/`rotate`/`scale` properties (a CSS `transform` replaces the attribute).
 
 ### Checking an animation
 - `#/gallery` (dev only) shows every pose and the nuzzle. The dev store is `globalThis.__chesterStore` for seeding.
@@ -1529,6 +1570,15 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-27, four new props (Features worker, `claude/features-props`): no skills invoked; no plugins installed or
+  removed. Art read from the art channel's artifact STmR6cBuuEYyFGrYTkXtVi (`paldex-art/props/`) with the Artifact
+  tool (read only), reviewed and ported into `src/chester/props.ts`, `propScenes.ts`, `props.css` and `art.ts`. MCP:
+  GitHub (pull request) and `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest (437,
+  new `src/engine/props.test.ts`), typecheck, build; Playwright (preinstalled Chromium) against the Vite dev server with
+  a cat seeded and the four props bought through `globalThis.__chesterStore`, each of the 20 moves triggered by real
+  gestures (tap, 3 taps, hold, flick, wiggle, idle) and captured as 5 frames, tiled with Pillow into contact sheets,
+  390 px, light and dark (`docs/screenshots/props/`). `src/ui/pushask.test.tsx` failed in some runs on main too (the
+  known flaky case); the full run passed.
 - 2026-11-27, Health and Skills segmented controls (Features worker, `claude/features-health-skills-tabs`):
   **apple-design** skill (`segmented-controls.md`: equal-width segments, noun labels, text only, at most ~5 on
   iPhone, for switching closely related subviews; `layout.md`). No plugins installed or removed; MCP: GitHub (pull

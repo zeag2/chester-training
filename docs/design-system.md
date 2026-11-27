@@ -2,7 +2,7 @@
 
 The design doc for PalDex. New screens and changes follow it; anything it doesn't cover gets added here first.
 Phase 1 named the direction and the tokens. Phase 2 (done) moved the code onto them: tokens, components and rules are below.
-Updated 2026-11-26 for the badge art (Josh): the art layer, branch colours, art sizes and their rules. 2026-11-27: the segmented control (`Segmented`, with its slide).
+Updated 2026-11-26 for the badge art (Josh): the art layer, branch colours, art sizes and their rules. 2026-11-27: the segmented control (`Segmented`, with its slide); the four props ("Props": prop art, shelf icons, the prop stage, `--art-floor`, `--fall`).
 
 ## Constraints (Josh)
 - **One named aesthetic direction, committed.** Never "modern and clean".
@@ -119,6 +119,7 @@ art carries its own outline, so it reads on both).
 | `--dur-fast` | 120 ms | press, fade, reduced motion |
 | `--dur` | 220 ms | settle, toast in |
 | `--dur-slow` | 320 ms | sheets |
+| `--fall` | cubic-bezier(.33, 0, .66, .33) | art only: a fall under gravity (the prop scenes' jumps and hops) |
 
 **"Settle into place" (a new log entry, a new row, a saved item):** the PM's proposal, kept, with one tune:
 - The new row: `opacity 0 → 1`, `translateY(6px → 0)`, `scale(.98 → 1)`, **220 ms**, `--ease-out`. No overshoot (no `--back`
@@ -178,6 +179,7 @@ component classes. Use them as `var(--name)` in CSS and in inline styles (`style
 | Radius | `--r-chip` 8, `--r-row` 14, `--r-card` 22, `--r-sheet` 26, `--r-pill` 999 |
 | Depth | `--shadow-card` (the one card shadow), `--shadow-float` (dialogs, the drop note) |
 | Motion | `--ease-out --ease-in-out` (`--sine`, and `--back` for celebrations only), `--dur-fast` 120, `--dur` 220, `--dur-slow` 320, `--settle-delay` 40; `--shine-ms` 520 and `--shine-flash-ms` 240 (the badge shine); the segmented control's thumb uses `--dur` + `--ease-out` (`.segthumb`); icon motion `--imo-turn` 30deg, `--imo-lift` −3px, `--imo-nod` 8deg, `--imo-nudge` 3px (classes `.imo-*`, see "Icon motion") |
+| Prop scenes (art layer) | `--art-floor` (the floor line a prop scene draws: #e3e0d5 light, #55564e dark; `.propstage` maps it to the scenes' `--floor`); `--fall` cubic-bezier(.33,0,.66,.33) (gravity: speeding up on the way down, for jumps and hops in the scenes) |
 | Badge and icon art (same in both themes) | `--branch-<foundation\|care\|manners\|adventure\|tricks>` with `-light` and `-ink`; `--icon-sky --icon-grey` (Chester icon fills); `--art-outline` (Chester icon outline, light and dark); `--badge-outline`; `--badge-tile` 64; `--icon-idle` (a tab icon that isn't current) |
 
 **Not yet on the scale (left as literals on purpose, so nothing moved).** The sweep only swapped values that equal a
@@ -224,6 +226,7 @@ go-ahead and a screenshot pass:
 | Inline question panel | `PANEL` + `Choice` in `src/ui/DailyTaps.tsx` (What's off?, Playtime, Daily check) | a `--sky` box inside the Quick log card: bold title, `.s` line, then `.seg` one-of rows (`Choice`: label above, tap the picked one again to clear) or `.chipbtn` chips, then `.btn2` + `.btn` side by side |
 | **Settle** (a new row) | `useSettle(keys)` from `src/ui/settle.ts`; CSS `.settle` in `tokens.css` | ref on the list, `data-settle-key={id}` on each row. Used by the Health log (phone list and desktop table) |
 | **Badge** | `BadgeTile` in `src/screens/Trophies.tsx` (`.badgetile`), `BadgeShine` from `src/ui/BadgeShine.tsx` | see "Badges, shine and icons" |
+| **Prop stage** (a prop's game) | `PropPlay` from `src/screens/PropPlay.tsx`; CSS `.propstage` + `.propscene` in `app.css` | `prop` (`'donut' \| 'post' \| 'perch' \| 'kicker'`); see "Props" |
 | Layout | `useLayout()` from `src/ui/layout.ts` | `phone`, `tablet` or `desktop` (760 / 1100 px) |
 | Visually hidden | `.visually-hidden` | text for VoiceOver only ("Locked" beside a lock icon) |
 | **Ask card** (a yes/not-now question at the right moment) | `PushAsk` from `src/ui/PushAsk.tsx`: `.card butter`, a Title line, a `.s` sub-line, then "Turn on" (`.btn2` on `--surface`) and "Not now" (`.btn2` transparent) | `title`, `sub`; inline where the moment is (after a friend request), or `askForPush(…)` → `<PushAskHost />` (mounted once in App) shows it in a `Sheet` after a sheet has closed (after saving a repeating medicine). Same pattern as `AccountNudge`. |
@@ -257,6 +260,29 @@ go-ahead and a screenshot pass:
     Icon tiles (`.ico`) and icon buttons draw at stroke 1.9, like the set.
   - **Tab bar labels** (UX review 2026-11-25, item 2): 12 px (`--fs-label`), `--muted` when not current (5.4:1 light,
     7.5:1 dark; it was `--muted-2` at 11 px, 3.47:1), `--ink` on the current tab.
+
+## Props (approved by Josh 2026-11-27; art from artifact STmR6cBuuEYyFGrYTkXtVi, `paldex-art/props/`)
+Four corner items with a game of five moves each: **Sprinkle donut** (a cushion, 30 treats), **Sisal tower** (toy, 32),
+**Sunny window** (toy, 48), **Catnip pickle** (toy, 16). They are **art layer**, like the cat: pastel fills, the
+#1f2440 outline, flat shade shapes; no colour depends on his coat. Use them as drawn (no recolour, filter or redraw in a
+screen); new prop art is made in the art kit first and added here.
+- **Prop art** (`src/chester/props.ts`): `donut()`, `post()`, `perch()`, `pickle()` (plus `bird`, `butterfly`, `leaf`,
+  `heart`, `spark`), drawn in Chester's own pose space (floor y = 190, he stands round x = 100), so a scene stacks prop
+  back layer, Chester, prop front layer. Each takes an id for its clip paths: pass a unique one per drawing on a page.
+- **Shelf icons** (`ICONS` in `props.ts`, 48 px viewBox, shown at 40 like the other toys) in the Corner's shelf and Play
+  row. The donut on Home and in the corner is `CushionArt id="donut"` (its own art, fitted to the cushions' 220 × 76 box).
+- **Scenes** (`src/chester/propScenes.ts` + `src/chester/props.css`): 20 scenes `.sc-<prop>-<move>`, each with its own
+  viewBox (6:5; Top of the tower is zoomed out to fit the jump), plus a resting scene per prop. `{{CAT|variant|anim}}`
+  slots are filled with his own `chesterSVG()` (coat, eyes, outfit). Two poses came with them: `scratch` (stood up on
+  the post) and the sit pose's `legs: 'flex' | 'swat'` (front legs split at the elbow). See HANDOFF §3a.
+- **The prop stage** (`.propstage` in `app.css`, `PropPlay` in `src/screens/PropPlay.tsx`, inside `PlayShell`): the
+  scene fills it at 6:5; `--sky` above his floor line and `--butter` below, like the toy stages (`--floor-at` per scene);
+  `--r-card` corners; focusable (Enter or Space is a tap), `role="application"` with the gestures in its label, and the
+  same gestures as a line under it.
+- **Motion:** each move plays a whole number of its loops (`PROP_MOVES[].ms` in `src/engine/props.ts`), then he rests.
+  Curves are the tokens (`--sine`, `--ease-out`, `--ease-in-out`, `--fall`). **Reduced motion:** the moves play as the
+  cat's own anims do (they're what you asked for), but no more than one idle move plays by itself, and the tower doesn't
+  shake while he scratches.
 
 ## Rules
 - **New screens use existing components and tokens only.** No literal colours, sizes, spacing or radii in new code.
