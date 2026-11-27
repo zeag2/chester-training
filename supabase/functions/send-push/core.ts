@@ -154,6 +154,36 @@ export async function queueMeds(d: MedsDeps, now = Date.now()): Promise<{ people
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// the keys: Edge Function secrets if set, else Vault (public.push_secrets(), service role only)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The four keys send-push needs. Empty string = not set. */
+export interface Keys { cronKey: string; publicKey: string; privateKey: string; subject: string }
+const KEY_NAMES = ['cronKey', 'publicKey', 'privateKey', 'subject'] as const;
+export const keysComplete = (k: Keys) => KEY_NAMES.every((n) => !!k[n]);
+
+/** A getter for the keys: each one from `env()` when set there, else from `vault()`, which is asked only when env
+    lacks one. Vault's answer is kept for the life of this instance once it fills every gap; an incomplete or failed
+    read is asked again next time (so secrets added later work without a redeploy). Never throws: a failed read just
+    leaves those keys empty, and the caller says "not set up". */
+export function keyLoader(env: () => Partial<Keys>, vault: () => Promise<Partial<Keys> | null>, log?: (m: string) => void): () => Promise<Keys> {
+  let cached: Partial<Keys> | null = null;
+  let pending: Promise<Partial<Keys> | null> | null = null;
+  const merge = (e: Partial<Keys>, v: Partial<Keys> | null): Keys =>
+    Object.fromEntries(KEY_NAMES.map((n) => [n, e[n] || v?.[n] || ''])) as unknown as Keys;
+  return async () => {
+    const e = env();
+    if (keysComplete(merge(e, null))) return merge(e, null);
+    if (cached) return merge(e, cached);
+    const v = await (pending ??= vault().catch((err) => { log?.(`keys from Vault: ${(err as Error).message}`); return null; })
+      .finally(() => { pending = null; }));
+    const k = merge(e, v);
+    if (keysComplete(k)) cached = v;
+    return k;
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // the request: only the cron (or the PM testing by hand) with the shared key
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -167,11 +197,12 @@ export function sameKey(a: string, b: string): boolean {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
-export interface HandlerDeps { cronKey: string | undefined; drain(): Promise<DrainResult>; meds(): Promise<{ people: number; queued: number }> }
+export interface HandlerDeps { cronKey(): Promise<string | undefined>; drain(): Promise<DrainResult>; meds(): Promise<{ people: number; queued: number }> }
 export async function handle(req: Request, d: HandlerDeps): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
-  if (!d.cronKey || d.cronKey.length < 16) return json({ error: 'not set up (PUSH_CRON_KEY)' }, 503);
-  if (!sameKey(req.headers.get('x-cron-key') ?? '', d.cronKey)) return json({ error: 'forbidden' }, 403);
+  const key = await d.cronKey();
+  if (!key || key.length < 16) return json({ error: 'not set up (PUSH_CRON_KEY or Vault push_cron_key)' }, 503);
+  if (!sameKey(req.headers.get('x-cron-key') ?? '', key)) return json({ error: 'forbidden' }, 403);
   let mode: unknown;
   try { mode = ((await req.json()) as { mode?: unknown }).mode; } catch { return json({ error: 'bad body' }, 400); }
   if (mode === 'drain') return json(await d.drain());

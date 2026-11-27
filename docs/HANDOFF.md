@@ -68,7 +68,7 @@ after Fed, litter box after Scooped, last toy on the rug), mood follows care, ta
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
 **Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
-**Running**: push keys from Vault (Josh's go 2026-11-26/27; branch `claude/features-push-vault`, `session_019xqnwfBqLqpfPbvGcgbxsL`; its SQL comes to Josh before anything runs); Health + Skills tabs, cozy Home step 2 (Josh's go 2026-11-27; branch `claude/features-health-skills-tabs`, `session_019xqnwhV5jYbCMM7UaDrtFd`). #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Running**: Health + Skills tabs, cozy Home step 2 (Josh's go 2026-11-27; branch `claude/features-health-skills-tabs`, `session_019xqnwhV5jYbCMM7UaDrtFd`). #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
@@ -763,6 +763,19 @@ Items marked *(art)* suit the art session.
    Josh's steps: `docs/sharing-setup.md` step 16. Tests: `src/lib/push.test.ts`, `src/ui/pushask.test.tsx`
    (browser faked by `src/lib/pushtest-env.ts`), `src/lib/sendpushfile.test.ts`. Screenshots: `docs/screenshots/push/`.
    Next: Josh runs the SQL + secrets + deploy, merge both PRs, then the iPhone test in the plan.
+   **Keys from Vault, 2026-11-27** (PR from `claude/features-push-vault`; SQL `20261127000000_push_vault.sql`): send-push
+   was never deployed and the old VAPID private key was lost, so Josh made a new pair and put all four keys in Vault
+   (`push_cron_key`, `push_vapid_public`, `push_vapid_private`, `push_vapid_subject` = `https://paldex-4qh.pages.dev/`).
+   `public.push_secrets()` (security definer, `search_path = ''`, execute for `service_role` only) returns them;
+   send-push's `keyLoader` (core.ts) takes each key from the Edge Function env if set, else from that RPC with the
+   service-role client, read once per instance once all four are there (an incomplete or failed read is retried next
+   call, so a later Vault fix needs no redeploy; a *changed* key does). The cron key is still checked in constant time,
+   and drain still fails before touching the outbox without the VAPID keys. New public key in `src/sync/config.ts`
+   (`BFTJa8EH…`). Phones subscribed with the old key: `refreshPush` (app start) and `enablePush` compare the
+   subscription's `options.applicationServerKey` with ours; a different one is unsubscribed, removed from the server
+   (`removePushSubscription`) and replaced (a browser that doesn't report the key is left alone). Tests:
+   `core.test.ts` (env vs Vault), `push.test.ts` (old-key re-subscribe), `supabase/tests/push_vault_test.sql`
+   (anon/authenticated refused, service_role gets all four; `stub_vault.sql` fakes Vault), e2e Vault-only steps.
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -1179,7 +1192,8 @@ supabase/
     20261126000000_contact_messages.sql  "Contact us": contact_messages (insert-only for everyone), app_admins (the owner)
     20261116000000_bundle.sql            the 2026-11-16 batch (photo feed, push_subscriptions, …)
     20261123000000_push.sql              push: push_prefs, push_outbox, enqueue_push, 3 triggers, pg_cron jobs (not run yet)
-  tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
+    20261127000000_push_vault.sql        push_secrets(): send-push's four keys from Vault, service role only
+  tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql/stub_vault.sql stand in for Supabase)
   tests/send-push-e2e/  run.sh: the real send-push in Deno + PostgREST + Postgres 16 + a fake push service (not CI)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
   functions/send-push/  push sender (Edge Function, called by pg_cron): index.ts wires core.ts (logic, Vitest-tested)
@@ -1376,7 +1390,12 @@ npm run build      # what CI runs
   oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
   friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
   `security_test` last. 2026-11-25 (Contact us): the same chain plus `20261126000000_contact_messages.sql` (twice) and
-  `contact_test.sql` (its own people V, W) before `security_test`: passed. User D goes into `auth.users` only (not
+  `contact_test.sql` (its own people V, W) before `security_test`: passed. 2026-11-27 (push keys from Vault): load
+  `stub_vault.sql` after the other stubs; the same chain plus `20261127000000_push_vault.sql` (twice) and
+  `push_vault_test.sql` before `security_test`: passed (strip `create extension pg_net/pg_cron` from the week 3 bundle
+  too; `setup-db.sh` now does that for any file). e2e in a cloud session: run `deno cache --no-lock
+  --node-modules-dir=none` on `e2e.ts` and `index.ts` first (with `--unsafely-ignore-certificate-errors` Deno ignores
+  `DENO_CERT` for npm downloads and fails on the proxy's certificate). User D goes into `auth.users` only (not
   `cat_members`) before the households migration, or `household_test` counts 3 members. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
   migrations, rls_test, people_test).
 - **send-push end to end** (not in CI): `supabase/tests/send-push-e2e/run.sh` installs Deno 2.9.6 (npm) and
@@ -1462,8 +1481,8 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
-| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
-| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account) and 2026-11-25 (Contact us). |
+| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration, and 2026-11-27 for `push_secrets()` (push keys from Vault). (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
+| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account), 2026-11-25 (Contact us) and 2026-11-27 (push keys from Vault). |
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
@@ -1491,6 +1510,11 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-27, push keys from Vault (Features worker, `claude/features-push-vault`): **supabase** and
+  **supabase-postgres-best-practices** skills (security-definer checklist: `search_path = ''`, revoke from public/anon/
+  authenticated, grant to service_role only). No plugins installed or removed; MCP: GitHub (pull request) and
+  `send_message` to the PM. Tools in scratch space only: Postgres 16 (the full SQL chain), Deno 2.9.6 + PostgREST
+  12.2.3 (`send-push-e2e/run.sh`, source and one-file copy). Checks: Vitest, typecheck, build.
 - 2026-11-26, Home step 1 + icon motion (Features worker, `claude/features-home-step1`): **apple-design** skill
   (`motion.md`, `disclosure-controls.md`). No plugins installed or removed; MCP: GitHub (pull request) and
   `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest, typecheck, build; Playwright
