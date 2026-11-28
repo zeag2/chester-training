@@ -1,4 +1,4 @@
-last-reviewed: 12fd2f52d0819c8ed55f2789ad4cfbfc7a0c1355
+last-reviewed: dab6597f45c30a8d402895c5d87758e76b78c88b
 
 # UX review log
 
@@ -18,6 +18,11 @@ When a review runs, it adds a `last-reviewed: <sha>` line at the top and a dated
   checklist in docs/HANDOFF.md, section 2).
 
 ## Reviews (newest first)
+
+### 2026-11-28: 12fd2f5..dab6597
+Main brought cozy Home step 2 (Health and Skills segmented controls, the daily check's water and appetite behind an
+optional row, HomeNotice), the push vault and four new props. Merged cleanly. Checked Home, Health (Overview / Log /
+Documents) and Skills in light and dark mode. No changes needed; the daily-check suggestion from 11-26 is done.
 
 ### 2026-11-27: fdd3089..12fd2f5
 Main brought the UI visual-match pass (one ScreenHeader for non-tab screens, chevron icons). Merged cleanly; the
