@@ -2,7 +2,7 @@
    PushManager), so src/lib/push.ts and the screens can be tested in jsdom. */
 import { vi } from 'vitest';
 
-export interface FakeSub { endpoint: string; toJSON(): unknown; unsubscribe: ReturnType<typeof vi.fn> }
+export interface FakeSub { endpoint: string; options: { applicationServerKey: ArrayBuffer | null }; toJSON(): unknown; unsubscribe: ReturnType<typeof vi.fn> }
 export interface FakeBrowser {
   permission: NotificationPermission;
   /** What the next permission prompt answers. */
@@ -14,8 +14,9 @@ export interface FakeBrowser {
 }
 
 let n = 0;
-export function fakeSub(endpoint = `https://fcm.googleapis.com/fcm/send/e${++n}`): FakeSub {
-  const s: FakeSub = { endpoint, toJSON: () => ({ endpoint, keys: { p256dh: 'BKey' + n, auth: 'auth' + n } }), unsubscribe: vi.fn(async () => { if (b?.sub === s) b.sub = null; return true; }) };
+/** A subscription; `key` = the applicationServerKey it was made with (null: this browser doesn't say). */
+export function fakeSub(endpoint = `https://fcm.googleapis.com/fcm/send/e${++n}`, key: Uint8Array | null = null): FakeSub {
+  const s: FakeSub = { endpoint, options: { applicationServerKey: key ? (key.slice().buffer as ArrayBuffer) : null }, toJSON: () => ({ endpoint, keys: { p256dh: 'BKey' + n, auth: 'auth' + n } }), unsubscribe: vi.fn(async () => { if (b?.sub === s) b.sub = null; return true; }) };
   return s;
 }
 
@@ -26,7 +27,7 @@ export function fakeBrowser(opts: { permission?: NotificationPermission; push?: 
   const had = { sw: Object.getOwnPropertyDescriptor(navigator, 'serviceWorker'), ua: Object.getOwnPropertyDescriptor(navigator, 'userAgent'), pm: w.PushManager, n: w.Notification };
   const fb: FakeBrowser = {
     permission: opts.permission ?? 'default', answer: 'granted', sub: null,
-    subscribe: vi.fn(async () => { fb.sub = fakeSub(); return fb.sub; }),
+    subscribe: vi.fn(async (o: PushSubscriptionOptionsInit) => { fb.sub = fakeSub(undefined, o.applicationServerKey as Uint8Array); return fb.sub; }),
     requestPermission: vi.fn(async () => { if (fb.permission === 'default') fb.permission = fb.answer; return fb.permission; }),
     restore() {
       if (had.sw) Object.defineProperty(navigator, 'serviceWorker', had.sw); else delete (navigator as unknown as Record<string, unknown>).serviceWorker;

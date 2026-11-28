@@ -4,19 +4,19 @@ import { store, useStore } from '../db/store';
 import { recommendNext } from '../engine/plan';
 import { SKILLS, SKILL_BY_ID } from '../engine/skills';
 import { DAILY_REWARDED_SETS } from '../engine/rewards';
-import { daysHome, today, ageText } from '../lib/stats';
+import { daysHome, today } from '../lib/stats';
 import { Icon, Paw, ChesterIcon } from '../ui/icons';
 import { go } from '../ui/router';
 import * as audio from '../lib/audio';
-import { MedsDueCard, TodayCard } from './Care';
+import { DueNow } from './Care';
 import { PetSwitcher } from '../ui/PetSwitcher';
 import { Chase } from '../chester/Chase';
 import { FRIEND_BONUS, giftClaimed } from '../engine/corner';
-import { movedTo } from '../lib/moved';
 import { pendingFriend } from '../lib/invite';
 import { InviteSheet } from './Friends';
 import { FriendsStrip } from '../ui/FriendsStrip';
-import { HomeIconNote } from '../ui/HomeIconNote';
+import { HomeNotice } from '../ui/HomeNotice';
+import { iconPress } from '../ui/iconMotion';
 import { DailyTaps } from '../ui/DailyTaps';
 import { AccountNudge } from '../ui/AccountNudge';
 import { NewestPhoto } from '../ui/NewestPhoto';
@@ -204,7 +204,7 @@ export function Home() {
     : done ? `That's ${DAILY_REWARDED_SETS} sets today. Nap time!` : sets.length === 0 ? `Hi! I'm ${cat.name}. Let's start with the clicker.` : next ? `${next.kind === 'last' ? 'Another round:' : 'Next up:'} ${next.skill.name}. Ready?` : 'Pet me!';
 
   // the cat scene, the "new home" card, and the cards that go in the right-hand column on desktop
-  const scene = <div ref={sceneRef} className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>
+  const scene = <div ref={sceneRef} data-home="stage" className={S.big ? 'row homescene big' : 'row'} style={{ alignItems: 'flex-end', gap: 'var(--sp-1)', marginTop: 10 }}>
       {chasing ? <Chase cats={[{ id: cat.id, name: cat.name, coat: cat.coat, eyes: cat.eyes, wear: cat.corner?.wearing }, ...others]} width={S.big ? Math.min(520, sceneRef.current?.clientWidth || 480) : Math.min(360, window.innerWidth - 40)} size={S.cat} gap={S.gap} onDone={() => setChasing(false)} />
       : <div className={`bedspot${bed ? ' onbed' : ''}`}>{bed && <div className="bed" aria-hidden="true"><CushionArt id={bed} width={S.bed} /></div>}
       <div className={`gagwrap ${gag ?? (petMe === 'in' ? 'back' : '')}${nuzzle && calm && !knead ? ' nuzzling' : ''}`}><span className="gagflip">
@@ -222,22 +222,22 @@ export function Home() {
     <span aria-hidden="true" style={{ width: 28, height: 28, overflow: 'hidden', display: 'inline-flex', alignItems: 'flex-start', justifyContent: 'center' }}>
       <Chester coat={cat.coat} eyes={cat.eyes} wear={cat.corner?.wearing} mood="happy" width={38} /></span>
     {pets.length > 1 ? 'Cats' : cat.name}<Icon name="chevron" size={16} /></button>;
-  const moved = movedTo() && <div className="card butter"><b style={{ color: 'var(--butter-ink)' }}>PalDex has a new home</b>
-      <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 'var(--sp-1)' }}>{account ? `Open the new link, sign in, and add it to your Home Screen. ${cat.name}’s training comes with you.` : `First sign in (Settings, then Set up a household) so ${cat.name}’s training is saved online. Then open the new link and sign in there.`}</p>
-      <a className="btn" style={{ marginTop: 'var(--sp-3)' }} href={movedTo()!}>Open {new URL(movedTo()!).host}</a></div>;
-  const rest = <>
-      <FriendsStrip onInvite={() => setInvite(true)} />
+  // Home step 1, top down from simple to complex: greeting, the stage, Quick log, the daily check, the notice, Due now,
+  // then Training and the corner, and friends' news and the newest photo last
+  const cards = <>
       {/* the card is the button (it starts the next skill), with one "Change skill" chip (UX review 2026-11-25, item 8) */}
-      {cat.training !== false && <div className="card mint cardlink traincard">
+      {cat.training !== false && <div className="card mint cardlink traincard" data-home="training">
         <a href={next && !done ? '#/session/' + next.skill.id : '#/train'} className="row">
           <div className="ico"><Icon name="target" /></div>
           <div className="sp"><b>Training</b><p className="s">{done ? `${DAILY_REWARDED_SETS} of ${DAILY_REWARDED_SETS} sets today. Nap time!` : next ? `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today · ${next.kind === 'last' ? 'last time' : 'up next'}: ${next.skill.name}` : `${Math.min(rewardedToday, DAILY_REWARDED_SETS)} of ${DAILY_REWARDED_SETS} sets today`}</p></div>
           {next && !done && <span className="chip">Start</span>}</a>
-        {next && !done && <button className="chipbtn" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('tree')}>Change skill</button>}</div>}
-      {wallet && <a href="#/corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><div className="ico"><Paw color="var(--butter-strong)" size={24} /></div><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
+        {next && !done && <button className="chipbtn" aria-label={`Change skill (now ${next.skill.name})`} onClick={() => go('skills/tree')}>Change skill</button>}</div>}
+      {wallet && <a href="#/corner" data-home="corner" className="card butter row" style={{ color: 'inherit', textDecoration: 'none' }}><div className="ico"><Paw color="var(--butter-strong)" size={24} /></div><div className="sp"><b style={{ color: 'var(--butter-ink)' }}>{cat.name}’s corner</b>
         <p className="s" style={{ color: 'var(--butter-ink)' }}>{giftClaimed(cat.corner, t) ? `${Math.max(0, wallet.treats)} treats to spend on outfits, toys and cushions.` : `Today’s gift is waiting · ${Math.max(0, wallet.treats)} treats to spend`}</p></div>
         {!giftClaimed(cat.corner, t) && <span className="chip" style={{ background: 'var(--surface)' }}>New</span>}</a>}
-      {friendNews && <div className="card butter pop" role="status">
+  </>;
+  const friends = <>
+      {friendNews && <div className="card butter pop" role="status" data-home="friendnews">
         <div className="row" style={{ alignItems: 'flex-start' }}><Icon name="star" /><div className="sp">
           <b style={{ color: 'var(--butter-ink)' }}>{friendNews.names.length === 1 ? `${friendNews.names[0]} is now your friend!` : `${friendNews.names.length} new friends!`}</b>
           <p className="s" style={{ color: 'var(--butter-ink)', marginTop: 2 }}>+{FRIEND_BONUS.treats * friendNews.names.length} treats and +{friendNews.names.length} bond for {cat.name}{friendNews.scarf ? `, and a Friendship scarf in ${pt('his')} corner` : ''}.</p></div>
@@ -246,7 +246,10 @@ export function Home() {
           {friendNews.scarf && <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { void store.wear('scarf'); store.dismissFriendNews(); }}>Put the scarf on</button>}
           <button className="btn2" style={{ flex: 1, background: 'var(--surface)' }} onClick={() => { store.dismissFriendNews(); go('friends'); }}>See their cats</button></div>
       </div>}
+      <FriendsStrip onInvite={() => setInvite(true)} />
+      <NewestPhoto />
   </>;
+  const care = <><DailyTaps /><HomeNotice /><DueNow /><AccountNudge /></>;
 
   return <div className={S.big ? 'screen wide' : 'screen'}>
     <div aria-hidden="true" style={{ position: 'absolute', inset: '0 0 auto 0', height: 420, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -256,17 +259,17 @@ export function Home() {
       {ph === 'night' && [[10, 30], [30, 18], [55, 40], [78, 22], [90, 60]].map(([x, y], i) => <span key={i} className="star" style={{ left: x + '%', top: y, animationDelay: `-${i * 0.7}s` }} />)}
     </div>
     <div className="stag" style={{ position: 'relative' }}>
-      <div><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
+      <div data-home="greeting"><p className="m">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} · day {daysHome(cat.homeDate)} at home</p>
         <div className="row"><h1 className="sp" style={{ marginTop: 'var(--sp-1)' }}>{GREET[ph]}{myName ? `, ${myName}` : ''}.</h1>
           {/* Settings lives here now (navigation Option A); the desktop side nav has it at the bottom */}
-          <button className="iconbtn" aria-label="Settings" onClick={() => go('settings')}><ChesterIcon name="settings" /></button></div>
+          <button className="iconbtn imo-hover-turn" aria-label="Settings" onClick={(e) => { iconPress('turn')(e); go('settings'); }}><ChesterIcon name="settings" /></button></div>
         {partners.length > 0 && <p className="s" style={{ marginTop: 'var(--sp-1)' }}>Looking after {pets.length > 1 ? 'your cats' : cat.name} with {partners.join(' and ')}</p>}
         <PetSwitcher />
         {account && !myName && <button className="chipbtn" style={{ marginTop: 'var(--sp-2)', alignSelf: 'flex-start' }} onClick={() => go('settings')}>Add your name so {cat.name} can greet you</button>}</div>
-      {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}<DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto /></div><div className="homecol">{moved}<HomeIconNote />{rest}</div></div>
-        : <>{scene}{catLink}{moved}<HomeIconNote /><DailyTaps /><AccountNudge /><MedsDueCard /><TodayCard /><NewestPhoto />{rest}</>}
+      {/* desktop keeps two columns: the stage and the everyday care left, training, the corner and friends right */}
+      {S.big ? <div className="homecols"><div className="homecol">{scene}{catLink}{care}</div><div className="homecol">{cards}{friends}</div></div>
+        : <>{scene}{catLink}{care}{cards}{friends}</>}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
-      <p className="s" style={{ textAlign: 'center', marginTop: 'var(--sp-5)' }}>{cat.name} · {ageText(cat.birthday)}</p>
     </div>
   </div>;
 }

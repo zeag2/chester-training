@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react';
 import { ChesterIcon, Icon } from './icons';
 import { useLayout } from './layout';
 import { PetSwitcher } from './PetSwitcher';
+import { iconPress, playIconMotion } from './iconMotion';
 
 /**
  * The main navigation (docs/plans/2026-11-14-navigation.md, Option A). Phone (under 760 px): Home · Health · + ·
@@ -19,22 +20,24 @@ export function TabBar({ active, onPlus, dot, catLabel = 'Cats' }: { active: str
     const el = document.documentElement; el.dataset.nav = layout === 'desktop' ? 'side' : 'rail';
     return () => { delete el.dataset.nav; };
   }, [layout]);
-  const t = (id: string, label: string, icon: string) => <a href={'#/' + id} className={`tab ${active === id ? 'on' : ''}`} aria-current={active === id ? 'page' : undefined}>
+  // icon motion (design doc, Motion › Icon motion): picking a tab bounces its icon (the cat's tab nods); never on load
+  const pickTab = (id: string) => (e: React.MouseEvent<HTMLElement>) => { if (active !== id) playIconMotion(e.currentTarget.querySelector('svg'), id === 'chester' ? 'nod' : 'bounce'); };
+  const t = (id: string, label: string, icon: string) => <a href={'#/' + id} className={`tab ${active === id ? 'on' : ''}`} aria-current={active === id ? 'page' : undefined} onClick={pickTab(id)}>
     <span style={{ position: 'relative', display: 'inline-flex' }}><ChesterIcon name={icon} />{dot === id && <i className="tabdot" aria-label="new" />}</span>{label}</a>;
   if (layout === 'tablet') return <nav className="tabs rail" aria-label="Main"><div className="tabs-in">
-    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
+    <button className="tab" aria-label="Log something" onClick={(e) => { iconPress('pop')(e); onPlus(); }}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
     {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}
   </div></nav>;
   if (layout === 'desktop') return <nav className="sidenav" aria-label="Main">
-    <a className="brand" href="#/home"><ChesterIcon name="paw" />PalDex</a>
-    <button className="btn navlog" onClick={onPlus}><Icon name="plus" size={20} />Log</button>
+    <a className="brand" href="#/home" onClick={iconPress('nod')}><ChesterIcon name="paw" />PalDex</a>
+    <button className="btn navlog" onClick={(e) => { iconPress('pop')(e); onPlus(); }}><Icon name="plus" size={20} />Log</button>
     <div className="navtabs">{t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}{t('chester', catLabel, 'paw')}{t('friends', 'Friends', 'user')}</div>
     <PetSwitcher inNav />
-    <a href="#/settings" className={`tab navsettings ${active === 'settings' ? 'on' : ''}`} aria-current={active === 'settings' ? 'page' : undefined}><ChesterIcon name="settings" />Settings</a>
+    <a href="#/settings" className={`tab navsettings imo-hover-turn ${active === 'settings' ? 'on' : ''}`} aria-current={active === 'settings' ? 'page' : undefined} onClick={iconPress('turn')}><ChesterIcon name="settings" />Settings</a>
   </nav>;
   return <nav className="tabs" aria-label="Main"><div className="tabs-in">
     {t('home', 'Home', 'home')}{t('health', 'Health', 'heart')}
-    <button className="tab" aria-label="Log something" onClick={onPlus}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
+    <button className="tab" aria-label="Log something" onClick={(e) => { iconPress('pop')(e); onPlus(); }}><span className="plus cplus"><ChesterIcon name="plus" /></span></button>
     {t('chester', catLabel, 'paw')}
     {t('friends', 'Friends', 'user')}
   </div></nav>;

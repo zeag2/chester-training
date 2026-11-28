@@ -62,7 +62,7 @@ export function FriendsStrip({ onInvite }: { onInvite: () => void }) {
   const pets = friends && !friends.missing ? friends.pets : [];
   const given = new Set(friends?.given ?? []);
   const canTreat = !!friends && friends.treats !== 'missing';
-  return <div className="card sky" style={{ paddingBottom: 10 }}>
+  return <div className="card sky" data-home="friends" style={{ paddingBottom: 10 }}>
     {requests.filter((q) => q.incoming).map((q) => <FriendRequestRow key={q.userId} q={q} style={{ marginBottom: 10 }} />)}
     {treatNews && <div className="row pop" role="status" style={{ marginBottom: 10 }}>
       <Paw color="var(--butter-strong)" size={22} />

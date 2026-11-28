@@ -6,8 +6,10 @@
 // supabase/migrations/20261123000000_push.sql) with the header `x-cron-key`:
 //   {"mode":"drain"}  every minute while the outbox has unsent rows: send them with Web Push
 //   {"mode":"meds"}   every hour at :05: queue today's medicine reminders for people whose medicine hour it is
-// Secrets (Edge Functions → Secrets; never in the repo): PUSH_CRON_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
-// VAPID_SUBJECT (a mailto: address). SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
+// Keys: read once per instance from Vault through public.push_secrets() (service role only; the Vault secrets
+// push_cron_key, push_vapid_public, push_vapid_private, push_vapid_subject; see 20261127000000_push_vault.sql).
+// An Edge Function secret with the same meaning wins when set: PUSH_CRON_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
+// VAPID_SUBJECT (mailto: or https:). SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 // Deploy with JWT verification off (the cron sends its own key, not a sign-in):
 //   supabase functions deploy send-push --no-verify-jwt
 // The logic lives in core.ts (tested with Vitest); this file only connects it to the database and the network.
@@ -33,24 +35,32 @@ async function all<T>(page: (from: number, to: number) => PromiseLike<{ data: T[
   }
 }
 
-const vapid = () => ({ subject: env('VAPID_SUBJECT'), publicKey: env('VAPID_PUBLIC_KEY'), privateKey: env('VAPID_PRIVATE_KEY') });
+type Secrets = { cron_key: string | null; vapid_public: string | null; vapid_private: string | null; vapid_subject: string | null };
+const keys = keyLoader(
+  () => ({ cronKey: env('PUSH_CRON_KEY'), publicKey: env('VAPID_PUBLIC_KEY'), privateKey: env('VAPID_PRIVATE_KEY'), subject: env('VAPID_SUBJECT') }),
+  async () => {
+    const r = (check(await sb.rpc('push_secrets')) as Secrets[] | null)?.[0];
+    return r ? { cronKey: r.cron_key ?? '', publicKey: r.vapid_public ?? '', privateKey: r.vapid_private ?? '', subject: r.vapid_subject ?? '' } : null;
+  },
+  (m) => console.error(m),
+);
 
-async function send(s: Subscription, payload: unknown, topic: string | undefined): Promise<number> {
+async function send(k: Keys, s: Subscription, payload: unknown, topic: string | undefined): Promise<number> {
   // web-push builds the encrypted request (VAPID JWT + aes128gcm); fetch sends it (no Node https needed on Deno)
   const r = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(payload),
-    { vapidDetails: vapid(), TTL: TTL_SECONDS, ...(topic ? { topic } : {}), urgency: 'normal' });
+    { vapidDetails: { subject: k.subject, publicKey: k.publicKey, privateKey: k.privateKey }, TTL: TTL_SECONDS, ...(topic ? { topic } : {}), urgency: 'normal' });
   const res = await fetch(r.endpoint, { method: r.method, headers: r.headers as Record<string, string>, body: r.body, signal: AbortSignal.timeout(10_000) });
   await res.body?.cancel();
   return res.status;
 }
 
-const runDrain = () => {
-  // without the VAPID secrets nothing can be sent: fail before touching the outbox, so no row loses a try
-  const v = vapid();
-  if (!v.subject || !v.publicKey || !v.privateKey) throw new Error('not set up (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)');
-  return drainNow();
+const runDrain = async () => {
+  // without the VAPID keys nothing can be sent: fail before touching the outbox, so no row loses a try
+  const k = await keys();
+  if (!k.subject || !k.publicKey || !k.privateKey) throw new Error('not set up (VAPID keys: Vault push_vapid_* or Edge Function secrets)');
+  return drainNow(k);
 };
-const drainNow = () => drain({
+const drainNow = (k: Keys) => drain({
   unsent: async (limit) => rows(await sb.from('push_outbox').select('id, user_id, kind, title, body, url, tag, tries')
     .is('sent_at', null).lt('tries', MAX_TRIES).order('created_at').limit(limit)) as OutboxRow[],
   // one conditional update per tries value: a row another run already claimed no longer matches
@@ -64,7 +74,7 @@ const drainNow = () => drain({
     return got;
   },
   subscriptions: async (ids) => rows(await sb.from('push_subscriptions').select('endpoint, user_id, p256dh, auth').in('user_id', ids)) as Subscription[],
-  send,
+  send: (s, payload, topic) => send(k, s, payload, topic),
   markSent: async (ids) => { check(await sb.from('push_outbox').update({ sent_at: new Date().toISOString() }).in('id', ids)); },
   giveUp: async (ids) => { check(await sb.from('push_outbox').update({ tries: MAX_TRIES }).in('id', ids)); },
   deleteSubscriptions: async (eps) => { check(await sb.from('push_subscriptions').delete().in('endpoint', eps)); },
@@ -116,7 +126,7 @@ const runMeds = () => queueMeds({
 
 Deno.serve(async (req) => {
   try {
-    return await handle(req, { cronKey: Deno.env.get('PUSH_CRON_KEY'), drain: runDrain, meds: () => runMeds() });
+    return await handle(req, { cronKey: async () => (await keys()).cronKey, drain: runDrain, meds: () => runMeds() });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
@@ -279,6 +289,36 @@ export async function queueMeds(d: MedsDeps, now = Date.now()): Promise<{ people
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// the keys: Edge Function secrets if set, else Vault (public.push_secrets(), service role only)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The four keys send-push needs. Empty string = not set. */
+export interface Keys { cronKey: string; publicKey: string; privateKey: string; subject: string }
+const KEY_NAMES = ['cronKey', 'publicKey', 'privateKey', 'subject'] as const;
+export const keysComplete = (k: Keys) => KEY_NAMES.every((n) => !!k[n]);
+
+/** A getter for the keys: each one from `env()` when set there, else from `vault()`, which is asked only when env
+    lacks one. Vault's answer is kept for the life of this instance once it fills every gap; an incomplete or failed
+    read is asked again next time (so secrets added later work without a redeploy). Never throws: a failed read just
+    leaves those keys empty, and the caller says "not set up". */
+export function keyLoader(env: () => Partial<Keys>, vault: () => Promise<Partial<Keys> | null>, log?: (m: string) => void): () => Promise<Keys> {
+  let cached: Partial<Keys> | null = null;
+  let pending: Promise<Partial<Keys> | null> | null = null;
+  const merge = (e: Partial<Keys>, v: Partial<Keys> | null): Keys =>
+    Object.fromEntries(KEY_NAMES.map((n) => [n, e[n] || v?.[n] || ''])) as unknown as Keys;
+  return async () => {
+    const e = env();
+    if (keysComplete(merge(e, null))) return merge(e, null);
+    if (cached) return merge(e, cached);
+    const v = await (pending ??= vault().catch((err) => { log?.(`keys from Vault: ${(err as Error).message}`); return null; })
+      .finally(() => { pending = null; }));
+    const k = merge(e, v);
+    if (keysComplete(k)) cached = v;
+    return k;
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // the request: only the cron (or the PM testing by hand) with the shared key
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -292,11 +332,12 @@ export function sameKey(a: string, b: string): boolean {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
-export interface HandlerDeps { cronKey: string | undefined; drain(): Promise<DrainResult>; meds(): Promise<{ people: number; queued: number }> }
+export interface HandlerDeps { cronKey(): Promise<string | undefined>; drain(): Promise<DrainResult>; meds(): Promise<{ people: number; queued: number }> }
 export async function handle(req: Request, d: HandlerDeps): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
-  if (!d.cronKey || d.cronKey.length < 16) return json({ error: 'not set up (PUSH_CRON_KEY)' }, 503);
-  if (!sameKey(req.headers.get('x-cron-key') ?? '', d.cronKey)) return json({ error: 'forbidden' }, 403);
+  const key = await d.cronKey();
+  if (!key || key.length < 16) return json({ error: 'not set up (PUSH_CRON_KEY or Vault push_cron_key)' }, 503);
+  if (!sameKey(req.headers.get('x-cron-key') ?? '', key)) return json({ error: 'forbidden' }, 403);
   let mode: unknown;
   try { mode = ((await req.json()) as { mode?: unknown }).mode; } catch { return json({ error: 'bad body' }, 400); }
   if (mode === 'drain') return json(await d.drain());

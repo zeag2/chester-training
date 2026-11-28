@@ -3,8 +3,6 @@ import { SKILLS } from '../engine/skills';
 import { isUnlocked } from '../engine/rules';
 import type { Branch, SkillDef } from '../engine/types';
 import { Icon, ICON_FOR } from '../ui/icons';
-import { ScreenHeader } from '../ui/ScreenHeader';
-import { back } from '../ui/router';
 
 const BG: Record<Branch, string> = { Foundation: 'sky', Care: 'peach', Manners: 'mint', Adventure: 'butter', Tricks: 'grey' };
 export type State = 'm' | 'p' | 'u' | 'l';
@@ -29,16 +27,16 @@ export function Node({ d, st, sub, indent = 0 }: { d: SkillDef; st: State; sub: 
         : <span className="chip" style={{ background: st === 'm' ? 'var(--ink-2)' : 'var(--grey)', color: look.fg }}>{STATE_LABEL[st]}</span>}</a></div>;
 }
 
-export function Tree() {
+/** The tree view of Skills (`#/skills/tree`): every skill by branch, and what unlocks next. */
+export function TreeView() {
   const { cat, progress, sets, unlockedHidden } = useStore();
   if (!cat) return null;
   const started = (id: string) => sets.some((s) => s.skillId === id);
   const visible = SKILLS.filter((d) => !d.hidden || unlockedHidden.includes(d.id));
   const branches: Branch[] = ['Foundation', 'Care', 'Manners', 'Adventure', 'Tricks'];
   const nextLocks = visible.filter((d) => skillState(d, progress, unlockedHidden, false) === 'l');
-  return <div className="screen">
-    <ScreenHeader onBack={() => back('chester')} title={`${cat.name}’s skill tree`} />
-    <p className="m" style={{ marginTop: 'var(--sp-1)' }}>Master a skill to unlock the ones that build on it.</p>
+  return <>
+    <p className="m" style={{ marginTop: 'var(--sp-3)' }}>Master a skill to unlock the ones that build on it.</p>
     {nextLocks.length > 0 && <div className="card butter"><p className="s" style={{ color: 'var(--butter-ink)' }}><b>{nextLocks.length} skills</b> are waiting on something {cat.name} hasn't mastered yet.</p></div>}
     <div className="stag">{branches.map((b) => {
       const ds = visible.filter((d) => d.branch === b);
@@ -51,5 +49,5 @@ export function Tree() {
           return <Node key={d.id} d={d} st={st} sub={sub} indent={d.requires.length && d.requires[0] !== 'clicker' ? 22 : 0} />; })}
         {!ds.length && <p className="s" style={{ marginTop: 10 }}>All hidden for now. Check-ins unlock them.</p>}
       </div>; })}</div>
-  </div>;
+  </>;
 }

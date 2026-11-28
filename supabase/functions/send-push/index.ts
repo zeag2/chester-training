@@ -2,14 +2,16 @@
 // supabase/migrations/20261123000000_push.sql) with the header `x-cron-key`:
 //   {"mode":"drain"}  every minute while the outbox has unsent rows: send them with Web Push
 //   {"mode":"meds"}   every hour at :05: queue today's medicine reminders for people whose medicine hour it is
-// Secrets (Edge Functions → Secrets; never in the repo): PUSH_CRON_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
-// VAPID_SUBJECT (a mailto: address). SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
+// Keys: read once per instance from Vault through public.push_secrets() (service role only; the Vault secrets
+// push_cron_key, push_vapid_public, push_vapid_private, push_vapid_subject; see 20261127000000_push_vault.sql).
+// An Edge Function secret with the same meaning wins when set: PUSH_CRON_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
+// VAPID_SUBJECT (mailto: or https:). SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 // Deploy with JWT verification off (the cron sends its own key, not a sign-in):
 //   supabase functions deploy send-push --no-verify-jwt
 // The logic lives in core.ts (tested with Vitest); this file only connects it to the database and the network.
 import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
-import { drain, handle, MAX_TRIES, queueMeds, TTL_SECONDS, type OutboxRow, type PetMeds, type Prefs, type Subscription } from './core.ts';
+import { drain, handle, keyLoader, MAX_TRIES, queueMeds, TTL_SECONDS, type Keys, type OutboxRow, type PetMeds, type Prefs, type Subscription } from './core.ts';
 import type { MedEntry } from '../_shared/meds.ts';
 
 const env = (k: string) => Deno.env.get(k) ?? '';
@@ -31,24 +33,32 @@ async function all<T>(page: (from: number, to: number) => PromiseLike<{ data: T[
   }
 }
 
-const vapid = () => ({ subject: env('VAPID_SUBJECT'), publicKey: env('VAPID_PUBLIC_KEY'), privateKey: env('VAPID_PRIVATE_KEY') });
+type Secrets = { cron_key: string | null; vapid_public: string | null; vapid_private: string | null; vapid_subject: string | null };
+const keys = keyLoader(
+  () => ({ cronKey: env('PUSH_CRON_KEY'), publicKey: env('VAPID_PUBLIC_KEY'), privateKey: env('VAPID_PRIVATE_KEY'), subject: env('VAPID_SUBJECT') }),
+  async () => {
+    const r = (check(await sb.rpc('push_secrets')) as Secrets[] | null)?.[0];
+    return r ? { cronKey: r.cron_key ?? '', publicKey: r.vapid_public ?? '', privateKey: r.vapid_private ?? '', subject: r.vapid_subject ?? '' } : null;
+  },
+  (m) => console.error(m),
+);
 
-async function send(s: Subscription, payload: unknown, topic: string | undefined): Promise<number> {
+async function send(k: Keys, s: Subscription, payload: unknown, topic: string | undefined): Promise<number> {
   // web-push builds the encrypted request (VAPID JWT + aes128gcm); fetch sends it (no Node https needed on Deno)
   const r = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(payload),
-    { vapidDetails: vapid(), TTL: TTL_SECONDS, ...(topic ? { topic } : {}), urgency: 'normal' });
+    { vapidDetails: { subject: k.subject, publicKey: k.publicKey, privateKey: k.privateKey }, TTL: TTL_SECONDS, ...(topic ? { topic } : {}), urgency: 'normal' });
   const res = await fetch(r.endpoint, { method: r.method, headers: r.headers as Record<string, string>, body: r.body, signal: AbortSignal.timeout(10_000) });
   await res.body?.cancel();
   return res.status;
 }
 
-const runDrain = () => {
-  // without the VAPID secrets nothing can be sent: fail before touching the outbox, so no row loses a try
-  const v = vapid();
-  if (!v.subject || !v.publicKey || !v.privateKey) throw new Error('not set up (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)');
-  return drainNow();
+const runDrain = async () => {
+  // without the VAPID keys nothing can be sent: fail before touching the outbox, so no row loses a try
+  const k = await keys();
+  if (!k.subject || !k.publicKey || !k.privateKey) throw new Error('not set up (VAPID keys: Vault push_vapid_* or Edge Function secrets)');
+  return drainNow(k);
 };
-const drainNow = () => drain({
+const drainNow = (k: Keys) => drain({
   unsent: async (limit) => rows(await sb.from('push_outbox').select('id, user_id, kind, title, body, url, tag, tries')
     .is('sent_at', null).lt('tries', MAX_TRIES).order('created_at').limit(limit)) as OutboxRow[],
   // one conditional update per tries value: a row another run already claimed no longer matches
@@ -62,7 +72,7 @@ const drainNow = () => drain({
     return got;
   },
   subscriptions: async (ids) => rows(await sb.from('push_subscriptions').select('endpoint, user_id, p256dh, auth').in('user_id', ids)) as Subscription[],
-  send,
+  send: (s, payload, topic) => send(k, s, payload, topic),
   markSent: async (ids) => { check(await sb.from('push_outbox').update({ sent_at: new Date().toISOString() }).in('id', ids)); },
   giveUp: async (ids) => { check(await sb.from('push_outbox').update({ tries: MAX_TRIES }).in('id', ids)); },
   deleteSubscriptions: async (eps) => { check(await sb.from('push_subscriptions').delete().in('endpoint', eps)); },
@@ -114,7 +124,7 @@ const runMeds = () => queueMeds({
 
 Deno.serve(async (req) => {
   try {
-    return await handle(req, { cronKey: Deno.env.get('PUSH_CRON_KEY'), drain: runDrain, meds: () => runMeds() });
+    return await handle(req, { cronKey: async () => (await keys()).cronKey, drain: runDrain, meds: () => runMeds() });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: { 'Content-Type': 'application/json' } });

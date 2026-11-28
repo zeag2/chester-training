@@ -5,6 +5,10 @@ import { fmtTime } from './vets';
 import { medsDue as sharedMedsDue, type MedDue as SharedMedDue } from '../../supabase/functions/_shared/meds';
 
 export type CareKind = 'food' | 'vet' | 'symptom' | 'weight' | 'groom' | 'med' | 'doc' | 'daily';
+/** One name per kind of log, used everywhere you log or read one (the + list, Health, the log): UX review
+    2026-11-25, item 3. */
+export const LOG_NAMES = { weight: 'Weight', symptom: 'Symptom', med: 'Medicine or vaccine', vet: 'Vet visit', groom: 'Grooming',
+  food: 'Food or treat', doc: 'Vet document', train: 'Training set' } as const;
 /** One-tap everyday logs: a meal, a litter scoop, a play session, or the daily health check. */
 export type DailyWhat = 'fed' | 'scoop' | 'play' | 'check';
 export type Verdict = 'love' | 'ok' | 'no';

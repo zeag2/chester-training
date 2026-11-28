@@ -30,36 +30,48 @@ afterEach(() => { cleanup(); location.hash = ''; });
 const h2s = (c: HTMLElement) => [...c.querySelectorAll('h2')].map((h) => h.textContent);
 const files = (list: File[], types = ['Files']) => ({ dataTransfer: { types, files: list, dropEffect: 'none' } });
 
-describe('Health on phones and tablets (under 1100 px) stays as before', () => {
-  for (const w of [390, 900]) it(`${w} px: one column in today's order, the log as a list, no desktop classes`, () => {
+// renders each view in turn and keeps a copy of it (the render itself is unmounted before the next one)
+const views = () => (['overview', 'log', 'documents'] as const).map((v) => { cleanup(); const r = render(<Care view={v} />); return [v, h2s(r.container), r.container.cloneNode(true) as HTMLElement] as const; });
+
+describe('Health on phones and tablets (under 1100 px): three views, one column', () => {
+  for (const w of [390, 900]) it(`${w} px: Overview, Log and Documents hold today's sections; the log is a list; no desktop classes`, () => {
     fakeMedia(w);
-    const { container } = render(<Care />);
-    expect(container.querySelector('.screen')!.className).toBe('screen');
-    expect(container.querySelector('.healthcols, .healthlog, table, .dropnote')).toBeNull();
-    expect(h2s(container)).toEqual(['Log something', 'Kitten vaccines and checkups', 'Food and treats', 'Documents', 'Health log']);
+    const got = views();
+    for (const [, , c] of got) {
+      expect(c.querySelector('.screen')!.className).toBe('screen');
+      expect(c.querySelector('.healthcols, .healthlog, table, .dropnote')).toBeNull();
+    }
+    expect(got.map(([v, h]) => [v, h])).toEqual([
+      ['overview', ['Kitten vaccines and checkups', 'Food and treats']],
+      ['log', ['Log something', 'Health log']],
+      ['documents', ['Documents']]]);
+    const log = got[1][2];
+    expect(log.textContent).toContain('Weight');
     // the log is still rows (Quick logs first), and quick logs aren't listed one by one
-    const items = [...container.querySelectorAll('button.item')].map((b) => b.querySelector('b')?.textContent);
+    const items = [...log.querySelectorAll('button.item')].map((b) => b.querySelector('b')?.textContent);
     expect(items.slice(-4)).toEqual(['Quick logs', 'Symptom', 'Weight', 'Vet visit']);
+    expect(got[0][2].textContent).toContain('Summary for the vet');
   });
 });
 
 describe('Health on desktop (1100 px and up)', () => {
-  it('uses the wide screen and two columns: vet, visits, Coming up and Log something left; documents, weight, food right', () => {
+  it('uses the wide screen; Overview and Log in two columns, the log table across both on Log', () => {
     fakeMedia(1440);
-    const { container } = render(<Care />);
-    expect(container.querySelector('.screen')!.className).toBe('screen wide');
-    const cols = container.querySelectorAll('.healthcols > .healthcol');
+    const [[, , o], [, , l]] = views();
+    expect(o.querySelector('.screen')!.className).toBe('screen wide');
+    let cols = o.querySelectorAll('.healthcols > .healthcol');
     expect(cols).toHaveLength(2);
-    expect(h2s(cols[0] as HTMLElement)).toEqual(['Log something', 'Kitten vaccines and checkups']);
     expect(cols[0].textContent).toContain('Summary for the vet');
-    expect(h2s(cols[1] as HTMLElement)).toEqual(['Documents', 'Food and treats']);
+    expect(h2s(cols[1] as HTMLElement)).toEqual(['Kitten vaccines and checkups', 'Food and treats']);
+    cols = l.querySelectorAll('.healthcols > .healthcol');
+    expect(h2s(cols[0] as HTMLElement)).toEqual(['Log something']);
     expect(cols[1].textContent).toContain('Weight');
     // the log is after the columns, across both
-    expect(container.querySelector('.healthcols + .healthlog')).toBeTruthy();
+    expect(l.querySelector('.healthcols + .healthlog')).toBeTruthy();
   });
   it('shows the Health log as a table (date · what · details · who), newest first, with the last 7 days’ quick logs', () => {
     fakeMedia(1440);
-    const { container } = render(<Care />);
+    const { container } = render(<Care view="log" />);
     const table = container.querySelector('.healthlog table')!;
     // no one else in the household here, so no "Who" column of blanks
     expect([...table.querySelectorAll('th')].map((t) => t.textContent)).toEqual(['Date', 'What', 'Details']);
@@ -71,7 +83,7 @@ describe('Health on desktop (1100 px and up)', () => {
   });
   it('a row opens what the list opens: the visit page, the entry’s form, or the quick-log sheet', () => {
     fakeMedia(1440);
-    const { container } = render(<Care />);
+    const { container } = render(<Care view="log" />);
     const row = (what: string) => [...container.querySelectorAll('tbody tr')].find((r) => r.querySelectorAll('td')[1].textContent === what)!;
     fireEvent.click(within(row('Weight') as HTMLElement).getByRole('button'));
     expect(screen.getByRole('dialog').textContent).toContain('Edit Weight');

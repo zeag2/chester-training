@@ -33,7 +33,7 @@ shared with the people you live with, plus friends who can see each other's cats
 3. Timing: restart only at a clean point: HANDOFF.md up to date and no PR waiting on SQL.
 4. Mid-task: finish the job first, even past the line.
 
-**Live on main** (387 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
+**Live on main** (437 tests): desktop layout; tabs Home · Health · + · Chester · Friends with 3-screen onboarding;
 photo feed (paws, hide, delete); vet booking (several cats, reschedule, cancel); "After the visit" (snap the papers →
 one review screen → Undo) with the chart + invoice reader; one pattern for log entries (cat chip, visit picker,
 Saved · Undo, duplicate guard); weigh-in de-dupe and editing; medicine reminders; holiday outfits; "Pet me?"; the
@@ -48,25 +48,28 @@ privacy page (`#/privacy`); backup restore; training suggests the last skill tra
 
 **Build next: UX review 2026-11-25** (review-only worker, apple-design skill; needs Josh's go per item). Ranked:
 1 text follows iPhone Text Size (rem + system body size) L · ✓2 tab bar inactive labels 3.47:1 at 11px → muted 12px S ·
-3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind) M · 4 Health segmented
-"Overview · Log · Documents", one black button per segment M · 5 one Skills screen "Tree · List" (Trophy case stays) M ·
+✓3 one place to log (+ is the full list; Home keeps Quick log + Daily check; one name per kind; in the Home step 1 PR) M · ✓4 Health segmented "Overview · Log · Documents", one black button per segment M · ✓5 one Skills screen "Tree · List" (Trophy case stays) M ·
 ✓6 one screen-header component in the design system S–M · ✓7 skill tree locked rows full contrast, lock icon only S ·
 ✓8 Home Training card is the button, "Change skill" chip, 44px targets S · 9 For the vet: empty sections in one line,
 2-column tables S · 10 Book a visit: one "+ Add a vet" S · 11 Appearance setting (HIG says none; Josh's call) S ·
 12 onboarding swatch labels + literal sizes sweep S · 13 Session step title wraps S · 14 new-cat stats empty state, Home
 "Chester ·" dot S · ✓15 Health vet/visit cards: no outline S. Suggested order: 2+7+8 (one a11y PR), 1, 3+4, 5, 6.
-(✓ = in the UI visual-match PR, `claude/features-ui-match`, waiting for Josh.)
+(✓ = done: 2, 6, 7, 8, 15 in #53; 3 in the Home step 1 PR; 4 and 5 in the PR from `claude/features-health-skills-tabs`.) Next after Josh's look at Home step 1: the cozy Home
+proposal's later steps (room art for the stage), then item 4 (Health segmented) or 1 (Text Size).
 
 **Build next: cozy Home plan (proposal 2026-11-26, Josh picks each step)**
-1. Home restructure (UX 3; running now as Home step 1 + icon motion). 2. Health "Overview · Log · Documents" and
-Skills "Tree · List" segmented controls (UX 4, 5) M. 3. Art director's room kit (wall, floor, window × 4 times of day,
+1. Home restructure (UX 3; open as the Home step 1 + icon motion PR, waiting for Josh). 2. Health "Overview · Log · Documents" and
+Skills "Tree · List" segmented controls (UX 4, 5) M (open as a PR from `claude/features-health-skills-tabs`, 2026-11-27, waiting for Josh). 3. Art director's room kit (wall, floor, window × 4 times of day,
 rug, bowl, lamp, lights), then Chester's room on Home: light follows the time of day, logs appear in the room (bowl
 after Fed, litter box after Scooped, last toy on the rug), mood follows care, tap reactions near objects. L, new art.
 4. Corner tabs (Outfits · Toys · Cushions · Room), room themes, his spot, "Edit Home" cards, outfit try-on carousel M.
 5. Seasonal room items + window birds M–L. Carousels only for Home's photo strip and the try-on; accordions for older
 log days, the kitten vaccine list, visit details. New components go into docs/design-system.md first.
 
-**Running**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, `session_019xqnwhPpyPRHH3tkeMAqEf`). #53 UI visual match merged 2026-11-26 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
+**Open PR**: Home step 1 + icon motion (Josh's go 2026-11-26: "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons that will make it feel more human"; branch `claude/features-home-step1`, no SQL; see section 1), waiting for Josh. UX review item 3 (+ is the full list) is done in it.
+**Four new props: built, PR open for Josh** (`claude/features-props`, no SQL; Josh's "Yes, queue props", 2026-11-27; art on artifact STmR6cBuuEYyFGrYTkXtVi). Sprinkle donut (cushion), Sisal tower, Sunny window, Catnip pickle, 5 moves each (20), the new `scratch` pose and elbow-jointed sit legs in `src/chester/art.ts`; each move is found by a gesture on the prop's stage (`#/play/<prop>`). See section 1, "Props", and §3a. Timing tuned in a browser; screenshots in `docs/screenshots/props/`. Not yet felt on a real iPhone.
+
+**Running**: nothing. #57 four new props (20 moves) merged 2026-11-27 (no SQL); Josh still to feel them on a real iPhone. #56 Health + Skills tabs (cozy Home step 2) merged 2026-11-27 (no SQL). send-push deployed (v1, Verify JWT off); next for Josh: the iPhone test. #55 push keys from Vault merged 2026-11-27; its SQL (`20261127000000_push_vault.sql`) was run by Josh. Next for Josh: deploy send-push from `supabase/deploy/send-push.ts` with Verify JWT off and no function secrets, then the iPhone test. #53 UI visual match merged 2026-11-26 and #54 Home step 1 + icon motion merged 2026-11-27 (no SQL). Flaky test to fix: `src/ui/pushask.test.tsx` "after saving a medicine that comes round again".
 
 **Waiting on Josh**: the push iPhone test; which UX-review items to build first.
 
@@ -96,6 +99,44 @@ Josh runs separate sessions at the same time. To keep them from colliding:
 
 ## 1. What's built
 
+- **Health and Skills segmented controls** (2026-11-27, cozy Home plan step 2 = UX review items 4 and 5; PR from
+  `claude/features-health-skills-tabs`, no SQL; apple-design skill). New design-system component `Segmented`
+  (`src/ui/Segmented.tsx`, CSS `.seg.slide` + `.segthumb`; tablist/tab/tabpanel, arrow keys; the white thumb slides
+  over `--dur` / `--ease-out`, jumps with reduced motion), added to `docs/design-system.md` (Components + Motion) first.
+  **Health** (`src/screens/Care.tsx`): "Overview · Log · Documents" under the title. Overview = last weight, vet card,
+  visits, Summary for the vet, Coming up, kitten vaccines, Food and treats as one row (opens the list in a sheet;
+  "Add food or treat" there). Log = Log something, the Weight card, Quick logs and the log list (last 7 days; older in
+  an `Accordion` "Older than a week (n)"); desktop keeps the table. Documents = newest 3, All documents, Add a
+  document. One primary button per view ("Book a visit" became `.btn2`). The view is remembered for the session
+  (`sessionStorage` `paldex-health-view`) and shown in the address (`#/health/overview|log|documents`, replaceState);
+  `#/health/log/<kind>` opens the form on Log (doc → Documents, food → Overview); a dropped file switches to Documents.
+  The + list's "Vet document" goes to `#/health/documents`, "Looked off?" to `#/health/log`. **Skills**
+  (`src/screens/Skills.tsx`, `#/skills`, `#/skills/tree|list`): "Tree · List" (TreeView from `Tree.tsx`, SkillList
+  with search and branch chips from `Library.tsx`), remembered per session (`paldex-skills-view`); `#/tree` and
+  `#/library` redirect. Chester → More: one "Skills" row + Trophy case + corner. "Change skill" opens
+  `#/skills/tree`; a skill page's Back falls back to `#/skills`. Tests: `src/screens/segments.test.tsx` (+ updated
+  health, weights, homestep1, train). Screenshots: `docs/screenshots/health-skills-tabs/`.
+
+- **Home step 1 + icon motion** (2026-11-26, PR from `claude/features-home-step1`, no SQL; apple-design skill). Josh's
+  "Build step 1" of the cozy Home proposal, plus "animations to the settings icons and other icons". Home now runs top
+  down from simple to complex: greeting + date; Chester's stage (same cat, room art later); Quick log (Fed · Scooped ·
+  Played); the daily check as one row ("All normal" / "Something's off") with Water and Appetite in an **Accordion**
+  (done = one line); one dismissible **notice** (`src/ui/HomeNotice.tsx`: the "new home" card and the Home Screen icon
+  note merged; HomeIconNote.tsx is gone; closing the "new home" note is remembered as `paldex-moved-notice`); **Due
+  now** (`DueNow` in `src/screens/Care.tsx`: meds due + the next booked vet visit, nothing when neither); the account
+  nudge; Training, then the corner; friends' news, the Friends strip and the newest photo last. The Today card is gone:
+  its Weight / Symptom / Food / Vet buttons are in the **+ list** (`QuickLog`, now grouped rows Health · Food ·
+  Training · Documents, UX review item 3; one name per kind, `LOG_NAMES` in `src/engine/care.ts`, also used by
+  Health's "Log something"), its last weight is a chip at the top of Health, and its other reminders stay on Health's
+  "Coming up". The age footer went. Desktop keeps two columns (stage + everyday care left; training, corner, friends
+  right). **New in the design system first:** `Accordion` (`src/ui/Accordion.tsx`, 220 ms grid-row open/close,
+  reduced motion = instant + `--dur-fast` fade) and **Icon motion** (`src/ui/iconMotion.ts`, `.imo-*` in
+  `tokens.css`): the gear turns (tap, and hover with a mouse), tab icons bounce when picked (the cat's tab nods, the
+  brand paw nods), the + pops, row chevrons nudge while pressed; never on load, never looping, ≤ `--dur`, reduced
+  motion = a `--dur-fast` opacity dip. The old load-time `ktabin` tab scale is gone. Tests:
+  `src/screens/homestep1.test.tsx` (16) + the daily-check test opens the accordion (403 tests). Screenshots (before /
+  after, 390 px, light and dark, Home and the + sheet): `docs/screenshots/home-step1/`. Not yet felt on a real iPhone
+  (the motions especially).
 - **UI visual match** (2026-11-25, PR from `claude/features-ui-match`, no SQL; apple-design skill). The rest of the app
   brought in line with the badge art and line icons (#52), plus UX review items 2, 6, 7, 8, 15. Behaviour, data and SQL
   unchanged. Screenshots (before/after, 390 px, light and dark): `docs/screenshots/ui-match/`.
@@ -239,7 +280,7 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   untouched (Pillow diff of five phone screens vs main: identical but for the cat's wave). No tooltips yet (brief §4,
   icon-only buttons). Screenshots: `docs/plans/img/2026-11-11-polish-*.png`.
 - **Home**: the cat(s) (faces to switch: `src/ui/PetSwitcher.tsx`), a **Today** card (what's due, last weight with
-  change, quick-log buttons: `TodayCard` in `Care.tsx`), a small Training card only for cats with training on, the
+  change, quick-log buttons: `TodayCard` in `Care.tsx`; replaced 2026-11-26 by `DueNow`, the + list and Health's last-weight chip, see Home step 1 above), a small Training card only for cats with training on, the
   corner, friends.
 - **Health** (`#/health`, the old Care page): `#/health/log/<kind>` opens a log form straight away.
 - **+** (`QuickLog.tsx`): weight, symptom, food, vet, medicine, grooming, a document, and a training set (if on).
@@ -534,8 +575,9 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   - **Storage:** files go in the private `pet-docs` bucket, readable by household members only.
 
 ### Chester's corner (`#/corner`, under Train, from Home's yellow card, or "Spend treats" after a set)
-- **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 3 toys (box, laser dot,
-  crinkle tunnel) and 3 cushions (mint, heart, cloud). Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
+- **Spend treats** on 6 outfits (bell collar, bow tie, bandana, ear flower, party hat, crown), 6 toys (box, laser dot,
+  crinkle tunnel, Sisal tower, Sunny window, Catnip pickle) and 4 cushions (mint, heart, cloud, Sprinkle donut).
+  Catalogue and prices: `SHOP` in `src/engine/corner.ts`.
 - **Outfits show everywhere** Chester appears for that pet (Home, session, recap, settings, skill pages). They're
   drawn in head coordinates in `outfit()` in `src/chester/art.ts`, so they follow every pose, the rig and petting.
   Tap a worn outfit or cushion again to take it off.
@@ -556,6 +598,34 @@ Josh runs separate sessions at the same time. To keep them from colliding:
   Buys, gifts and plays are an append-only log merged by id on sync (two phones never lose each other's buys; the
   gift and play ids are per day, so they can't be claimed twice). The outfit and cushion choice carry their own
   `styledAt`, so an unrelated edit on another phone never undoes them. Balance = treats from sets + the log.
+
+### Props (2026-11-27, `claude/features-props`; art kit from the art channel, artifact STmR6cBuuEYyFGrYTkXtVi)
+- **Four props, five moves each**, bought in the corner: **Sprinkle donut** (a cushion, 30: he sits on it on Home like
+  the other beds, and it's in the Play row too), **Sisal tower** (32), **Sunny window** (48), **Catnip pickle** (16).
+  Tapping one in the Play row opens `#/play/<prop>` (`src/screens/PropPlay.tsx` inside `PlayShell`: "Moves found",
+  +3 treats per new move, the first play each day pays like the other toys). No SQL (moves and buys are corner log events).
+- **The game**: a stage with him resting by the prop; a gesture plays a move, then he rests again. Rules and timings
+  are pure in `src/engine/props.ts` (`PROP_MOVES`, `pickPropMove`, `classify`; tested in `props.test.ts`):
+
+  | Prop | tap | three quick taps | hold (0.6 s) | wiggle (drag back and forth) | flick (quick swipe) | leave him 6 s |
+  |---|---|---|---|---|---|---|
+  | Donut | Biscuit baker; **Wake-up yawn** while he naps | | Slow blink | | | Round and round, then **Donut hole** (nap) |
+  | Tower | Big stretch; **Proud strut** right after a scratch | Scratch scratch | | | Pom-pom bat | Top of the tower |
+  | Window | Bird TV; **Ek-ek-ek** while he watches it | | Paw on the glass | Rainy day doze | | Sunbeam loaf |
+  | Pickle | Sniff test | | Roly-poly | Bunny kicks | Catnip zoomies | **Blissed out** after the zoomies |
+
+  A move playing isn't restarted, and a new one waits 0.8 s before it can cut in (three quick taps still turn a stretch
+  into a scratch). Up to 3 idle moves in a row (1 with reduced motion), then he just rests. Enter or Space on the
+  focused stage is a tap. The hints in "Moves found" are these gestures (the kit's "sunny morning" / "rainy day" ideas
+  became gestures; real weather or time of day could drive them later).
+- **Timing tweaks** after playing them in Chromium (the kit had only checked still frames; all marked "app tune" in
+  `props.css`): Paw on the glass's paw hung down (the press keyframes now turn about the raised paw's −160°); the catnip
+  puff (Sniff test) and the drifting hearts (Blissed out) lost their positions (a CSS `transform` replaced the SVG
+  attribute; now `translate`/`rotate`/`scale` properties); Proud strut started off screen (now starts a step left of
+  where he rests); `--fall` was missing (added as a token). Each move plays whole loops of its scene (`ms` in
+  `PROP_MOVES`: e.g. kneading 4 × 1.1 s, scratching 4 × 0.9 s, the jump once at 7 s).
+- **Known cuts** (left as drawn): between resting and some moves he jumps a little (Ek-ek-ek sits further right; Top
+  of the tower zooms the view out to fit the jump arc).
 
 ### Chester himself (the character)
 _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): section 3a._
@@ -614,7 +684,7 @@ _How it works under the hood (SVG, CSS layers, the rig, the component, scenes): 
   the install manifest (`src/lib/appname.ts`). An iPhone Home Screen app doesn't share storage with Safari, so the names
   ride into the installed app in the start address (`?pets=Chester,Luna`), and setup walks through each kitten in turn.
   An icon already on a Home Screen keeps its old name (long-press to rename, or remove and add it again).
-- **"Your Home Screen icon still shows the old cats"** (2026-11-10, `src/ui/HomeIconNote.tsx`, on Home): in the
+- **"Your Home Screen icon still shows the old cats"** (2026-11-10, `src/ui/HomeIconNote.tsx`, on Home; since 2026-11-26 part of `src/ui/HomeNotice.tsx`): in the
   installed iPhone app only (standalone and iOS; never in Safari tabs or on Android, which updates from the manifest),
   the app remembers the cats it first ran with (`rememberHomeLook`, `paldex-homescreen-look`: all the names and the
   first two cats' coat and eyes). When those change, Home shows the note once per change (Close or Got it stores
@@ -741,6 +811,19 @@ Items marked *(art)* suit the art session.
    Josh's steps: `docs/sharing-setup.md` step 16. Tests: `src/lib/push.test.ts`, `src/ui/pushask.test.tsx`
    (browser faked by `src/lib/pushtest-env.ts`), `src/lib/sendpushfile.test.ts`. Screenshots: `docs/screenshots/push/`.
    Next: Josh runs the SQL + secrets + deploy, merge both PRs, then the iPhone test in the plan.
+   **Keys from Vault, 2026-11-27** (PR from `claude/features-push-vault`; SQL `20261127000000_push_vault.sql`): send-push
+   was never deployed and the old VAPID private key was lost, so Josh made a new pair and put all four keys in Vault
+   (`push_cron_key`, `push_vapid_public`, `push_vapid_private`, `push_vapid_subject` = `https://paldex-4qh.pages.dev/`).
+   `public.push_secrets()` (security definer, `search_path = ''`, execute for `service_role` only) returns them;
+   send-push's `keyLoader` (core.ts) takes each key from the Edge Function env if set, else from that RPC with the
+   service-role client, read once per instance once all four are there (an incomplete or failed read is retried next
+   call, so a later Vault fix needs no redeploy; a *changed* key does). The cron key is still checked in constant time,
+   and drain still fails before touching the outbox without the VAPID keys. New public key in `src/sync/config.ts`
+   (`BFTJa8EH…`). Phones subscribed with the old key: `refreshPush` (app start) and `enablePush` compare the
+   subscription's `options.applicationServerKey` with ours; a different one is unsubscribed, removed from the server
+   (`removePushSubscription`) and replaced (a browser that doesn't report the key is left alone). Tests:
+   `core.test.ts` (env vs Vault), `push.test.ts` (old-key re-subscribe), `supabase/tests/push_vault_test.sql`
+   (anon/authenticated refused, service_role gets all four; `stub_vault.sql` fakes Vault), e2e Vault-only steps.
 6. [x] **Medicine reminders, in-app** (done 2026-11-19, PR from `claude/features-medicine-reminders`; no SQL): the
    medicine form has **Repeat** (Once / Daily / Twice a day / 3× a day) + "Every day until", saved as `course: { times,
    until }` on the entry (each dose given is its own entry carrying the course). Home's **"[cat] Chester · Medicine"**
@@ -1157,7 +1240,8 @@ supabase/
     20261126000000_contact_messages.sql  "Contact us": contact_messages (insert-only for everyone), app_admins (the owner)
     20261116000000_bundle.sql            the 2026-11-16 batch (photo feed, push_subscriptions, …)
     20261123000000_push.sql              push: push_prefs, push_outbox, enqueue_push, 3 triggers, pg_cron jobs (not run yet)
-  tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql stand in for Supabase)
+    20261127000000_push_vault.sql        push_secrets(): send-push's four keys from Vault, service role only
+  tests/                plain-Postgres tests of the policies (stub_auth.sql/stub_storage.sql/stub_vault.sql stand in for Supabase)
   tests/send-push-e2e/  run.sh: the real send-push in Deno + PostgREST + Postgres 16 + a fake push service (not CI)
   functions/read-vet-doc/  OPTIONAL Claude-based document reader (Edge Function). Not used by the app (see decisions).
   functions/send-push/  push sender (Edge Function, called by pg_cron): index.ts wires core.ts (logic, Vitest-tested)
@@ -1199,7 +1283,12 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   shadow, spun as a whole about (100, 122)), `full` (front-facing, round belly after a meal: `.pawPat`, `.puff`),
   `sploot` (front-on, flat on the floor, legs out, tail up: the roll), and the **play poses**, side on facing right:
   `crouch` (stalk: shoulders low, `.rump` up and wiggling, `.pawLift`), `leap` (stretched pounce, front paws forward;
-  the play screen tilts it along the arc), `reach` (rearing up on the back legs, `.swipe` paw high, mouth open). Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
+  the play screen tilts it along the arc), `reach` (rearing up on the back legs, `.swipe` paw high, mouth open); and `scratch` (2026-11-27, the props kit: stood up
+  on his back legs, front paws up on the Sisal tower to his right; `.rakeA/.rakeB` front legs about the shoulder with
+  `.foreA/.foreB` forearms about the elbow, `.claws`, a fixed tube tail `.tailS`, no rig tail). The sit pose takes
+  `legs: 'flex' | 'swat'` (props kit): each front leg split at the elbow (`.upL/.loL`, `.upR/.loR` inside the usual
+  `.pawL/.r-legL` groups; upper turns about (x, 142), lower about (x, 166)); `swat` also draws the right paw over the head.
+  Each is a function in `art.ts` sharing `head()`, `limb()`, the coat (`COATS`) and `outfit()`.
 - **Head:** `head(c, eyes, mood, uid, wear, { size, outer, turn })`, scaled by `HEAD_SIZE.scale` (0.88) × the pose's
   own size about the neck. `turn` swings the face toward the side (walk). `mood`: `curious` (round eyes), `happy`
   (^ ^), `sleepy`, `open` (mouth open).
@@ -1305,6 +1394,13 @@ the rainbow dash, the play screen) move whole `<Chester>`s around with their own
   on a catch). Mouth open (`mood="open"`) in the air and while swatting. Dev builds expose the brain as
   `globalThis.__playBrain` for checks.
 
+- **Prop scenes** (`src/chester/propScenes.ts`, `props.css`, `src/screens/PropPlay.tsx`): no `<Chester>` component and
+  no rig. Each scene is one SVG string: the prop's back layer, Chester in a nested `<svg viewBox="-14 -34 232 232">` (so
+  `props.css` transform-origins are plain Chester numbers) filled by `slotSVG()` from `chesterSVG()` (his coat, eyes and
+  outfit), the prop's front layer, effects. Animated by `.sc-<scene id>` rules in `props.css`, which reuse
+  `chester.css`'s anims (`nap`, `slowblink`, `yawn`, `zoom`…). An element with its own SVG `transform` attribute must
+  be animated with the `translate`/`rotate`/`scale` properties (a CSS `transform` replaces the attribute).
+
 ### Checking an animation
 - `#/gallery` (dev only) shows every pose and the nuzzle. The dev store is `globalThis.__chesterStore` for seeding.
 - Playwright: screenshot frames or an element clip at intervals and tile them into a contact sheet (that's how the
@@ -1354,7 +1450,12 @@ npm run build      # what CI runs
   oldest migrations once, rls/care/docs tests, add user D, households + `household_test` (drop `public._h`), friends +
   friends_test, then every later migration twice with its test after it (bundle → photos_test, push → push_test),
   `security_test` last. 2026-11-25 (Contact us): the same chain plus `20261126000000_contact_messages.sql` (twice) and
-  `contact_test.sql` (its own people V, W) before `security_test`: passed. User D goes into `auth.users` only (not
+  `contact_test.sql` (its own people V, W) before `security_test`: passed. 2026-11-27 (push keys from Vault): load
+  `stub_vault.sql` after the other stubs; the same chain plus `20261127000000_push_vault.sql` (twice) and
+  `push_vault_test.sql` before `security_test`: passed (strip `create extension pg_net/pg_cron` from the week 3 bundle
+  too; `setup-db.sh` now does that for any file). e2e in a cloud session: run `deno cache --no-lock
+  --node-modules-dir=none` on `e2e.ts` and `index.ts` first (with `--unsafely-ignore-certificate-errors` Deno ignores
+  `DENO_CERT` for npm downloads and fails on the proxy's certificate). User D goes into `auth.users` only (not
   `cat_members`) before the households migration, or `household_test` counts 3 members. `people_test` makes B leave, so it runs in its own fresh cluster (stubs, four oldest
   migrations, rls_test, people_test).
 - **send-push end to end** (not in CI): `supabase/tests/send-push-e2e/run.sh` installs Deno 2.9.6 (npm) and
@@ -1440,12 +1541,12 @@ here in the same commit (see `CLAUDE.md`).
 | claudedesignskills (23 skills: `motion-framer`, `animejs`, `threejs-webgl`, `lottie-animations`, `react-spring-physics`, …) | freshtechbro/claudedesignskills | 2026-11-07 | Web animation and 3D reference. Its `gsap-scrolltrigger` was replaced by the official one (old copy still in `.agents/skills/`) |
 | `gsap-core`, `gsap-timeline`, `gsap-react`, `gsap-plugins`, `gsap-utils`, `gsap-performance`, `gsap-frameworks`, `gsap-scrolltrigger` | greensock/gsap-skills (official) | 2026-11-08 | Installed, not used yet |
 | `text-to-lottie` | diffusionstudio/lottie | 2026-11-08 | Installed, not used yet |
-| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration. (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
-| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account) and 2026-11-25 (Contact us). |
+| `supabase` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request; for SQL, RLS and auth work. Used 2026-11-23 for the delete-account migration (with `supabase-postgres-best-practices`) and 2026-11-25 for the Contact us migration, and 2026-11-27 for `push_secrets()` (push keys from Vault). (`reddit-automation` from flowkit-labs/skills was added the same day for a Reddit search, which the network blocked, then removed at Josh's request.) |
+| `supabase-postgres-best-practices` | supabase/agent-skills (official) | 2026-11-11 | Installed at Josh's request: Postgres rules for schema, migrations, RLS, indexes and queries (reference docs only, no scripts). Load before writing SQL (e.g. the photo feed). Used 2026-11-23 (delete account), 2026-11-25 (Contact us) and 2026-11-27 (push keys from Vault). |
 | `find-skills` | vercel-labs/skills | 2026-11-11 | Installed at Josh's request: finds skills with `npx skills find`. Its tip to install with `-g -y` is not followed here; ask Josh before installing anything it finds. Not used yet. |
 | `remotion-render` | inference-sh/skills | 2026-11-11 | Installed at Josh's request for the UX auditor: renders Remotion (React) code to MP4 on inference.sh's cloud. Needs their `belt` CLI, an inference.sh account and key, and network access to inference.sh; none are set up, so it can't run yet. Its frontmatter pre-approves `belt` commands. It sends the code you render to a third party, so never put user data in it. Not used yet. |
 | `ask-matt` | mattpocock/skills | 2026-11-11 | Installed at Josh's request: a menu (run only as `/ask-matt`) that points to Matt Pocock's other workflow skills (`/grill-with-docs`, `/to-spec`, `/tdd`, …). Those aren't installed, so it's only a guide for now. Not used yet. |
-| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). |
+| `apple-design` | dickwu/apple-design-skill (commit 91e1566) | 2026-11-25 | Installed at Josh's request: a design reviewer built on Apple's Human Interface Guidelines (123 HIG pages as Markdown in `references/hig/`, plus a "craft" lens against templated looks). Instructions and reference docs only: no secrets, no network. The repo's `scripts/pull-hig.mjs` (re-downloads the HIG from developer.apple.com) and `.github/` were left out on purpose. PalDex is a web app, so it applies the HIG's principles and foundations (accessibility, colour, type, layout, writing) rather than native iOS rules; `docs/design-system.md` and the tokens still win where they differ. **Used 2026-11-25** for the UI visual-match pass (PR from `claude/features-ui-match`): SKILL.md plus `accessibility.md`, `layout.md`, `typography.md`, `color.md`, `designing-for-ios.md`, `writing.md` and `icons.md` (one header pattern, 44 px targets, 4.5:1 tab labels, one icon language, action-named buttons). **Used 2026-11-26** for Home step 1 + icon motion (`claude/features-home-step1`): SKILL.md plus `motion.md` (feedback motion brief and precise, avoid motion on very frequent interactions, make motion optional → small transform-only moves and a reduced-motion opacity fallback) and `disclosure-controls.md` (a labelled disclosure that points right when closed and down when open → the Accordion). **Used 2026-11-27** for the Health and Skills segmented controls (`claude/features-health-skills-tabs`): `segmented-controls.md` (equal segments, noun labels, ≤5 on iPhone, switching related subviews) and `layout.md`. |
 
 Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.agents/skills/` with symlinks in
 `.claude/skills/`; the GSAP and Lottie skills are copied straight into `.claude/skills/`.
@@ -1469,6 +1570,31 @@ Files: the claudedesignskills, reanimate, earshot and huashu skills live in `.ag
   `src/ui/icons.tsx` and the corner's toy art.
 
 ### Skills actually used so far
+- 2026-11-27, four new props (Features worker, `claude/features-props`): no skills invoked; no plugins installed or
+  removed. Art read from the art channel's artifact STmR6cBuuEYyFGrYTkXtVi (`paldex-art/props/`) with the Artifact
+  tool (read only), reviewed and ported into `src/chester/props.ts`, `propScenes.ts`, `props.css` and `art.ts`. MCP:
+  GitHub (pull request) and `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest (437,
+  new `src/engine/props.test.ts`), typecheck, build; Playwright (preinstalled Chromium) against the Vite dev server with
+  a cat seeded and the four props bought through `globalThis.__chesterStore`, each of the 20 moves triggered by real
+  gestures (tap, 3 taps, hold, flick, wiggle, idle) and captured as 5 frames, tiled with Pillow into contact sheets,
+  390 px, light and dark (`docs/screenshots/props/`). `src/ui/pushask.test.tsx` failed in some runs on main too (the
+  known flaky case); the full run passed.
+- 2026-11-27, Health and Skills segmented controls (Features worker, `claude/features-health-skills-tabs`):
+  **apple-design** skill (`segmented-controls.md`: equal-width segments, noun labels, text only, at most ~5 on
+  iPhone, for switching closely related subviews; `layout.md`). No plugins installed or removed; MCP: GitHub (pull
+  request) and `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest (415), typecheck,
+  build; Playwright (preinstalled Chromium) against the Vite dev server, store seeded through
+  `globalThis.__chesterStore`, 390 px light and dark, before and after.
+- 2026-11-27, push keys from Vault (Features worker, `claude/features-push-vault`): **supabase** and
+  **supabase-postgres-best-practices** skills (security-definer checklist: `search_path = ''`, revoke from public/anon/
+  authenticated, grant to service_role only). No plugins installed or removed; MCP: GitHub (pull request) and
+  `send_message` to the PM. Tools in scratch space only: Postgres 16 (the full SQL chain), Deno 2.9.6 + PostgREST
+  12.2.3 (`send-push-e2e/run.sh`, source and one-file copy). Checks: Vitest, typecheck, build.
+- 2026-11-26, Home step 1 + icon motion (Features worker, `claude/features-home-step1`): **apple-design** skill
+  (`motion.md`, `disclosure-controls.md`). No plugins installed or removed; MCP: GitHub (pull request) and
+  `send_message` to the PM (`lottiefiles-creator` connected, unused). Checks: Vitest, typecheck, build; Playwright
+  (preinstalled Chromium) against the Vite dev server with a cat, two weigh-ins, a medicine due today, a booked visit
+  and a Fed seeded through `globalThis.__chesterStore`, at 390 px light and dark, before and after.
 - 2026-11-25, "Contact us" form + Messages inbox (Features worker, `claude/features-contact-us`): **supabase** and
   **supabase-postgres-best-practices** skills (RLS/grants checklist: column-level INSERT grants, `(select auth.uid())`
   in policies, definer trigger in `private` with a pinned `search_path` and execute revoked, indexes for the inbox and

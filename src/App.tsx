@@ -6,8 +6,7 @@ import { AnotherCat, Onboarding } from './screens/Onboarding';
 import { Home } from './screens/Home';
 import { Session } from './screens/Session';
 import { Recap } from './screens/Recap';
-import { Tree } from './screens/Tree';
-import { Library } from './screens/Library';
+import { Skills } from './screens/Skills';
 import { SkillPage } from './screens/SkillPage';
 import { Settings } from './screens/Settings';
 import { CatPage } from './screens/CatPage';
@@ -80,13 +79,16 @@ export default function App() {
     case 'recap': return <Recap key={r1} skillId={r1 ?? 'clicker'} />;
     // Health: the care page, as its own tab; #/health/log/<kind> opens a log form straight away (from the + sheet)
     // #/health/visit/<id>: one visit with its documents, doses and weight; #/health/docs: all documents
+    // #/health/overview, #/health/log, #/health/documents: the three views (the segmented control at the top)
     case 'health': case 'care': body = r1 === 'visit' ? <VisitPage key={r2} id={r2 ?? ''} /> : r1 === 'docs' ? <Documents />
-      : <Care key={r1 === 'log' ? 'log-' + r2 : 'care'} open={r1 === 'log' ? (r2 as CareKind) : undefined} />; tab = 'health'; break;
+      : <Care key={r1 === 'log' && r2 ? 'log-' + r2 : 'care-' + (r1 ?? '')} open={r1 === 'log' && r2 ? (r2 as CareKind) : undefined}
+        view={r1 === 'overview' || r1 === 'documents' || (r1 === 'log' && !r2) ? r1 : undefined} />; tab = 'health'; break;
     // Train: everything about training, with the tree, library, skills and Chester's corner under it
     // the cat's own tab: his scene, corner and (when on) training; #/train lands here too
     case 'chester': case 'train': body = <CatPage />; tab = 'chester'; break;
-    case 'tree': body = <Tree />; tab = 'chester'; break;
-    case 'library': body = <Library />; tab = 'chester'; break;
+    // Skills: the tree and the list (was Library) as two views of one screen; the old #/tree and #/library redirect
+    case 'skills': body = <Skills key={r1 ?? ''} view={r1 === 'tree' || r1 === 'list' ? r1 : undefined} />; tab = 'chester'; break;
+    case 'tree': case 'library': body = <Skills key={r0} view={r0 === 'tree' ? 'tree' : 'list'} redirect />; tab = 'chester'; break;
     case 'vet-summary': body = <VetSummary />; tab = 'health'; break;
     case 'week': body = <Week />; tab = 'home'; break;
     case 'trophies': body = <Trophies />; tab = 'chester'; break;

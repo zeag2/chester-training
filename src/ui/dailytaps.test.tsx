@@ -79,6 +79,12 @@ describe('Quick log taps', () => {
     const id = store.get().cat!.id;
     for (const c of await live('check', id)) await store.deleteCare(c.id);
     render(<DailyTaps />);
+    // Water and Appetite wait in an accordion: closed, they're hidden from VoiceOver and the tab order
+    expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
+    const head = screen.getByRole('button', { name: /^Water and appetite \(optional\)/ });
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    await tap(/^Water and appetite/);
+    expect(head.getAttribute('aria-expanded')).toBe('true');
     await tap('More'); await tap('Picky'); await tap('Picky'); await tap('Didn’t eat');
     await tap('All normal');
     const [c] = await live('check', id);

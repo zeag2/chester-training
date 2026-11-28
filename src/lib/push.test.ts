@@ -98,6 +98,43 @@ describe('on app start', () => {
     expect(fb.subscribe).toHaveBeenCalledTimes(2);
     expect(server.pushSubs.size).toBe(1);
   });
+  it('a phone subscribed with the old key: unsubscribed, subscribed again with the new key, saved; the old one removed', async () => {
+    fb = fakeBrowser(); const { server, r } = await signedIn();
+    await enablePush(r);
+    const newKey = new Uint8Array(fb.subscribe.mock.calls[0][0].applicationServerKey as Uint8Array);
+    const oldKey = newKey.slice(); oldKey[1] ^= 0xff;
+    server.pushSubs.clear();
+    const old = fakeSub('https://fcm.googleapis.com/fcm/send/old-key', oldKey); fb.sub = old;
+    await r.savePushSubscription({ endpoint: old.endpoint, p256dh: 'x', auth: 'y' }, 'test');
+    await refreshPush(r);
+    expect(old.unsubscribe).toHaveBeenCalled();
+    expect(fb.subscribe).toHaveBeenCalledTimes(2);
+    expect(new Uint8Array(fb.subscribe.mock.calls[1][0].applicationServerKey as Uint8Array)).toEqual(newKey);
+    expect(server.pushSubs.has(old.endpoint)).toBe(false);
+    expect(server.pushSubs.has(fb.sub!.endpoint)).toBe(true);
+    expect(server.pushSubs.size).toBe(1);
+    // next start: already on the new key, nothing changes
+    await refreshPush(r);
+    expect(fb.subscribe).toHaveBeenCalledTimes(2);
+  });
+  it('turning it on with an old-key subscription still in the browser: a fresh one with the new key', async () => {
+    fb = fakeBrowser(); const { server, r } = await signedIn();
+    const oldKey = new Uint8Array(65).fill(4);
+    const old = fakeSub('https://fcm.googleapis.com/fcm/send/old-on', oldKey); fb.sub = old;
+    expect(await enablePush(r)).toBe('on');
+    expect(old.unsubscribe).toHaveBeenCalled();
+    expect(fb.subscribe).toHaveBeenCalledTimes(1);
+    expect([...server.pushSubs.keys()]).toEqual([fb.sub!.endpoint]);
+  });
+  it('a browser that doesn\'t say which key it used: the subscription is kept', async () => {
+    fb = fakeBrowser(); const { server, r } = await signedIn();
+    await enablePush(r);
+    const kept = fakeSub('https://fcm.googleapis.com/fcm/send/unknown-key', null); fb.sub = kept;
+    await refreshPush(r);
+    expect(kept.unsubscribe).not.toHaveBeenCalled();
+    expect(fb.subscribe).toHaveBeenCalledTimes(1);
+    expect(server.pushSubs.has(kept.endpoint)).toBe(true);
+  });
   it('blocked since: forgets it was on, never throws', async () => {
     fb = fakeBrowser(); const { r } = await signedIn(); await enablePush(r);
     fb.permission = 'denied';

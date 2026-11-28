@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { donut, ICONS } from '../chester/props';
 import { Chester } from '../chester/Chester';
 import { store, useStore } from '../db/store';
 import { BOND_LEVELS, bondGiftLevel, bondLevel, dailyGiftTreats, giftClaimed, inSeason, ITEM_BY_ID, owned, playedToday, SHOP, type ShelfKind, type ShopItem } from '../engine/corner';
@@ -13,6 +14,9 @@ import { PLAYABLE } from './Play';
 
 /** Cushions drawn under him in the corner. */
 export function CushionArt({ id, width = 220 }: { id?: string; width?: number }) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  // the Sprinkle donut is prop art (src/chester/props.ts), drawn in Chester's space: shown in the same 220 × 76 box
+  if (id === 'donut') return <svg viewBox="-14 120 228 79" width={width} aria-hidden="true" style={{ display: 'block' }} dangerouslySetInnerHTML={{ __html: donut('c' + uid).back }} />;
   const stroke = '#232320';
   const shape = id === 'heart'
     ? <g><path d="M110 70 C60 70 14 58 14 38 C14 18 44 12 66 22 C80 28 96 32 110 32 C124 32 140 28 154 22 C176 12 206 18 206 38 C206 58 160 70 110 70 Z" fill="#f4a9b6" stroke={stroke} strokeWidth="4" /><path d="M180 52 C172 44 170 36 177 34 C180 33 182 35 182 37 C182 35 184 33 187 34 C194 36 192 44 184 52 Z" fill="#e5484d" transform="translate(-4 -4)" /></g>
@@ -33,6 +37,8 @@ const TOY_MOVE: Record<string, [ReactionId, string]> = {
 const TOY_COLOR = ['#ef8f9a', '#efc44a', '#9fc0ea', '#a9dcc9', '#f0a07e'];
 
 function ToyArt({ name, i }: { name: string; i: number }) {
+  // the props' own 48 px shelf icons (art layer, as drawn)
+  if (ICONS[name]) return <svg viewBox="0 0 48 48" width={40} height={40} aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICONS[name] }} />;
   const c = TOY_COLOR[i % TOY_COLOR.length];
   const L = { stroke: 'var(--ink)', strokeWidth: 2.5, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
   const art = name === 'box' ? <><path d="M8 18 H40 V40 H8 Z" fill="#d9b382" {...L} /><path d="M8 18 L2 10 M40 18 L46 10 M8 18 L14 8 M40 18 L34 8" {...L} fill="none" /></>
@@ -62,7 +68,8 @@ export function Corner() {
   const bond = bondLevel(wallet.bond);
   const giftReady = !giftClaimed(c, day);
   // the feather wand is free for everyone (a gifted "a feather wand" is the same toy)
-  const toys = [...new Set(['wand', ...wallet.toys.filter((t) => t !== 'a feather wand'), ...SHOP.filter((i) => i.kind === 'toy' && have.has(i.id)).map((i) => i.id)])];
+  // the Sprinkle donut is a cushion with its own moves, so it's in the Play row too once bought
+  const toys = [...new Set(['wand', ...wallet.toys.filter((t) => t !== 'a feather wand'), ...SHOP.filter((i) => (i.kind === 'toy' || i.id === 'donut') && have.has(i.id)).map((i) => i.id)])];
   const say = (t: string) => { setToast(t); window.setTimeout(() => setToast((x) => (x === t ? '' : x)), 2600); };
   const act = async (f: () => Promise<unknown>) => { if (busy) return; setBusy(true); try { await f(); } finally { setBusy(false); } };
 
